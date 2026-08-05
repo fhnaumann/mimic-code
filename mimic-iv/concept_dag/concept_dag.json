@@ -1,0 +1,1408 @@
+{
+  "generator": "concept_dag",
+  "parser_version": "sqlglot 30.15.0",
+  "source_root": "mimic-iv/concepts",
+  "total_concepts": 65,
+  "total_edges": 91,
+  "nodes": {
+    "acei": {
+      "stem": "acei",
+      "path": "medication/acei.sql",
+      "sha256": "6a5ec32282f6e5207d33818b689fb1c52d41c075f36a0dbc6eeb135afb510110",
+      "level": 0,
+      "dependencies": [],
+      "dependents": []
+    },
+    "age": {
+      "stem": "age",
+      "path": "demographics/age.sql",
+      "sha256": "b91101e98437f96ffdf7b9136a4506ab6a790b1f63572ffcd14c31a28ee273d6",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "charlson",
+        "creatinine_baseline",
+        "oasis",
+        "sapsii"
+      ]
+    },
+    "antibiotic": {
+      "stem": "antibiotic",
+      "path": "medication/antibiotic.sql",
+      "sha256": "300816a74a070b2dffe6c5aa982e8103c46080fa5ed98cf5fffd36a245b24be2",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "suspicion_of_infection"
+      ]
+    },
+    "apsiii": {
+      "stem": "apsiii",
+      "path": "score/apsiii.sql",
+      "sha256": "9692a6342940d7c2f885a67db72fc18ce38eab174c4e360a3fe82262d03085c0",
+      "level": 2,
+      "dependencies": [
+        "bg",
+        "first_day_gcs",
+        "first_day_lab",
+        "first_day_urine_output",
+        "first_day_vitalsign",
+        "ventilation"
+      ],
+      "dependents": []
+    },
+    "arb": {
+      "stem": "arb",
+      "path": "medication/arb.sql",
+      "sha256": "e24b91d1ecf8eaef598129b7e9cf14e21b2ff27491407c08fbb07efab9b35d97",
+      "level": 0,
+      "dependencies": [],
+      "dependents": []
+    },
+    "bg": {
+      "stem": "bg",
+      "path": "measurement/bg.sql",
+      "sha256": "90a7f58852b5af97cfce799e9e76a9754c765e2fb9593860ca6bf85b60a5cd55",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "apsiii",
+        "first_day_bg",
+        "first_day_bg_art",
+        "first_day_sofa",
+        "lods",
+        "sapsii",
+        "sofa"
+      ]
+    },
+    "blood_differential": {
+      "stem": "blood_differential",
+      "path": "measurement/blood_differential.sql",
+      "sha256": "a93f21dfb29e00b1450fabff5572830a2a5930f1229dbe43f816dd1b8b8235f1",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "first_day_lab"
+      ]
+    },
+    "cardiac_marker": {
+      "stem": "cardiac_marker",
+      "path": "measurement/cardiac_marker.sql",
+      "sha256": "a8e02e5df6089cb4c26cf7c5779a999cf20b5708071f5ae113b570b5f1ac7b36",
+      "level": 0,
+      "dependencies": [],
+      "dependents": []
+    },
+    "charlson": {
+      "stem": "charlson",
+      "path": "comorbidity/charlson.sql",
+      "sha256": "5b797b673ace4dcbc6f686848d24371382f49ac61fcc39101f09c3b42969d801",
+      "level": 1,
+      "dependencies": [
+        "age"
+      ],
+      "dependents": []
+    },
+    "chemistry": {
+      "stem": "chemistry",
+      "path": "measurement/chemistry.sql",
+      "sha256": "b674ae2e12fe859c44850a5e8268f3a18ccb934fb9f0ab47112af0c346364d70",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "creatinine_baseline",
+        "first_day_lab",
+        "sapsii",
+        "sofa"
+      ]
+    },
+    "coagulation": {
+      "stem": "coagulation",
+      "path": "measurement/coagulation.sql",
+      "sha256": "d6f9ba24d8872e3eaed92707522dd2f24a51f879dd77feebe25ee9c6b08225dc",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "first_day_lab"
+      ]
+    },
+    "code_status": {
+      "stem": "code_status",
+      "path": "treatment/code_status.sql",
+      "sha256": "b8c92ff0d4c724ab2f5c069735aa5c0b5608842f1450da933190c5bc38ecca67",
+      "level": 0,
+      "dependencies": [],
+      "dependents": []
+    },
+    "complete_blood_count": {
+      "stem": "complete_blood_count",
+      "path": "measurement/complete_blood_count.sql",
+      "sha256": "8eb94ba8891e0effa66c7a62c76e648d9f42e8941f97f052c92a0823434bae92",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "first_day_lab",
+        "sapsii",
+        "sofa"
+      ]
+    },
+    "creatinine_baseline": {
+      "stem": "creatinine_baseline",
+      "path": "measurement/creatinine_baseline.sql",
+      "sha256": "3ca2e029f27025df7c96b5364e4bc7acf7165510340160f9f32406a3e838cdda",
+      "level": 1,
+      "dependencies": [
+        "age",
+        "chemistry"
+      ],
+      "dependents": []
+    },
+    "crrt": {
+      "stem": "crrt",
+      "path": "treatment/crrt.sql",
+      "sha256": "6fffa92ab889ef5701d0bce0f246eef67e64adb2714cb95f2fd466183d6bd17a",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "kdigo_stages"
+      ]
+    },
+    "dobutamine": {
+      "stem": "dobutamine",
+      "path": "medication/dobutamine.sql",
+      "sha256": "7b74249ebca27705ed5e31de753189c60a27e002a50c29745ff0bffee6e27ad5",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "first_day_sofa",
+        "sofa",
+        "vasoactive_agent"
+      ]
+    },
+    "dopamine": {
+      "stem": "dopamine",
+      "path": "medication/dopamine.sql",
+      "sha256": "4809121abcd1bd3d827a3025b7427f959dc99a53bbbee7dbe109c957145ff74d",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "first_day_sofa",
+        "sofa",
+        "vasoactive_agent"
+      ]
+    },
+    "enzyme": {
+      "stem": "enzyme",
+      "path": "measurement/enzyme.sql",
+      "sha256": "5c719b94ec9947366f4eb191687e12f2b80931764272c3c6988506ef716647cd",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "first_day_lab",
+        "sapsii",
+        "sofa"
+      ]
+    },
+    "epinephrine": {
+      "stem": "epinephrine",
+      "path": "medication/epinephrine.sql",
+      "sha256": "97c1c3cf8c549fb7546c85c7a66902911cc217fd39fd29b3a15070e83d6a2e5a",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "first_day_sofa",
+        "sofa",
+        "vasoactive_agent"
+      ]
+    },
+    "first_day_bg": {
+      "stem": "first_day_bg",
+      "path": "firstday/first_day_bg.sql",
+      "sha256": "3c2ff855bc1fea224d78c50e5905f652e100d75857ef9cf909be8fc10e92a352",
+      "level": 1,
+      "dependencies": [
+        "bg"
+      ],
+      "dependents": []
+    },
+    "first_day_bg_art": {
+      "stem": "first_day_bg_art",
+      "path": "firstday/first_day_bg_art.sql",
+      "sha256": "f3ef6de5f9b071736c19bc27eedeb2509173d9084019ced555ac8dc882683fac",
+      "level": 1,
+      "dependencies": [
+        "bg"
+      ],
+      "dependents": [
+        "sirs"
+      ]
+    },
+    "first_day_gcs": {
+      "stem": "first_day_gcs",
+      "path": "firstday/first_day_gcs.sql",
+      "sha256": "ebbabc9c407dcea8acc5363636ee6218723192aa6122e49e2e4d553ce958a4a5",
+      "level": 1,
+      "dependencies": [
+        "gcs"
+      ],
+      "dependents": [
+        "apsiii",
+        "first_day_sofa",
+        "lods",
+        "oasis"
+      ]
+    },
+    "first_day_height": {
+      "stem": "first_day_height",
+      "path": "firstday/first_day_height.sql",
+      "sha256": "4ac0656fe4336995f39871093a445b2b46df86dda3d81ff791575bc4d3a98352",
+      "level": 1,
+      "dependencies": [
+        "height"
+      ],
+      "dependents": []
+    },
+    "first_day_lab": {
+      "stem": "first_day_lab",
+      "path": "firstday/first_day_lab.sql",
+      "sha256": "bf7b2828579565b923b9c132a3e0c3ec66ee61abf69b0f1c27b034039e72a0cf",
+      "level": 1,
+      "dependencies": [
+        "blood_differential",
+        "chemistry",
+        "coagulation",
+        "complete_blood_count",
+        "enzyme"
+      ],
+      "dependents": [
+        "apsiii",
+        "first_day_sofa",
+        "lods",
+        "meld",
+        "sirs"
+      ]
+    },
+    "first_day_rrt": {
+      "stem": "first_day_rrt",
+      "path": "firstday/first_day_rrt.sql",
+      "sha256": "24b7035b85822139f5b7ab952598ff2dcd35067040dd23c239e6db81ce43c859",
+      "level": 1,
+      "dependencies": [
+        "rrt"
+      ],
+      "dependents": [
+        "meld"
+      ]
+    },
+    "first_day_sofa": {
+      "stem": "first_day_sofa",
+      "path": "firstday/first_day_sofa.sql",
+      "sha256": "e56ae4c67d7b19bf8d47f262011bcd888bdb04160b1e9ce744423243b867892e",
+      "level": 2,
+      "dependencies": [
+        "bg",
+        "dobutamine",
+        "dopamine",
+        "epinephrine",
+        "first_day_gcs",
+        "first_day_lab",
+        "first_day_urine_output",
+        "first_day_vitalsign",
+        "norepinephrine",
+        "ventilation"
+      ],
+      "dependents": []
+    },
+    "first_day_urine_output": {
+      "stem": "first_day_urine_output",
+      "path": "firstday/first_day_urine_output.sql",
+      "sha256": "2ddae1a9d4d0040bedbbb24b552576375f8aa4311e7c9b7ee2603227c5502f11",
+      "level": 1,
+      "dependencies": [
+        "urine_output"
+      ],
+      "dependents": [
+        "apsiii",
+        "first_day_sofa",
+        "lods",
+        "oasis"
+      ]
+    },
+    "first_day_vitalsign": {
+      "stem": "first_day_vitalsign",
+      "path": "firstday/first_day_vitalsign.sql",
+      "sha256": "f85ecb807cbd23090b41f02af2253cf2e46ba8d50e8734fb2577be3a4b9af700",
+      "level": 1,
+      "dependencies": [
+        "vitalsign"
+      ],
+      "dependents": [
+        "apsiii",
+        "first_day_sofa",
+        "lods",
+        "oasis",
+        "sirs"
+      ]
+    },
+    "first_day_weight": {
+      "stem": "first_day_weight",
+      "path": "firstday/first_day_weight.sql",
+      "sha256": "be5dbedf07b372ebb5e57f9a8004beaa988ac347e73822b72aedba34af3b69a3",
+      "level": 1,
+      "dependencies": [
+        "weight_durations"
+      ],
+      "dependents": []
+    },
+    "gcs": {
+      "stem": "gcs",
+      "path": "measurement/gcs.sql",
+      "sha256": "77d14660a8322928069c049cd1aa28eb8f356b7751f73eba2625358266f3039e",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "first_day_gcs",
+        "sapsii",
+        "sofa"
+      ]
+    },
+    "height": {
+      "stem": "height",
+      "path": "measurement/height.sql",
+      "sha256": "9b024d54f770b9a8e1f1ac0afe84fe5918295155eaa95872a849ef112c76d492",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "first_day_height"
+      ]
+    },
+    "icp": {
+      "stem": "icp",
+      "path": "measurement/icp.sql",
+      "sha256": "d7a6ad8f8c455f2f177c26749a0fbf80d000e652dfda276b9782fa7dcd99f62c",
+      "level": 0,
+      "dependencies": [],
+      "dependents": []
+    },
+    "icustay_detail": {
+      "stem": "icustay_detail",
+      "path": "demographics/icustay_detail.sql",
+      "sha256": "35103cee621ed025d266e6c4c59916515ad2ecf59e6b1f1962bff5821e463cd8",
+      "level": 0,
+      "dependencies": [],
+      "dependents": []
+    },
+    "icustay_hourly": {
+      "stem": "icustay_hourly",
+      "path": "demographics/icustay_hourly.sql",
+      "sha256": "6e20f8fba635f25708b29b48f926c4bd68da691bfae66a04fba394593c8c1f28",
+      "level": 1,
+      "dependencies": [
+        "icustay_times"
+      ],
+      "dependents": [
+        "sofa"
+      ]
+    },
+    "icustay_times": {
+      "stem": "icustay_times",
+      "path": "demographics/icustay_times.sql",
+      "sha256": "a26457b40e30eb4d6dbd98809ab0a39044d014806554c3f2c065262d6cb14bcc",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "icustay_hourly"
+      ]
+    },
+    "inflammation": {
+      "stem": "inflammation",
+      "path": "measurement/inflammation.sql",
+      "sha256": "88b7cc933d2832aed284a489ee67a3a156e67365c96e60706fb6eb6c537590c9",
+      "level": 0,
+      "dependencies": [],
+      "dependents": []
+    },
+    "invasive_line": {
+      "stem": "invasive_line",
+      "path": "treatment/invasive_line.sql",
+      "sha256": "61c8d3a30219a7d5e3380b3375b0ae595d524b280f1a69f24dcdb3e5a1fe2f7c",
+      "level": 0,
+      "dependencies": [],
+      "dependents": []
+    },
+    "kdigo_creatinine": {
+      "stem": "kdigo_creatinine",
+      "path": "organfailure/kdigo_creatinine.sql",
+      "sha256": "a7daeaf1c58c6f3b6a3f6fb0e8b7623e1b922123451ee485cc93bb4beb8b30b4",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "kdigo_stages"
+      ]
+    },
+    "kdigo_stages": {
+      "stem": "kdigo_stages",
+      "path": "organfailure/kdigo_stages.sql",
+      "sha256": "ecfa0c8c343d3d210a4bf1d59882d83472f4ad02001ae87a605a3695be262d55",
+      "level": 2,
+      "dependencies": [
+        "crrt",
+        "kdigo_creatinine",
+        "kdigo_uo"
+      ],
+      "dependents": []
+    },
+    "kdigo_uo": {
+      "stem": "kdigo_uo",
+      "path": "organfailure/kdigo_uo.sql",
+      "sha256": "7b4e012a2dc3c1c50f080372edc003aec5f7d3388a3a4d788d4b3cd89c71d2d2",
+      "level": 1,
+      "dependencies": [
+        "urine_output",
+        "weight_durations"
+      ],
+      "dependents": [
+        "kdigo_stages"
+      ]
+    },
+    "lods": {
+      "stem": "lods",
+      "path": "score/lods.sql",
+      "sha256": "ddfc09733ed165a9e35a8ce9901878383facc47b8600c7cd9051f3993246f9c7",
+      "level": 2,
+      "dependencies": [
+        "bg",
+        "first_day_gcs",
+        "first_day_lab",
+        "first_day_urine_output",
+        "first_day_vitalsign",
+        "ventilation"
+      ],
+      "dependents": []
+    },
+    "meld": {
+      "stem": "meld",
+      "path": "organfailure/meld.sql",
+      "sha256": "a7ce07eb899fcdcf5fc6e2f2200adcc0af320767acc404c7a13a6bf5de919679",
+      "level": 2,
+      "dependencies": [
+        "first_day_lab",
+        "first_day_rrt"
+      ],
+      "dependents": []
+    },
+    "milrinone": {
+      "stem": "milrinone",
+      "path": "medication/milrinone.sql",
+      "sha256": "5ff338dcfd6d66733ae2a543bf6180a635518772bc9ea88591552df86a00794e",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "vasoactive_agent"
+      ]
+    },
+    "neuroblock": {
+      "stem": "neuroblock",
+      "path": "medication/neuroblock.sql",
+      "sha256": "1e42f6d1f894f593eb315ab1f876ca4777892c65f89113a768c7e003db3ac19f",
+      "level": 0,
+      "dependencies": [],
+      "dependents": []
+    },
+    "norepinephrine": {
+      "stem": "norepinephrine",
+      "path": "medication/norepinephrine.sql",
+      "sha256": "4972b33d3dce3aa0f8626f790b19d4cff033436e0910845f795c7e2a55ec1d28",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "first_day_sofa",
+        "sofa",
+        "vasoactive_agent"
+      ]
+    },
+    "norepinephrine_equivalent_dose": {
+      "stem": "norepinephrine_equivalent_dose",
+      "path": "medication/norepinephrine_equivalent_dose.sql",
+      "sha256": "b4c4840d06b079344194eb038bb295b009ddd2ad630b57c5a5dbbb03e7cef11c",
+      "level": 2,
+      "dependencies": [
+        "vasoactive_agent"
+      ],
+      "dependents": []
+    },
+    "nsaid": {
+      "stem": "nsaid",
+      "path": "medication/nsaid.sql",
+      "sha256": "5289cf2b0e5c6e1f05030c843560ad36c10c03303492d5cadf60acace92aeccc",
+      "level": 0,
+      "dependencies": [],
+      "dependents": []
+    },
+    "oasis": {
+      "stem": "oasis",
+      "path": "score/oasis.sql",
+      "sha256": "7b5082e8e66df40a95590567ab4dad7ef28e44d4a0be7b921d02186c6616a19e",
+      "level": 2,
+      "dependencies": [
+        "age",
+        "first_day_gcs",
+        "first_day_urine_output",
+        "first_day_vitalsign",
+        "ventilation"
+      ],
+      "dependents": []
+    },
+    "oxygen_delivery": {
+      "stem": "oxygen_delivery",
+      "path": "measurement/oxygen_delivery.sql",
+      "sha256": "b3c9df45c64ac7364e98c8eba0ebf233dc153ffecdc8ad23bb4b9cea53bd2752",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "ventilation"
+      ]
+    },
+    "phenylephrine": {
+      "stem": "phenylephrine",
+      "path": "medication/phenylephrine.sql",
+      "sha256": "173331e5ad8a011e4c9d24faae342ad3a1de5e645879210715885d099c6032a3",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "vasoactive_agent"
+      ]
+    },
+    "rhythm": {
+      "stem": "rhythm",
+      "path": "measurement/rhythm.sql",
+      "sha256": "97a4b14b1d493605f91ce7587e05fdf0990e1ba1cdfe5562d2e522996219517d",
+      "level": 0,
+      "dependencies": [],
+      "dependents": []
+    },
+    "rrt": {
+      "stem": "rrt",
+      "path": "treatment/rrt.sql",
+      "sha256": "9b0b11a15f442b402701424a83229df0ee03a9225fc267d27faa4cc2d3089f8b",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "first_day_rrt"
+      ]
+    },
+    "sapsii": {
+      "stem": "sapsii",
+      "path": "score/sapsii.sql",
+      "sha256": "a7f474712fd8e8e68b7293d1e70e7f42b19fe2712c9c8a8b14149a20a1f52df7",
+      "level": 2,
+      "dependencies": [
+        "age",
+        "bg",
+        "chemistry",
+        "complete_blood_count",
+        "enzyme",
+        "gcs",
+        "urine_output",
+        "ventilation",
+        "vitalsign"
+      ],
+      "dependents": []
+    },
+    "sepsis3": {
+      "stem": "sepsis3",
+      "path": "sepsis/sepsis3.sql",
+      "sha256": "1d06e0efed85220c8a9cfd27ee9ee50e4dfbbe7a4975a7d2f7af72a92766692a",
+      "level": 3,
+      "dependencies": [
+        "sofa",
+        "suspicion_of_infection"
+      ],
+      "dependents": []
+    },
+    "sirs": {
+      "stem": "sirs",
+      "path": "score/sirs.sql",
+      "sha256": "0d5f398c452de2b9d1e4718f912042e8831bd7370c4f52ebd453d5adddcf2355",
+      "level": 2,
+      "dependencies": [
+        "first_day_bg_art",
+        "first_day_lab",
+        "first_day_vitalsign"
+      ],
+      "dependents": []
+    },
+    "sofa": {
+      "stem": "sofa",
+      "path": "score/sofa.sql",
+      "sha256": "a2dcdfa54c7d981c6846e9afdc8492656cfa8aa85137033becec8ac5dc8c1099",
+      "level": 2,
+      "dependencies": [
+        "bg",
+        "chemistry",
+        "complete_blood_count",
+        "dobutamine",
+        "dopamine",
+        "enzyme",
+        "epinephrine",
+        "gcs",
+        "icustay_hourly",
+        "norepinephrine",
+        "urine_output_rate",
+        "ventilation",
+        "vitalsign"
+      ],
+      "dependents": [
+        "sepsis3"
+      ]
+    },
+    "suspicion_of_infection": {
+      "stem": "suspicion_of_infection",
+      "path": "sepsis/suspicion_of_infection.sql",
+      "sha256": "943d9a7a4058c03d03f1965a58d89e1b6eabcccd50e5b75de835030fe784e29d",
+      "level": 1,
+      "dependencies": [
+        "antibiotic"
+      ],
+      "dependents": [
+        "sepsis3"
+      ]
+    },
+    "urine_output": {
+      "stem": "urine_output",
+      "path": "measurement/urine_output.sql",
+      "sha256": "51de17db6f24817d1c442654f01b2423e49001738682c0b9d2d6025a3407301a",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "first_day_urine_output",
+        "kdigo_uo",
+        "sapsii",
+        "urine_output_rate"
+      ]
+    },
+    "urine_output_rate": {
+      "stem": "urine_output_rate",
+      "path": "measurement/urine_output_rate.sql",
+      "sha256": "2a94ace1b31094d311b32ae3256eeba0ed6ff000fb57fe30b9917de89db5d7ff",
+      "level": 1,
+      "dependencies": [
+        "urine_output",
+        "weight_durations"
+      ],
+      "dependents": [
+        "sofa"
+      ]
+    },
+    "vasoactive_agent": {
+      "stem": "vasoactive_agent",
+      "path": "medication/vasoactive_agent.sql",
+      "sha256": "7c8fd57ead83e4b8edf3867204b23fac3d06c141bc8ada8be8fa6513dab1b390",
+      "level": 1,
+      "dependencies": [
+        "dobutamine",
+        "dopamine",
+        "epinephrine",
+        "milrinone",
+        "norepinephrine",
+        "phenylephrine",
+        "vasopressin"
+      ],
+      "dependents": [
+        "norepinephrine_equivalent_dose"
+      ]
+    },
+    "vasopressin": {
+      "stem": "vasopressin",
+      "path": "medication/vasopressin.sql",
+      "sha256": "13a5e11dd3a4275ffc64dc4f588c04773f6439889fabb2791a2f23edbed2e43b",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "vasoactive_agent"
+      ]
+    },
+    "ventilation": {
+      "stem": "ventilation",
+      "path": "treatment/ventilation.sql",
+      "sha256": "8d7ce56f2d71c8aab18625c7af03c7324cdabfd87c8a431077d755672909a2b2",
+      "level": 1,
+      "dependencies": [
+        "oxygen_delivery",
+        "ventilator_setting"
+      ],
+      "dependents": [
+        "apsiii",
+        "first_day_sofa",
+        "lods",
+        "oasis",
+        "sapsii",
+        "sofa"
+      ]
+    },
+    "ventilator_setting": {
+      "stem": "ventilator_setting",
+      "path": "measurement/ventilator_setting.sql",
+      "sha256": "80ac2b4bde1d4e8324f1818bd36c453fe0b70b2e90e228762ecfe65fcc757708",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "ventilation"
+      ]
+    },
+    "vitalsign": {
+      "stem": "vitalsign",
+      "path": "measurement/vitalsign.sql",
+      "sha256": "9a618fb7f6bf74ed1571e08088b09d1f27a8ccf8b1054082a94270cde456ab0d",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "first_day_vitalsign",
+        "sapsii",
+        "sofa"
+      ]
+    },
+    "weight_durations": {
+      "stem": "weight_durations",
+      "path": "demographics/weight_durations.sql",
+      "sha256": "82e23dd4ac6d0dc316438d08ee3f5edab2c4ca0f6535c23b3ab40eb7cafcd795",
+      "level": 0,
+      "dependencies": [],
+      "dependents": [
+        "first_day_weight",
+        "kdigo_uo",
+        "urine_output_rate"
+      ]
+    }
+  },
+  "edges": [
+    {
+      "consumer": "apsiii",
+      "dependency": "bg"
+    },
+    {
+      "consumer": "apsiii",
+      "dependency": "first_day_gcs"
+    },
+    {
+      "consumer": "apsiii",
+      "dependency": "first_day_lab"
+    },
+    {
+      "consumer": "apsiii",
+      "dependency": "first_day_urine_output"
+    },
+    {
+      "consumer": "apsiii",
+      "dependency": "first_day_vitalsign"
+    },
+    {
+      "consumer": "apsiii",
+      "dependency": "ventilation"
+    },
+    {
+      "consumer": "charlson",
+      "dependency": "age"
+    },
+    {
+      "consumer": "creatinine_baseline",
+      "dependency": "age"
+    },
+    {
+      "consumer": "creatinine_baseline",
+      "dependency": "chemistry"
+    },
+    {
+      "consumer": "first_day_bg",
+      "dependency": "bg"
+    },
+    {
+      "consumer": "first_day_bg_art",
+      "dependency": "bg"
+    },
+    {
+      "consumer": "first_day_gcs",
+      "dependency": "gcs"
+    },
+    {
+      "consumer": "first_day_height",
+      "dependency": "height"
+    },
+    {
+      "consumer": "first_day_lab",
+      "dependency": "blood_differential"
+    },
+    {
+      "consumer": "first_day_lab",
+      "dependency": "chemistry"
+    },
+    {
+      "consumer": "first_day_lab",
+      "dependency": "coagulation"
+    },
+    {
+      "consumer": "first_day_lab",
+      "dependency": "complete_blood_count"
+    },
+    {
+      "consumer": "first_day_lab",
+      "dependency": "enzyme"
+    },
+    {
+      "consumer": "first_day_rrt",
+      "dependency": "rrt"
+    },
+    {
+      "consumer": "first_day_sofa",
+      "dependency": "bg"
+    },
+    {
+      "consumer": "first_day_sofa",
+      "dependency": "dobutamine"
+    },
+    {
+      "consumer": "first_day_sofa",
+      "dependency": "dopamine"
+    },
+    {
+      "consumer": "first_day_sofa",
+      "dependency": "epinephrine"
+    },
+    {
+      "consumer": "first_day_sofa",
+      "dependency": "first_day_gcs"
+    },
+    {
+      "consumer": "first_day_sofa",
+      "dependency": "first_day_lab"
+    },
+    {
+      "consumer": "first_day_sofa",
+      "dependency": "first_day_urine_output"
+    },
+    {
+      "consumer": "first_day_sofa",
+      "dependency": "first_day_vitalsign"
+    },
+    {
+      "consumer": "first_day_sofa",
+      "dependency": "norepinephrine"
+    },
+    {
+      "consumer": "first_day_sofa",
+      "dependency": "ventilation"
+    },
+    {
+      "consumer": "first_day_urine_output",
+      "dependency": "urine_output"
+    },
+    {
+      "consumer": "first_day_vitalsign",
+      "dependency": "vitalsign"
+    },
+    {
+      "consumer": "first_day_weight",
+      "dependency": "weight_durations"
+    },
+    {
+      "consumer": "icustay_hourly",
+      "dependency": "icustay_times"
+    },
+    {
+      "consumer": "kdigo_stages",
+      "dependency": "crrt"
+    },
+    {
+      "consumer": "kdigo_stages",
+      "dependency": "kdigo_creatinine"
+    },
+    {
+      "consumer": "kdigo_stages",
+      "dependency": "kdigo_uo"
+    },
+    {
+      "consumer": "kdigo_uo",
+      "dependency": "urine_output"
+    },
+    {
+      "consumer": "kdigo_uo",
+      "dependency": "weight_durations"
+    },
+    {
+      "consumer": "lods",
+      "dependency": "bg"
+    },
+    {
+      "consumer": "lods",
+      "dependency": "first_day_gcs"
+    },
+    {
+      "consumer": "lods",
+      "dependency": "first_day_lab"
+    },
+    {
+      "consumer": "lods",
+      "dependency": "first_day_urine_output"
+    },
+    {
+      "consumer": "lods",
+      "dependency": "first_day_vitalsign"
+    },
+    {
+      "consumer": "lods",
+      "dependency": "ventilation"
+    },
+    {
+      "consumer": "meld",
+      "dependency": "first_day_lab"
+    },
+    {
+      "consumer": "meld",
+      "dependency": "first_day_rrt"
+    },
+    {
+      "consumer": "norepinephrine_equivalent_dose",
+      "dependency": "vasoactive_agent"
+    },
+    {
+      "consumer": "oasis",
+      "dependency": "age"
+    },
+    {
+      "consumer": "oasis",
+      "dependency": "first_day_gcs"
+    },
+    {
+      "consumer": "oasis",
+      "dependency": "first_day_urine_output"
+    },
+    {
+      "consumer": "oasis",
+      "dependency": "first_day_vitalsign"
+    },
+    {
+      "consumer": "oasis",
+      "dependency": "ventilation"
+    },
+    {
+      "consumer": "sapsii",
+      "dependency": "age"
+    },
+    {
+      "consumer": "sapsii",
+      "dependency": "bg"
+    },
+    {
+      "consumer": "sapsii",
+      "dependency": "chemistry"
+    },
+    {
+      "consumer": "sapsii",
+      "dependency": "complete_blood_count"
+    },
+    {
+      "consumer": "sapsii",
+      "dependency": "enzyme"
+    },
+    {
+      "consumer": "sapsii",
+      "dependency": "gcs"
+    },
+    {
+      "consumer": "sapsii",
+      "dependency": "urine_output"
+    },
+    {
+      "consumer": "sapsii",
+      "dependency": "ventilation"
+    },
+    {
+      "consumer": "sapsii",
+      "dependency": "vitalsign"
+    },
+    {
+      "consumer": "sepsis3",
+      "dependency": "sofa"
+    },
+    {
+      "consumer": "sepsis3",
+      "dependency": "suspicion_of_infection"
+    },
+    {
+      "consumer": "sirs",
+      "dependency": "first_day_bg_art"
+    },
+    {
+      "consumer": "sirs",
+      "dependency": "first_day_lab"
+    },
+    {
+      "consumer": "sirs",
+      "dependency": "first_day_vitalsign"
+    },
+    {
+      "consumer": "sofa",
+      "dependency": "bg"
+    },
+    {
+      "consumer": "sofa",
+      "dependency": "chemistry"
+    },
+    {
+      "consumer": "sofa",
+      "dependency": "complete_blood_count"
+    },
+    {
+      "consumer": "sofa",
+      "dependency": "dobutamine"
+    },
+    {
+      "consumer": "sofa",
+      "dependency": "dopamine"
+    },
+    {
+      "consumer": "sofa",
+      "dependency": "enzyme"
+    },
+    {
+      "consumer": "sofa",
+      "dependency": "epinephrine"
+    },
+    {
+      "consumer": "sofa",
+      "dependency": "gcs"
+    },
+    {
+      "consumer": "sofa",
+      "dependency": "icustay_hourly"
+    },
+    {
+      "consumer": "sofa",
+      "dependency": "norepinephrine"
+    },
+    {
+      "consumer": "sofa",
+      "dependency": "urine_output_rate"
+    },
+    {
+      "consumer": "sofa",
+      "dependency": "ventilation"
+    },
+    {
+      "consumer": "sofa",
+      "dependency": "vitalsign"
+    },
+    {
+      "consumer": "suspicion_of_infection",
+      "dependency": "antibiotic"
+    },
+    {
+      "consumer": "urine_output_rate",
+      "dependency": "urine_output"
+    },
+    {
+      "consumer": "urine_output_rate",
+      "dependency": "weight_durations"
+    },
+    {
+      "consumer": "vasoactive_agent",
+      "dependency": "dobutamine"
+    },
+    {
+      "consumer": "vasoactive_agent",
+      "dependency": "dopamine"
+    },
+    {
+      "consumer": "vasoactive_agent",
+      "dependency": "epinephrine"
+    },
+    {
+      "consumer": "vasoactive_agent",
+      "dependency": "milrinone"
+    },
+    {
+      "consumer": "vasoactive_agent",
+      "dependency": "norepinephrine"
+    },
+    {
+      "consumer": "vasoactive_agent",
+      "dependency": "phenylephrine"
+    },
+    {
+      "consumer": "vasoactive_agent",
+      "dependency": "vasopressin"
+    },
+    {
+      "consumer": "ventilation",
+      "dependency": "oxygen_delivery"
+    },
+    {
+      "consumer": "ventilation",
+      "dependency": "ventilator_setting"
+    }
+  ],
+  "topological_order": [
+    "acei",
+    "age",
+    "antibiotic",
+    "arb",
+    "bg",
+    "blood_differential",
+    "cardiac_marker",
+    "charlson",
+    "chemistry",
+    "coagulation",
+    "code_status",
+    "complete_blood_count",
+    "creatinine_baseline",
+    "crrt",
+    "dobutamine",
+    "dopamine",
+    "enzyme",
+    "epinephrine",
+    "first_day_bg",
+    "first_day_bg_art",
+    "first_day_lab",
+    "gcs",
+    "first_day_gcs",
+    "height",
+    "first_day_height",
+    "icp",
+    "icustay_detail",
+    "icustay_times",
+    "icustay_hourly",
+    "inflammation",
+    "invasive_line",
+    "kdigo_creatinine",
+    "milrinone",
+    "neuroblock",
+    "norepinephrine",
+    "nsaid",
+    "oxygen_delivery",
+    "phenylephrine",
+    "rhythm",
+    "rrt",
+    "first_day_rrt",
+    "meld",
+    "suspicion_of_infection",
+    "urine_output",
+    "first_day_urine_output",
+    "vasopressin",
+    "vasoactive_agent",
+    "norepinephrine_equivalent_dose",
+    "ventilator_setting",
+    "ventilation",
+    "vitalsign",
+    "first_day_vitalsign",
+    "apsiii",
+    "first_day_sofa",
+    "lods",
+    "oasis",
+    "sapsii",
+    "sirs",
+    "weight_durations",
+    "first_day_weight",
+    "kdigo_uo",
+    "kdigo_stages",
+    "urine_output_rate",
+    "sofa",
+    "sepsis3"
+  ],
+  "levels": {
+    "0": [
+      "acei",
+      "age",
+      "antibiotic",
+      "arb",
+      "bg",
+      "blood_differential",
+      "cardiac_marker",
+      "chemistry",
+      "coagulation",
+      "code_status",
+      "complete_blood_count",
+      "crrt",
+      "dobutamine",
+      "dopamine",
+      "enzyme",
+      "epinephrine",
+      "gcs",
+      "height",
+      "icp",
+      "icustay_detail",
+      "icustay_times",
+      "inflammation",
+      "invasive_line",
+      "kdigo_creatinine",
+      "milrinone",
+      "neuroblock",
+      "norepinephrine",
+      "nsaid",
+      "oxygen_delivery",
+      "phenylephrine",
+      "rhythm",
+      "rrt",
+      "urine_output",
+      "vasopressin",
+      "ventilator_setting",
+      "vitalsign",
+      "weight_durations"
+    ],
+    "1": [
+      "charlson",
+      "creatinine_baseline",
+      "first_day_bg",
+      "first_day_bg_art",
+      "first_day_gcs",
+      "first_day_height",
+      "first_day_lab",
+      "first_day_rrt",
+      "first_day_urine_output",
+      "first_day_vitalsign",
+      "first_day_weight",
+      "icustay_hourly",
+      "kdigo_uo",
+      "suspicion_of_infection",
+      "urine_output_rate",
+      "vasoactive_agent",
+      "ventilation"
+    ],
+    "2": [
+      "apsiii",
+      "first_day_sofa",
+      "kdigo_stages",
+      "lods",
+      "meld",
+      "norepinephrine_equivalent_dose",
+      "oasis",
+      "sapsii",
+      "sirs",
+      "sofa"
+    ],
+    "3": [
+      "sepsis3"
+    ]
+  },
+  "external_tables": {
+    "mimiciv_hosp.admissions": [
+      "age",
+      "apsiii",
+      "charlson",
+      "icustay_detail",
+      "lods",
+      "oasis",
+      "sapsii"
+    ],
+    "mimiciv_hosp.diagnoses_icd": [
+      "apsiii",
+      "charlson",
+      "creatinine_baseline",
+      "sapsii"
+    ],
+    "mimiciv_hosp.labevents": [
+      "bg",
+      "blood_differential",
+      "cardiac_marker",
+      "chemistry",
+      "coagulation",
+      "complete_blood_count",
+      "enzyme",
+      "inflammation",
+      "kdigo_creatinine"
+    ],
+    "mimiciv_hosp.microbiologyevents": [
+      "suspicion_of_infection"
+    ],
+    "mimiciv_hosp.patients": [
+      "age",
+      "apsiii",
+      "creatinine_baseline",
+      "icustay_detail",
+      "lods",
+      "oasis"
+    ],
+    "mimiciv_hosp.poe": [
+      "code_status"
+    ],
+    "mimiciv_hosp.poe_detail": [
+      "code_status"
+    ],
+    "mimiciv_hosp.prescriptions": [
+      "acei",
+      "antibiotic",
+      "arb",
+      "nsaid"
+    ],
+    "mimiciv_hosp.services": [
+      "oasis",
+      "sapsii"
+    ],
+    "mimiciv_icu.chartevents": [
+      "bg",
+      "code_status",
+      "crrt",
+      "gcs",
+      "height",
+      "icp",
+      "icustay_times",
+      "lods",
+      "oxygen_delivery",
+      "rhythm",
+      "rrt",
+      "sapsii",
+      "urine_output_rate",
+      "ventilator_setting",
+      "vitalsign",
+      "weight_durations"
+    ],
+    "mimiciv_icu.d_items": [
+      "invasive_line"
+    ],
+    "mimiciv_icu.icustays": [
+      "antibiotic",
+      "apsiii",
+      "code_status",
+      "first_day_bg",
+      "first_day_bg_art",
+      "first_day_gcs",
+      "first_day_height",
+      "first_day_lab",
+      "first_day_rrt",
+      "first_day_sofa",
+      "first_day_urine_output",
+      "first_day_vitalsign",
+      "first_day_weight",
+      "icustay_detail",
+      "icustay_times",
+      "kdigo_creatinine",
+      "kdigo_stages",
+      "kdigo_uo",
+      "lods",
+      "meld",
+      "oasis",
+      "sapsii",
+      "sirs",
+      "sofa",
+      "urine_output_rate",
+      "weight_durations"
+    ],
+    "mimiciv_icu.inputevents": [
+      "dobutamine",
+      "dopamine",
+      "epinephrine",
+      "milrinone",
+      "neuroblock",
+      "norepinephrine",
+      "phenylephrine",
+      "rrt",
+      "vasopressin"
+    ],
+    "mimiciv_icu.outputevents": [
+      "urine_output"
+    ],
+    "mimiciv_icu.procedureevents": [
+      "invasive_line",
+      "rrt"
+    ]
+  }
+}

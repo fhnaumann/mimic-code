@@ -1,0 +1,3974 @@
+{
+  "concepts": {
+    "acei": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "acei",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "starttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "stoptime",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "comparison": "full_tuple_multiset",
+      "content_hash": "1032835272963132826734966",
+      "key": null,
+      "key_probes": 6,
+      "row_count": 112014
+    },
+    "age": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "admittime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "anchor_age",
+          "type": "SMALLINT"
+        },
+        {
+          "name": "anchor_year",
+          "type": "SMALLINT"
+        },
+        {
+          "name": "age",
+          "type": "BIGINT"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "3978795427240068505844319",
+      "key": [
+        "hadm_id"
+      ],
+      "key_probes": 2,
+      "row_count": 431231
+    },
+    "antibiotic": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "antibiotic",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "route",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "starttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "stoptime",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "comparison": "full_tuple_multiset",
+      "content_hash": "6782172449880294332339350",
+      "key": null,
+      "key_probes": 13,
+      "row_count": 735462
+    },
+    "apsiii": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "apsiii",
+          "type": "INTEGER"
+        },
+        {
+          "name": "apsiii_prob",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "hr_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "mbp_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "temp_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "resp_rate_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "pao2_aado2_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hematocrit_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "wbc_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "creatinine_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "uo_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "bun_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "sodium_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "albumin_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "bilirubin_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "glucose_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "acidbase_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "gcs_score",
+          "type": "INTEGER"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "673648988840457574510608",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 3,
+      "row_count": 73181
+    },
+    "arb": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "arb",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "starttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "stoptime",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "comparison": "full_tuple_multiset",
+      "content_hash": "363228205723639534517241",
+      "key": null,
+      "key_probes": 6,
+      "row_count": 39534
+    },
+    "bg": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "specimen",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "so2",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "po2",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "pco2",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "fio2_chartevents",
+          "type": "FLOAT"
+        },
+        {
+          "name": "fio2",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "aado2",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "aado2_calc",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "pao2fio2ratio",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ph",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "baseexcess",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bicarbonate",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "totalco2",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "hematocrit",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "hemoglobin",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "carboxyhemoglobin",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "methemoglobin",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "chloride",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "calcium",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "temperature",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "potassium",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "sodium",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "lactate",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "glucose",
+          "type": "DOUBLE"
+        }
+      ],
+      "comparison": "full_tuple_multiset",
+      "content_hash": "4715898718807671376295114",
+      "key": null,
+      "key_probes": 6,
+      "row_count": 511637
+    },
+    "blood_differential": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "specimen_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "wbc",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "basophils_abs",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "eosinophils_abs",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "lymphocytes_abs",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "monocytes_abs",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "neutrophils_abs",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "basophils",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "eosinophils",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "lymphocytes",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "monocytes",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "neutrophils",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "atypical_lymphocytes",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bands",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "immature_granulocytes",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "metamyelocytes",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "nrbc",
+          "type": "DOUBLE"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "29265702385887167985716650",
+      "key": [
+        "specimen_id"
+      ],
+      "key_probes": 3,
+      "row_count": 3171906
+    },
+    "cardiac_marker": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "specimen_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "troponin_t",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ck_mb",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ntprobnp",
+          "type": "DOUBLE"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "2719731734708305127928814",
+      "key": [
+        "specimen_id"
+      ],
+      "key_probes": 3,
+      "row_count": 295246
+    },
+    "charlson": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "age_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "myocardial_infarct",
+          "type": "INTEGER"
+        },
+        {
+          "name": "congestive_heart_failure",
+          "type": "INTEGER"
+        },
+        {
+          "name": "peripheral_vascular_disease",
+          "type": "INTEGER"
+        },
+        {
+          "name": "cerebrovascular_disease",
+          "type": "INTEGER"
+        },
+        {
+          "name": "dementia",
+          "type": "INTEGER"
+        },
+        {
+          "name": "chronic_pulmonary_disease",
+          "type": "INTEGER"
+        },
+        {
+          "name": "rheumatic_disease",
+          "type": "INTEGER"
+        },
+        {
+          "name": "peptic_ulcer_disease",
+          "type": "INTEGER"
+        },
+        {
+          "name": "mild_liver_disease",
+          "type": "INTEGER"
+        },
+        {
+          "name": "diabetes_without_cc",
+          "type": "INTEGER"
+        },
+        {
+          "name": "diabetes_with_cc",
+          "type": "INTEGER"
+        },
+        {
+          "name": "paraplegia",
+          "type": "INTEGER"
+        },
+        {
+          "name": "renal_disease",
+          "type": "INTEGER"
+        },
+        {
+          "name": "malignant_cancer",
+          "type": "INTEGER"
+        },
+        {
+          "name": "severe_liver_disease",
+          "type": "INTEGER"
+        },
+        {
+          "name": "metastatic_solid_tumor",
+          "type": "INTEGER"
+        },
+        {
+          "name": "aids",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charlson_comorbidity_index",
+          "type": "INTEGER"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "3977960854556551623535327",
+      "key": [
+        "hadm_id"
+      ],
+      "key_probes": 2,
+      "row_count": 431231
+    },
+    "chemistry": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "specimen_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "albumin",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "globulin",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "total_protein",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "aniongap",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bicarbonate",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bun",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "calcium",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "chloride",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "creatinine",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "glucose",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "sodium",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "potassium",
+          "type": "DOUBLE"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "35150535527686103916301966",
+      "key": [
+        "specimen_id"
+      ],
+      "key_probes": 3,
+      "row_count": 3811523
+    },
+    "coagulation": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "specimen_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "d_dimer",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "fibrinogen",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "thrombin",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "inr",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "pt",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ptt",
+          "type": "DOUBLE"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "14242933001644112189800422",
+      "key": [
+        "specimen_id"
+      ],
+      "key_probes": 3,
+      "row_count": 1543003
+    },
+    "code_status": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "fullcode",
+          "type": "INTEGER"
+        },
+        {
+          "name": "cmo",
+          "type": "INTEGER"
+        },
+        {
+          "name": "dni",
+          "type": "INTEGER"
+        },
+        {
+          "name": "dnr",
+          "type": "INTEGER"
+        }
+      ],
+      "comparison": "full_tuple_multiset",
+      "content_hash": "2479683865358039166294707",
+      "key": null,
+      "key_probes": 13,
+      "row_count": 269072
+    },
+    "complete_blood_count": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "specimen_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hematocrit",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "hemoglobin",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "mch",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "mchc",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "mcv",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "platelet",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "rbc",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "rdw",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "rdwsd",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "wbc",
+          "type": "DOUBLE"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "31018683655451200177002189",
+      "key": [
+        "specimen_id"
+      ],
+      "key_probes": 3,
+      "row_count": 3362503
+    },
+    "creatinine_baseline": {
+      "columns": [
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "gender",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "age",
+          "type": "BIGINT"
+        },
+        {
+          "name": "scr_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ckd",
+          "type": "INTEGER"
+        },
+        {
+          "name": "mdrd_est",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "scr_baseline",
+          "type": "DOUBLE"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "3973085088470630347988305",
+      "key": [
+        "hadm_id"
+      ],
+      "key_probes": 1,
+      "row_count": 431231
+    },
+    "crrt": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "crrt_mode",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "access_pressure",
+          "type": "FLOAT"
+        },
+        {
+          "name": "blood_flow",
+          "type": "FLOAT"
+        },
+        {
+          "name": "citrate",
+          "type": "FLOAT"
+        },
+        {
+          "name": "current_goal",
+          "type": "FLOAT"
+        },
+        {
+          "name": "dialysate_fluid",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "dialysate_rate",
+          "type": "FLOAT"
+        },
+        {
+          "name": "effluent_pressure",
+          "type": "FLOAT"
+        },
+        {
+          "name": "filter_pressure",
+          "type": "FLOAT"
+        },
+        {
+          "name": "heparin_concentration",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "heparin_dose",
+          "type": "FLOAT"
+        },
+        {
+          "name": "hourly_patient_fluid_removal",
+          "type": "FLOAT"
+        },
+        {
+          "name": "prefilter_replacement_rate",
+          "type": "FLOAT"
+        },
+        {
+          "name": "postfilter_replacement_rate",
+          "type": "FLOAT"
+        },
+        {
+          "name": "replacement_fluid",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "replacement_rate",
+          "type": "FLOAT"
+        },
+        {
+          "name": "return_pressure",
+          "type": "FLOAT"
+        },
+        {
+          "name": "ultrafiltrate_output",
+          "type": "FLOAT"
+        },
+        {
+          "name": "system_active",
+          "type": "INTEGER"
+        },
+        {
+          "name": "clots",
+          "type": "INTEGER"
+        },
+        {
+          "name": "clots_increasing",
+          "type": "INTEGER"
+        },
+        {
+          "name": "clotted",
+          "type": "INTEGER"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "2648913713770192824073513",
+      "key": [
+        "stay_id",
+        "charttime"
+      ],
+      "key_probes": 2,
+      "row_count": 287152
+    },
+    "dobutamine": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "linkorderid",
+          "type": "INTEGER"
+        },
+        {
+          "name": "vaso_rate",
+          "type": "FLOAT"
+        },
+        {
+          "name": "vaso_amount",
+          "type": "FLOAT"
+        },
+        {
+          "name": "starttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "endtime",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "78597150937471500660440",
+      "key": [
+        "stay_id",
+        "starttime"
+      ],
+      "key_probes": 4,
+      "row_count": 8513
+    },
+    "dopamine": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "linkorderid",
+          "type": "INTEGER"
+        },
+        {
+          "name": "vaso_rate",
+          "type": "FLOAT"
+        },
+        {
+          "name": "vaso_amount",
+          "type": "FLOAT"
+        },
+        {
+          "name": "starttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "endtime",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "156333424215430002122813",
+      "key": [
+        "stay_id",
+        "starttime"
+      ],
+      "key_probes": 4,
+      "row_count": 16892
+    },
+    "enzyme": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "specimen_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "alt",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "alp",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ast",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "amylase",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bilirubin_total",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bilirubin_direct",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bilirubin_indirect",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ck_cpk",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ck_mb",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ggt",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ld_ldh",
+          "type": "DOUBLE"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "15124874566644937232720621",
+      "key": [
+        "specimen_id"
+      ],
+      "key_probes": 3,
+      "row_count": 1639514
+    },
+    "epinephrine": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "linkorderid",
+          "type": "INTEGER"
+        },
+        {
+          "name": "vaso_rate",
+          "type": "FLOAT"
+        },
+        {
+          "name": "vaso_amount",
+          "type": "FLOAT"
+        },
+        {
+          "name": "starttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "endtime",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "225705626436457452501583",
+      "key": [
+        "linkorderid",
+        "starttime"
+      ],
+      "key_probes": 6,
+      "row_count": 24470
+    },
+    "first_day_bg": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "lactate_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "lactate_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ph_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ph_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "so2_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "so2_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "po2_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "po2_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "pco2_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "pco2_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "aado2_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "aado2_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "aado2_calc_min",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "aado2_calc_max",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "pao2fio2ratio_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "pao2fio2ratio_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "baseexcess_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "baseexcess_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bicarbonate_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bicarbonate_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "totalco2_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "totalco2_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "hematocrit_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "hematocrit_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "hemoglobin_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "hemoglobin_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "carboxyhemoglobin_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "carboxyhemoglobin_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "methemoglobin_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "methemoglobin_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "temperature_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "temperature_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "chloride_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "chloride_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "calcium_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "calcium_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "glucose_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "glucose_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "potassium_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "potassium_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "sodium_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "sodium_max",
+          "type": "DOUBLE"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "673786133293483847236972",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 2,
+      "row_count": 73181
+    },
+    "first_day_bg_art": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "lactate_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "lactate_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ph_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ph_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "so2_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "so2_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "po2_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "po2_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "pco2_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "pco2_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "aado2_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "aado2_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "aado2_calc_min",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "aado2_calc_max",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "pao2fio2ratio_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "pao2fio2ratio_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "baseexcess_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "baseexcess_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bicarbonate_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bicarbonate_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "totalco2_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "totalco2_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "hematocrit_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "hematocrit_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "hemoglobin_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "hemoglobin_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "carboxyhemoglobin_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "carboxyhemoglobin_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "methemoglobin_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "methemoglobin_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "temperature_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "temperature_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "chloride_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "chloride_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "calcium_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "calcium_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "glucose_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "glucose_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "potassium_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "potassium_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "sodium_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "sodium_max",
+          "type": "DOUBLE"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "671924205417670167696036",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 2,
+      "row_count": 73181
+    },
+    "first_day_gcs": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "gcs_min",
+          "type": "FLOAT"
+        },
+        {
+          "name": "gcs_motor",
+          "type": "FLOAT"
+        },
+        {
+          "name": "gcs_verbal",
+          "type": "FLOAT"
+        },
+        {
+          "name": "gcs_eyes",
+          "type": "FLOAT"
+        },
+        {
+          "name": "gcs_unable",
+          "type": "INTEGER"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "676309535374199663921171",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 2,
+      "row_count": 73181
+    },
+    "first_day_height": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "height",
+          "type": "DECIMAL(38,2)"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "672726114199549723280053",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 2,
+      "row_count": 73181
+    },
+    "first_day_lab": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hematocrit_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "hematocrit_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "hemoglobin_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "hemoglobin_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "platelets_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "platelets_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "wbc_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "wbc_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "albumin_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "albumin_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "globulin_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "globulin_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "total_protein_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "total_protein_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "aniongap_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "aniongap_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bicarbonate_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bicarbonate_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bun_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bun_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "calcium_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "calcium_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "chloride_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "chloride_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "creatinine_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "creatinine_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "glucose_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "glucose_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "sodium_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "sodium_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "potassium_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "potassium_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "abs_basophils_min",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "abs_basophils_max",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "abs_eosinophils_min",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "abs_eosinophils_max",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "abs_lymphocytes_min",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "abs_lymphocytes_max",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "abs_monocytes_min",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "abs_monocytes_max",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "abs_neutrophils_min",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "abs_neutrophils_max",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "atyps_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "atyps_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bands_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bands_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "imm_granulocytes_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "imm_granulocytes_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "metas_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "metas_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "nrbc_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "nrbc_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "d_dimer_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "d_dimer_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "fibrinogen_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "fibrinogen_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "thrombin_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "thrombin_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "inr_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "inr_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "pt_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "pt_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ptt_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ptt_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "alt_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "alt_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "alp_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "alp_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ast_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ast_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "amylase_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "amylase_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bilirubin_total_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bilirubin_total_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bilirubin_direct_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bilirubin_direct_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bilirubin_indirect_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bilirubin_indirect_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ck_cpk_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ck_cpk_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ck_mb_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ck_mb_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ggt_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ggt_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ld_ldh_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "ld_ldh_max",
+          "type": "DOUBLE"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "676436954844033005838787",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 2,
+      "row_count": 73181
+    },
+    "first_day_rrt": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "dialysis_present",
+          "type": "INTEGER"
+        },
+        {
+          "name": "dialysis_active",
+          "type": "INTEGER"
+        },
+        {
+          "name": "dialysis_type",
+          "type": "VARCHAR"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "675342012688584616762705",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 2,
+      "row_count": 73181
+    },
+    "first_day_sofa": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "sofa",
+          "type": "INTEGER"
+        },
+        {
+          "name": "respiration",
+          "type": "INTEGER"
+        },
+        {
+          "name": "coagulation",
+          "type": "INTEGER"
+        },
+        {
+          "name": "liver",
+          "type": "INTEGER"
+        },
+        {
+          "name": "cardiovascular",
+          "type": "INTEGER"
+        },
+        {
+          "name": "cns",
+          "type": "INTEGER"
+        },
+        {
+          "name": "renal",
+          "type": "INTEGER"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "676227372960547913564453",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 3,
+      "row_count": 73181
+    },
+    "first_day_urine_output": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "urineoutput",
+          "type": "DOUBLE"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "675584496042766789818341",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 2,
+      "row_count": 73181
+    },
+    "first_day_vitalsign": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "heart_rate_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "heart_rate_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "heart_rate_mean",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "sbp_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "sbp_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "sbp_mean",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "dbp_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "dbp_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "dbp_mean",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "mbp_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "mbp_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "mbp_mean",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "resp_rate_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "resp_rate_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "resp_rate_mean",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "temperature_min",
+          "type": "DECIMAL(38,2)"
+        },
+        {
+          "name": "temperature_max",
+          "type": "DECIMAL(38,2)"
+        },
+        {
+          "name": "temperature_mean",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "spo2_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "spo2_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "spo2_mean",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "glucose_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "glucose_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "glucose_mean",
+          "type": "DOUBLE"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "676491687612113806249816",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 2,
+      "row_count": 73181
+    },
+    "first_day_weight": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "weight_admit",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "weight",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "weight_min",
+          "type": "DECIMAL(38,3)"
+        },
+        {
+          "name": "weight_max",
+          "type": "DECIMAL(38,3)"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "675512562749250142454987",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 2,
+      "row_count": 73181
+    },
+    "gcs": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "gcs",
+          "type": "FLOAT"
+        },
+        {
+          "name": "gcs_motor",
+          "type": "FLOAT"
+        },
+        {
+          "name": "gcs_verbal",
+          "type": "FLOAT"
+        },
+        {
+          "name": "gcs_eyes",
+          "type": "FLOAT"
+        },
+        {
+          "name": "gcs_unable",
+          "type": "INTEGER"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "15101391958896914044154050",
+      "key": [
+        "stay_id",
+        "charttime"
+      ],
+      "key_probes": 5,
+      "row_count": 1637763
+    },
+    "height": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "height",
+          "type": "DECIMAL(38,2)"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "308076288200394089208675",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 2,
+      "row_count": 33474
+    },
+    "icp": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "icp",
+          "type": "FLOAT"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "1600144389317208984087802",
+      "key": [
+        "subject_id",
+        "charttime"
+      ],
+      "key_probes": 4,
+      "row_count": 173273
+    },
+    "icustay_detail": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "gender",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "dod",
+          "type": "DATE"
+        },
+        {
+          "name": "admittime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "dischtime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "los_hospital",
+          "type": "BIGINT"
+        },
+        {
+          "name": "admission_age",
+          "type": "BIGINT"
+        },
+        {
+          "name": "race",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "hospital_expire_flag",
+          "type": "SMALLINT"
+        },
+        {
+          "name": "hospstay_seq",
+          "type": "BIGINT"
+        },
+        {
+          "name": "first_hosp_stay",
+          "type": "BOOLEAN"
+        },
+        {
+          "name": "icu_intime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "icu_outtime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "los_icu",
+          "type": "DECIMAL(38,2)"
+        },
+        {
+          "name": "icustay_seq",
+          "type": "BIGINT"
+        },
+        {
+          "name": "first_icu_stay",
+          "type": "BOOLEAN"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "675739139103232689923158",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 3,
+      "row_count": 73181
+    },
+    "icustay_hourly": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hr",
+          "type": "BIGINT"
+        },
+        {
+          "name": "endtime",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "71960026161320957752879246",
+      "key": [
+        "stay_id",
+        "endtime"
+      ],
+      "key_probes": 2,
+      "row_count": 7799814
+    },
+    "icustay_times": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "intime_hr",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "outtime_hr",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "672786547075103012014990",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 3,
+      "row_count": 73181
+    },
+    "inflammation": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "specimen_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "crp",
+          "type": "DOUBLE"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "1083617212033750837128287",
+      "key": [
+        "specimen_id"
+      ],
+      "key_probes": 3,
+      "row_count": 117898
+    },
+    "invasive_line": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "line_type",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "line_site",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "starttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "endtime",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "comparison": "full_tuple_multiset",
+      "content_hash": "859619292610935294693459",
+      "key": null,
+      "key_probes": 4,
+      "row_count": 93378
+    },
+    "kdigo_creatinine": {
+      "columns": [
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "creat",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "creat_low_past_48hr",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "creat_low_past_7day",
+          "type": "DOUBLE"
+        }
+      ],
+      "comparison": "full_tuple_multiset",
+      "content_hash": "5528068797238846344066052",
+      "key": null,
+      "key_probes": 6,
+      "row_count": 599607
+    },
+    "kdigo_stages": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "creat_low_past_7day",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "creat_low_past_48hr",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "creat",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "aki_stage_creat",
+          "type": "INTEGER"
+        },
+        {
+          "name": "uo_rt_6hr",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "uo_rt_12hr",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "uo_rt_24hr",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "aki_stage_uo",
+          "type": "INTEGER"
+        },
+        {
+          "name": "aki_stage_crrt",
+          "type": "INTEGER"
+        },
+        {
+          "name": "aki_stage",
+          "type": "INTEGER"
+        },
+        {
+          "name": "aki_stage_smoothed",
+          "type": "INTEGER"
+        }
+      ],
+      "comparison": "full_tuple_multiset",
+      "content_hash": "36973302142092350894519937",
+      "key": null,
+      "key_probes": 13,
+      "row_count": 4011255
+    },
+    "kdigo_uo": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "weight",
+          "type": "DECIMAL(38,3)"
+        },
+        {
+          "name": "urineoutput_6hr",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "urineoutput_12hr",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "urineoutput_24hr",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "uo_rt_6hr",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "uo_rt_12hr",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "uo_rt_24hr",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "uo_tm_6hr",
+          "type": "DECIMAL(38,6)"
+        },
+        {
+          "name": "uo_tm_12hr",
+          "type": "DECIMAL(38,6)"
+        },
+        {
+          "name": "uo_tm_24hr",
+          "type": "DECIMAL(38,6)"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "30628518195287439154136560",
+      "key": [
+        "stay_id",
+        "charttime"
+      ],
+      "key_probes": 2,
+      "row_count": 3321748
+    },
+    "lods": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "lods",
+          "type": "INTEGER"
+        },
+        {
+          "name": "neurologic",
+          "type": "INTEGER"
+        },
+        {
+          "name": "cardiovascular",
+          "type": "INTEGER"
+        },
+        {
+          "name": "renal",
+          "type": "INTEGER"
+        },
+        {
+          "name": "pulmonary",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hematologic",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hepatic",
+          "type": "INTEGER"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "676484096084767365989219",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 3,
+      "row_count": 73181
+    },
+    "meld": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "meld_initial",
+          "type": "DECIMAL(38,1)"
+        },
+        {
+          "name": "meld",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "rrt",
+          "type": "INTEGER"
+        },
+        {
+          "name": "creatinine_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bilirubin_total_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "inr_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "sodium_min",
+          "type": "DOUBLE"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "675414521333092948051843",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 3,
+      "row_count": 73181
+    },
+    "milrinone": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "linkorderid",
+          "type": "INTEGER"
+        },
+        {
+          "name": "vaso_rate",
+          "type": "FLOAT"
+        },
+        {
+          "name": "vaso_amount",
+          "type": "FLOAT"
+        },
+        {
+          "name": "starttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "endtime",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "89101111642465598408845",
+      "key": [
+        "stay_id",
+        "starttime"
+      ],
+      "key_probes": 4,
+      "row_count": 9573
+    },
+    "neuroblock": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "orderid",
+          "type": "INTEGER"
+        },
+        {
+          "name": "drug_rate",
+          "type": "FLOAT"
+        },
+        {
+          "name": "drug_amount",
+          "type": "FLOAT"
+        },
+        {
+          "name": "starttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "endtime",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "130935704742634906657241",
+      "key": [
+        "orderid"
+      ],
+      "key_probes": 2,
+      "row_count": 14174
+    },
+    "norepinephrine": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "linkorderid",
+          "type": "INTEGER"
+        },
+        {
+          "name": "vaso_rate",
+          "type": "FLOAT"
+        },
+        {
+          "name": "vaso_amount",
+          "type": "FLOAT"
+        },
+        {
+          "name": "starttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "endtime",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "3097195944865461101690850",
+      "key": [
+        "linkorderid",
+        "starttime"
+      ],
+      "key_probes": 6,
+      "row_count": 336000
+    },
+    "norepinephrine_equivalent_dose": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "starttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "endtime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "norepinephrine_equivalent_dose",
+          "type": "DECIMAL(38,4)"
+        }
+      ],
+      "comparison": "full_tuple_multiset",
+      "content_hash": "5711457597412574804359820",
+      "key": null,
+      "key_probes": 4,
+      "row_count": 619330
+    },
+    "nsaid": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "nsaid",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "starttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "stoptime",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "comparison": "full_tuple_multiset",
+      "content_hash": "2176136563370166550299276",
+      "key": null,
+      "key_probes": 6,
+      "row_count": 235678
+    },
+    "oasis": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "oasis",
+          "type": "INTEGER"
+        },
+        {
+          "name": "oasis_prob",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "age",
+          "type": "BIGINT"
+        },
+        {
+          "name": "age_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "preiculos",
+          "type": "BIGINT"
+        },
+        {
+          "name": "preiculos_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "gcs",
+          "type": "FLOAT"
+        },
+        {
+          "name": "gcs_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "heartrate",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "heart_rate_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "meanbp",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "mbp_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "resprate",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "resp_rate_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "temp",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "temp_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "urineoutput",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "urineoutput_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "mechvent",
+          "type": "INTEGER"
+        },
+        {
+          "name": "mechvent_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "electivesurgery",
+          "type": "INTEGER"
+        },
+        {
+          "name": "electivesurgery_score",
+          "type": "INTEGER"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "677022547984036261550245",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 3,
+      "row_count": 73181
+    },
+    "oxygen_delivery": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "o2_flow",
+          "type": "FLOAT"
+        },
+        {
+          "name": "o2_flow_additional",
+          "type": "FLOAT"
+        },
+        {
+          "name": "o2_delivery_device_1",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "o2_delivery_device_2",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "o2_delivery_device_3",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "o2_delivery_device_4",
+          "type": "VARCHAR"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "5539730940850415022396488",
+      "key": [
+        "subject_id",
+        "charttime"
+      ],
+      "key_probes": 4,
+      "row_count": 601546
+    },
+    "phenylephrine": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "linkorderid",
+          "type": "INTEGER"
+        },
+        {
+          "name": "vaso_rate",
+          "type": "FLOAT"
+        },
+        {
+          "name": "vaso_amount",
+          "type": "FLOAT"
+        },
+        {
+          "name": "starttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "endtime",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "comparison": "full_tuple_multiset",
+      "content_hash": "1779069417892779903290598",
+      "key": null,
+      "key_probes": 11,
+      "row_count": 193260
+    },
+    "rhythm": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "heart_rhythm",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "ectopy_type",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "ectopy_frequency",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "ectopy_type_secondary",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "ectopy_frequency_secondary",
+          "type": "VARCHAR"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "54189518315020488036835742",
+      "key": [
+        "subject_id",
+        "charttime"
+      ],
+      "key_probes": 2,
+      "row_count": 5873723
+    },
+    "rrt": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "dialysis_present",
+          "type": "INTEGER"
+        },
+        {
+          "name": "dialysis_active",
+          "type": "INTEGER"
+        },
+        {
+          "name": "dialysis_type",
+          "type": "VARCHAR"
+        }
+      ],
+      "comparison": "full_tuple_multiset",
+      "content_hash": "26065468018985185044055763",
+      "key": null,
+      "key_probes": 2,
+      "row_count": 2827715
+    },
+    "sapsii": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "starttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "endtime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "sapsii",
+          "type": "INTEGER"
+        },
+        {
+          "name": "sapsii_prob",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "age_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hr_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "sysbp_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "temp_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "pao2fio2_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "uo_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "bun_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "wbc_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "potassium_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "sodium_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "bicarbonate_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "bilirubin_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "gcs_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "comorbidity_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "admissiontype_score",
+          "type": "INTEGER"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "676384039125166879360466",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 3,
+      "row_count": 73181
+    },
+    "sepsis3": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "antibiotic_time",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "culture_time",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "suspected_infection_time",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "sofa_time",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "sofa_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "respiration",
+          "type": "INTEGER"
+        },
+        {
+          "name": "coagulation",
+          "type": "INTEGER"
+        },
+        {
+          "name": "liver",
+          "type": "INTEGER"
+        },
+        {
+          "name": "cardiovascular",
+          "type": "INTEGER"
+        },
+        {
+          "name": "cns",
+          "type": "INTEGER"
+        },
+        {
+          "name": "renal",
+          "type": "INTEGER"
+        },
+        {
+          "name": "sepsis3",
+          "type": "BOOLEAN"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "303735228387322374588155",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 2,
+      "row_count": 32971
+    },
+    "sirs": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "sirs",
+          "type": "INTEGER"
+        },
+        {
+          "name": "temp_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "heart_rate_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "resp_score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "wbc_score",
+          "type": "INTEGER"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "675266807845701934050341",
+      "key": [
+        "stay_id"
+      ],
+      "key_probes": 3,
+      "row_count": 73181
+    },
+    "sofa": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hr",
+          "type": "BIGINT"
+        },
+        {
+          "name": "starttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "endtime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "pao2fio2ratio_novent",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "pao2fio2ratio_vent",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "rate_epinephrine",
+          "type": "FLOAT"
+        },
+        {
+          "name": "rate_norepinephrine",
+          "type": "FLOAT"
+        },
+        {
+          "name": "rate_dopamine",
+          "type": "FLOAT"
+        },
+        {
+          "name": "rate_dobutamine",
+          "type": "FLOAT"
+        },
+        {
+          "name": "meanbp_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "gcs_min",
+          "type": "FLOAT"
+        },
+        {
+          "name": "uo_24hr",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "bilirubin_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "creatinine_max",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "platelet_min",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "respiration",
+          "type": "INTEGER"
+        },
+        {
+          "name": "coagulation",
+          "type": "INTEGER"
+        },
+        {
+          "name": "liver",
+          "type": "INTEGER"
+        },
+        {
+          "name": "cardiovascular",
+          "type": "INTEGER"
+        },
+        {
+          "name": "cns",
+          "type": "INTEGER"
+        },
+        {
+          "name": "renal",
+          "type": "INTEGER"
+        },
+        {
+          "name": "respiration_24hours",
+          "type": "INTEGER"
+        },
+        {
+          "name": "coagulation_24hours",
+          "type": "INTEGER"
+        },
+        {
+          "name": "liver_24hours",
+          "type": "INTEGER"
+        },
+        {
+          "name": "cardiovascular_24hours",
+          "type": "INTEGER"
+        },
+        {
+          "name": "cns_24hours",
+          "type": "INTEGER"
+        },
+        {
+          "name": "renal_24hours",
+          "type": "INTEGER"
+        },
+        {
+          "name": "sofa_24hours",
+          "type": "INTEGER"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "55768846624791480168503247",
+      "key": [
+        "stay_id",
+        "starttime"
+      ],
+      "key_probes": 2,
+      "row_count": 6043902
+    },
+    "suspicion_of_infection": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "hadm_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "ab_id",
+          "type": "BIGINT"
+        },
+        {
+          "name": "antibiotic",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "antibiotic_time",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "suspected_infection",
+          "type": "INTEGER"
+        },
+        {
+          "name": "suspected_infection_time",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "culture_time",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "specimen",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "positive_culture",
+          "type": "INTEGER"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "6783735249345721458839818",
+      "key": [
+        "subject_id",
+        "ab_id"
+      ],
+      "key_probes": 6,
+      "row_count": 735462
+    },
+    "urine_output": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "urineoutput",
+          "type": "DOUBLE"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "30644066215434825883602992",
+      "key": [
+        "stay_id",
+        "charttime"
+      ],
+      "key_probes": 2,
+      "row_count": 3321748
+    },
+    "urine_output_rate": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "weight",
+          "type": "DECIMAL(38,3)"
+        },
+        {
+          "name": "uo",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "urineoutput_6hr",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "urineoutput_12hr",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "urineoutput_24hr",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "uo_mlkghr_6hr",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "uo_mlkghr_12hr",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "uo_mlkghr_24hr",
+          "type": "DECIMAL(38,4)"
+        },
+        {
+          "name": "uo_tm_6hr",
+          "type": "DECIMAL(38,2)"
+        },
+        {
+          "name": "uo_tm_12hr",
+          "type": "DECIMAL(38,2)"
+        },
+        {
+          "name": "uo_tm_24hr",
+          "type": "DECIMAL(38,2)"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "30641118753151169458862655",
+      "key": [
+        "stay_id",
+        "charttime"
+      ],
+      "key_probes": 2,
+      "row_count": 3321747
+    },
+    "vasoactive_agent": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "starttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "endtime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "dopamine",
+          "type": "FLOAT"
+        },
+        {
+          "name": "epinephrine",
+          "type": "FLOAT"
+        },
+        {
+          "name": "norepinephrine",
+          "type": "FLOAT"
+        },
+        {
+          "name": "phenylephrine",
+          "type": "FLOAT"
+        },
+        {
+          "name": "vasopressin",
+          "type": "FLOAT"
+        },
+        {
+          "name": "dobutamine",
+          "type": "FLOAT"
+        },
+        {
+          "name": "milrinone",
+          "type": "FLOAT"
+        }
+      ],
+      "comparison": "full_tuple_multiset",
+      "content_hash": "6128790236506024926632458",
+      "key": null,
+      "key_probes": 4,
+      "row_count": 665529
+    },
+    "vasopressin": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "linkorderid",
+          "type": "INTEGER"
+        },
+        {
+          "name": "vaso_rate",
+          "type": "FLOAT"
+        },
+        {
+          "name": "vaso_amount",
+          "type": "FLOAT"
+        },
+        {
+          "name": "starttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "endtime",
+          "type": "TIMESTAMP"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "239492349451787792014051",
+      "key": [
+        "stay_id",
+        "starttime"
+      ],
+      "key_probes": 4,
+      "row_count": 25892
+    },
+    "ventilation": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "starttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "endtime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "ventilation_status",
+          "type": "VARCHAR"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "1024980408297346316064184",
+      "key": [
+        "stay_id",
+        "starttime"
+      ],
+      "key_probes": 2,
+      "row_count": 111172
+    },
+    "ventilator_setting": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "respiratory_rate_set",
+          "type": "FLOAT"
+        },
+        {
+          "name": "respiratory_rate_total",
+          "type": "FLOAT"
+        },
+        {
+          "name": "respiratory_rate_spontaneous",
+          "type": "FLOAT"
+        },
+        {
+          "name": "minute_volume",
+          "type": "FLOAT"
+        },
+        {
+          "name": "tidal_volume_set",
+          "type": "FLOAT"
+        },
+        {
+          "name": "tidal_volume_observed",
+          "type": "FLOAT"
+        },
+        {
+          "name": "tidal_volume_spontaneous",
+          "type": "FLOAT"
+        },
+        {
+          "name": "plateau_pressure",
+          "type": "FLOAT"
+        },
+        {
+          "name": "peep",
+          "type": "FLOAT"
+        },
+        {
+          "name": "fio2",
+          "type": "FLOAT"
+        },
+        {
+          "name": "flow_rate",
+          "type": "FLOAT"
+        },
+        {
+          "name": "ventilator_mode",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "ventilator_mode_hamilton",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "ventilator_type",
+          "type": "VARCHAR"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "9283391739802383303365382",
+      "key": [
+        "subject_id",
+        "charttime"
+      ],
+      "key_probes": 4,
+      "row_count": 1006127
+    },
+    "vitalsign": {
+      "columns": [
+        {
+          "name": "subject_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "charttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "heart_rate",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "sbp",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "dbp",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "mbp",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "sbp_ni",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "dbp_ni",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "mbp_ni",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "resp_rate",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "temperature",
+          "type": "DECIMAL(38,2)"
+        },
+        {
+          "name": "temperature_site",
+          "type": "VARCHAR"
+        },
+        {
+          "name": "spo2",
+          "type": "DOUBLE"
+        },
+        {
+          "name": "glucose",
+          "type": "DOUBLE"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "89864178994352133668078810",
+      "key": [
+        "stay_id",
+        "charttime"
+      ],
+      "key_probes": 5,
+      "row_count": 9745500
+    },
+    "weight_durations": {
+      "columns": [
+        {
+          "name": "stay_id",
+          "type": "INTEGER"
+        },
+        {
+          "name": "starttime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "endtime",
+          "type": "TIMESTAMP"
+        },
+        {
+          "name": "weight",
+          "type": "DECIMAL(38,3)"
+        },
+        {
+          "name": "weight_type",
+          "type": "VARCHAR"
+        }
+      ],
+      "comparison": "keyed_join",
+      "content_hash": "2512822479788147515302735",
+      "key": [
+        "stay_id",
+        "endtime"
+      ],
+      "key_probes": 3,
+      "row_count": 272445
+    }
+  },
+  "dataset": "full",
+  "format_version": "1.0",
+  "oracle": {
+    "duckdb_version": "1.5.5",
+    "mtime": "2026-08-05T04:57:30",
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "size_bytes": 14539567104
+  },
+  "schema": "mimiciv_derived",
+  "summary": {
+    "concept_count": 65,
+    "total_rows": 72221096,
+    "unkeyed_concepts": [
+      "acei",
+      "antibiotic",
+      "arb",
+      "bg",
+      "code_status",
+      "invasive_line",
+      "kdigo_creatinine",
+      "kdigo_stages",
+      "norepinephrine_equivalent_dose",
+      "nsaid",
+      "phenylephrine",
+      "rrt",
+      "vasoactive_agent"
+    ]
+  }
+}

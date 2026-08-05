@@ -1,0 +1,35 @@
+{
+  "format_version": 2,
+  "execution": {
+    "one_concept_per_goal": true,
+    "parallel_by_default": false,
+    "demo_gate": "shape_only",
+    "demo_zero_rows": "unsure",
+    "require_full_match": true,
+    "max_full_runs_per_concept": 10
+  },
+  "source": {
+    "dataset": "MIMIC-IV",
+    "version": "2.2",
+    "engine": "duckdb",
+    "demo_oracle_env": "MIMIC_DUCKDB_PATH",
+    "demo_oracle_default": "/Users/nau025/warehouses/mimic4-demo.db",
+    "full_oracle_path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "full_oracle_manifest": "mimic-iv/concepts_fhir/oracle/oracle_manifest.full.json",
+    "derived_schema": "mimiciv_derived",
+    "read_only": true
+  },
+  "target": {
+    "dataset": "MIMIC-on-FHIR",
+    "version": "2.1",
+    "demo_fhir_base_url_env": "PATHLING_FHIR_BASE_URL",
+    "demo_fhir_base_url_default": "http://localhost:8080/fhir/",
+    "full_warehouse_path": "/scratch3/nau025/mimic-on-fhir-delta/spark_warehouse",
+    "pathling_config": "../../../master_thesis_pipeline/orchestration-new/config/pathling_config.yaml"
+  },
+  "terminology": {
+    "base_url": "https://velonto.dw.csiro.au/fhir",
+    "accept_relationships_except": ["unmatched"],
+    "snapshot_resources": true
+  }
+}
