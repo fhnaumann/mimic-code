@@ -27,11 +27,14 @@ from mimic_utils.compare_port_results import (
     EXIT_FAIL,
     EXIT_PASS,
     EXIT_UNSURE,
+    UNREPRESENTABLE_FILENAME,
+    UnrepresentableDeclarationError,
     classify_logical_type,
     compare_full,
     compare_port_results_cli,
     compare_shape,
     load_manifest_entry,
+    load_unrepresentable,
     scan_expression,
     types_compatible,
     write_comparison,
@@ -79,6 +82,28 @@ def oracle(tmp_path):
     con.execute(
         "INSERT INTO mimiciv_derived.unkeyed VALUES (1,'a'), (1,'a'), (2,'b')"
     )
+    # Shaped like `acei`/`arb`: unkeyed, but with an identity spine and two
+    # timestamp columns the FHIR ETL is known to drop. This is the shape the
+    # residual pairing exists for.
+    con.execute(
+        """CREATE TABLE mimiciv_derived.meds (
+               subject_id INTEGER, hadm_id INTEGER, drug VARCHAR,
+               starttime TIMESTAMP, stoptime TIMESTAMP)"""
+    )
+    con.execute(
+        """INSERT INTO mimiciv_derived.meds VALUES
+               (1, 100, 'Lisinopril', TIMESTAMP '2150-01-01 08:00:00',
+                                      TIMESTAMP '2150-01-02 08:00:00'),
+               (1, 100, 'Captopril',  TIMESTAMP '2150-01-03 08:00:00',
+                                      TIMESTAMP '2150-01-04 08:00:00'),
+               (2, 200, 'Lisinopril', TIMESTAMP '2151-03-12 02:30:00',
+                                      TIMESTAMP '2151-03-13 02:30:00'),
+               (3, 300, 'Ramipril',   TIMESTAMP '2152-05-01 08:00:00',
+                                      TIMESTAMP '2152-05-02 08:00:00')"""
+    )
+    # No identity column at all: pairing must refuse to claim an anchor.
+    con.execute("CREATE TABLE mimiciv_derived.anon (label VARCHAR, amount INTEGER)")
+    con.execute("INSERT INTO mimiciv_derived.anon VALUES ('a', 1), ('b', 2)")
     con.close()
     return path
 
@@ -107,6 +132,27 @@ def manifest(tmp_path, oracle):
                         "columns": [
                             {"name": "subject_id", "type": "INTEGER"},
                             {"name": "drug", "type": "VARCHAR"},
+                        ],
+                        "key": None,
+                        "comparison": "full_tuple_multiset",
+                    },
+                    "meds": {
+                        "row_count": 4,
+                        "columns": [
+                            {"name": "subject_id", "type": "INTEGER"},
+                            {"name": "hadm_id", "type": "INTEGER"},
+                            {"name": "drug", "type": "VARCHAR"},
+                            {"name": "starttime", "type": "TIMESTAMP"},
+                            {"name": "stoptime", "type": "TIMESTAMP"},
+                        ],
+                        "key": None,
+                        "comparison": "full_tuple_multiset",
+                    },
+                    "anon": {
+                        "row_count": 2,
+                        "columns": [
+                            {"name": "label", "type": "VARCHAR"},
+                            {"name": "amount", "type": "INTEGER"},
                         ],
                         "key": None,
                         "comparison": "full_tuple_multiset",
@@ -268,6 +314,29 @@ class TestShapeGate:
         assert r["verdict"] == "shape_fail"
         assert r["schema"]["incompatible_types"][0]["column"] == "age"
 
+    def test_string_where_number_expected_carries_a_cast_hint(self, manifest, candidate):
+        """The remedy travels with the failure, so no probing is needed to find it."""
+        sql = ("SELECT subject_id, hadm_id, admittime, CAST(age AS VARCHAR) AS age, "
+               "ratio FROM mimiciv_derived.age")
+        r = compare_shape("age", manifest, candidate(sql))
+        assert len(r["schema"]["hints"]) == 1
+        assert r["schema"]["hints"][0].startswith("age: candidate is VARCHAR")
+        assert "CAST" in r["schema"]["hints"][0]
+        # `age` is not an identifier, so the identifier-spine half stays quiet.
+        assert "getResourceKey" not in r["schema"]["hints"][0]
+
+    def test_identifier_column_hint_names_the_identifier_spine(self, manifest, candidate):
+        sql = ("SELECT CAST(subject_id AS VARCHAR) AS subject_id, hadm_id, admittime, "
+               "age, ratio FROM mimiciv_derived.age")
+        r = compare_shape("age", manifest, candidate(sql))
+        assert "getResourceKey" in r["schema"]["hints"][0]
+        assert "identifier.value" in r["schema"]["hints"][0]
+
+    def test_no_hints_when_types_agree(self, manifest, candidate):
+        r = compare_shape("age", manifest, candidate(ALL_AGE))
+        assert r["verdict"] == "shape_ok"
+        assert "hints" not in r["schema"]
+
     def test_compatible_type_widening_passes(self, manifest, candidate):
         """BIGINT vs DOUBLE carries the same values here."""
         sql = ("SELECT subject_id, hadm_id, admittime, CAST(age AS DOUBLE) AS age, "
@@ -335,21 +404,33 @@ class TestKeyedDiff:
         r = compare_full("age", manifest, oracle, cand)
         assert r["row_count"]["match"] is True
         assert r["schema"]["match"] is True
-        assert r["verdict"] == "mismatch"
+        # `contested`, not `mismatch`: the comparator sees a value conflict and
+        # says so, but rotated values and upstream ETL rewriting are the same
+        # shape from here. The judge separates them.
+        assert r["verdict"] == "review"
+        assert r["divergence"]["tier"] == "contested"
         assert r["diff"]["differing"] > 0
         assert "age" in r["diff"]["columns_differing"]
 
     def test_missing_row_detected(self, manifest, oracle, candidate):
+        """A missing row is `review`: a coverage gap looks exactly like this."""
         r = compare_full("age", manifest, oracle, candidate(f"{ALL_AGE} WHERE hadm_id <> 100"))
-        assert r["verdict"] == "mismatch"
+        assert r["verdict"] == "review"
         assert r["diff"]["only_oracle"] == 1
         assert r["diff"]["only_candidate"] == 0
+        assert [c["class"] for c in r["divergence"]["reviewable"]] == ["only_oracle"]
+        assert r["divergence"]["tier"] == "gap_shaped"
+        assert r["divergence"]["blocking"] == []
 
     def test_extra_row_detected(self, manifest, oracle, candidate):
+        """An invented row is contested, not auto-failed -- but it is not a gap."""
         sql = (f"{ALL_AGE} UNION ALL "
                "SELECT 9, 900, TIMESTAMP '2170-01-01 00:00:00', 55, 9.0")
         r = compare_full("age", manifest, oracle, candidate(sql))
-        assert r["verdict"] == "mismatch"
+        assert r["verdict"] == "review"
+        assert r["divergence"]["tier"] == "contested"
+        assert [c["class"] for c in r["divergence"]["contested"]] == ["only_candidate"]
+        assert r["divergence"]["gap_shaped"] == []
         assert r["diff"]["only_candidate"] == 1
         assert r["diff"]["only_oracle"] == 0
 
@@ -359,7 +440,7 @@ class TestKeyedDiff:
                "FROM mimiciv_derived.age")
         r = compare_full("age", manifest, oracle, candidate(sql))
         assert r["diff"]["columns_differing"] == {"age": 4}
-        assert any("'age' differs" in d for d in r["diagnostics"])
+        assert any("column 'age' conflicts on 4 row(s)" in d for d in r["diagnostics"])
 
     def test_columns_differing_omits_matching_columns(self, manifest, oracle, candidate):
         sql = ("SELECT subject_id, hadm_id, admittime, age + 1 AS age, ratio "
@@ -372,45 +453,90 @@ class TestKeyedDiff:
             "age", manifest, oracle, candidate(f"{ALL_AGE} WHERE hadm_id <> 100"),
             rtol=0.99,
         )
+        # A value tolerance never absorbs a missing row: it still surfaces as
+        # `only_oracle`, which is reviewable but never silently equal.
         assert r["row_count"]["match"] is False
-        assert r["verdict"] == "mismatch"
+        assert r["row_count"]["gated"] is False
+        assert r["diff"]["only_oracle"] == 1
+        assert r["verdict"] == "review"
 
     def test_float_within_tolerance_matches(self, manifest, oracle, candidate):
         sql = ("SELECT subject_id, hadm_id, admittime, age, ratio * 1.0001 AS ratio "
                "FROM mimiciv_derived.age")
         assert compare_full("age", manifest, oracle, candidate(sql))["verdict"] == "match"
 
-    def test_float_outside_tolerance_mismatches(self, manifest, oracle, candidate):
+    def test_float_outside_tolerance_conflicts(self, manifest, oracle, candidate):
         sql = ("SELECT subject_id, hadm_id, admittime, age, ratio * 1.05 AS ratio "
                "FROM mimiciv_derived.age")
         r = compare_full("age", manifest, oracle, candidate(sql))
-        assert r["verdict"] == "mismatch"
+        assert r["divergence"]["tier"] == "contested"
+        assert r["diff"]["differing_conflict"] == len(ROWS)
         assert "ratio" in r["diff"]["columns_differing"]
 
     def test_integers_compared_exactly(self, manifest, oracle, candidate):
         """Tolerance must not leak into integer columns."""
-        sql = ("SELECT subject_id, hadm_id, admittime, age + 1 AS age, ratio "
-               "FROM mimiciv_derived.age")
-        assert compare_full("age", manifest, oracle, candidate(sql))["verdict"] == "mismatch"
+        r = compare_full(
+            "age", manifest, oracle,
+            candidate("SELECT subject_id, hadm_id, admittime, age + 1 AS age, "
+                      "ratio FROM mimiciv_derived.age"),
+        )
+        assert r["verdict"] != "match"
+        assert r["diff"]["differing_conflict"] == len(ROWS)
 
     def test_timestamp_within_one_second_matches(self, manifest, oracle, candidate):
         sql = ("SELECT subject_id, hadm_id, admittime + INTERVAL 500 MILLISECOND "
                "AS admittime, age, ratio FROM mimiciv_derived.age")
         assert compare_full("age", manifest, oracle, candidate(sql))["verdict"] == "match"
 
-    def test_timestamp_beyond_tolerance_mismatches(self, manifest, oracle, candidate):
+    def test_timestamp_beyond_tolerance_conflicts(self, manifest, oracle, candidate):
+        """The shape of the real DST-shift divergence: a value conflict.
+
+        `age`'s 44 shifted admission times reach the judge as `contested`
+        rather than hard-failing, because the shift happened in
+        `fhir_encounter.sql`, not in the port.
+        """
         sql = ("SELECT subject_id, hadm_id, admittime + INTERVAL 5 MINUTE AS admittime, "
                "age, ratio FROM mimiciv_derived.age")
         r = compare_full("age", manifest, oracle, candidate(sql))
-        assert r["verdict"] == "mismatch"
+        assert r["verdict"] == "review"
+        assert r["divergence"]["tier"] == "contested"
         assert "admittime" in r["diff"]["columns_differing"]
 
-    def test_null_must_be_reproduced_as_null(self, manifest, oracle, candidate):
+    def test_candidate_null_for_a_value_is_gap_shaped(
+        self, manifest, oracle, candidate
+    ):
+        """NULL where the oracle has a value is the shape of a missing element.
+
+        Still a divergence -- never silently equal -- but `differing_null_only`
+        rather than a conflict, so the judge rules at the lower of the two bars.
+        """
         sql = ("SELECT subject_id, hadm_id, admittime, age, NULL::DOUBLE AS ratio "
                "FROM mimiciv_derived.age")
         r = compare_full("age", manifest, oracle, candidate(sql))
-        assert r["verdict"] == "mismatch"
+        assert r["verdict"] == "review"
+        assert r["divergence"]["tier"] == "gap_shaped"
+        assert r["diff"]["differing_null_only"] == len(ROWS)
+        assert r["diff"]["differing_conflict"] == 0
+        assert "ratio" in r["diff"]["columns_candidate_null"]
         assert "ratio" in r["diff"]["columns_differing"]
+
+    def test_candidate_value_for_an_oracle_null_is_contested(
+        self, manifest, oracle, candidate
+    ):
+        """The mirror case is a conflict: a gap cannot make the candidate fuller.
+
+        It reaches the judge, but at the raised bar -- an absent element does
+        not explain a value the oracle does not have.
+        """
+        cand = candidate(ALL_AGE, name="filled")  # built while ratio still has values
+        con = duckdb.connect(str(oracle))
+        con.execute("UPDATE mimiciv_derived.age SET ratio = NULL WHERE hadm_id = 100")
+        con.close()
+        r = compare_full("age", manifest, oracle, cand)
+        assert r["verdict"] == "review"
+        assert r["divergence"]["tier"] == "contested"
+        assert r["divergence"]["judge_bar"]
+        assert r["diff"]["differing_conflict"] == 1
 
     def test_null_equals_null(self, manifest, oracle, tmp_path):
         """NULL on both sides is agreement, not a difference."""
@@ -433,14 +559,14 @@ class TestKeyedDiff:
         sql = ("SELECT subject_id, hadm_id, admittime, age + 1 AS age, ratio "
                "FROM mimiciv_derived.age")
         r = compare_full("age", manifest, oracle, candidate(sql))
-        sample = r["diff"]["samples"]["differing"][0]
+        sample = r["diff"]["samples"]["differing_conflict"][0]
         assert sample["age__candidate"] == sample["age__oracle"] + 1
 
     def test_sample_limit_respected(self, manifest, oracle, candidate):
         sql = ("SELECT subject_id, hadm_id, admittime, age + 1 AS age, ratio "
                "FROM mimiciv_derived.age")
         r = compare_full("age", manifest, oracle, candidate(sql), sample_limit=2)
-        assert len(r["diff"]["samples"]["differing"]) == 2
+        assert len(r["diff"]["samples"]["differing_conflict"]) == 2
 
     def test_samples_disabled(self, manifest, oracle, candidate):
         r = compare_full("age", manifest, oracle, candidate(ALL_AGE), sample_limit=0)
@@ -501,7 +627,10 @@ class TestMultisetDiff:
         """EXCEPT ALL counts duplicates: two identical rows are not one row."""
         sql = "SELECT DISTINCT subject_id, drug FROM mimiciv_derived.unkeyed"
         r = compare_full("unkeyed", manifest, oracle, candidate(sql))
-        assert r["verdict"] == "mismatch"
+        # No key: `only_candidate` and a NULL divergence are indistinguishable,
+        # so an unkeyed concept routes to the judge instead of hard-failing.
+        assert r["verdict"] == "review"
+        assert r["divergence"]["classification"] == "unavailable_no_key"
         assert r["diff"]["only_oracle"] == 1
 
     def test_missing_row_detected(self, manifest, oracle, candidate):
@@ -519,6 +648,120 @@ class TestMultisetDiff:
     def test_key_is_null_in_artifact(self, manifest, oracle, candidate):
         r = compare_full("unkeyed", manifest, oracle, candidate(self.ALL))
         assert r["diff"]["key"] is None
+
+
+# ---------------------------------------------------------------------------
+# residual pairing -- recovering the classification a missing key withheld
+# ---------------------------------------------------------------------------
+
+
+class TestResidualPairing:
+    """The evidence `only_oracle == only_candidate` was being read as.
+
+    That equality is an identity, not a finding: ``EXCEPT ALL`` is multiset
+    difference, so the two counts differ by exactly the row-count difference.
+    Equal row counts force equal counts for *every* candidate, however wrong.
+    These tests pin the real check that replaced it.
+    """
+
+    ALL = "SELECT * FROM mimiciv_derived.meds"
+
+    def test_dropped_timestamps_pair_and_are_gap_shaped(
+        self, manifest, oracle, candidate
+    ):
+        """The acei/arb/antibiotic shape: the ETL drops both interval endpoints.
+
+        Every row still exists and only the two timestamps went NULL, so this is
+        a coverage gap. Before pairing it presented as `only_candidate` and was
+        forced to the `contested` bar, which demanded an ETL citation for what
+        is an absent element.
+        """
+        sql = f"""SELECT subject_id, hadm_id, drug,
+                         CASE WHEN drug = 'Lisinopril' THEN NULL ELSE starttime END
+                             AS starttime,
+                         CASE WHEN drug = 'Lisinopril' THEN NULL ELSE stoptime END
+                             AS stoptime
+                  FROM ({self.ALL})"""
+        r = compare_full("meds", manifest, oracle, candidate(sql))
+        diff, div = r["diff"], r["divergence"]
+
+        assert diff["classification"] == "paired_residual"
+        assert diff["residual_pairing"]["paired"] == 2
+        assert diff["residual_pairing"]["pairing_columns"] == [
+            "drug", "hadm_id", "subject_id",
+        ]
+        assert diff["residual_pairing"]["substituted_columns"] == [
+            "starttime", "stoptime",
+        ]
+        # The point of the whole exercise: gap_shaped, not contested.
+        assert div["tier"] == "gap_shaped"
+        assert diff["differing_null_only"] == 2
+        assert diff["differing_conflict"] == 0
+        assert diff["columns_candidate_null"] == {"starttime": 2, "stoptime": 2}
+        # A paired residual knows how many rows survived untouched, which an
+        # unkeyed concept previously could not state at all.
+        assert diff["identical"] == 2
+
+    def test_rewritten_timestamp_pairs_and_is_contested(
+        self, manifest, oracle, candidate
+    ):
+        """The DST shape: the value is present on both sides and disagrees."""
+        sql = f"""SELECT subject_id, hadm_id, drug,
+                         starttime + INTERVAL 1 HOUR AS starttime, stoptime
+                  FROM ({self.ALL}) WHERE subject_id = 2
+                  UNION ALL SELECT * FROM ({self.ALL}) WHERE subject_id <> 2"""
+        r = compare_full("meds", manifest, oracle, candidate(sql))
+        diff, div = r["diff"], r["divergence"]
+
+        assert diff["classification"] == "paired_residual"
+        assert div["tier"] == "contested"
+        assert diff["differing_conflict"] == 1
+        assert diff["columns_conflicting"] == {"starttime": 1}
+
+    def test_invented_row_does_not_pair(self, manifest, oracle, candidate):
+        """A row the oracle never had must not be absorbed as a substitution."""
+        sql = f"""SELECT * FROM ({self.ALL}) WHERE subject_id <> 3
+                  UNION ALL SELECT 9, 900, 'Enalapril',
+                                   TIMESTAMP '2160-01-01 08:00:00',
+                                   TIMESTAMP '2160-01-02 08:00:00'"""
+        r = compare_full("meds", manifest, oracle, candidate(sql))
+        diff = r["diff"]
+
+        assert diff["classification"] == "unavailable_no_key"
+        assert diff["only_oracle"] == 1
+        assert diff["only_candidate"] == 1
+        assert r["divergence"]["tier"] == "contested"
+
+    def test_tautology_is_named_when_the_residual_does_not_pair(
+        self, manifest, oracle, candidate
+    ):
+        """The equal counts must be labelled as vacuous where they appear."""
+        sql = f"""SELECT * FROM ({self.ALL}) WHERE subject_id <> 3
+                  UNION ALL SELECT 9, 900, 'Enalapril',
+                                   TIMESTAMP '2160-01-01 08:00:00',
+                                   TIMESTAMP '2160-01-02 08:00:00'"""
+        r = compare_full("meds", manifest, oracle, candidate(sql))
+        notes = " ".join(r["divergence"]["notes"])
+        assert "NOT evidence" in notes
+        assert "row-count difference" in notes
+
+    def test_pairing_without_an_identity_column_is_not_claimed(
+        self, manifest, oracle, candidate
+    ):
+        """Pairing on values alone aligns unrelated rows; refuse to call it proof."""
+        sql = "SELECT label, amount + 1 AS amount FROM mimiciv_derived.anon"
+        r = compare_full("anon", manifest, oracle, candidate(sql))
+        pairing = r["diff"]["residual_pairing"]
+
+        assert pairing["unpaired_oracle"] == 0  # it *does* pair on `label`
+        assert pairing["anchored"] is False
+        # ...but an unanchored pairing does not earn the classification.
+        assert r["diff"]["classification"] == "unavailable_no_key"
+
+    def test_identical_result_attempts_no_pairing(self, manifest, oracle, candidate):
+        r = compare_full("meds", manifest, oracle, candidate(self.ALL))
+        assert r["verdict"] == "match"
+        assert r["diff"]["residual_pairing"]["attempted"] is False
 
 
 # ---------------------------------------------------------------------------
@@ -540,7 +783,7 @@ class TestWriteComparison:
                "FROM mimiciv_derived.age")
         r = compare_full("age", manifest, oracle, candidate(sql))
         out = write_comparison(r, tmp_path / "c.json")
-        assert json.loads(out.read_text())["diff"]["samples"]["differing"]
+        assert json.loads(out.read_text())["diff"]["samples"]["differing_conflict"]
 
     def test_creates_parents_and_leaves_no_temp(self, tmp_path):
         write_comparison({"x": 1}, tmp_path / "a" / "b" / "c.json")
@@ -560,12 +803,47 @@ class TestCli:
         assert rc == EXIT_PASS
 
     def test_full_mismatch_exit_1(self, manifest, oracle, candidate, tmp_path):
+        """A self-refuting declaration exits 1 -- nothing for the judge to weigh."""
+        rc = self._run(
+            "full", "--concept", "age", "--manifest", str(manifest),
+            "--candidate", str(candidate(ALL_AGE)),
+            "--oracle", str(oracle), "--output", str(tmp_path / "o.json"),
+            # `ratio` is populated in ALL_AGE, so the declaration refutes itself.
+            "--unrepresentable", str(_declare(tmp_path, {"ratio": _WHY})),
+        )
+        assert rc == EXIT_FAIL
+
+    def test_full_contested_exit_2(self, manifest, oracle, candidate, tmp_path):
+        """A conflict is no longer exit 1: it is a question, not a verdict.
+
+        An invented row used to hard-fail here. It now routes to the judge at
+        the raised bar, so the exit code must say "neither pass nor fail".
+        """
+        sql = (f"{ALL_AGE} UNION ALL "
+               "SELECT 9, 900, TIMESTAMP '2170-01-01 00:00:00', 55, 9.0")
+        out = tmp_path / "o.json"
+        rc = self._run(
+            "full", "--concept", "age", "--manifest", str(manifest),
+            "--candidate", str(candidate(sql)),
+            "--oracle", str(oracle), "--output", str(out),
+        )
+        assert rc == EXIT_UNSURE
+        assert json.loads(out.read_text())["divergence"]["tier"] == "contested"
+
+    def test_full_review_exit_2(self, manifest, oracle, candidate, tmp_path):
+        """Gap-shaped divergence is neither pass nor fail -- the judge decides.
+
+        Collapsing this onto 1 would turn "look at this" into "this is wrong".
+        """
         rc = self._run(
             "full", "--concept", "age", "--manifest", str(manifest),
             "--candidate", str(candidate(f"{ALL_AGE} WHERE hadm_id <> 100")),
             "--oracle", str(oracle), "--output", str(tmp_path / "o.json"),
         )
-        assert rc == EXIT_FAIL
+        assert rc == EXIT_UNSURE
+        written = json.loads((tmp_path / "o.json").read_text())
+        assert written["verdict"] == "review"
+        assert written["divergence"]["judge_required"] is True
 
     def test_shape_ok_exit_0(self, manifest, candidate, tmp_path):
         rc = self._run(
@@ -621,3 +899,211 @@ class TestTolerancesDocumented:
     ):
         r = compare_full("age", manifest, oracle, candidate(ALL_AGE))
         assert r["tolerances"]["row_count"] == "none (exact)"
+
+
+# ---------------------------------------------------------------------------
+# declared-unrepresentable columns
+#
+# The rule under test: a column MIMIC-on-FHIR cannot represent must be emitted
+# as a typed NULL and declared. A NULL is reviewable; an estimate is blocking.
+# The declaration is verified against the data, never trusted.
+# ---------------------------------------------------------------------------
+
+NULL_RATIO = (
+    "SELECT subject_id, hadm_id, admittime, age, CAST(NULL AS DOUBLE) AS ratio "
+    "FROM mimiciv_derived.age"
+)
+
+_WHY = "No FHIR element carries this; Patient.birthDate collapses the pair."
+
+
+def _declare(tmp_path, mapping, name=UNREPRESENTABLE_FILENAME):
+    path = tmp_path / name
+    path.write_text(json.dumps(mapping))
+    return path
+
+
+class TestLoadUnrepresentable:
+    def test_reads_column_to_justification(self, tmp_path):
+        path = _declare(tmp_path, {"ratio": _WHY})
+        assert load_unrepresentable(path) == {"ratio": _WHY}
+
+    def test_missing_file_is_an_error(self, tmp_path):
+        with pytest.raises(UnrepresentableDeclarationError, match="not found"):
+            load_unrepresentable(tmp_path / "nope.json")
+
+    def test_rejects_non_object(self, tmp_path):
+        path = tmp_path / "d.json"
+        path.write_text(json.dumps(["ratio"]))
+        with pytest.raises(UnrepresentableDeclarationError, match="JSON object"):
+            load_unrepresentable(path)
+
+    def test_rejects_invalid_json(self, tmp_path):
+        path = tmp_path / "d.json"
+        path.write_text("{not json")
+        with pytest.raises(UnrepresentableDeclarationError, match="not valid JSON"):
+            load_unrepresentable(path)
+
+    @pytest.mark.parametrize("justification", ["", "n/a", "none", "   "])
+    def test_rejects_a_token_justification(self, tmp_path, justification):
+        path = _declare(tmp_path, {"ratio": justification})
+        with pytest.raises(UnrepresentableDeclarationError, match="justification"):
+            load_unrepresentable(path)
+
+
+class TestUnrepresentableVerification:
+    def test_all_null_declared_column_is_confirmed_and_still_review(
+        self, tmp_path, manifest, oracle, candidate
+    ):
+        """A verified declaration is evidence, not a verdict: still `review`."""
+        result = compare_full(
+            "age", manifest, oracle, candidate(NULL_RATIO),
+            unrepresentable={"ratio": _WHY},
+        )
+        assert result["verdict"] == "review"
+        assert result["unrepresentable"]["confirmed"] == {"ratio": _WHY}
+        assert result["unrepresentable"]["violations"] == []
+        # the justification reaches the judge alongside the divergence
+        assert result["divergence"]["declared_unrepresentable"] == {"ratio": _WHY}
+        assert any(
+            "declared unrepresentable" in line for line in result["diagnostics"]
+        )
+
+    def test_a_confirmed_declaration_gets_a_representable_fidelity_figure(
+        self, manifest, oracle, candidate
+    ):
+        """A by-design NULL column drives `identical` to zero. It must not be
+        the only number reported.
+
+        This is the `age` reading problem exactly: 0 of 431,231 identical, while
+        every representable value on 430,727 of those rows was reproduced. Both
+        figures are reported; the honest total is not replaced.
+        """
+        result = compare_full(
+            "age", manifest, oracle, candidate(NULL_RATIO),
+            unrepresentable={"ratio": _WHY},
+        )
+        d = result["divergence"]
+        assert d["identical_rows"] == 0
+        assert d["identical_fraction"] == 0.0
+        assert d["identical_representable_rows"] == len(ROWS)
+        assert d["representable_fraction"] == 1.0
+        assert d["representable_excludes"] == ["ratio"]
+        assert any("on the representable columns" in x for x in result["diagnostics"])
+
+    def test_no_declaration_means_no_second_fidelity_figure(
+        self, manifest, oracle, candidate
+    ):
+        """With nothing excluded the two numbers would be identical, and a
+        duplicated figure invites the reader to think it means something."""
+        d = compare_full("age", manifest, oracle, candidate(ALL_AGE))["divergence"]
+        assert d["identical_fraction"] == 1.0
+        assert "representable_fraction" not in d
+
+    def test_declaring_a_column_then_emitting_values_is_blocking(
+        self, tmp_path, manifest, oracle, candidate
+    ):
+        """The estimate-instead-of-NULL failure the declaration exists to catch."""
+        result = compare_full(
+            "age", manifest, oracle, candidate(ALL_AGE),
+            unrepresentable={"ratio": _WHY},
+        )
+        assert result["verdict"] == "mismatch"
+        violations = result["unrepresentable"]["violations"]
+        assert [v["column"] for v in violations] == ["ratio"]
+        assert violations[0]["non_null_rows"] == len(ROWS)
+        assert any(
+            b["class"] == "false_unrepresentable_declaration"
+            for b in result["divergence"]["blocking"]
+        )
+
+    def test_declaring_an_unknown_column_is_blocking(
+        self, manifest, oracle, candidate
+    ):
+        result = compare_full(
+            "age", manifest, oracle, candidate(NULL_RATIO),
+            unrepresentable={"anchor_year": _WHY},
+        )
+        assert result["verdict"] == "mismatch"
+        assert "not a column" in result["unrepresentable"]["violations"][0]["reason"]
+
+    def test_declaring_a_key_column_is_blocking(self, manifest, oracle, candidate):
+        result = compare_full(
+            "age", manifest, oracle, candidate(NULL_RATIO),
+            unrepresentable={"hadm_id": _WHY},
+        )
+        assert result["verdict"] == "mismatch"
+        assert "natural key" in result["unrepresentable"]["violations"][0]["reason"]
+
+    def test_undeclared_all_null_column_is_noted_not_failed(
+        self, manifest, oracle, candidate
+    ):
+        """An unreported gap is surfaced, but it is not itself a failure."""
+        result = compare_full(
+            "age", manifest, oracle, candidate(NULL_RATIO),
+            unrepresentable={"age": "Placeholder justification naming an element."},
+        )
+        # `age` is declared but populated -> blocking; `ratio` is the undeclared one
+        assert "ratio" in result["unrepresentable"]["undeclared_fully_null_columns"]
+
+    def test_declaration_cannot_rescue_a_real_conflict(
+        self, manifest, oracle, candidate
+    ):
+        """Declaring one column does not excuse a conflict in another.
+
+        The declaration is confirmed and `ratio`'s NULLs become gap-shaped, but
+        `age` still conflicts, and a conflict outranks a gap: the result is
+        `contested`, not the gap-shaped review the declaration alone would earn.
+        """
+        sql = (
+            "SELECT subject_id, hadm_id, admittime, age + 1 AS age, "
+            "CAST(NULL AS DOUBLE) AS ratio FROM mimiciv_derived.age"
+        )
+        result = compare_full(
+            "age", manifest, oracle, candidate(sql),
+            unrepresentable={"ratio": _WHY},
+        )
+        assert result["verdict"] == "review"
+        assert result["divergence"]["tier"] == "contested"
+        assert result["unrepresentable"]["confirmed"] == {"ratio": _WHY}
+        assert result["diff"]["columns_conflicting"] == {"age": len(ROWS)}
+
+    def test_no_declaration_leaves_the_result_unchanged(
+        self, manifest, oracle, candidate
+    ):
+        result = compare_full("age", manifest, oracle, candidate(NULL_RATIO))
+        assert result["verdict"] == "review"
+        assert "unrepresentable" not in result
+        assert result["divergence"]["declared_unrepresentable"] == {}
+
+
+class TestUnrepresentableCli:
+    def test_full_mode_accepts_the_flag(self, tmp_path, manifest, oracle, candidate):
+        rc = compare_port_results_cli([
+            "full", "--concept", "age", "--manifest", str(manifest),
+            "--candidate", str(candidate(NULL_RATIO)),
+            "--oracle", str(oracle),
+            "--unrepresentable", str(_declare(tmp_path, {"ratio": _WHY})),
+            "--output", str(tmp_path / "out.json"),
+        ])
+        assert rc == EXIT_UNSURE  # review
+        written = json.loads((tmp_path / "out.json").read_text())
+        assert written["unrepresentable"]["confirmed"] == {"ratio": _WHY}
+
+    def test_false_declaration_exits_fail(self, tmp_path, manifest, oracle, candidate):
+        rc = compare_port_results_cli([
+            "full", "--concept", "age", "--manifest", str(manifest),
+            "--candidate", str(candidate(ALL_AGE)), "--oracle", str(oracle),
+            "--unrepresentable", str(_declare(tmp_path, {"ratio": _WHY})),
+            "--output", str(tmp_path / "out.json"),
+        ])
+        assert rc == EXIT_FAIL
+
+    def test_shape_mode_rejects_the_flag(self, tmp_path, manifest, candidate):
+        with pytest.raises(SystemExit):
+            compare_port_results_cli([
+                "shape", "--concept", "age", "--manifest", str(manifest),
+                "--candidate", str(candidate(NULL_RATIO)),
+                "--unrepresentable", str(_declare(tmp_path, {"ratio": _WHY})),
+                "--output", str(tmp_path / "out.json"),
+            ])
