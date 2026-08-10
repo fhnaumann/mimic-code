@@ -72,6 +72,10 @@ shorter `mimic_utils ...` spelling below names the subcommand only.
     **`carryover-record <concept> --stage S`**,
     **`carryover-invalidate <concept> --stage S --reason "..."`** — which
     analysis stages can be reused on the next attempt. See Phase 3.
+13. **`conversion_metrics_finalize({concept: <concept>})`** — OpenCode tool,
+    not a shell command. After any terminal conversion outcome, deterministically
+    aggregates the dedicated root session(s) and descendant subagents and writes
+    `mimic-iv/concepts_fhir/metrics/<concept>/run_NNNN.json` once.
 
 The controller uses three counters: `semantic`, `engineering`, `hpc`.
 Lifecycle: `PENDING → RUNNING → VALIDATING_DEMO → VALIDATING_FULL →
@@ -90,6 +94,11 @@ own.
 Receive exactly one named concept from the `/goal` argument. Never accept
 multiple concepts. Never auto-advance to the next concept. Other goals porting
 other concepts at the same time is expected and is none of your business.
+The command is exactly `/goal <concept>` and starts in a fresh dedicated
+OpenCode session. Never reuse a finalized conversion's root session for another
+run or concept; doing so would contaminate its token total. A resume may start
+in another fresh session, which the metrics plugin attaches to the unfinished
+run.
 
 Read `mimic-iv/concepts_fhir/MIMIC_NOTES.md` now, before spawning anything, and
 the fragments in `mimic-iv/concepts_fhir/MIMIC_NOTES.d/` with it. Together they
@@ -242,9 +251,14 @@ Target shape comes from `mimic-iv/concepts_fhir/oracle/oracle_manifest.full.json
    blames only the SQL or the ViewDefinition invalidates nothing: that is
    implementer output, which is attempt-scoped and never carried over.
 
-3. If diagnosis says **fixable bug** → run `mimic_utils fail <concept>`,
-   then `mimic_utils retry <concept>` to create a new write-once attempt
-   (or `mimic_utils resume <concept> --apply`, which does both). The
+3. If diagnosis says **fixable semantic bug** — a wrong filter, join,
+   aggregation, mapping, or value meaning in a port that executed — run
+   `mimic_utils fail <concept> --counter semantic --error "..."`. This explicit
+   counter is the metric's semantic-rework signal. Invalid SQL/ViewDefinition,
+   wrong shape, environment, transfer, queue and tool failures are not semantic
+   rework; use the default engineering counter for those. Then run
+   `mimic_utils retry <concept>` to create a new write-once attempt
+   (or, after that explicit `fail`, `mimic_utils resume <concept> --apply`). The
    implementer reads the previous attempt, creates corrected artifacts
    once in the new directory, and loops back to Phase 4.
 4. A `mismatch` is **never** routed to the judge — it means the result is not
@@ -333,7 +347,7 @@ serious.
 - `accept` → gap is intrinsic and the port is as faithful as the data allows.
   Write the exception once, run
   `mimic_utils accept-divergence <concept> --justification "<the judge's cited
-  reason>"`, and terminate with `[goal:complete-with-divergence]`.
+  reason>"`, and continue to Phase 8's divergence terminal sequence.
 - `bug` → judge says the divergence is fixable. Loop back to Phase 5.
 - `blocked` → intrinsic *and* severe enough that the result is not a port of
   the concept. Run `mimic_utils block <concept> --error "..."` and terminate
@@ -347,18 +361,30 @@ would make the `judge` / `human` distinction meaningless in the one direction
 that matters.
 
 ### Phase 8 — Terminal state
+After the state transition to COMPLETED, COMPLETED_WITH_DIVERGENCE, FAILED, or
+BLOCKED_REPRESENTATION, call `conversion_metrics_finalize` with the concept.
+Do not infer or write metric values in prose: the tool reads OpenCode SQLite,
+controller state and immutable attempt artifacts. Do not emit a terminal marker
+until it reports the write-once metrics path. Finalization happens before this
+last response, so the artifact records that the small terminal response itself
+is excluded.
+
 Emit terminal markers:
-- `[goal:complete]` only on a full-data `match`. A demo pass never justifies
-  it — a demo pass only earns permission to spend an HPC run.
-- `[goal:complete-with-divergence]` on a judge `accept`. This is a real result
-  but **not** an exact match; say so in the evidence block, and never report it
-  as `[goal:complete]`.
+- On a full-data `match`, end with adjacent lines
+  `[goal:evidence] <verified summary>` then `[goal:complete]`. A demo pass never
+  justifies this sequence.
+- On a judge `accept`, emit `[goal:complete-with-divergence]`, then end with
+  adjacent lines `[goal:evidence] <summary explicitly naming
+  COMPLETED_WITH_DIVERGENCE>` and `[goal:complete]`. The last marker terminates
+  the goal extension; it is not an exact-match claim. The controller state and
+  metrics artifact remain the research outcome.
 - `[goal:blocked]` on a judge `blocked`, or on reaching the 10-run cap.
 - Include a final evidence block summarizing: concept, attempt number, number
   of full runs consumed, verdict, the divergence classes and counts if any, the
   judge's citation if one was needed, artifact paths, and every entry this
   concept appended to `MIMIC_NOTES.d/<concept>.md` (or "none"), so the human
-  merging between waves knows what is waiting.
+  merging between waves knows what is waiting. Include the metrics artifact
+  path too.
 
 ## Attempt management (immutable, controller-driven)
 

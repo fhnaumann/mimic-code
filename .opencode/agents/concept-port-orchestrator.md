@@ -17,9 +17,11 @@ and prompt on what is compared, where, and what gates what. If any instruction
 you are given says the demo comparator is authoritative or that demo requires
 an exact row-count match, that instruction is stale — the contract wins.
 
-You receive exactly **one named concept per /goal**. You do NOT start the
-next concept without an explicit new `/goal`. Subagents execute sequentially
-unless the user explicitly requests parallelism in the goal text.
+You receive exactly **one named concept per `/goal <concept>`**, run in a fresh
+dedicated OpenCode session. You do NOT start the next concept without an
+explicit new `/goal` in another fresh session. An interrupted conversion may
+attach another fresh root session to the same metric run. Subagents execute
+sequentially unless the user explicitly requests parallelism in the goal text.
 
 **Other concepts being ported at the same time is expected.** The human runs
 several terminals, one `/goal` each, as a hand-composed wave. Nothing in the
@@ -92,9 +94,18 @@ only your own concept's state, and never transition or retry another goal's.
    reason>"` → COMPLETED_WITH_DIVERGENCE. `mimic_utils block` is only for a
    judge `blocked`: intrinsic **and** severe enough that the result is not a
    port of the concept.
-7. **Terminal state:** emit `[goal:complete]` only on a full-data `match`.
-   Emit `[goal:complete-with-divergence]` on a judge `accept` — a real result,
-   but not an exact match, so never report it as `[goal:complete]`. Emit
+7. **Terminal state and metrics:** after the controller reaches COMPLETED,
+   COMPLETED_WITH_DIVERGENCE, FAILED, or BLOCKED_REPRESENTATION, call
+   `conversion_metrics_finalize` with the concept. Require its write-once
+   `mimic-iv/concepts_fhir/metrics/<concept>/run_NNNN.json` result before
+   emitting a terminal marker. The tool aggregates this root session and every
+   bound resumed root plus all descendant subagents; never calculate token or
+   runtime values yourself. Emit `[goal:complete]` only on a full-data `match`.
+   On a judge `accept`, report `[goal:complete-with-divergence]`, then terminate
+   the goal extension with an adjacent `[goal:evidence] ...` / `[goal:complete]`
+   pair that explicitly names COMPLETED_WITH_DIVERGENCE. The final
+   `[goal:complete]` is only the extension lifecycle marker, not a claim of an
+   exact comparator match. Emit
    `[goal:blocked]` on a judge `blocked`, or on reaching the 10-run cap.
    Include a final evidence block stating how many full runs were consumed.
 

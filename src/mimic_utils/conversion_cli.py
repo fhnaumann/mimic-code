@@ -27,6 +27,8 @@ Commands
   carryover-record CONCEPT --stage S [--artifact-root DIR]
   carryover-invalidate CONCEPT --stage S --reason MSG [--artifact-root DIR]
   depcheck CONCEPT [--artifact-root DIR]
+  metrics-finalize CONCEPT --run N --session-id ID [--session-id ID ...]
+                  [--artifact-root DIR] [--opencode-db PATH]
   preflight [--duckdb PATH] [--no-color]
 """
 
@@ -56,6 +58,7 @@ from mimic_utils.resume import (
     CarryoverStore,
     resume_plan,
 )
+from mimic_utils.conversion_metrics import finalize_conversion_metrics
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -395,6 +398,29 @@ def _h_preflight(duckdb: Optional[str] = None, no_color: bool = False) -> _Ec:
     return code
 
 
+def _h_metrics_finalize(
+    concept: str,
+    run: int,
+    session_id: Optional[list[str]] = None,
+    artifact_root: Optional[str] = None,
+    opencode_db: Optional[str] = None,
+) -> _Ec:
+    """Finalize the terminal conversion metrics artifact."""
+    try:
+        path = finalize_conversion_metrics(
+            concept,
+            run=run,
+            session_ids=session_id or [],
+            artifact_root=artifact_root,
+            opencode_db=opencode_db,
+        )
+        print(f"Wrote conversion metrics: {path}")
+        return 0
+    except (StateError, OSError, ValueError) as exc:
+        print(f"ERROR: {exc}")
+        return 4
+
+
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
@@ -577,3 +603,21 @@ def register_commands(subparsers: _SubParsersAction) -> None:
                    help=f"DuckDB oracle path (default from ${DUCKDB_ENV_KEY}).")
     p.add_argument("--no-color", action="store_true")
     p.set_defaults(func=_h_preflight)
+
+    # --- deterministic conversion metrics ------------------------------------
+    p = subparsers.add_parser(
+        "metrics-finalize",
+        help="Write the write-once terminal conversion metrics artifact.",
+    )
+    p.add_argument("concept")
+    p.add_argument("--run", type=int, required=True, metavar="N")
+    p.add_argument(
+        "--session-id", action="append", required=True, metavar="ID",
+        help="Root OpenCode session id; repeat for resumed/root session trees.",
+    )
+    p.add_argument("--artifact-root", **ar)
+    p.add_argument(
+        "--opencode-db", default=None,
+        help="OpenCode SQLite database (default: ~/.local/share/opencode/opencode.db).",
+    )
+    p.set_defaults(func=_h_metrics_finalize)

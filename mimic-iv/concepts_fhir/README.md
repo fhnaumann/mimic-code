@@ -15,6 +15,7 @@ concepts_fhir/
     oracle_manifest.full.json       # per-concept row count, columns, key, hash
     submit_build_oracle.slurm
   state/<concept>/state.json
+  metrics/<concept>/run_NNNN.json      # write-once conversion usage/outcome metrics
   concepts/<category>/<concept>/attempt_NNNN/
     ViewDefinition*.json
     concept.sql

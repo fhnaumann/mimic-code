@@ -78,3 +78,6 @@ target/
 
 # PyCharm / JetBrains
 .idea
+
+# Local OpenCode conversion metric bindings and run state
+.opencode/conversion-metrics/

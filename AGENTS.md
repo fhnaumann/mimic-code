@@ -236,6 +236,29 @@ attempt subdirectory. State is managed by the `ConversionController` via
 CLI commands. In an unactivated shell, prefix every command with `uv run`, for
 example `uv run mimic_utils status`.
 
+## Conversion metrics
+
+Run conversions as exactly `/goal <concept>` in a fresh dedicated OpenCode
+session. A resumed conversion may attach another fresh root session, but a
+finalized session is never reused for another run or concept. The local
+`.opencode/plugins/conversion-metrics.ts` binding state is gitignored.
+
+The LLM does not calculate metrics. On every terminal outcome — COMPLETED,
+COMPLETED_WITH_DIVERGENCE, FAILED, or BLOCKED_REPRESENTATION — the orchestrator
+calls `conversion_metrics_finalize` before its terminal marker. The tool reads
+OpenCode SQLite, controller state and immutable attempt artifacts, then writes
+the canonical write-once result to
+`mimic-iv/concepts_fhir/metrics/<concept>/run_NNNN.json`. It includes all bound
+root sessions and descendant subagents; human idle time is excluded and every
+submitted HPC job contributes a flat 300 seconds in place of polling/runtime.
+
+The one judgment-backed metric is semantic rework. When a diagnosis sends an
+executing but semantically wrong port to another attempt, transition with
+`mimic_utils fail <concept> --counter semantic --error "..."`. Do not use that
+counter for invalid SQL/ViewDefinitions, wrong shape, environment, transfer,
+queue or tool failures. The finalizer preserves the raw counter and derives
+semantic rework after removing any terminal semantic transition.
+
 ---
 
 ## Artifact layout
@@ -249,6 +272,7 @@ and its CLI (`mimic_utils init|start|validate-demo|...`). The canonical paths:
   concepts/<category>/<concept>/attempt_NNNN/   # immutable attempt dirs
   carryover/<concept>/<stage>.md                # mutable, reused across attempts
   carryover/<concept>/carryover.json            # freshness ledger
+  metrics/<concept>/run_NNNN.json               # write-once conversion metrics
   MIMIC_NOTES.md                                # curated, read-only to a loop
   MIMIC_NOTES.d/<concept>.md                    # append-only findings fragment
 ```
@@ -484,9 +508,12 @@ full-data verdict.
   `/goal`. The orchestrator never starts the next concept without an explicit
   new `/goal`. Parallel subagent execution is prohibited unless the user
   explicitly requests it in the goal text.
-- **Terminal markers.** At goal completion, the orchestrator must emit a
-  final evidence block and signal the terminal state: `[goal:complete]` on
-  success or `[goal:blocked]` on a representability exception.
+- **Terminal markers.** At exact completion, end with adjacent
+  `[goal:evidence] <verified summary>` and `[goal:complete]` lines. For
+  COMPLETED_WITH_DIVERGENCE, first emit `[goal:complete-with-divergence]`, then
+  the same adjacent evidence/completion pair with the divergent state named
+  explicitly; `[goal:complete]` terminates the extension and does not relabel
+  the comparator result. Emit `[goal:blocked]` on a representability exception.
 
 ---
 
