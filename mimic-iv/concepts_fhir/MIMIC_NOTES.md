@@ -1,18 +1,21 @@
 # MIMIC_NOTES.md — cross-concept knowledge about the MIMIC-on-FHIR data
 
 Dataset/IG-level quirks that hold regardless of which concept is being ported.
-Read this **before** probing the IG or authoring a ViewDefinition or SQL. When you discover a new quirk, check for an existing
-entry and update it rather than duplicating; concept-specific findings belong
-in that attempt's `evidence/<stage>.md` instead.
+Read this **before** probing the IG or authoring a ViewDefinition or SQL.
+Concept-specific findings belong in that attempt's `evidence/<stage>.md`
+instead.
 
 Entry format: short claim · affected resource/field · one line on how it was
 verified (so a future agent can trust-but-recheck cheaply).
 
-**This file is mutable and shared — it is the one document outside the
-write-once attempt regime.** Attempt artifacts are immutable; this is not. Edit
-it in place: update an existing entry when you sharpen or contradict it, append
-a new `##` section when the quirk is genuinely new. Never rewrite an entry to
-erase what it used to say without saying why in the verified line.
+**This file is READ-ONLY for a running loop.** Do not edit it — not to add an
+entry, not to sharpen one. Write your findings to
+`MIMIC_NOTES.d/<concept>.md`, the append-only fragment your `/goal` owns, in
+this same entry format; the protocol is in `MIMIC_NOTES.d/README.md`. Several
+goals run at once as a wave, and five loops editing one markdown file in place
+lose each other's writes. A human merges the fragments back into this file
+between waves, which is also what makes an entry here mean "checked", against a
+fragment's "one loop currently believes".
 
 ## Provenance of the verification lines
 
@@ -27,6 +30,12 @@ the trail stays followable from here.
 
 The two files have since diverged and are **not** kept in sync automatically. If
 a quirk you find is dataset-wide, it is worth carrying back there by hand.
+
+There is a third tier, below both: `MIMIC_NOTES.d/<concept>.md`. Those
+fragments are one loop's live hypotheses, written mid-run and not yet merged
+here. An entry in *this* file has survived a full run and a human's read; a
+fragment has not. Verify a fragment against served data before acting on it,
+and never cite one as evidence for a verdict.
 
 ---
 

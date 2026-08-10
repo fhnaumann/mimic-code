@@ -1,0 +1,3 @@
+Concept: coagulation, attempt_0002.
+
+Reused the recorded source and FHIR carryover from attempt_0001. Created the four matching ViewDefinitions and `concept.sql` with the same exact lab system/codes, numeric/comparator filters, identifier spines, left Encounter join, specimen grouping, independent MAX pivots, and explicit ten-column casts. Fixed the prior demo failure by removing the malformed datetime formatter fallback and using `TRY_CAST(effective_text AS TIMESTAMP_NTZ)`; no offset-aware parsing was added. No unrepresentable declaration is needed and no new notes-fragment entry was appended.

@@ -1,82 +1,95 @@
 ---
 name: pathling-sql
-description: Provision FHIR ViewDefinitions and sql-view Libraries on Pathling and execute derived SQL via $sqlquery-run — the proven pattern from orchestration-new/scripts/sofa_provisioning. Register ViewDefinition via PUT, register Library with relatedArtifact labels, execute through Pathling client's sqlquery_run_sync(). Trigger phrases include "provision view", "register ViewDefinition", "pathling SQL", "sqlquery-run".
+description: How a FHIR ViewDefinition and the concept.sql that selects from it are structured and authored for embedded Pathling on Spark, including the label-is-the-table-name invariant and the Spark SQL dialect notes the MIMIC-on-FHIR warehouse requires. Trigger phrases include "register ViewDefinition", "pathling SQL", "concept.sql", "ViewDefinition label", "Spark SQL dialect".
 ---
 
 # pathling-sql
 
-Registering FHIR ViewDefinitions, registering sql-view Libraries with
-`relatedArtifact` labels referencing the ViewDefinition, and executing
-derived SQL through Pathling's `$sqlquery-run` endpoint.
+How ViewDefinitions and their `concept.sql` are structured and authored for the
+concept-port loop.
 
-The canonical provisioning flow is demonstrated in
-`../master_thesis_pipeline/orchestration-new/scripts/sofa_provisioning/register_patient_sofa.py`.
-This is the **only** approved pattern — there is no `$aggregate` or `$sql`
-flow for concept ports.
+Pair this with `mimic-iv/concepts_fhir/MIMIC_NOTES.md`, which records the
+data-side quirks the SQL has to absorb — most notably that FHIR datetimes are
+ISO-8601 strings Spark's default parser rejects, so every time computation needs
+an explicit format string. New dataset-wide findings are appended to this
+concept's own `mimic-iv/concepts_fhir/MIMIC_NOTES.d/<concept>.md`, never to
+`MIMIC_NOTES.md`, which is read-only while a loop is running.
 
-## Proven provisioning flow
+## One engine: embedded Pathling on Spark
 
-### 1. Register ViewDefinition
+Both legs — `mimic_utils run-demo` locally and `run-full` on the HPC — run
+**embedded Pathling on Spark** over a Delta warehouse. There is no FHIR server
+anywhere in the loop, no HTTP provisioning flow, and no `$sqlquery-run`. The
+full leg has no choice (compute nodes have no FHIR server), and a second local
+path would only mean the Spark leg's first real execution happened on the HPC.
 
-```python
-client.put_definitional(
-    resource_type="ViewDefinition",
-    resource_id="<vd-id>",
-    resource_body=viewdefinition_dict,
-)
+If you find a document describing `PUT ViewDefinition` + a `sql-view` Library +
+`$sqlquery-run`, or a `--engine server` flag, it is stale. The server was
+removed rather than demoted: it served different data from the Delta warehouse,
+so a disagreement between it and Spark could never tell "Spark bug" apart from
+"different dataset".
+
+**The invariant that matters is the label.** The ViewDefinition's filename label
+*is* the SQL table name, bound through `createOrReplaceTempView(label)`, and it
+must equal the ViewDefinition's own `name` — the runner rejects the attempt
+otherwise. Get it wrong and `concept.sql` selects from a table that was never
+registered.
+
+## Attempt artifacts
+
+An attempt directory holds exactly two hand-authored things:
+
+```
+ViewDefinition.<label>.json    one or more; <label> is the SQL table name
+concept.sql                    Spark SQL selecting from those labels
 ```
 
-The ViewDefinition JSON uses the `select[].column[].{path, name}` format
-with optional `forEach`/`forEachOrNull` — see `fhir-mapping` skill for the
-exact structure.
+The ViewDefinition JSON uses the `select[].column[].{path, name}` format with
+optional `forEach`/`forEachOrNull` — see the `fhir-mapping` skill for the exact
+structure, and
+`../master_thesis_pipeline/orchestration-new/scripts/sofa_provisioning/v_observation.viewdefinition.json`
+for a canonical example.
 
-### 2. Register sql-view Library
+The runner writes `candidate.demo.parquet` from the resulting Spark DataFrame.
+Parquet, not text, because Parquet carries the Spark schema: a column emitted as
+`CAST(NULL AS SMALLINT)` reaches the shape gate as `SMALLINT`, where through
+NDJSON it would infer as `JSON` and fail. This means a type mismatch reported by
+the gate is a real one — write your `CAST`s to match the manifest's types
+deliberately rather than assuming a serialisation artifact will be forgiven.
 
-```python
-import base64
+## Cast every output column from the manifest
 
-sql_bytes = sql_text.encode("utf-8")
-encoded = base64.b64encode(sql_bytes).decode("ascii")
+A ViewDefinition hands SQL almost everything as a Spark **STRING** — identifiers,
+dates, numbers alike. The manifest
+(`mimic-iv/concepts_fhir/oracle/oracle_manifest.full.json`, per concept, under
+`columns`) declares what each output column must be. Those two facts do not meet
+by themselves.
 
-library_body = {
-    "resourceType": "Library",
-    "status": "active",
-    "url": "<library_url>",
-    "type": {
-        "coding": [{
-            "system": "http://terminology.hl7.org/CodeSystem/library-type",
-            "code": "sql-view"
-        }]
-    },
-    "content": [{
-        "contentType": "application/sql",
-        "data": encoded
-    }],
-    "relatedArtifact": [{
-        "type": "depends-on",
-        "label": "<view_definition_label>",
-        "resource": "<view_definition_url>"
-    }]
-}
+**Read the manifest entry before writing the final `SELECT`, and give every
+column in it an explicit `CAST` to its declared type.** Not the ones that look
+risky — every one. This costs a line each and removes the entire class of
+shape-gate failure:
 
-client.put_definitional(
-    resource_type="Library",
-    resource_id="<library-id>",
-    resource_body=library_body,
-)
+```sql
+SELECT
+    CAST(p.subject_id_str AS INTEGER)                 AS subject_id,   -- manifest: INTEGER
+    CAST(e.hadm_id_str    AS INTEGER)                 AS hadm_id,      -- manifest: INTEGER
+    CAST(e.period_start   AS TIMESTAMP_NTZ)           AS admittime,    -- manifest: TIMESTAMP
+    CAST(NULL             AS SMALLINT)                AS anchor_age,   -- manifest: SMALLINT
+    CAST(v.value          AS DOUBLE)                  AS valuenum      -- manifest: DOUBLE
+FROM ...
 ```
 
-### 3. Execute SQL
+The gate allows numeric widening (`INTEGER` where the manifest says `BIGINT` is
+fine) and date/datetime interchange. It does **not** forgive string-vs-number:
+`VARCHAR` against a declared `INTEGER` is a `shape_fail`, and it is the single
+most common one. If a column reaches the gate as `VARCHAR` and the manifest says
+otherwise, the cast is missing — that diagnosis needs no probing.
 
-```python
-vd_dep = [{"label": "<vd_label>", "resource": "<vd_url>"}]
-lib_dep = [{"label": "<lib_label>", "resource": "<lib_url>"}]
-
-columns, rows = client.sqlquery_run_sync("SELECT count(*) AS n FROM <lib_label>", lib_dep)
-```
-
-The Pathling client adapter lives in
-`../master_thesis_pipeline/orchestration-new/src/services/pathling_client.py`.
+Identifier columns have a second failure mode stacked on the cast: `subject_id`,
+`hadm_id`, `stay_id` must come from `identifier.value`, not `getResourceKey()`,
+or the cast is applied to a UUID. See "Identifier spine" in the `fhir-mapping`
+skill and the identifier entry in `MIMIC_NOTES.md`.
 
 ## SQL authoring patterns
 
@@ -136,29 +149,33 @@ WHERE
   `MIMIC_NOTES.md` — safer than `to_timestamp`, which throws on null/malformed).
 - `CAST(value AS DOUBLE)` for FHIR Quantity values.
 - `DATE_TRUNC('DAY', ts)` for day-level bucketing.
-- Check `../master_thesis_pipeline/paper_reproductions/MIMIC_NOTES.md` for
-  dataset-specific quirks (datetime parsing, code system flatness, etc.).
+- Pass the **explicit format** either way —
+  `TRY_TO_TIMESTAMP(col, "yyyy-MM-dd'T'HH:mm:ssXXX")`. The offset-bearing
+  ISO-8601 strings this warehouse serves do not parse under the default.
+- Check `mimic-iv/concepts_fhir/MIMIC_NOTES.md` and the `MIMIC_NOTES.d/`
+  fragments for dataset-specific quirks (datetime parsing, code system
+  flatness, etc.); append new ones to your own fragment. Fragments are other
+  loops' unconfirmed hypotheses — verify before relying on one.
 
 ## Output requirements
 
-The final `concept.sql` must be self-contained within the sql-view Library
-— it references the registered ViewDefinition but must produce the output
-table shape matching the original concept exactly (same column names, types,
-row count).
+`concept.sql` must be self-contained: it selects only from the registered
+ViewDefinition labels, and must produce the column **names and types** the
+oracle manifest declares for the concept. Row count is deliberately not part of
+this — MIMIC-on-FHIR does not carry everything relational MIMIC-IV carries, so a
+faithful port can legitimately return fewer rows, and neither gate treats a
+count difference as a failure on its own.
 
-## Pathling configuration
+Where the manifest declares a column MIMIC-on-FHIR cannot populate, emit it
+explicitly as `CAST(NULL AS <type>)` rather than omitting it. The shape is part
+of the contract, and Parquet carries the declared type through to the gate. If
+the column is not merely unpopulated but genuinely *unrepresentable*, declare it
+in the attempt's `unrepresentable.json` — the full comparator verifies every
+declared column really is 100% NULL, and a declared column holding values is a
+blocking failure.
 
-The Pathling server config lives in
-`../master_thesis_pipeline/orchestration-new/config/pathling_config.yaml`:
+## Warehouse configuration
 
-```yaml
-active_environment: dev
-environments:
-  dev:
-    base_url: http://localhost:8080/fhir/
-  prod:
-    base_url: https://pathling.dw.csiro.au/fhir/
-    # ... OAuth config ...
-```
-
-The default dev environment targets a local Docker Pathling container.
+The Delta warehouse path comes from `MIMIC_FHIR_WAREHOUSE`, or `--warehouse`.
+The demo runner falls back to a laptop default; the full runner deliberately has
+none, so demo data can never decide a correctness verdict.

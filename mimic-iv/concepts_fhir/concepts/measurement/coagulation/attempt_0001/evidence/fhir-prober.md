@@ -1,0 +1,7 @@
+Concept: coagulation
+
+The prober used embedded Pathling 9.6.0/Spark 4.0.2 over the authoritative demo Delta warehouse and read-only DuckDB over the demo oracle; it did not use HTTP Pathling or raw NDJSON. It mapped labevents Observations using the exact lab coding system `http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-d-labitems` and codes 51196, 51214, 51297, 51237, 51274, and 51275. Quantity values come from `(value).ofType(Quantity).value` and materialize as strings requiring a DOUBLE cast. Effective dateTime requires `TIMESTAMP_NTZ`. Subject and specimen IDs come from Patient/Specimen identifier.value, not UUID resource keys; hospital Encounter identifiers are optional and must be left-joined for nullable hadm_id.
+
+The target is ten columns keyed by specimen_id. The demo probe found 4,577 eligible numeric Observation rows, 1,630 grouped specimens, and exact agreement with the grouped DuckDB source on identifiers and all six analytes; one charttime differed due to the known DST-gap ETL rewrite. Text-only rows are excluded because the source requires valuenum IS NOT NULL. Carryover was written and recorded at `mimic-iv/concepts_fhir/carryover/coagulation/fhir-prober.md`.
+
+The prober appended a dataset-wide provisional note to `mimic-iv/concepts_fhir/MIMIC_NOTES.d/coagulation.md`: comparator text can synthesize FHIR Quantity values when relational valuenum is NULL, so comparator-bearing values and valueString fallbacks must not enter numeric source ports. No curated MIMIC_NOTES.md file was modified.

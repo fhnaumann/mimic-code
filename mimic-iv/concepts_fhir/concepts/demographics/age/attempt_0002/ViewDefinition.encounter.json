@@ -1,0 +1,21 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/age-0002-encounter",
+  "name": "encounter",
+  "resource": "Encounter",
+  "select": [
+    {
+      "column": [
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
+        { "path": "period.start", "name": "admittime" }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-hosp')",
+      "column": [
+        { "path": "value", "name": "hadm_id_str" }
+      ]
+    }
+  ]
+}

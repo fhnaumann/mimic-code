@@ -1,0 +1,26 @@
+{
+  "note": "No ConceptMap is used in production translation for bg: no ConceptMap on Velonto has the served lab/chart Observation code systems (mimic-d-labitems, mimic-chartevents-d-items) as a source. The single ConceptMap below was used only in $translate probes establishing that negative finding, and is hashed per preflight policy so the evidence is reproducible.",
+  "conceptmaps": {
+    "http://fhnaumann.github.io/mimic-profiles/fhir/ConceptMap/mimic-observation-merged-to-standard": {
+      "version": "1.0.0",
+      "date": "2026-08-05",
+      "status": "active",
+      "sha256_full_fhir_json": "11332d7e098937fc07325ebc105c56b03fef3c145ecd0fc504368aefaa9273c4",
+      "snapshot": "mimic-observation-merged-to-standard.fhir.json"
+    }
+  },
+  "codesystems_queried_flat_only": {
+    "http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-d-labitems": {
+      "version": "1.4.1-csiro",
+      "date": "2022-09-21T13:59:43-04:00",
+      "status": "draft",
+      "content": "complete"
+    },
+    "http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items": {
+      "version": "1.4.1-csiro",
+      "date": "2022-09-21T13:59:43-04:00",
+      "status": "draft",
+      "content": "complete"
+    }
+  }
+}

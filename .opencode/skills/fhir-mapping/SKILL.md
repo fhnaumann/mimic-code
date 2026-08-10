@@ -9,11 +9,27 @@ Mapping MIMIC-IV source tables and columns to MIMIC-on-FHIR resource paths
 and authoring FHIR ViewDefinitions using the canonical format from
 `../master_thesis_pipeline/orchestration-new/scripts/sofa_provisioning/`.
 
+**Read `mimic-iv/concepts_fhir/MIMIC_NOTES.md` before mapping anything.** It
+records how the served warehouse actually behaves where the StructureDefinition
+does not tell you — choice-type fields that split across datatypes row by row
+(project one aliased column per variant and COALESCE in the SQL), categorical
+values stored as `value.ofType(string)`, codings with a null `display` and the
+readable name in `code`, ICU stays identified by `Encounter.identifier.system`
+rather than `class`, and elements that are never populated at all. Read the
+`mimic-iv/concepts_fhir/MIMIC_NOTES.d/` fragments with it, treating each as
+another loop's unconfirmed lead rather than a fact.
+
+When you establish a new dataset-wide quirk, **append** it to this concept's
+`MIMIC_NOTES.d/<concept>.md`, keeping the `##` claim / `- Affected:` /
+`- Verified:` format so the human's merge is a copy. `MIMIC_NOTES.md` is
+read-only while a loop is running; attempt artifacts are immutable.
+
 ## ViewDefinition format (authoritative)
 
 The `scripts/sofa_provisioning/v_observation.viewdefinition.json` is the
-canonical reference. Every concept port ViewDefinition MUST follow this
-exact structural pattern:
+canonical reference, and the block below is a verbatim copy of it. Every
+concept port ViewDefinition MUST follow this exact structural pattern. If the
+two ever disagree, the file wins — re-read it rather than trusting this copy.
 
 ```json
 {
@@ -25,9 +41,9 @@ exact structural pattern:
   "select": [
     {
       "column": [
-        { "path": "getResourceKey()", "name": "<resource>_fhir_id" },
-        { "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_fhir_id" },
-        { "path": "subject.getReferenceKey(Patient)", "name": "patient_fhir_id" },
+        { "path": "getResourceKey()", "name": "observation_id" },
+        { "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_id" },
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_id" },
         { "path": "(value).ofType(Quantity).value", "name": "value" },
         { "path": "(value).ofType(Quantity).unit", "name": "unit" },
         { "path": "(effective).ofType(dateTime)", "name": "effective_datetime" }
@@ -55,34 +71,36 @@ Key format rules:
   shape is hallucinated.
 - `forEach`/`forEachOrNull` wraps `code.coding`, `identifier`, etc.
 
-## Proven provisioning flow (from sofa_provisioning)
+Note what the example does **not** show: `observation_id` and `patient_id` there
+are UUID keys, and it emits no `subject_id`/`hadm_id`/`stay_id` at all. Copying
+its `getResourceKey()` line into a column named `subject_id` is the standing
+mistake — see "Identifier spine" below for the columns a concept output needs.
 
-The canonical flow for executing a concept port, as demonstrated in
-`register_patient_sofa.py`:
+## How a ViewDefinition becomes a SQL table
 
-1. **PUT ViewDefinition** — register the ViewDefinition on the Pathling
-   server via `PUT ViewDefinition/<id>`.
-2. **PUT Library** — register a `Library` resource of type `sql-view` with
-   `relatedArtifact` labels referencing the registered ViewDefinition:
-   ```json
-   {
-     "resourceType": "Library",
-     "status": "active",
-     "url": "<library_url>",
-     "type": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/library-type", "code": "sql-view" }] },
-     "content": [{ "contentType": "application/sql", "data": "<base64-sql>" }],
-     "relatedArtifact": [{ "type": "depends-on", "label": "<vd_label>", "resource": "<vd_url>" }]
-   }
-   ```
-3. **Execute** — run SQL through `$sqlquery-run` or the Pathling client's
-   `sqlquery_run_sync()` with the ViewDefinition label references.
+There is no registration step to author. The runner materialises each
+`ViewDefinition.<label>.json` in the attempt directory as a Spark temp view
+named `<label>`, and `concept.sql` selects from those names directly:
 
-## FHIRPath idioms (from MIMIC_NOTES.md)
+```
+ViewDefinition.observation.json   ->   SELECT ... FROM observation
+```
 
-- **`getResourceKey()`** — for the FHIR resource key. This is not a raw MIMIC
-  identifier.
+The filename label is authoritative and must equal the ViewDefinition's own
+`name` field — the runner rejects the attempt if they disagree, because the SQL
+would otherwise select from a table that was never registered.
+
+`register_patient_sofa.py` in `sofa_provisioning/` predates this and drives a
+Pathling server over HTTP. Read its **ViewDefinition JSON** for structure;
+ignore its provisioning code.
+
+## FHIRPath idioms (see `mimic-iv/concepts_fhir/MIMIC_NOTES.md`)
+
+- **`getResourceKey()`** — the FHIR resource key, a UUID. **Never** an output
+  `subject_id`/`hadm_id`/`stay_id`; those come from `identifier.value`.
 - **`getReferenceKey(ResourceType)`** — for foreign-key references
   (e.g. `subject.getReferenceKey(Patient)`, `encounter.getReferenceKey(Encounter)`).
+  Also a UUID, and also never an output identifier column.
 - **`.ofType(X)`** — for choice-type (polymorphic) fields. Each variant
   gets its own column:
   - `(effective).ofType(dateTime)` → `effective_datetime`
@@ -91,25 +109,121 @@ The canonical flow for executing a concept port, as demonstrated in
 
 ## Identifier spine
 
-Exact comparison requires raw MIMIC identifiers, not FHIR UUIDs. Project
-these identifiers with `forEachOrNull: "identifier"`, retain both `system`
-and `value`, and select the values for the systems used by the actual data:
+**Do not author this from scratch. Copy the block below.** Nearly every concept
+needs it, it is the single most common cause of a `shape_fail`, and there is
+exactly one correct way to write it.
 
-- Patient identifier ending in `/identifier/patient` → `subject_id`.
-- Hospital Encounter identifier ending in `/identifier/encounter-hosp` →
-  `hadm_id`.
-- ICU Encounter identifier ending in `/identifier/encounter-icu` → `stay_id`.
+Two rules, and they are the whole section:
 
-Probe and record the complete identifier system URLs before relying on them.
+1. `subject_id`, `hadm_id`, `stay_id` come from **`identifier.value`**, never
+   from `getResourceKey()` / `getReferenceKey()`. Those return UUIDs
+   (`Patient/0a8eebfd-a352-…`) — they are join keys between resources and must
+   never reach the output.
+2. `identifier.value` is a **string**. The oracle manifest declares these
+   columns `INTEGER`. So the SQL always casts. A UUID and an uncast digit string
+   both arrive at the gate as `VARCHAR`, and both fail it.
+
+The systems — all four share the same `Patient`/`Encounter` tables, so every
+Encounter view must filter on `identifier.system` (unfiltered, the demo
+Encounter table is 637 rows against 275 `mimiciv_hosp.admissions`;
+`Encounter.class` does not discriminate the streams, see `MIMIC_NOTES.md`):
+
+- `http://mimic.mit.edu/fhir/mimic/identifier/patient` → `subject_id`.
+- `http://mimic.mit.edu/fhir/mimic/identifier/encounter-hosp` → `hadm_id`.
+- `http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu` → `stay_id`.
+- `http://mimic.mit.edu/fhir/mimic/identifier/encounter-ed` → an ED contact,
+  which is **neither** an admission nor an ICU stay.
+
+### The recipe
+
+`ViewDefinition.patient.json` — the UUID to join on, the id to emit:
+
+```json
+{
+  "column": [
+    { "path": "getResourceKey()", "name": "patient_key" },
+    { "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/patient').value", "name": "subject_id_str" }
+  ]
+}
+```
+
+`ViewDefinition.encounter.json` — same shape, plus the stream filter:
+
+```json
+{
+  "column": [
+    { "path": "getResourceKey()", "name": "encounter_key" },
+    { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
+    { "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-hosp').value", "name": "hadm_id_str" },
+    { "path": "period.start", "name": "period_start" }
+  ]
+}
+```
+
+`concept.sql` — join on the UUIDs, emit the cast identifiers:
+
+```sql
+SELECT
+    CAST(p.subject_id_str AS INTEGER) AS subject_id,
+    CAST(e.hadm_id_str   AS INTEGER) AS hadm_id,
+    ...
+FROM encounter e
+JOIN patient p ON e.patient_key = p.patient_key
+WHERE e.hadm_id_str IS NOT NULL       -- drops the icu/ed streams
+```
+
+The `_str` suffix and the `_key` suffix are load-bearing conventions, not
+decoration: a column named `subject_id` inside a ViewDefinition is how the wrong
+value reaches the output unnoticed. Keep FHIR-typed columns suffixed until the
+final `SELECT` casts them.
+
 An Observation's `subject.getReferenceKey(Patient)` and
-`encounter.getReferenceKey(Encounter)` are join keys into these identifier
-views; they are not themselves `subject_id`, `hadm_id`, or `stay_id`.
+`encounter.getReferenceKey(Encounter)` join into these views the same way.
+`getResourceKey()` returns a type-prefixed key (`Patient/<uuid>`) and
+`getReferenceKey(Patient)` returns the matching form, so the two join directly.
+
+Filtering on `identifier.value IS NOT NULL` selects the stream because the
+`where(system=…)` returned nothing for the other two. `forEachOrNull:
+"identifier"` with `system`/`value` columns is the alternative shape — use it
+only when you genuinely need several systems side by side, since it multiplies
+rows per identifier and then needs a pivot.
+
+## Coded filters: constrain inside the `forEach`
+
+A concept's codes are the literals its source SQL names, confirmed against the
+data by `fhir-prober`. Nothing translates them — `Observation.code.coding.code`
+is a verbatim `CAST(itemid AS TEXT)`, so `CAST(code AS INTEGER)` is the whole
+mapping (see `MIMIC_NOTES.md`).
+
+Constrain the coding **inside** the `forEach`, not after it:
+
+```json
+{
+  "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-d-labitems')",
+  "column": [
+    { "path": "code", "name": "item_code" },
+    { "path": "system", "name": "code_system" }
+  ]
+}
+```
+
+A bare `forEach: "code.coding"` emits one row per coding. That is currently
+harmless because every lab and chart Observation carries exactly one coding —
+but the ratio is a property of the warehouse, not of FHIR, and a data
+preparation that adds a second coding would double every row feeding a
+`full_tuple_multiset` comparison, with nothing in the diff pointing at the
+cause. The `where()` form costs nothing and is correct either way.
+
+Discriminate on `system` + exact code. **Never on `meta.profile`** — the merged
+data preparation collapses profile values across the Observation sub-profiles,
+so a profile that separates streams in one warehouse variant does not in
+another.
 
 ## MIMIC source-table → FHIR resource mapping
 
 | MIMIC Table (Schema) | Likely FHIR Resource | Required Probe |
 |---|---|---|
-| `admissions` (hosp) | `Encounter` | id, subject, period, class |
+| `admissions` (hosp) | `Encounter` (`identifier.system` = `…/encounter-hosp`) | id, subject, period, identifier.system |
 | `patients` (hosp) | `Patient` | id, birthDate, gender |
 | `diagnoses_icd` (hosp) | `Condition` | id, subject, encounter, code, recordedDate |
 | `labevents` (hosp) | `Observation` | id, subject, encounter, code, value, effective |
@@ -119,18 +233,45 @@ views; they are not themselves `subject_id`, `hadm_id`, or `stay_id`.
 | `inputevents` (icu) | `MedicationAdministration` | id, subject, encounter, medication, effective |
 | `outputevents` (icu) | `Observation` | id, subject, encounter, code, value, effective |
 | `procedureevents` (icu) | `Procedure` | id, subject, encounter, code, performed |
-| `icustays` (icu) | `Encounter` | id, subject, period, class |
+| `icustays` (icu) | `Encounter` (`identifier.system` = `…/encounter-icu`) | id, subject, period, identifier.system |
 
-## IG probing
+## Probing
 
-To probe the live IG for field definitions:
+**Probe the Delta warehouse, not the live server.** Both legs of the loop run
+embedded Pathling on Spark over Delta, so that warehouse is the source of
+truth. The prod server holds different data (its `Observation` resources carry
+the merged profile — see `MIMIC_NOTES.md`) and, more practically, every
+resource read on it returns `401`; only `/metadata` is open. Do not spend a
+turn on it.
+
+The probe route, which needs no credentials and no network:
+
+```python
+import json, os
+os.environ.setdefault("PYSPARK_SUBMIT_ARGS",
+                      "--driver-memory 4g --conf spark.ui.enabled=false pyspark-shell")
+from pathling import PathlingContext
+
+ctx = PathlingContext.create()
+ctx.spark.sparkContext.setLogLevel("ERROR")
+src = ctx.read.delta(os.environ["MIMIC_FHIR_WAREHOUSE"])
+
+# (a) what fields exist: the encoded Spark schema is the real StructureDefinition
+for f in src.read("Encounter").schema.fields:
+    print(f.name, "::", str(f.dataType)[:100])
+
+# (b) what is actually populated: materialise a ViewDefinition and count
+src.view(json=json.dumps(view_definition)).createOrReplaceTempView("v_probe")
+ctx.spark.sql("SELECT count(*), count(<col>) FROM v_probe").show()
 ```
-GET <pathling_base>/fhir/StructureDefinition/<resource_type>
-```
 
-The StructureDefinition's `snapshot.element` array contains every field
-with its path, type, cardinality, and binding. Local FHIR JSON snapshots
-from `../master_thesis_pipeline/orchestration-new/` provide cached IG data
-for offline resolution. Treat the table above as a starting hypothesis;
-confirm the populated resource type, profile, coding system, identifiers,
-choice variants, and units against the actual MIMIC-on-FHIR 2.1 data.
+`src.read("<ResourceType>").schema` answers cardinality/choice-variant
+questions faster than a StructureDefinition would, and it describes the data
+that will actually be queried. Note that extensions do **not** appear as an
+`extension` column — see the extensions entry in `MIMIC_NOTES.md`.
+
+Treat the table above as a starting hypothesis; confirm the populated resource
+type, profile, coding system, identifiers, choice variants, and units against
+the warehouse. Where a mapping's correctness is checkable against the DuckDB
+oracle (`MIMIC_DUCKDB_PATH`), check it — a mapping that looks right in the
+schema can still disagree with the oracle row for row.

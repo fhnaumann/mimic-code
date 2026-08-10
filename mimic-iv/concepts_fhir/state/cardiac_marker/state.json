@@ -1,0 +1,16 @@
+{
+  "attempt": 2,
+  "category": "measurement",
+  "completed_at": "2026-08-10T05:04:09.605218+00:00",
+  "concept_name": "cardiac_marker",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Full-data cardiac_marker attempt_0002 reproduces 295,228/295,246 rows exactly. The remaining 18 keyed conflicts affect only charttime and are uniformly +1 hour. Upstream mimic-fhir/sql/fhir_observation_labevents.sql:15 casts source charttime through TIMESTAMPTZ and line 121 writes the transformed value to Observation.effectiveDateTime. fhir_specimen_lab.sql:9,18,58 transforms the same value identically, while Observation.issued contains storetime. DST-gap normalization is non-injective, so the original 02:xx wall time is unrecoverable from FHIR without corrupting genuine 03:xx values. All defensible mappings were exhausted; accept as intrinsic transformation loss.",
+  "engineering_counter": 3,
+  "error_message": null,
+  "hpc_counter": 1,
+  "semantic_counter": 1,
+  "started_at": "2026-08-10T04:44:19.182811+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-10T05:04:09.605650+00:00"
+}

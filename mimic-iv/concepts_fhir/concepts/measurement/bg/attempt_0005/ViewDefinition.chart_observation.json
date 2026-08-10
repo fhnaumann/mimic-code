@@ -1,0 +1,26 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/bg-0005-chart_observation",
+  "name": "chart_observation",
+  "resource": "Observation",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "observation_key" },
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
+        { "path": "(effective).ofType(dateTime)", "name": "effective_datetime" },
+        { "path": "(effective).ofType(Period).start", "name": "effective_period_start" },
+        { "path": "(value).ofType(Quantity).value", "name": "quantity_value" },
+        { "path": "(value).ofType(string)", "name": "value_string" }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items')",
+      "column": [
+        { "path": "code", "name": "code" },
+        { "path": "system", "name": "system" }
+      ]
+    }
+  ]
+}

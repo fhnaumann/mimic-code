@@ -2,11 +2,17 @@
   "format_version": 2,
   "execution": {
     "one_concept_per_goal": true,
-    "parallel_by_default": false,
+    "parallel_subagents_within_goal": false,
+    "parallel_goals": "human_composed_waves",
     "demo_gate": "shape_only",
     "demo_zero_rows": "unsure",
-    "require_full_match": true,
-    "max_full_runs_per_concept": 10
+    "max_full_runs_per_concept": 10,
+    "full_row_count_gated": false,
+    "full_verdicts": ["match", "mismatch", "review"],
+    "full_review_tiers": ["gap_shaped", "contested"],
+    "full_divergence_classes_defined_in": "src/mimic_utils/compare_port_results.py",
+    "divergence_floor": null,
+    "judge_decides": "review"
   },
   "source": {
     "dataset": "MIMIC-IV",
@@ -22,14 +28,11 @@
   "target": {
     "dataset": "MIMIC-on-FHIR",
     "version": "2.1",
-    "demo_fhir_base_url_env": "PATHLING_FHIR_BASE_URL",
-    "demo_fhir_base_url_default": "http://localhost:8080/fhir/",
+    "engine": "pathling-embedded-spark",
+    "demo_warehouse_env": "MIMIC_FHIR_WAREHOUSE",
+    "demo_warehouse_default": "/Users/nau025/warehouses/mimic-iv-demo/delta",
     "full_warehouse_path": "/scratch3/nau025/mimic-on-fhir-delta/spark_warehouse",
-    "pathling_config": "../../../master_thesis_pipeline/orchestration-new/config/pathling_config.yaml"
-  },
-  "terminology": {
-    "base_url": "https://velonto.dw.csiro.au/fhir",
-    "accept_relationships_except": ["unmatched"],
-    "snapshot_resources": true
+    "full_oracle_env": "MIMIC_FULL_ORACLE",
+    "candidate_format": "parquet"
   }
 }

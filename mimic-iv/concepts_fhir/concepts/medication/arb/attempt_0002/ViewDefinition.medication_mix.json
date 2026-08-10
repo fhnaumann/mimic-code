@@ -1,0 +1,20 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/arb-0002-medication_mix",
+  "name": "medication_mix",
+  "resource": "Medication",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "mix_key" }
+      ]
+    },
+    {
+      "forEach": "ingredient",
+      "column": [
+        { "path": "itemReference.getReferenceKey(Medication)", "name": "ingredient_medication_key" }
+      ]
+    }
+  ]
+}

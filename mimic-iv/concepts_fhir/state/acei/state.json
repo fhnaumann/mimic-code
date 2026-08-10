@@ -1,0 +1,15 @@
+{
+  "attempt": 4,
+  "category": "medication",
+  "completed_at": "2026-08-08T05:26:38.080052+00:00",
+  "concept_name": "acei",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Attempt 0004 accepted: exact schema and 112,014-row count; the unkeyed 9,073 only_candidate/9,073 only_oracle substitutions are exactly 9,059 invalid or incomplete intervals omitted by mimic-fhir/sql/fhir_medication_request.sql:172-177 plus 14 DST-gap endpoints irreversibly normalized by lines 43-44. MedicationRequest.dispenseRequest.validityPeriod.start/end therefore cannot recover the oracle times; authoredOn is pharmacy entertime, not a substitute. The prior medication-mix omission was corrected through ingredient.itemReference with exact multiplicity. No divergent dependencies.",
+  "engineering_counter": 6,
+  "error_message": null,
+  "hpc_counter": 2,
+  "semantic_counter": 1,
+  "started_at": "2026-08-08T02:17:46.994350+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE"
+}

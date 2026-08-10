@@ -1,0 +1,403 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/medication/acei/attempt_0004/candidate.full.parquet/*.parquet",
+  "comparison": "full_tuple_multiset",
+  "concept": "acei",
+  "dataset": "full",
+  "diagnostics": [
+    "CONTESTED \u2014 a value conflict. Either a port bug or upstream ETL transformation loss; the data cannot tell you which:",
+    "  9,073 \u00d7 only_candidate (8.100% of oracle rows) \u2014 rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise",
+    "  bar for an accept: A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "GAP-SHAPED \u2014 consistent with a MIMIC-on-FHIR coverage gap:",
+    "  9,073 \u00d7 only_oracle \u2014 oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes",
+    "note: No unique key for this concept: divergence classes cannot be separated. The judge is reasoning with strictly less evidence than a keyed concept would provide."
+  ],
+  "diff": {
+    "classification": "unavailable_no_key",
+    "differing": null,
+    "differing_conflict": null,
+    "differing_null_only": null,
+    "identical": null,
+    "key": null,
+    "only_candidate": 9073,
+    "only_oracle": 9073,
+    "samples": {
+      "only_candidate": [
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 23031835,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 18668691
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 24822520,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 18681822
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 29295856,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 18705722
+        },
+        {
+          "acei": "Captopril",
+          "hadm_id": 25416668,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 18751711
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 25416668,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 18751711
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 22387777,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 18767957
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 25500442,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 18778581
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 21780718,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 18779399
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 24149581,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 18804195
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 26162137,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 18813680
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 26162137,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 18813680
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 29291211,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 18852313
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 27777887,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 18907406
+        },
+        {
+          "acei": "Enalapril Maleate",
+          "hadm_id": 21939183,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 18907714
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 29801072,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 18910662
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 28356330,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 18937411
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 28356330,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 18937411
+        },
+        {
+          "acei": "Captopril",
+          "hadm_id": 22080836,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 18975819
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 20541212,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 18981374
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 24445999,
+          "starttime": null,
+          "stoptime": null,
+          "subject_id": 19018059
+        }
+      ],
+      "only_oracle": [
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 25286697,
+          "starttime": "2166-04-12T20:00:00",
+          "stoptime": "2166-04-12T18:00:00",
+          "subject_id": 16068179
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 27698147,
+          "starttime": "2153-01-28T08:00:00",
+          "stoptime": "2153-01-27T17:00:00",
+          "subject_id": 16084719
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 21953271,
+          "starttime": "2138-02-13T20:00:00",
+          "stoptime": "2138-02-13T19:00:00",
+          "subject_id": 16095488
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 21866742,
+          "starttime": "2171-12-18T08:00:00",
+          "stoptime": "2171-12-17T15:00:00",
+          "subject_id": 16174132
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 26646834,
+          "starttime": "2172-11-27T06:00:00",
+          "stoptime": "2172-11-27T05:00:00",
+          "subject_id": 16174132
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 26915801,
+          "starttime": "2173-05-14T05:00:00",
+          "stoptime": "2173-05-14T04:00:00",
+          "subject_id": 16185783
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 26999650,
+          "starttime": "2177-02-16T08:00:00",
+          "stoptime": "2177-02-16T00:00:00",
+          "subject_id": 16202769
+        },
+        {
+          "acei": "Captopril",
+          "hadm_id": 25202993,
+          "starttime": "2134-04-09T14:00:00",
+          "stoptime": "2134-04-09T12:00:00",
+          "subject_id": 16269232
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 21178626,
+          "starttime": "2174-03-08T08:00:00",
+          "stoptime": "2174-03-07T18:00:00",
+          "subject_id": 16269879
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 20733381,
+          "starttime": "2154-03-31T08:00:00",
+          "stoptime": "2154-03-30T13:00:00",
+          "subject_id": 16296020
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 20022678,
+          "starttime": "2171-11-14T08:00:00",
+          "stoptime": "2171-11-14T00:00:00",
+          "subject_id": 16326503
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 24478063,
+          "starttime": "2135-09-15T10:00:00",
+          "stoptime": "2135-09-15T09:00:00",
+          "subject_id": 16339096
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 20634172,
+          "starttime": "2152-01-24T08:00:00",
+          "stoptime": "2152-01-23T15:00:00",
+          "subject_id": 16359268
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 21892801,
+          "starttime": "2144-07-08T08:00:00",
+          "stoptime": "2144-07-07T23:00:00",
+          "subject_id": 16381302
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 24863031,
+          "starttime": "2177-07-10T08:00:00",
+          "stoptime": "2177-07-09T20:00:00",
+          "subject_id": 16393147
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 23269430,
+          "starttime": "2116-10-28T08:00:00",
+          "stoptime": "2116-10-27T17:00:00",
+          "subject_id": 16426569
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 28532579,
+          "starttime": "2171-03-03T08:00:00",
+          "stoptime": "2171-03-02T21:00:00",
+          "subject_id": 16427266
+        },
+        {
+          "acei": "Captopril",
+          "hadm_id": 23720995,
+          "starttime": "2155-07-15T08:00:00",
+          "stoptime": "2155-07-15T07:00:00",
+          "subject_id": 16435424
+        },
+        {
+          "acei": "Captopril",
+          "hadm_id": 23269475,
+          "starttime": "2132-11-27T14:00:00",
+          "stoptime": "2132-11-27T13:00:00",
+          "subject_id": 16443700
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 21240952,
+          "starttime": "2134-03-18T08:00:00",
+          "stoptime": "2134-03-18T06:00:00",
+          "subject_id": 16450343
+        }
+      ]
+    }
+  },
+  "divergence": {
+    "blocking": [
+      {
+        "class": "only_candidate",
+        "count": 9073,
+        "why": "rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise"
+      }
+    ],
+    "classification": "unavailable_no_key",
+    "contested": [
+      {
+        "class": "only_candidate",
+        "count": 9073,
+        "why": "rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise"
+      }
+    ],
+    "declared_unrepresentable": {},
+    "gap_shaped": [
+      {
+        "class": "only_oracle",
+        "count": 9073,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "identical_fraction": null,
+    "identical_rows": null,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "notes": [
+      "No unique key for this concept: divergence classes cannot be separated. The judge is reasoning with strictly less evidence than a keyed concept would provide."
+    ],
+    "oracle_rows": 112014,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which.",
+    "reviewable": [
+      {
+        "class": "only_candidate",
+        "count": 9073,
+        "why": "rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise"
+      },
+      {
+        "class": "only_oracle",
+        "count": 9073,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "1032835272963132826734966",
+    "manifest_row_count": 112014,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.acei"
+  },
+  "row_count": {
+    "candidate": 112014,
+    "delta": 0,
+    "gated": false,
+    "match": true,
+    "oracle": 112014
+  },
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "hadm_id",
+      "acei",
+      "starttime",
+      "stoptime"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "hadm_id",
+      "acei",
+      "starttime",
+      "stoptime"
+    ],
+    "extra_columns": [],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "verdict": "review"
+}

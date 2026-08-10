@@ -1,0 +1,27 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/code_status-0002-cs_chart",
+  "name": "cs_chart",
+  "resource": "Observation",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "observation_key" },
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
+        { "path": "encounter.getReferenceKey(Encounter)", "name": "icu_encounter_key" },
+        { "path": "(effective).ofType(dateTime)", "name": "effective_datetime" },
+        { "path": "(effective).ofType(Period).start", "name": "effective_period_start" },
+        { "path": "(value).ofType(string)", "name": "value_string" }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items').where(code='223758')",
+      "column": [
+        { "path": "code", "name": "item_code" },
+        { "path": "system", "name": "code_system" },
+        { "path": "display", "name": "item_display" }
+      ]
+    }
+  ]
+}

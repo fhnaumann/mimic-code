@@ -67,7 +67,7 @@ Naming one you are not sure about costs an agent run; failing to name one that
 is genuinely wrong costs every remaining attempt, so when the analysis is
 plausibly implicated, name it.
 
-## `MIMIC_NOTES.md` — read it, then feed it
+## The notes — read them, then feed your fragment
 
 `mimic-iv/concepts_fhir/MIMIC_NOTES.md` records the dataset/IG quirks
 established so far. Read it **before** diagnosing: a large `only_oracle` or a
@@ -78,24 +78,33 @@ string where a CodeableConcept was expected, an ICU cohort selected on
 `Encounter.class` instead of the identifier system. Checking the file is the
 cheapest step in your procedure and it frequently *is* the diagnosis.
 
+**Re-read it here, and read `MIMIC_NOTES.d/*.md` with it, even if this concept
+already read them at intake.** This stage is the one that always runs on the
+failure path — `fhir-prober` is frequently skipped as `reuse` on a retry — and
+it is the last read before a fix is authored. A sibling loop may have written a
+fragment in the intervening hours that names exactly your divergence. Fragments
+are **provisional**, so treat one as a lead to confirm against the diff and the
+served data, never as a finding you can cite.
+
 You are the loop's best source of new entries, because a divergence on full data
 is the strongest evidence a quirk exists. When your root cause is **dataset-wide
 rather than concept-specific** — it would bite any concept touching that
-resource or field — **add it to `MIMIC_NOTES.md`**:
+resource or field — **append it to your own fragment**,
+`mimic-iv/concepts_fhir/MIMIC_NOTES.d/<concept>.md`:
 
-- Check for an existing entry and **update** it rather than duplicating; a
-  divergence that sharpens an existing claim belongs inside that entry.
+- Append a new `##` section. Never edit `MIMIC_NOTES.md`, never edit another
+  concept's fragment, and never rewrite an earlier section of your own.
 - Keep the format: `##` claim heading, `- Affected: <resource>.<field>`,
   `- Verified:` naming this concept, the attempt number, and the divergence
-  counts you saw — that is exactly the trust-but-recheck trail the file wants.
+  counts you saw — that is exactly the trust-but-recheck trail the file wants,
+  and it makes the human's merge a copy rather than a rewrite.
 - The test is generality, not size. "This concept's filter was too narrow" is a
   diagnosis for your evidence block. "This FHIR element is never populated in
-  the served warehouse" belongs in the file.
+  the served warehouse" belongs in the fragment.
 
-This file is the **one** exception to your "never edit files" rule below: it is
-shared, mutable, and outside the write-once attempt regime. You still never edit
-a ViewDefinition, SQL, or any attempt artifact — the implementer does that in a
-new attempt.
+That fragment is the **one** exception to your "never edit files" rule below.
+You still never edit a ViewDefinition, SQL, or any attempt artifact — the
+implementer does that in a new attempt.
 
 ## Diagnostic procedure
 
@@ -203,7 +212,7 @@ number, the tier, the divergence classes present with their counts, root cause
 diagnosis, the specific location of the error, recommended fix, and
 classification (fixable bug, candidate coverage gap, or upstream transformation
 loss with its file and line). State which
-`MIMIC_NOTES.md` entries you checked and whether one explained the divergence,
-and name any entry you added or updated there. Never git-commit. Never edit
-files — you diagnose, you do not fix. `MIMIC_NOTES.md` is the sole file you may
-write to.
+`MIMIC_NOTES.md` entries and `MIMIC_NOTES.d/` fragments you checked, whether one
+explained the divergence, and name any entry you appended to your own fragment.
+Never git-commit. Never edit files — you diagnose, you do not fix.
+`MIMIC_NOTES.d/<concept>.md` is the sole file you may write to.

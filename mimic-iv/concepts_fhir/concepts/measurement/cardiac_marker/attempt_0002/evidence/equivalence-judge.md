@@ -1,0 +1,9 @@
+## Equivalence-judge evidence
+
+Verdict: `accept` for the `review`, tier `contested`, on attempt 2.
+
+The judge found 295,228/295,246 rows identical (99.9939%), with equal row counts and matching schema. The only divergence is 18 `differing_conflict` rows in `charttime`, uniformly one hour later in the candidate; there are no missing, invented, or null-only rows. The contested bar is satisfied by the upstream citations: `mimic-fhir/sql/fhir_observation_labevents.sql:15` casts source `lab.charttime` through `TIMESTAMPTZ` and line 121 writes it to `Observation.effectiveDateTime`; `mimic-fhir/sql/fhir_specimen_lab.sql:9,18,58` applies the same transformation to the alternate specimen collection path; and `fhir_observation_labevents.sql:16,122` shows `Observation.issued` is based on `storetime`, not charttime.
+
+DST-gap normalization of nonexistent 02:xx wall times to 03:xx is non-injective, so the original value cannot be recovered from FHIR without corrupting genuine 03:xx timestamps. The judge concluded all defensible mappings were exhausted and accepted the result as intrinsic transformation loss. No divergent dependencies exist and no notes fragment was used as verdict evidence.
+
+Acceptance justification to record: “Full-data cardiac_marker attempt_0002 reproduces 295,228/295,246 rows exactly. The remaining 18 keyed conflicts affect only charttime and are uniformly +1 hour. Upstream `mimic-fhir/sql/fhir_observation_labevents.sql:15` casts source charttime through TIMESTAMPTZ and line 121 writes the transformed value to `Observation.effectiveDateTime`. `fhir_specimen_lab.sql:9,18,58` transforms the same value identically, while Observation.issued contains storetime. DST-gap normalization is non-injective, so the original 02:xx wall time is unrecoverable from FHIR without corrupting genuine 03:xx values. All defensible mappings were exhausted; accept as intrinsic transformation loss.”

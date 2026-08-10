@@ -1,0 +1,8 @@
+{
+  "concept": "arb",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "29603727",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/medication/arb/attempt_0001",
+  "submitted_at": "2026-08-08T08:51:22.511662+00:00",
+  "walltime": "2:00:00"
+}

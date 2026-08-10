@@ -1,0 +1,15 @@
+{
+  "attempt": 6,
+  "category": "measurement",
+  "completed_at": "2026-08-08T00:38:12.485762+00:00",
+  "concept_name": "bg",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accepted the 70/511637 (0.014%) unkeyed full-tuple residual: mimic-fhir/sql/fhir_observation_labevents.sql:15,121, fhir_observation_chartevents.sql:9,67, and fhir_specimen_lab.sql:18,58 cast source chart times through TIMESTAMPTZ, irreversibly normalizing DST-gap wall times before writing Observation.effectiveDateTime and Specimen.collection.collectedDateTime. FHIR carries only the normalized time; Observation.issued is storetime, so the original wall time and exact chart-window ordering are unrecoverable by any FHIR query. The current port uses TIMESTAMP_NTZ, exact specimen grouping/itemids, and NULLIF(value_string, '___') for the separate fhir_observation_labevents.sql:133-136 comments fallback. No divergent dependencies; schema and row count match. Judge verdict: accept.",
+  "engineering_counter": 11,
+  "error_message": null,
+  "hpc_counter": 4,
+  "semantic_counter": 1,
+  "started_at": "2026-08-08T00:19:07.711828+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE"
+}

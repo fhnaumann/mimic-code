@@ -1,0 +1,4 @@
+{
+  "anchor_age": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); the pair is collapsed into its difference.",
+  "anchor_year": "Same collapse. Approximable at ~99% via min(year(Encounter.period.start)), but not exactly, so NULL is emitted rather than an estimate."
+}

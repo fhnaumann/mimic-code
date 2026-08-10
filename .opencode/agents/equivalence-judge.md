@@ -17,7 +17,15 @@ authoritative. The task text gives you the concept name, the attempt number,
 findings, and the list of divergent dependencies (see below).
 
 Also read `mimic-iv/concepts_fhir/MIMIC_NOTES.md` — the loop's record of
-dataset/IG quirks. It cuts both ways for you, and you must use it both ways:
+dataset/IG quirks. **Read that file and no other notes source.** The
+`MIMIC_NOTES.d/` fragments are deliberately out of scope for you: they are
+other loops' live hypotheses, unconfirmed by their own full runs, and the bar
+below promotes a notes entry to real evidence toward the named absence an
+`accept` requires. Admitting a provisional claim at that bar is how an `accept`
+gets granted on something nobody checked. A fragment becomes admissible when a
+human merges it into `MIMIC_NOTES.md`, and not before.
+
+The file cuts both ways for you, and you must use it both ways:
 
 - An entry naming an element as absent or unpopulated in the served warehouse is
   real evidence toward the **named absence** an `accept` requires. Cite the entry
@@ -234,5 +242,6 @@ figures, the specific FHIR element or path cited (and the ETL file and line, on
 a `contested` tier), whether the concept had divergent dependencies, which
 `MIMIC_NOTES.md` entries bore on the verdict, and a rationale paragraph. If you
 found a dataset-wide quirk not yet recorded, state it in the form the file uses
-(claim, affected field, how it was verified) so the orchestrator can promote it
-verbatim. Never git-commit. Never change files. Verdict-only.
+(claim, affected field, how it was verified) so the orchestrator can append it
+to the concept's fragment verbatim. Never git-commit. Never change files.
+Verdict-only.

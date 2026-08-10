@@ -1,0 +1,16 @@
+{
+  "attempt": 2,
+  "category": "treatment",
+  "completed_at": "2026-08-10T09:20:10.572998+00:00",
+  "concept_name": "code_status",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "The 197,931 only-oracle rows are the independently counted hospital POE/detail branch selected by General Care/Code status. The served FHIR warehouse has no resource/path carrying those POE events, poe_detail.field_value, or poe.ordertime. MedicationRequest's medication-request-poe identifier stream is a different medication/IV/TPN subset and was tested and rejected. The Observation chart branch is fully represented, and attempt 0002 completed Observation.id UUID-witness recovery for all nine prior timestamp substitutions, leaving 71,141 exact chart tuples and no candidate residual. No divergent dependencies exist.",
+  "engineering_counter": 3,
+  "error_message": null,
+  "hpc_counter": 2,
+  "semantic_counter": 1,
+  "started_at": "2026-08-10T06:52:33.449553+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-10T09:20:10.573803+00:00"
+}

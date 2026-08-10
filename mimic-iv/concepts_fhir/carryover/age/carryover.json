@@ -1,0 +1,10 @@
+{
+  "stages": {
+    "fhir-prober": {
+      "invalidated_at": "2026-08-07T04:07:27+00:00",
+      "invalidated_reason": "Demo-only verification: birthDate.year==anchor_year-anchor_age held 100/100 demo but is false on full data (ETL uses MIN(transfers.intime)-anchor_age); full-data age differs on ~460 rows",
+      "written_at": "2026-08-07T03:06:44+00:00",
+      "written_at_attempt": 1
+    }
+  }
+}

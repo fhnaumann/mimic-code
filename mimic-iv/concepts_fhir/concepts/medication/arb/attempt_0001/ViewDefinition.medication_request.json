@@ -1,0 +1,20 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/arb-0001-medication_request",
+  "name": "medication_request",
+  "resource": "MedicationRequest",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "medication_request_key" },
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
+        { "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_key" },
+        { "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/medication-request-phid').value", "name": "pharmacy_id_str" },
+        { "path": "medicationReference.getReferenceKey(Medication)", "name": "medication_key" },
+        { "path": "dispenseRequest.validityPeriod.start", "name": "starttime_str" },
+        { "path": "dispenseRequest.validityPeriod.end", "name": "stoptime_str" }
+      ]
+    }
+  ]
+}

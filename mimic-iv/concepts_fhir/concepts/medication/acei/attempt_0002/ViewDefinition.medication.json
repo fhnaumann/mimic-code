@@ -1,0 +1,21 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/acei-0002-medication",
+  "name": "medication",
+  "resource": "Medication",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "medication_key" }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-medication-name')",
+      "column": [
+        { "path": "system", "name": "drug_system" },
+        { "path": "value", "name": "drug_name" }
+      ]
+    }
+  ]
+}

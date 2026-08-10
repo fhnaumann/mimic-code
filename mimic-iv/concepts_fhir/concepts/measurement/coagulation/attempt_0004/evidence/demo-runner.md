@@ -1,0 +1,1 @@
+Attempt_0004 passed the embedded Pathling/Spark demo shape gate. The run returned 1,630 observed rows with the expected ten columns and compatible types, including charttime TIMESTAMP_NTZ and six DOUBLE analytes. Artifacts: `candidate.demo.parquet` and `shape.demo.json`. Row count was not used as a gate; full-data comparison remains decisive.

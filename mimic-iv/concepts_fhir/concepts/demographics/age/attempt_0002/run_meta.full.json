@@ -1,0 +1,69 @@
+{
+  "attempt_dir": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/demographics/age/attempt_0002",
+  "column_types": {
+    "admittime": "timestamp_ntz",
+    "age": "bigint",
+    "anchor_age": "smallint",
+    "anchor_year": "smallint",
+    "hadm_id": "int",
+    "subject_id": "int"
+  },
+  "columns": [
+    "subject_id",
+    "hadm_id",
+    "admittime",
+    "anchor_age",
+    "anchor_year",
+    "age"
+  ],
+  "concept": "age",
+  "dataset": "full",
+  "divergence": {
+    "blocking": [
+      {
+        "class": "differing_conflict",
+        "count": 504,
+        "why": "key-matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL; the row exists on both sides, so this is not a coverage gap"
+      }
+    ],
+    "classification": "keyed",
+    "declared_unrepresentable": {
+      "anchor_age": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); no anchor_age extension exists, so anchor_age is not recoverable exactly and is emitted as typed NULL.",
+      "anchor_year": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); min(year(Encounter.period.start)) is approximately 99% recoverable but not exact, so anchor_year is emitted as typed NULL."
+    },
+    "identical_fraction": 0.0,
+    "identical_rows": 0,
+    "judge_required": false,
+    "notes": [],
+    "oracle_rows": 431231,
+    "policy": "Row count is not a hard gate. `mismatch` means a divergence class that a MIMIC-on-FHIR coverage gap cannot produce; the judge cannot override it. `review` means only gap-shaped divergence remains and the judge decides, citing the specific FHIR element or path.",
+    "reviewable": [
+      {
+        "class": "differing_null_only",
+        "count": 430727,
+        "declared_unrepresentable": {
+          "anchor_age": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); no anchor_age extension exists, so anchor_age is not recoverable exactly and is emitted as typed NULL.",
+          "anchor_year": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); min(year(Encounter.period.start)) is approximately 99% recoverable but not exact, so anchor_year is emitted as typed NULL."
+        },
+        "why": "key-matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      }
+    ],
+    "verdict": "mismatch"
+  },
+  "engine": "pathling-embedded",
+  "format_version": "1.0",
+  "generated_at": "2026-08-07T03:44:41.997833+00:00",
+  "oracle": "/scratch3/nau025/oracle/mimic4-full.db",
+  "oracle_row_count": 431231,
+  "row_count": 431231,
+  "timings_seconds": {
+    "compare": 1.287,
+    "execute": 19.477
+  },
+  "verdict": "mismatch",
+  "view_labels": [
+    "encounter",
+    "patient"
+  ],
+  "warehouse": "/scratch3/nau025/mimic-on-fhir-delta/spark_warehouse"
+}

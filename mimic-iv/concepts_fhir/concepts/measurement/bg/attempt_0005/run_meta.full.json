@@ -1,0 +1,131 @@
+{
+  "attempt_dir": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/bg/attempt_0005",
+  "column_types": {
+    "aado2": "double",
+    "aado2_calc": "decimal(38,4)",
+    "baseexcess": "double",
+    "bicarbonate": "double",
+    "calcium": "double",
+    "carboxyhemoglobin": "double",
+    "charttime": "timestamp",
+    "chloride": "double",
+    "fio2": "double",
+    "fio2_chartevents": "float",
+    "glucose": "double",
+    "hadm_id": "int",
+    "hematocrit": "double",
+    "hemoglobin": "double",
+    "lactate": "double",
+    "methemoglobin": "double",
+    "pao2fio2ratio": "double",
+    "pco2": "double",
+    "ph": "double",
+    "po2": "double",
+    "potassium": "double",
+    "so2": "double",
+    "sodium": "double",
+    "specimen": "string",
+    "subject_id": "int",
+    "temperature": "double",
+    "totalco2": "double"
+  },
+  "columns": [
+    "subject_id",
+    "hadm_id",
+    "charttime",
+    "specimen",
+    "so2",
+    "po2",
+    "pco2",
+    "fio2_chartevents",
+    "fio2",
+    "aado2",
+    "aado2_calc",
+    "pao2fio2ratio",
+    "ph",
+    "baseexcess",
+    "bicarbonate",
+    "totalco2",
+    "hematocrit",
+    "hemoglobin",
+    "carboxyhemoglobin",
+    "methemoglobin",
+    "chloride",
+    "calcium",
+    "temperature",
+    "potassium",
+    "sodium",
+    "lactate",
+    "glucose"
+  ],
+  "concept": "bg",
+  "dataset": "full",
+  "divergence": {
+    "blocking": [
+      {
+        "class": "only_candidate",
+        "count": 511637,
+        "why": "rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise"
+      }
+    ],
+    "classification": "unavailable_no_key",
+    "contested": [
+      {
+        "class": "only_candidate",
+        "count": 511637,
+        "why": "rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise"
+      }
+    ],
+    "declared_unrepresentable": {},
+    "gap_shaped": [
+      {
+        "class": "only_oracle",
+        "count": 511637,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "identical_fraction": null,
+    "identical_rows": null,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "notes": [
+      "No unique key for this concept: divergence classes cannot be separated. The judge is reasoning with strictly less evidence than a keyed concept would provide."
+    ],
+    "oracle_rows": 511637,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which.",
+    "reviewable": [
+      {
+        "class": "only_candidate",
+        "count": 511637,
+        "why": "rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise"
+      },
+      {
+        "class": "only_oracle",
+        "count": 511637,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "engine": "pathling-embedded",
+  "format_version": "1.0",
+  "generated_at": "2026-08-07T11:16:19.417025+00:00",
+  "oracle": "/scratch3/nau025/oracle/mimic4-full.db",
+  "oracle_row_count": 511637,
+  "row_count": 511637,
+  "timings_seconds": {
+    "compare": 1.512,
+    "execute": 134.61
+  },
+  "verdict": "review",
+  "view_labels": [
+    "chart_observation",
+    "encounter",
+    "lab_observation",
+    "patient",
+    "specimen"
+  ],
+  "warehouse": "/scratch3/nau025/mimic-on-fhir-delta/spark_warehouse"
+}

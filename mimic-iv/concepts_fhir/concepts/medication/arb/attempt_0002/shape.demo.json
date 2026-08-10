@@ -1,0 +1,40 @@
+{
+  "candidate": "/Users/nau025/Documents/mimic-code/mimic-iv/concepts_fhir/concepts/medication/arb/attempt_0002/candidate.demo.parquet/*.parquet",
+  "candidate_row_count": 35,
+  "concept": "arb",
+  "dataset": "demo",
+  "executed": true,
+  "format_version": "2.0",
+  "gated": [
+    "execution",
+    "column_names",
+    "column_types"
+  ],
+  "mode": "shape",
+  "not_gated": [
+    "row_count"
+  ],
+  "note": "Shape is correct. This earns permission to spend an HPC run; it is not evidence of correctness.",
+  "oracle_full_row_count": 39534,
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "hadm_id",
+      "arb",
+      "starttime",
+      "stoptime"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "hadm_id",
+      "arb",
+      "starttime",
+      "stoptime"
+    ],
+    "extra_columns": [],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": []
+  },
+  "verdict": "shape_ok"
+}

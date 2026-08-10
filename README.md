@@ -188,32 +188,72 @@ for one derived table is:
 The generated dependency DAG must be available in both machine-readable and
 human-readable forms. A goal may only select a concept whose dependencies have
 already passed, and it must not automatically continue to the next concept.
-Execution is strictly sequential by default, including local probes and HPC
-validation. Parallel execution is allowed only when the goal explicitly requests
-it.
+Within a goal, execution is strictly sequential — subagents, local probes and
+HPC validation alike — unless the goal explicitly requests otherwise.
+
+Across goals it is not. Several terminals may each run one `/goal`, as a wave
+the human composes and merges between; nothing in the controller arbitrates
+that. The three mechanisms that replaced the old single-active invariant — the
+local Spark lease, per-attempt HPC staging, and per-concept notes fragments —
+are in
+[`mimic-iv/concepts_fhir/LOOP_CONTRACT.md`](mimic-iv/concepts_fhir/LOOP_CONTRACT.md)
+→ "Concurrency: waves of parallel goals".
+
+### Composing a wave
+
+Deciding which concepts go in a wave is yours, not any agent's. Four rules:
+
+1. **Every concept's dependencies are already `COMPLETED` or
+   `COMPLETED_WITH_DIVERGENCE`.** `mimic_utils status` marks each concept ready
+   or not; `depcheck` and `start` both refuse otherwise, so this one costs you
+   a failed goal rather than a wrong result.
+2. **Never put a concept and its own dependent in the same wave.** The
+   dependent would start against a dependency that has not reached a terminal
+   state. Also enforced, and also cheaper to avoid than to hit.
+3. **Send a solo pathfinder into a raw source table nothing has ported yet.**
+   The first concept over a new table pays for the mapping discovery — which
+   resource carries the columns, which coding system, which fields are never
+   populated — and everything after it reads that out of the notes. Run the
+   siblings together instead and either all of them pay for it at once, or all
+   of them inherit the same wrong guess. So: run one, merge its fragment, then
+   parallelise the rest.
+
+   Derive the current answer rather than trusting a list. Cross-reference the
+   **External Raw Tables** table in
+   [`mimic-iv/concept_dag/concept_dag.md`](mimic-iv/concept_dag/concept_dag.md),
+   which maps each raw `mimiciv_hosp` / `mimiciv_icu` table to the concepts
+   referencing it, against the completed concepts in `mimic_utils status`. A
+   table whose "Referenced By" list contains nothing completed is unscouted,
+   and its largest such group is the best pathfinder candidate. (Run early in
+   the port, that derivation surfaces `mimiciv_icu.inputevents` and its nine
+   dependants — an illustration of the method, not a standing fact.)
+4. **Merge the fragments into `MIMIC_NOTES.md` before typing the next wave's
+   goals.** A precondition, not an aspiration: the next wave's loops read the
+   curated file and not each other's fragments, so anything left unmerged is
+   knowledge the wave pays an HPC run to rediscover. Protocol in
+   `mimic-iv/concepts_fhir/MIMIC_NOTES.d/README.md`.
 
 Validation uses the public 100-patient MIMIC-IV 2.2 demo as the local relational
 oracle and the MIMIC-on-FHIR demo as the local candidate dataset after an identifier
 check confirms that both contain the same source cohort.
 Full MIMIC-IV 2.2 and MIMIC-on-FHIR 2.1 remain on HPC for final validation of each
-concept. Dataset versions, source SQL, dependencies, terminology resources, and
-execution artifacts must be hashed and recorded for every attempt.
+concept. Dataset versions, source SQL, dependencies, and execution artifacts must
+be hashed and recorded for every attempt.
 
-FHIR ConceptMaps hosted on `https://velonto.dw.csiro.au/fhir/`, with pinned local
-FHIR copies when needed for reproducibility or offline HPC execution, are the
-authoritative terminology mappings. The CSV mappings under
-`mimic-iv/concepts/concept_map/` are not used by this port. Translation accepts
-every ConceptMap relationship except an explicit `unmatched` result. Production
-views use an approved ConceptMap canonical and verify its scope and version before
-execution; bare `$translate` is suitable for discovery but is not a reproducible
-mapping contract by itself.
+The port performs **no terminology resolution**. A concept's code set is the
+literal one its source SQL filters on, and MIMIC-on-FHIR stores those same values
+— `Observation.code.coding.code` is a verbatim `CAST(itemid AS TEXT)` — so
+`CAST(code AS INTEGER)` recovers the source code and there is nothing to
+translate. Views discriminate on `code.coding.system` plus the exact code, never
+on `meta.profile`. The CSV mappings under `mimic-iv/concepts/concept_map/` are
+not used by this port.
 
 Agent model assignments follow task complexity:
 
 - Complex reasoning, implementation, mismatch diagnosis, orchestration, and
   independent equivalence or representability judgment use Sol with `xhigh`.
-- Bounded analysis, FHIR probing, terminology resolution, and engineering repair
-  use Luna with `xhigh` or `max`.
+- Bounded analysis, FHIR probing, and engineering repair use Luna with `xhigh`
+  or `max`.
 - Mechanical DAG checks, job launch, polling, artifact transfer, and formatting
   use Luna with `low`.
 
@@ -258,8 +298,11 @@ tool is not part of the concept-port execution path; the port loop uses
 
 The generated human-readable selection order is at
 [`mimic-iv/concept_dag/concept_dag.md`](mimic-iv/concept_dag/concept_dag.md).
-Run `uv run mimic_utils status` to combine that DAG with current conversion
-state and see which concepts are ready.
+It is regenerated wholesale by `mimic_utils concept_dag`, so it carries
+structure and nothing else — a checkbox or progress note added there is wiped
+on the next run. Progress lives in `uv run mimic_utils status`, which combines
+that DAG with current conversion state and shows which concepts are ready,
+which are active and how long since each last moved.
 
 Source oracle and comparison artifacts are write-once:
 

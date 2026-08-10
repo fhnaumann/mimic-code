@@ -1,0 +1,8 @@
+{
+  "concept": "chemistry",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "29679671",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/chemistry/attempt_0003",
+  "submitted_at": "2026-08-10T06:26:01.024651+00:00",
+  "walltime": "2:00:00"
+}

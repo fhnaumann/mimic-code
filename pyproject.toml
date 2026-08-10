@@ -35,6 +35,20 @@ equivalence = [
     "pandas>=1.3",
     "numpy>=1.21",
 ]
+# Embedded Pathling: needed by `run-full` (the HPC correctness gate) and by
+# `run-demo --engine embedded`. Optional because the state machine, the DAG and
+# the comparator must keep working on a machine with no JVM.
+#
+# Pinned, not floored, and pinned to exactly what Petrichor has. The demo gate
+# only predicts a full-run failure if both legs run the same engine, so a local
+# version that drifts ahead of the cluster silently costs the demo leg its
+# entire reason to exist. Bump these only together with the remote env at
+# /scratch3/nau025/mimic-on-fhir-delta, never on their own.
+fhir = [
+    "pathling==9.6.0",
+    "pyspark==4.0.2",
+    "duckdb==1.5.5",
+]
 
 [project.scripts]
 mimic_utils = "mimic_utils.__main__:main"

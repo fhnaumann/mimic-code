@@ -1,0 +1,3 @@
+## Lab Observation.valueQuantity can be synthesized from source text when valuenum is NULL
+- Affected: `Observation.valueQuantity.value` and `Observation.valueQuantity.comparator` for labevents-derived Observations
+- Verified: `blood_differential` attempt_0001 full-data diagnosis traced all 5 `only_candidate` specimen rows to itemid `51301` source rows with `value='<0.1'` and `valuenum=NULL`; served FHIR carries `valueQuantity.value=0.1`, `comparator='<'`, and no `valueString`. `mimic-fhir/sql/fhir_observation_labevents.sql:27-47,123-136` parses comparator text into the numeric FHIR value, so a port of a source `valuenum IS NOT NULL` filter must inspect the comparator/text-derived branch rather than treating every Quantity as source numeric data.

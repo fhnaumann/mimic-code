@@ -1,0 +1,16 @@
+{
+  "stages": {
+    "fhir-prober": {
+      "invalidated_at": null,
+      "invalidated_reason": null,
+      "written_at": "2026-08-08T02:30:06+00:00",
+      "written_at_attempt": 4
+    },
+    "source-analyst": {
+      "invalidated_at": null,
+      "invalidated_reason": null,
+      "written_at": "2026-08-07T04:47:40+00:00",
+      "written_at_attempt": 1
+    }
+  }
+}

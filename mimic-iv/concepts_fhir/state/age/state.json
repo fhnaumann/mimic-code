@@ -1,0 +1,15 @@
+{
+  "attempt": 2,
+  "category": "demographics",
+  "completed_at": "2026-08-07T04:36:38.457707+00:00",
+  "concept_name": "age",
+  "dependencies": [],
+  "divergence_decided_by": "human",
+  "divergence_justification": "Intrinsic representability gap, upstream-ETL-confirmed. 430,727/431,231 rows (99.883%) identical on all representable columns. age conflicts on 460 rows (0.107%): mimic-fhir/sql/fhir_patient.sql:15 synthesises Patient.birthDate as MIN(transfers.intime)-anchor_age, not anchor_year-anchor_age; canonical age needs anchor_year, which no FHIR element carries. admittime conflicts on 44 rows (0.010%): fhir_encounter.sql:65 casts through TIMESTAMPTZ, normalising DST-gap wall times irreversibly. anchor_age/anchor_year emitted as typed NULLs per contract. Divergence propagates to creatinine_baseline, oasis, charlson, sapsii, which all select age.",
+  "engineering_counter": 3,
+  "error_message": null,
+  "hpc_counter": 1,
+  "semantic_counter": 2,
+  "started_at": "2026-08-07T03:14:05.380691+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE"
+}

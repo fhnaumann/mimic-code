@@ -13,7 +13,6 @@ from mimic_utils.conversion_state import (
     ACTIVE_STATUSES,
     ATTEMPT_DIR_PATTERN,
     ConceptState,
-    ConcurrencyError,
     ConversionController,
     DAGError,
     DependencyError,
@@ -328,18 +327,19 @@ class TestStatusReport:
         report = ctrl_dag.status_report()
         concepts = {c["concept"] for c in report.concepts}
         assert concepts == {"a", "b", "c"}
-        assert report.active_concept is None
+        assert report.active_concepts == []
 
     def test_active_shown(self, ctrl_dag):
         ctrl_dag.initialize("a")
         ctrl_dag.start("a")
         report = ctrl_dag.status_report()
-        assert report.active_concept == "a"
-        assert report.active_status == "RUNNING"
+        assert [(a["concept"], a["status"], a["stale"]) for a in report.active_concepts] == [
+            ("a", "RUNNING", False)
+        ]
 
 
 # ---------------------------------------------------------------------------
-# Start — concurrency always enforced
+# Start
 # ---------------------------------------------------------------------------
 
 
@@ -349,13 +349,6 @@ class TestStart:
         st = ctrl_dag.start("a")
         assert st.status == "RUNNING"
         assert st.attempt == 1
-
-    def test_concurrency_always_enforced(self, ctrl_dag):
-        ctrl_dag.initialize("a")
-        ctrl_dag.initialize("b")
-        ctrl_dag.start("a")
-        with pytest.raises(ConcurrencyError, match="already"):
-            ctrl_dag.start("b")
 
     def test_dependency_cannot_be_bypassed(self, ctrl_dag):
         ctrl_dag.initialize("a")
@@ -411,6 +404,82 @@ class TestTransition:
         st = ctrl_dag.start("a")
         assert st.status == "RUNNING"
         assert st.attempt == 2
+
+    def test_accept_divergence_requires_a_justification(self, ctrl_dag):
+        ctrl_dag.initialize("a")
+        ctrl_dag.start("a")
+        ctrl_dag.transition("a", "VALIDATING_FULL")
+        with pytest.raises(StateError, match="requires --justification"):
+            ctrl_dag.transition("a", "COMPLETED_WITH_DIVERGENCE")
+
+    def test_judge_acceptance_records_its_provenance(self, ctrl_dag):
+        ctrl_dag.initialize("a")
+        ctrl_dag.start("a")
+        ctrl_dag.transition("a", "VALIDATING_FULL")
+        st = ctrl_dag.transition(
+            "a", "COMPLETED_WITH_DIVERGENCE", justification="Encounter.period absent"
+        )
+        assert st.divergence_decided_by == "judge"
+
+    def test_a_human_can_clear_a_representability_block(self, ctrl_dag):
+        """The other thing a human can conclude besides "try again".
+
+        Without this edge, recording a human's acceptance of a blocked concept
+        means re-running it to manufacture a VALIDATING_FULL the human has
+        already ruled on -- an HPC run spent on a transition table.
+        """
+        ctrl_dag.initialize("a")
+        ctrl_dag.start("a")
+        ctrl_dag.transition("a", "BLOCKED_REPRESENTATION", error_message="conflict")
+        st = ctrl_dag.transition(
+            "a", "COMPLETED_WITH_DIVERGENCE",
+            justification="fhir_patient.sql:15 synthesises birthDate differently",
+            decided_by="human",
+        )
+        assert st.status == "COMPLETED_WITH_DIVERGENCE"
+        assert st.divergence_decided_by == "human"
+        assert st.error_message is None
+
+    def test_the_judge_cannot_clear_a_representability_block(self, ctrl_dag):
+        """The judge is never called on a blocked concept, so an acceptance
+        attributed to it there did not happen."""
+        ctrl_dag.initialize("a")
+        ctrl_dag.start("a")
+        ctrl_dag.transition("a", "BLOCKED_REPRESENTATION", error_message="conflict")
+        with pytest.raises(StateError, match="only a human can clear"):
+            ctrl_dag.transition(
+                "a", "COMPLETED_WITH_DIVERGENCE", justification="x" * 40,
+            )
+
+    def test_an_accepted_divergence_survives_a_reload(self, ctrl_dag):
+        """The justification IS the record. Dropping it on read would leave a
+        COMPLETED_WITH_DIVERGENCE with no argument -- the exact state
+        `transition` refuses to create."""
+        ctrl_dag.initialize("a")
+        ctrl_dag.start("a")
+        ctrl_dag.transition("a", "VALIDATING_FULL")
+        ctrl_dag.transition(
+            "a", "COMPLETED_WITH_DIVERGENCE",
+            justification="Patient.birthDate collapses the anchor pair",
+            decided_by="human",
+        )
+        st = ctrl_dag._read_state("a")
+        assert st.divergence_justification == (
+            "Patient.birthDate collapses the anchor pair"
+        )
+        assert st.divergence_decided_by == "human"
+
+    def test_status_report_splits_judge_from_human_acceptance(self, ctrl_dag):
+        ctrl_dag.initialize("a")
+        ctrl_dag.start("a")
+        ctrl_dag.transition("a", "VALIDATING_FULL")
+        ctrl_dag.transition(
+            "a", "COMPLETED_WITH_DIVERGENCE",
+            justification="x" * 40, decided_by="human",
+        )
+        report = ctrl_dag.status_report().format(color=False)
+        assert "accepted by a human (manual override)" in report
+        assert "accepted by the judge" not in report
 
     def test_counter_across_lifecycle(self, ctrl_dag):
         ctrl_dag.initialize("a")

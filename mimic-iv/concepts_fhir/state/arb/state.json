@@ -1,0 +1,15 @@
+{
+  "attempt": 2,
+  "category": "medication",
+  "completed_at": "2026-08-08T10:43:59.136298+00:00",
+  "concept_name": "arb",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accepted intrinsic upstream ETL loss: for 3,182 of 39,534 ARB rows (8.049%), fhir_medication_request.sql:43-44 obtains prescription endpoints but :172-177 omits MedicationRequest.dispenseRequest.validityPeriod for incomplete or reversed intervals, yielding unrecoverable NULL start/stop values. authoredOn at :55,124 is pharmacy entry time, and medication_prescriptions.sql:19-58 plus medication_mix.sql:27-53,64-85 preserve no endpoints. The candidate's direct and mix branches, multiplicity, exact filters, identifier joins, and TIMESTAMP_NTZ parsing are correct; no alternate FHIR path can recover the oracle timestamps. Unkeyed comparison had paired 3,182 only_candidate NULL tuples and 3,182 only_oracle timestamp tuples, with matching schema and row count. divergent_dependencies(arb)=[]; no retry warranted.",
+  "engineering_counter": 3,
+  "error_message": null,
+  "hpc_counter": 2,
+  "semantic_counter": 1,
+  "started_at": "2026-08-08T10:23:11.365729+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE"
+}

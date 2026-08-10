@@ -1,4 +1,4 @@
-"""Generic Pathling demo runner for a concept-port attempt.
+"""Pathling demo runner for a concept-port attempt.
 
 Takes an attempt directory containing the two hand-authored artifacts:
 
@@ -9,19 +9,36 @@ Takes an attempt directory containing the two hand-authored artifacts:
 ``concept.sql``
     Spark SQL producing the ported concept, selecting from those labels.
 
-and drives the proven Pathling provisioning flow end to end:
+and executes them through **embedded Pathling on Spark** over the demo Delta
+warehouse -- the same executor, artifact format and comparator that
+:mod:`mimic_utils.full_runner` uses on the HPC.  There is exactly one execution
+path, deliberately: the full leg has no alternative (compute nodes have no FHIR
+server), so any second path would mean the Spark leg's first real execution
+happens on the HPC, where a failure costs a queue slot instead of seconds.
 
-1. PUT each ViewDefinition under an **attempt-scoped** id and canonical, so
-   two attempts at the same concept never overwrite each other's definitions.
-2. PUT ``concept.sql`` as a stored ``sql-view`` Library labelled with the
-   concept name, carrying every ViewDefinition as a ``depends-on``
-   relatedArtifact.
-3. ``DESCRIBE <concept>`` to get the authoritative column order and Spark
-   types.
-4. ``SELECT * FROM <concept>`` to get the full result.
-5. Write ``candidate.demo.ndjson`` — a DuckDB-scannable result file.
-6. Run the **shape gate** against the oracle manifest and write
+Local runs are serialised by the Spark lease when ``$MIMIC_SPARK_LOCK`` is set
+(:func:`mimic_utils.embedded_runner._acquire_spark_lease`).  Parallel goals
+share one laptop -- one driver heap, one repo-root ``spark-warehouse/`` Derby
+metastore -- so a demo run may block for minutes before its JVM starts.  The
+wait is logged; nothing else about the run changes.
+
+The run:
+
+1. Bind each ViewDefinition label to a temp view via ``createOrReplaceTempView``.
+2. Execute ``concept.sql`` and take the authoritative column order and types
+   from the resulting DataFrame.
+3. Write ``candidate.demo.parquet`` straight from that DataFrame.
+4. Run the **shape gate** against the oracle manifest and write
    ``shape.demo.json``.
+
+Parquet, not a text format, and that is load-bearing.  Parquet carries the Spark
+schema; a text round-trip does not, so the gate would end up checking DuckDB's
+re-inference of serialised JSON rather than the types the HPC run will actually
+produce.  An all-null column -- legitimate, when a concept's shape requires a
+column MIMIC-on-FHIR cannot populate -- infers as ``JSON`` and fails a
+``SMALLINT`` expectation; a ``DECIMAL`` serialises to a string and fails a
+numeric one.  Both are artifacts of the artifact format, not port bugs.  Parquet
+removes the class entirely, and removes the ``collect()`` into Python with it.
 
 This is a **cheap shape gate, not a correctness gate**.  See
 ``mimic-iv/concepts_fhir/LOOP_CONTRACT.md``, which is authoritative.  It exists
@@ -43,58 +60,37 @@ The verdict is never hand-calculated: it comes from
 :func:`mimic_utils.compare_port_results.compare_shape`.
 
 Attempt artifacts are write-once.  A re-run needs a new attempt, so the
-runner refuses to overwrite ``candidate.demo.ndjson`` or ``shape.demo.json``.
+runner refuses to overwrite ``candidate.demo.parquet`` or ``shape.demo.json``.
 """
 
 from __future__ import annotations
 
 import json
-import re
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from mimic_utils.compare_port_results import compare_shape, write_comparison
-from mimic_utils.export_oracle import _serialise_value
-from mimic_utils.pathling import (
-    LIBRARY_KIND_SQL_VIEW,
-    PathlingClient,
-    PathlingError,
-    RelatedArtifact,
-    build_sqlquery_library,
-    resolve_base_url,
-)
+
+#: Demo Delta warehouse, used when the runner is invoked without an explicit
+#: path or ``MIMIC_FHIR_WAREHOUSE``. The *full* runner deliberately has no such
+#: default: there, defaulting to a demo path could let demo data decide a
+#: correctness verdict. Here the blast radius is a wrong shape gate, and the
+#: convenience of a laptop default is worth it.
+DEMO_WAREHOUSE_DEFAULT = "/Users/nau025/warehouses/mimic-iv-demo/delta"
 
 VIEWDEFINITION_GLOB = "ViewDefinition.*.json"
 CONCEPT_SQL_NAME = "concept.sql"
-CANDIDATE_NAME = "candidate.demo.ndjson"
+CANDIDATE_NAME = "candidate.demo.parquet"
 SHAPE_NAME = "shape.demo.json"
 
 # Default manifest location, relative to the repo root.
 DEFAULT_MANIFEST = Path("mimic-iv/concepts_fhir/oracle/oracle_manifest.full.json")
 
-# Canonical URL namespace for attempt-scoped port resources.
-CANONICAL_BASE = "http://mimic.mit.edu/fhir/port"
-
-# FHIR resource ids allow only [A-Za-z0-9-.] and are capped at 64 chars.
-_FHIR_ID_ALLOWED = re.compile(r"[^A-Za-z0-9.-]")
-_FHIR_ID_MAX = 64
-
 
 class DemoRunError(RuntimeError):
     """A demo run could not be executed (missing artifacts, bad definitions)."""
-
-
-def _fhir_id(*parts: str) -> str:
-    """Join *parts* into a legal, deterministic FHIR resource id."""
-    raw = "-".join(p for p in parts if p)
-    cleaned = _FHIR_ID_ALLOWED.sub("-", raw).strip("-")
-    if len(cleaned) > _FHIR_ID_MAX:
-        # Keep the tail: the discriminating part (label) is at the end.
-        cleaned = cleaned[-_FHIR_ID_MAX:].lstrip("-")
-    if not cleaned:
-        raise DemoRunError(f"Cannot derive a FHIR id from {parts!r}")
-    return cleaned
 
 
 @dataclass
@@ -103,10 +99,8 @@ class DemoRunResult:
 
     concept: str
     attempt_dir: str
-    base_url: str
-    scope: str = ""
-    view_definitions: List[Dict[str, str]] = field(default_factory=list)
-    library_url: str = ""
+    warehouse: str = ""
+    view_labels: List[str] = field(default_factory=list)
     row_count: int = 0
     columns: List[str] = field(default_factory=list)
     column_types: Dict[str, str] = field(default_factory=dict)
@@ -243,19 +237,30 @@ def read_concept_sql(attempt: Path) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _resolve_demo_warehouse(explicit: Optional[str | Path]) -> Path:
+    """Resolve the demo warehouse: explicit -> env -> laptop default."""
+    from mimic_utils.embedded_runner import WAREHOUSE_ENV_KEY, resolve_warehouse
+
+    target = explicit or os.environ.get(WAREHOUSE_ENV_KEY) or DEMO_WAREHOUSE_DEFAULT
+    return resolve_warehouse(target)
+
+
 def run_demo(
     concept: str,
     *,
     attempt_dir: Optional[str | Path] = None,
-    base_url: Optional[str] = None,
     manifest_path: Optional[str | Path] = None,
     artifact_root: Optional[str | Path] = None,
     repo_root: Optional[Path] = None,
     attempt: Optional[int] = None,
     skip_compare: bool = False,
-    client: Optional[PathlingClient] = None,
+    warehouse: Optional[str | Path] = None,
 ) -> DemoRunResult:
     """Register, execute and shape-check one concept-port attempt on demo data.
+
+    Runs embedded Pathling in-process over the demo Delta *warehouse* on Spark
+    -- the same executor the HPC full run uses -- and writes the result as
+    Parquet, so the gate sees the Spark schema rather than a re-inferred one.
 
     The runner never reads an oracle database.  The target shape comes from
     *manifest_path* (default ``oracle_manifest.full.json``), so no
@@ -264,128 +269,63 @@ def run_demo(
     A ``shape_ok`` or ``unsure`` verdict earns permission to spend a full-data
     HPC run; neither is evidence of correctness.
     """
+    # Imported here: `embedded_runner` imports this module, and pathling and
+    # pyspark are optional dependencies the rest of mimic_utils must not need.
+    from mimic_utils.embedded_runner import EmbeddedExecutor, EmbeddedRunError, execute_attempt
+
     resolved_attempt = resolve_attempt_dir(
         concept,
         attempt_dir=attempt_dir,
         artifact_root=artifact_root,
         attempt=attempt,
     )
-    resolved_base = resolve_base_url(base_url)
-    result = DemoRunResult(
-        concept=concept,
-        attempt_dir=str(resolved_attempt),
-        base_url=resolved_base,
-    )
+    result = DemoRunResult(concept=concept, attempt_dir=str(resolved_attempt))
 
     candidate_path = resolved_attempt / CANDIDATE_NAME
-    if candidate_path.exists():
-        result.errors.append(
-            f"{CANDIDATE_NAME} already exists (attempts are write-once); "
-            f"start a new attempt instead of re-running this one"
-        )
-        return result
-
-    definitions = discover_view_definitions(resolved_attempt)
-    sql = read_concept_sql(resolved_attempt)
-
-    # Attempt-scoped identity: <concept>-<attempt dir name>.
-    scope = f"{concept}-{resolved_attempt.name}"
-    result.scope = scope
-    if client is None:
-        client = PathlingClient(resolved_base)
-
-    # -- 1. register the ViewDefinitions ------------------------------------
-    dependencies: List[RelatedArtifact] = []
-    for definition in definitions:
-        label = definition["label"]
-        vd_id = _fhir_id("port", scope, "vd", label)
-        vd_url = f"{CANONICAL_BASE}/{scope}/ViewDefinition/{label}"
-        body = {**definition["body"], "url": vd_url}
-        try:
-            client.put_definitional(
-                resource_type="ViewDefinition",
-                resource_id=vd_id,
-                resource_body=body,
+    shape_path = resolved_attempt / SHAPE_NAME
+    for path in (candidate_path, shape_path):
+        if path.exists():
+            result.errors.append(
+                f"{path.name} already exists (attempts are write-once); "
+                f"start a new attempt instead of re-running this one"
             )
-        except PathlingError as exc:
-            result.errors.append(f"ViewDefinition {label!r} registration failed: {exc}")
             return result
-        result.view_definitions.append({"label": label, "id": vd_id, "url": vd_url})
-        dependencies.append(RelatedArtifact(label=label, resource=vd_url))
 
-    # -- 2. register the concept as a stored sql-view Library ----------------
-    library_id = _fhir_id("port", scope, "lib")
-    library_url = f"{CANONICAL_BASE}/{scope}/Library/{concept}"
-    result.library_url = library_url
-    library = build_sqlquery_library(
-        sql,
-        dependencies,
-        kind=LIBRARY_KIND_SQL_VIEW,
-        url=library_url,
-        name=concept,
-    )
     try:
-        client.put_definitional(
-            resource_type="Library",
-            resource_id=library_id,
-            resource_body=library,
-        )
-    except PathlingError as exc:
-        result.errors.append(f"sql-view Library registration failed: {exc}")
+        resolved_warehouse = _resolve_demo_warehouse(warehouse)
+    except EmbeddedRunError as exc:
+        result.errors.append(str(exc))
         return result
+    result.warehouse = str(resolved_warehouse)
 
-    library_dep = [RelatedArtifact(label=concept, resource=library_url)]
-
-    # -- 3. authoritative column order and types ----------------------------
+    # -- 1-3. execute and write Parquet --------------------------------------
+    executor: Optional[EmbeddedExecutor] = None
     try:
-        result.column_types = client.describe_columns(concept, library_dep)
-    except PathlingError as exc:
-        result.errors.append(f"DESCRIBE {concept} failed: {exc}")
-        return result
-    if not result.column_types:
-        result.errors.append(f"DESCRIBE {concept} returned no columns")
-        return result
-    result.columns = list(result.column_types.keys())
-
-    # -- 4. execute ---------------------------------------------------------
-    try:
-        raw_rows = client.sqlquery_run_dicts(f"SELECT * FROM {concept}", library_dep)
-    except PathlingError as exc:
-        result.errors.append(f"SELECT * FROM {concept} failed: {exc}")
-        return result
-
-    # NDJSON omits null-valued keys, so DESCRIBE order is the source of truth.
-    unexpected = sorted(
-        {key for row in raw_rows for key in row} - set(result.columns)
-    )
-    if unexpected:
-        result.errors.append(
-            f"Result rows carry columns absent from DESCRIBE {concept}: {unexpected}"
+        frame, executor, labels = execute_attempt(
+            resolved_attempt, warehouse_path=resolved_warehouse
         )
+        result.view_labels = labels
+        result.columns = list(frame.columns)
+        result.column_types = dict(frame.dtypes)
+        # `mode("error")` rather than overwrite: the write-once rule is
+        # enforced by the filesystem, not only by the check above.
+        frame.write.mode("error").parquet(str(candidate_path))
+        # Counted from the written artifact rather than by re-evaluating the
+        # query, which would run the whole concept a second time.
+        result.row_count = executor.spark.read.parquet(str(candidate_path)).count()
+    except EmbeddedRunError as exc:
+        result.errors.append(str(exc))
         return result
-
-    result.row_count = len(raw_rows)
-
-    # -- 5. write the candidate as NDJSON -----------------------------------
-    # NDJSON rather than the old rows-in-JSON artifact: DuckDB scans it
-    # natively, so the comparator never materialises rows into Python.
-    if candidate_path.exists():
-        result.errors.append(
-            f"{CANDIDATE_NAME} already exists (attempts are write-once)"
-        )
+    except Exception as exc:  # noqa: BLE001 - a Spark failure is a real shape failure
+        result.errors.append(f"embedded execution failed: {exc}")
         return result
-    with candidate_path.open("w", encoding="utf-8") as fh:
-        for row in raw_rows:
-            fh.write(
-                json.dumps(
-                    {col: _serialise_value(row.get(col)) for col in result.columns},
-                    ensure_ascii=False,
-                )
-                + "\n"
-            )
+    finally:
+        if executor is not None:
+            executor.close()
+
     result.candidate_path = str(candidate_path)
 
-    # -- 6. shape gate against the oracle manifest --------------------------
+    # -- 4. shape gate against the oracle manifest --------------------------
     # No oracle export: the target shape comes from the manifest. Row count is
     # NOT gated here and 0 rows is `unsure`, never `fail` -- see LOOP_CONTRACT.
     if skip_compare:
@@ -399,12 +339,11 @@ def run_demo(
         )
         return result
 
-    shape_path = resolved_attempt / SHAPE_NAME
-    if shape_path.exists():
-        result.errors.append(f"{SHAPE_NAME} already exists (attempts are write-once)")
-        return result
-
-    comparison = compare_shape(concept, manifest, candidate_path)
+    # DuckDB reads the Spark part-files through a glob, exactly as the full
+    # runner does; `scan_expression` dispatches on the `.parquet` suffix, which
+    # the glob preserves.
+    scan_target = str(candidate_path / "*.parquet")
+    comparison = compare_shape(concept, manifest, scan_target)
     result.shape_path = str(write_comparison(comparison, shape_path))
     result.compared = True
     result.verdict = comparison.get("verdict")
@@ -440,18 +379,14 @@ def format_demo_report(result: DemoRunResult, *, color: bool = True) -> str:
 
     lines.append("=" * 68)
     lines.append(f"  Pathling demo run — concept '{result.concept}'")
-    lines.append(f"  Attempt: {result.attempt_dir}")
-    lines.append(f"  FHIR:    {result.base_url}")
+    lines.append(f"  Attempt:   {result.attempt_dir}")
+    lines.append(f"  Warehouse: {result.warehouse or '(unresolved)'}")
     lines.append("=" * 68)
     lines.append("")
 
-    if result.view_definitions:
-        lines.append("  Registered ViewDefinitions:")
-        for vd in result.view_definitions:
-            lines.append(f"    {vd['label']:<28} {vd['id']}")
-    if result.library_url:
-        lines.append(f"  sql-view Library: {result.library_url}")
-    lines.append("")
+    if result.view_labels:
+        lines.append(f"  Views registered: {', '.join(result.view_labels)}")
+        lines.append("")
 
     if result.columns:
         lines.append(f"  Result columns ({len(result.columns)}):")
@@ -512,9 +447,10 @@ def run_demo_cli(args: Optional[List[str]] = None) -> int:
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Execute a concept-port attempt on the local demo Pathling "
-        "instance and check its SHAPE against the oracle manifest. Row count is "
-        "not gated; 0 rows yields 'unsure'."
+        description="Execute a concept-port attempt over the local demo Delta "
+        "warehouse via embedded Pathling on Spark — the same engine the HPC "
+        "full run uses — and check its SHAPE against the oracle manifest. Row "
+        "count is not gated; 0 rows yields 'unsure'."
     )
     parser.add_argument("concept", help="Concept stem (e.g. age).")
     parser.add_argument(
@@ -525,7 +461,11 @@ def run_demo_cli(args: Optional[List[str]] = None) -> int:
         "--attempt", type=int, default=None,
         help="Explicit attempt number instead of the current one.",
     )
-    parser.add_argument("--base-url", default=None, help="Pathling FHIR base URL.")
+    parser.add_argument(
+        "--warehouse", default=None,
+        help=f"Demo Delta warehouse (env: MIMIC_FHIR_WAREHOUSE, default "
+        f"{DEMO_WAREHOUSE_DEFAULT}).",
+    )
     parser.add_argument(
         "--manifest", default=None,
         help="Oracle manifest JSON (default: oracle_manifest.full.json).",
@@ -542,10 +482,10 @@ def run_demo_cli(args: Optional[List[str]] = None) -> int:
         concept=opts.concept,
         attempt_dir=opts.attempt_dir,
         attempt=opts.attempt,
-        base_url=opts.base_url,
         manifest_path=opts.manifest,
         artifact_root=opts.artifact_root,
         skip_compare=opts.skip_compare,
+        warehouse=opts.warehouse,
     )
     print(format_demo_report(result, color=not opts.no_color))
     if result.blocked:

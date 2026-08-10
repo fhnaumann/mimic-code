@@ -1,0 +1,15 @@
+{
+  "attempt": 1,
+  "category": "medication",
+  "completed_at": "2026-08-08T08:00:46.132814+00:00",
+  "concept_name": "antibiotic",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accepted attempt 0001's contested unkeyed multiset divergence. The missing FHIR paths are MedicationRequest.dispenseRequest.validityPeriod.start/end: mimic-fhir/sql/fhir_medication_request.sql:172-177 omits invalid or incomplete intervals, and authoredOn at :55,124 is pharmacy entertime rather than either source endpoint, so ICU stay_id cannot be reconstructed when starttime is absent. The same ETL at :43-44 irreversibly normalizes DST-gap endpoints through TIMESTAMPTZ (+3600 seconds). Exhaustive EXCEPT ALL pairing accounted for all 43,576 mirrored divergences, with no invented rows; all defensible direct/mix mappings and filters were applied. The judge reported 691,886/735,462 exact tuples (94.075%).",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "semantic_counter": 1,
+  "started_at": "2026-08-08T06:21:16.976339+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE"
+}

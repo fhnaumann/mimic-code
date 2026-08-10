@@ -1,0 +1,52 @@
+{
+  "candidate": "/Users/nau025/Documents/mimic-code/mimic-iv/concepts_fhir/concepts/demographics/age/attempt_0001/candidate.demo.parquet/*.parquet",
+  "candidate_row_count": 275,
+  "concept": "age",
+  "dataset": "demo",
+  "executed": true,
+  "format_version": "2.0",
+  "gated": [
+    "execution",
+    "column_names",
+    "column_types"
+  ],
+  "mode": "shape",
+  "not_gated": [
+    "row_count"
+  ],
+  "oracle_full_row_count": 431231,
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "hadm_id",
+      "admittime",
+      "anchor_age",
+      "anchor_year",
+      "age"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "hadm_id",
+      "admittime",
+      "anchor_age",
+      "anchor_year",
+      "age"
+    ],
+    "extra_columns": [],
+    "incompatible_types": [
+      {
+        "actual": "VARCHAR",
+        "column": "subject_id",
+        "expected": "INTEGER"
+      },
+      {
+        "actual": "VARCHAR",
+        "column": "hadm_id",
+        "expected": "INTEGER"
+      }
+    ],
+    "match": false,
+    "missing_columns": []
+  },
+  "verdict": "shape_fail"
+}

@@ -1,0 +1,16 @@
+{
+  "attempt": 3,
+  "category": "measurement",
+  "completed_at": "2026-08-10T06:37:42.078024+00:00",
+  "concept_name": "chemistry",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accept: upstream mimic-fhir/sql/fhir_observation_labevents.sql:15 casts naive labevents.charttime through TIMESTAMPTZ and :121 writes it to Observation.effectiveDateTime; fhir_specimen_lab.sql:9,18,58 stores the same transformed MAX(charttime). DST spring-forward-gap 02:xx to 03:xx normalization is non-injective, no independent FHIR element preserves the original, and no FHIR query can recover it. Attempt 0003 otherwise matches; accept 198 intrinsic charttime conflicts, with 3,811,325/3,811,523 identical rows (99.9948%) and no excluded columns.",
+  "engineering_counter": 4,
+  "error_message": null,
+  "hpc_counter": 2,
+  "semantic_counter": 1,
+  "started_at": "2026-08-10T06:18:24.212811+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-10T06:37:42.078566+00:00"
+}

@@ -67,15 +67,20 @@ SQL files and compares against the stored artifact. Exit non-zero on mismatch.
 
 ### Full status
 Run `mimic_utils status`. Produces a table of all concepts with status,
-attempt count, and dependency readiness.
+attempt count, and dependency readiness, preceded by every active concept and
+how long since its last transition. `mimic_utils status --stale` narrows that
+to the concepts past their staleness threshold — the loops that probably died
+and are silently blocking their dependents through `depcheck`.
 
 ## Build-order constraint
 
 A concept can only be started (`mimic_utils start <concept>`) when ALL
 concepts in its `dependencies` list are `COMPLETED` in the controller state.
-The controller always enforces this and also enforces concurrency — only one
-concept may be in an active state
-(RUNNING, VALIDATING_DEMO, or VALIDATING_FULL) at any time.
+The controller always enforces this, so a concept whose dependency has not
+reached a terminal state cannot start, whatever else is running. It does
+**not** limit how many concepts are active at once: several may be RUNNING,
+VALIDATING_DEMO or VALIDATING_FULL simultaneously, because the human composes
+waves of parallel goals.
 
 ## External raw tables → candidate FHIR resources
 

@@ -3,11 +3,10 @@
   "plugin": ["opencode-goal-plugin"],
   "command": {
     "goal": {
-      "description": "Convert exactly one named MIMIC-IV concept to MIMIC-on-FHIR. Sequential-only: no next concept is started automatically. Supply the concept name as the argument (one concept per goal).",
+      "description": "Convert exactly one named MIMIC-IV concept to MIMIC-on-FHIR. No next concept is started automatically; run further concepts as separate goals in their own terminals. Supply the concept name as the argument (one concept per goal).",
       "template": "$ARGUMENTS",
       "agent": "concept-port-orchestrator",
-      "model": "openai/gpt-5.6-sol",
-      "variant": "xhigh"
+      "model": "openai/gpt-5.6-luna"
     }
   },
   "references": {
@@ -17,7 +16,7 @@
     },
     "paper_reproductions": {
       "path": "../master_thesis_pipeline/paper_reproductions",
-      "description": "Proven auto-repro loop pattern, convergence judge separation, HPC transfer/poll skills (csiro-hpc, hpc-transfer), MIMIC_NOTES.md dataset quirks, Velonto TX infrastructure."
+      "description": "Proven auto-repro loop pattern, convergence judge separation, HPC transfer/poll skills (csiro-hpc, hpc-transfer), MIMIC_NOTES.md dataset quirks."
     }
   }
 }

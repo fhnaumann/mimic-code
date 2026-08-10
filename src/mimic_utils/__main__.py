@@ -19,8 +19,6 @@ from mimic_utils.conversion_cli import register_commands as _register_conversion
 from mimic_utils.demo_runner import format_demo_report, run_demo
 from mimic_utils.duckdb_oracle import ENV_KEY as DUCKDB_ENV_KEY
 from mimic_utils.export_oracle import export_oracle
-from mimic_utils.pathling import BASE_URL_ENV_KEY
-from mimic_utils.preflight_fhir import format_fhir_report, run_preflight_fhir
 from mimic_utils.transpile import transpile_file, transpile_folder
 
 
@@ -90,7 +88,12 @@ def _compare_port_results_command(**kwargs) -> int:
 
     mode = kwargs["mode"]
     try:
+        declaration = kwargs.get("unrepresentable")
+        declared = _cpr.load_unrepresentable(declaration) if declaration else None
         if mode == "shape":
+            if declared:
+                logging.error("--unrepresentable applies to mode 'full' only")
+                return EXIT_FAIL
             result = compare_shape(
                 kwargs["concept"], kwargs["manifest"], kwargs["candidate"]
             )
@@ -107,6 +110,7 @@ def _compare_port_results_command(**kwargs) -> int:
                 rtol=kwargs.get("rtol", _cpr.DEFAULT_RTOL),
                 atol=kwargs.get("atol", _cpr.DEFAULT_ATOL),
                 sample_limit=kwargs.get("sample_limit", _cpr.DEFAULT_SAMPLE_LIMIT),
+                unrepresentable=declared,
             )
     except Exception as exc:  # noqa: BLE001
         logging.error("compare-port-results failed: %s", exc)
@@ -135,21 +139,6 @@ def _compare_port_results_command(**kwargs) -> int:
     return EXIT_FAIL
 
 
-def _preflight_fhir_command(**kwargs) -> int:
-    """Dispatch for ``mimic_utils preflight-fhir``."""
-    import logging
-    try:
-        result = run_preflight_fhir(
-            fhir_base_url=kwargs.get("base_url"),
-            duckdb_path=kwargs.get("duckdb"),
-        )
-        print(format_fhir_report(result, color=not kwargs.get("no_color", False)))
-        return 0 if result.passed else 1
-    except Exception as exc:
-        logging.error("preflight-fhir failed: %s", exc)
-        return 1
-
-
 def _run_demo_command(**kwargs) -> int:
     """Dispatch for ``mimic_utils run-demo`` (the demo shape gate).
 
@@ -161,11 +150,11 @@ def _run_demo_command(**kwargs) -> int:
         result = run_demo(
             concept=kwargs["concept"],
             attempt_dir=kwargs.get("attempt_dir"),
-            base_url=kwargs.get("base_url"),
             manifest_path=kwargs.get("manifest"),
             artifact_root=kwargs.get("artifact_root"),
             attempt=kwargs.get("attempt"),
             skip_compare=kwargs.get("skip_compare", False),
+            warehouse=kwargs.get("warehouse"),
         )
         print(format_demo_report(result, color=not kwargs.get("no_color", False)))
         if result.blocked:
@@ -176,6 +165,70 @@ def _run_demo_command(**kwargs) -> int:
     except Exception as exc:
         logging.error("run-demo failed: %s", exc)
         return 1
+
+
+def _run_full_command(**kwargs) -> int:
+    """Dispatch for ``mimic_utils run-full`` (the full-data correctness gate).
+
+    Exit codes: 0 match, 1 mismatch or error. Unlike the demo gate there is no
+    'unsure': full data decides.
+    """
+    import logging
+    from mimic_utils.full_runner import format_full_report, run_full
+
+    try:
+        result = run_full(
+            concept=kwargs["concept"],
+            attempt_dir=kwargs.get("attempt_dir"),
+            attempt=kwargs.get("attempt"),
+            warehouse=kwargs.get("warehouse"),
+            oracle=kwargs.get("oracle"),
+            manifest_path=kwargs.get("manifest"),
+            artifact_root=kwargs.get("artifact_root"),
+            schema=kwargs.get("schema") or "mimiciv_derived",
+            rtol=kwargs.get("rtol", 0.001),
+            atol=kwargs.get("atol", 1e-9),
+            sample_limit=kwargs.get("sample_limit", 20),
+        )
+        print(format_full_report(result, color=not kwargs.get("no_color", False)))
+        return 0 if result.matched else 1
+    except Exception as exc:
+        logging.error("run-full failed: %s", exc)
+        return 1
+
+
+def _hpc_launch_command(**kwargs) -> int:
+    """Dispatch for ``mimic_utils hpc-launch``."""
+    from mimic_utils.hpc import hpc_launch_cli
+
+    argv = [kwargs["concept"]]
+    for flag in ("attempt_dir", "artifact_root", "walltime"):
+        value = kwargs.get(flag)
+        if value:
+            argv += [f"--{flag.replace('_', '-')}", str(value)]
+    if kwargs.get("attempt") is not None:
+        argv += ["--attempt", str(kwargs["attempt"])]
+    if kwargs.get("skip_smoke"):
+        argv.append("--skip-smoke")
+    return hpc_launch_cli(argv)
+
+
+def _hpc_poll_command(**kwargs) -> int:
+    """Dispatch for ``mimic_utils hpc-poll``."""
+    from mimic_utils.hpc import hpc_poll_cli
+
+    argv = [kwargs["concept"]]
+    for flag in ("attempt_dir", "artifact_root", "job_id"):
+        value = kwargs.get(flag)
+        if value:
+            argv += [f"--{flag.replace('_', '-')}", str(value)]
+    if kwargs.get("attempt") is not None:
+        argv += ["--attempt", str(kwargs["attempt"])]
+    if kwargs.get("interval") is not None:
+        argv += ["--interval", str(kwargs["interval"])]
+    if kwargs.get("max_polls") is not None:
+        argv += ["--max-polls", str(kwargs["max_polls"])]
+    return hpc_poll_cli(argv)
 
 
 def _oracle_manifest_command(**kwargs) -> int:
@@ -303,7 +356,8 @@ def main():
     compare_port_parser.add_argument(
         "mode", choices=("shape", "full"),
         help="shape = demo gate (columns/types only, row count not gated); "
-             "full = correctness gate (exact row count, schema, keyed diff).",
+             "full = correctness gate (schema identity + classified keyed "
+             "diff; row count reported, not gated).",
     )
     compare_port_parser.add_argument(
         "--concept", required=True, metavar="NAME",
@@ -315,7 +369,9 @@ def main():
     )
     compare_port_parser.add_argument(
         "--candidate", required=True, metavar="PATH",
-        help="Candidate result file (.parquet / .ndjson / .csv).",
+        help="Candidate result. Both runners write Parquet, so this is normally "
+             "a '<dir>/*.parquet' glob over the Spark part-files; .ndjson and "
+             ".csv are accepted but have their types inferred, not carried.",
     )
     compare_port_parser.add_argument(
         "--output", required=True, metavar="PATH",
@@ -324,6 +380,14 @@ def main():
     compare_port_parser.add_argument(
         "--oracle", metavar="PATH",
         help="Oracle DuckDB file. Required for mode 'full'; opened read-only.",
+    )
+    compare_port_parser.add_argument(
+        "--unrepresentable", metavar="PATH",
+        help=f"Attempt's {_cpr.UNREPRESENTABLE_FILENAME}: a JSON object mapping "
+             "column name to a justification, for columns MIMIC-on-FHIR cannot "
+             "represent at all. Each is verified to be 100%% NULL in the "
+             "candidate; a declared column that holds values is a blocking "
+             "failure. Mode 'full' only.",
     )
     compare_port_parser.add_argument(
         "--schema", default="mimiciv_derived",
@@ -348,9 +412,10 @@ def main():
         "run-demo",
         help="Execute a concept-port attempt on local Pathling and check its SHAPE.",
         description=(
-            "Register the attempt's ViewDefinitions and sql-view Library on the "
-            "local demo Pathling instance, execute the concept, and check the "
-            "result's SHAPE against the oracle manifest.\n\n"
+            "Execute the attempt's ViewDefinitions and concept.sql over the "
+            "local demo Delta warehouse via embedded Pathling on Spark — the "
+            "same engine the HPC full run uses — and check the result's SHAPE "
+            "against the oracle manifest.\n\n"
             "This is a cheap gate, not a correctness gate: it catches execution "
             "failure, wrong column names and incompatible types. Row count is NOT "
             "gated, and 0 rows yields 'unsure' (exit 2) rather than a failure -- "
@@ -369,10 +434,6 @@ def main():
         help="Explicit attempt number instead of the current one.",
     )
     run_demo_parser.add_argument(
-        "--base-url", default=None,
-        help=f"Pathling FHIR base URL (env: {BASE_URL_ENV_KEY}).",
-    )
-    run_demo_parser.add_argument(
         "--manifest", default=None,
         help="Oracle manifest JSON (default: oracle_manifest.full.json).",
     )
@@ -383,8 +444,111 @@ def main():
         "--skip-compare", action="store_true",
         help="Write the candidate result only; do not run the shape gate.",
     )
+    run_demo_parser.add_argument(
+        "--warehouse", default=None,
+        help="Demo Delta warehouse (env: MIMIC_FHIR_WAREHOUSE).",
+    )
     run_demo_parser.add_argument("--no-color", action="store_true")
     run_demo_parser.set_defaults(func=_run_demo_command)
+
+    run_full_parser = subparsers.add_parser(
+        "run-full",
+        help="Execute a concept-port attempt on FULL data and run the keyed diff.",
+        description=(
+            "Execute the attempt on full MIMIC-on-FHIR via embedded Pathling "
+            "and compare it against the immutable full oracle. This is the "
+            "correctness gate: column schema identity and the classified keyed "
+            "row-level diff. Row count is reported, never gated.\n\n"
+            "Normally invoked by the Slurm job on an HPC compute node, where "
+            "the warehouse and the oracle are both node-local.\n\n"
+            "Exit codes: 0 match, 1 mismatch or error, 2 review (the judge "
+            "decides). Never read a non-zero exit as failure: 2 means the run "
+            "succeeded and the port may well be correct."
+        ),
+        formatter_class=RawDescriptionHelpFormatter,
+    )
+    run_full_parser.add_argument("concept", help="Concept stem (e.g. age).")
+    run_full_parser.add_argument(
+        "--attempt-dir", default=None,
+        help="Attempt directory (default: the concept's current attempt).",
+    )
+    run_full_parser.add_argument(
+        "--attempt", type=int, default=None,
+        help="Explicit attempt number instead of the current one.",
+    )
+    run_full_parser.add_argument(
+        "--warehouse", default=None,
+        help="Full Delta warehouse path (env: MIMIC_FHIR_WAREHOUSE).",
+    )
+    run_full_parser.add_argument(
+        "--oracle", default=None,
+        help="Full oracle DuckDB file, opened read-only (env: MIMIC_FULL_ORACLE).",
+    )
+    run_full_parser.add_argument(
+        "--manifest", default=None,
+        help="Oracle manifest JSON (default: oracle_manifest.full.json).",
+    )
+    run_full_parser.add_argument(
+        "--artifact-root", default=None, help="Artifact root directory.",
+    )
+    run_full_parser.add_argument("--schema", default="mimiciv_derived")
+    run_full_parser.add_argument(
+        "--rtol", type=float, default=0.001,
+        help="Relative tolerance for floating-point VALUES (never row count).",
+    )
+    run_full_parser.add_argument("--atol", type=float, default=1e-9)
+    run_full_parser.add_argument("--sample-limit", type=int, default=20)
+    run_full_parser.add_argument("--no-color", action="store_true")
+    run_full_parser.set_defaults(func=_run_full_command)
+
+    hpc_launch_parser = subparsers.add_parser(
+        "hpc-launch",
+        help="Stage an attempt to the HPC, smoke-test it, and submit the full run.",
+        description=(
+            "rsync the attempt, this repo's mimic_utils source and the oracle "
+            "manifest to Petrichor, run a cheap login-node smoke test, then "
+            "sbatch the full-data job and record its id in hpc_job.json.\n\n"
+            "A failed smoke test aborts before sbatch: a broken job still costs "
+            "a queue slot."
+        ),
+        formatter_class=RawDescriptionHelpFormatter,
+    )
+    hpc_launch_parser.add_argument("concept", help="Concept stem (e.g. age).")
+    hpc_launch_parser.add_argument("--attempt-dir", default=None)
+    hpc_launch_parser.add_argument("--attempt", type=int, default=None)
+    hpc_launch_parser.add_argument("--artifact-root", default=None)
+    hpc_launch_parser.add_argument("--walltime", default=None)
+    hpc_launch_parser.add_argument(
+        "--skip-smoke", action="store_true",
+        help="Submit without the login-node check (not recommended).",
+    )
+    hpc_launch_parser.set_defaults(func=_hpc_launch_command)
+
+    hpc_poll_parser = subparsers.add_parser(
+        "hpc-poll",
+        help="Poll a submitted full run and fetch its verdict back.",
+        description=(
+            "Poll squeue every 5 minutes until the job leaves the queue or a "
+            "fatal marker appears in its log, then fetch comparison.full.json "
+            "and run_meta.full.json into the attempt directory. The large "
+            "candidate Parquet stays on scratch.\n\n"
+            "Leaving the queue is not success: only a fetched comparison "
+            "artifact is.\n\n"
+            "Exit codes: 0 match, 1 mismatch, crash or timeout."
+        ),
+        formatter_class=RawDescriptionHelpFormatter,
+    )
+    hpc_poll_parser.add_argument("concept", help="Concept stem (e.g. age).")
+    hpc_poll_parser.add_argument("--attempt-dir", default=None)
+    hpc_poll_parser.add_argument("--attempt", type=int, default=None)
+    hpc_poll_parser.add_argument("--artifact-root", default=None)
+    hpc_poll_parser.add_argument("--job-id", default=None)
+    hpc_poll_parser.add_argument(
+        "--interval", type=int, default=None,
+        help="Seconds between polls (default 300; do not go lower).",
+    )
+    hpc_poll_parser.add_argument("--max-polls", type=int, default=288)
+    hpc_poll_parser.set_defaults(func=_hpc_poll_command)
 
     manifest_parser = subparsers.add_parser(
         "oracle-manifest",

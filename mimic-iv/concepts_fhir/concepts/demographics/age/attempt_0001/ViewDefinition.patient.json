@@ -1,0 +1,15 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/age-0001-patient",
+  "name": "patient",
+  "resource": "Patient",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "subject_id" },
+        { "path": "birthDate", "name": "birthDate" }
+      ]
+    }
+  ]
+}

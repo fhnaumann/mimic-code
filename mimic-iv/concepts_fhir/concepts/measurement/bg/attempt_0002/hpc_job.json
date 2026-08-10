@@ -1,0 +1,8 @@
+{
+  "concept": "bg",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "29587320",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/bg/attempt_0002",
+  "submitted_at": "2026-08-07T06:41:32.222658+00:00",
+  "walltime": "2:00:00"
+}

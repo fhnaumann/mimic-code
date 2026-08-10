@@ -6,6 +6,7 @@ and the other document is a bug.
 
 Decided 2026-08-05. Row-count gating revised 2026-08-06. Conflict gating
 revised 2026-08-07 — see "MIMIC-on-FHIR is a transform, not a subset".
+Concurrency revised 2026-08-10 — see "Concurrency: waves of parallel goals".
 
 ## What is being claimed
 
@@ -252,6 +253,72 @@ Prefer the **smallest** unique key. If a port gets `subject_id` wrong but `hadm_
 right, keying on `hadm_id` alone reports a value mismatch in a named column; keying
 on both reports "row missing" plus "extra row", which localises nothing.
 
+## Concurrency: waves of parallel goals
+
+`ConversionController.start()` used to raise on any other active concept. That
+invariant is gone. Any number of concepts may be `RUNNING`, `VALIDATING_DEMO`
+or `VALIDATING_FULL` at the same time.
+
+**One concept per `/goal` did not change.** A goal still receives exactly one
+named concept, still never auto-advances to the next, and still runs its
+subagents sequentially; one attempt still carries at most one full run.
+Parallelism is composed by the human — N terminals, N goals, one concept each —
+and lives entirely outside the loop. A goal that sees four other concepts
+active is looking at its siblings, not at corruption. Dependency gating via
+`depcheck` is unchanged.
+
+Which concepts share a wave is a human scheduling decision taken before any
+goal starts, and the rules for it live in `README.md`. Nothing inside a goal
+depends on how the wave was composed, so a goal never has grounds to conclude
+one was composed wrongly.
+
+### What replaces the invariant
+
+The single-active rule was implicitly protecting three unrelated resources at
+once, at the price of never running two concepts. Each now has its own
+mechanism.
+
+| Resource | Why the invariant covered it | What covers it now |
+|---|---|---|
+| The local Spark JVM | one laptop, one driver heap, one `spark-warehouse/` Derby metastore in the repo root that two sessions in the same cwd collide on | an OS-level `flock` around the embedded executor — at most one local JVM, the rest block until it exits |
+| The remote `mimic_utils` tree | `stage_attempt` rsynced `--delete` into one shared path, so a launch could rewrite the module tree a running job was importing | staging is per attempt: `<remote_attempt>/src/mimic_utils/`, and the code that produced a verdict is part of that attempt's evidence |
+| `MIMIC_NOTES.md` | one file, edited in place, and the loop guaranteed one writer | one append-only fragment per concept under `MIMIC_NOTES.d/`, owned by exactly one goal |
+
+### Fragments are provisional
+
+`MIMIC_NOTES.d/<concept>.md` carries one loop's live hypotheses, written before
+its own full run confirmed anything. Read a fragment as a lead to verify
+against served data, never as an established fact, and never cite one as
+evidence for a verdict. If `bg`'s prober writes a wrong claim, four siblings
+inherit it, and the mechanism goes from saving HPC runs to multiplying one
+wrong one across the wave. `MIMIC_NOTES.md` remains the curated read surface: a
+human merges fragments into it by hand, and a fragment stays provisional until
+that happens — which is what makes an entry in `MIMIC_NOTES.md` mean "checked"
+and a fragment mean "one loop currently believes".
+
+`carryover/<concept>/` is unaffected: it was already per-concept, and it is
+still edited in place.
+
+### Staleness replaces the liveness signal
+
+A single `Active:` concept was doubling as a liveness detector — a dead loop
+stopped the system and named itself. With five loops a stranded `chemistry`
+silently blocks `creatinine_baseline`, `first_day_lab`, `sofa` and `sapsii`
+through `depcheck` until someone notices weeks later, and the goal runner's
+budgets make stranding the normal case rather than the exception.
+
+So every CLI transition stamps `updated_at`, `hpc-poll` touches it on each
+poll, and `mimic_utils status` renders the time since the last transition and
+takes `--stale`. Thresholds: `RUNNING` 45 min, `VALIDATING_DEMO` 90 min — it
+must exceed the Spark lease's 60-minute wait, or a loop queued behind the lease
+reads as dead — and `VALIDATING_FULL` 15 min, which is three missed polls and
+is only meaningful because the poller heartbeats.
+
+Staleness is advisory and display-only, with one exception: `resume --apply`
+and `retry` refuse on a concept that still looks live, and `--force` overrides
+them. The bar for `--force` is a session you *know* is dead — never an error
+you have not diagnosed.
+
 ## Gates
 
 ### Demo — cheap shape gate, NOT a correctness gate
@@ -346,6 +413,10 @@ Three lines, never summed. A human override is a real result and a weaker one:
 it was decided outside the protocol, and a reader who cannot tell which is which
 is being asked to trust the loop on precisely the point worth checking.
 
+`status` also lists every active concept with the time since its last
+transition, and `--stale` filters to the ones past their threshold — see
+"Concurrency: waves of parallel goals" for what the thresholds mean.
+
 The judge can never override a `mismatch`. It decides `review` results, at the
 bar its tier sets.
 
@@ -389,5 +460,6 @@ it is **not** the dependent's own doing — a dependent that reports those same
 | Full FHIR | `/scratch3/nau025/mimic-on-fhir-delta/spark_warehouse` (HPC, 156 GB) |
 | Demo oracle | `/Users/nau025/warehouses/mimic4-demo.db` (local, read-only) |
 | Demo FHIR | `/Users/nau025/warehouses/mimic-iv-demo/delta` (Delta; read by embedded Pathling on Spark) |
+| Staged attempt | `/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/<category>/<concept>/attempt_NNNN/` (HPC; carries its own `src/mimic_utils/` and `oracle_manifest.full.json`) |
 
 Every code path opens a DuckDB oracle with `read_only=True`.

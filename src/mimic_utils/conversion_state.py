@@ -1,4 +1,4 @@
-"""Durable one-concept-at-a-time conversion-loop state / controller.
+"""Durable per-concept conversion-loop state / controller.
 
 State is serialised as JSON with schema validation.  Writes are atomic
 (tmp-file + os.replace).  Attempt directories are **append-only and
@@ -19,9 +19,14 @@ Lifecycle states
   SKIPPED -- RUNNING              (when dependencies resolve)
   FAILED  -- RUNNING              (retry)
 
-Concurrency constraint: exactly one concept may be in an *active* state
-(``RUNNING``, ``VALIDATING_DEMO``, or ``VALIDATING_FULL``) at any time.
-Dependencies must always be completed before a concept can start.
+Any number of concepts may be in an *active* state (``RUNNING``,
+``VALIDATING_DEMO``, or ``VALIDATING_FULL``) at once: parallelism is composed
+outside the loop, as one ``/goal`` per terminal, and the controller no longer
+arbitrates it.  The three resources the old single-active rule was implicitly
+protecting have their own mechanisms now -- an OS-level lease around the local
+Spark JVM, per-attempt HPC staging, and per-concept notes fragments.  See
+``mimic-iv/concepts_fhir/LOOP_CONTRACT.md`` -> "Concurrency: waves of parallel
+goals".  Dependencies must still be completed before a concept can start.
 
 Paths
 -----
@@ -66,13 +71,36 @@ STATUS_ORDER: List[str] = [
     "VALIDATING_FULL",
     "BLOCKED_REPRESENTATION",
     "FAILED",
+    # A port the judge accepted despite divergence the comparator could not
+    # clear on its own. Kept distinct from COMPLETED on purpose: the two are
+    # different research results, and a headline of "65/65 completed" that
+    # quietly folds them together is not a claim the artifacts support.
+    "COMPLETED_WITH_DIVERGENCE",
     "COMPLETED",
 ]
 STATUS_VALUES = frozenset(STATUS_ORDER)
 ACTIVE_STATUSES = frozenset({"RUNNING", "VALIDATING_DEMO", "VALIDATING_FULL"})
 COUNTER_NAMES = frozenset({"semantic", "engineering", "hpc"})
+#: Who may accept a divergence. "judge" is the loop's own equivalence judge;
+#: "human" is a manual override recorded against a BLOCKED_REPRESENTATION.
+DIVERGENCE_DECIDERS = frozenset({"judge", "human"})
 ATTEMPT_DIR_PATTERN = re.compile(r"^attempt_(\d{4})$")
 CACHE_FILENAME = "state.json"
+
+#: How long an active status may go without a transition before the concept is
+#: reported stale.  This replaces the liveness signal the old single-active
+#: invariant was accidentally providing: with several goals in flight a
+#: stranded concept blocks its dependents through `depcheck` and says nothing.
+#:
+#: ``VALIDATING_DEMO`` must stay above the Spark lease's 60-minute wait
+#: (``embedded_runner.SPARK_LEASE_TIMEOUT_SECONDS``), or a loop legitimately
+#: queued behind the lease reads as dead.  ``VALIDATING_FULL`` can be short --
+#: three missed polls -- only because ``hpc-poll`` heartbeats every 300 s.
+STALENESS_THRESHOLDS: Dict[str, int] = {
+    "RUNNING": 45 * 60,
+    "VALIDATING_DEMO": 90 * 60,
+    "VALIDATING_FULL": 15 * 60,
+}
 
 # Relative to artifact root
 DEFAULT_STATE_DIR = "mimic-iv/concepts_fhir/state"
@@ -87,9 +115,23 @@ LEGAL_TRANSITIONS: Dict[str, Set[str]] = {
     "PENDING":         {"RUNNING", "SKIPPED"},
     "RUNNING":         {"VALIDATING_DEMO", "VALIDATING_FULL", "BLOCKED_REPRESENTATION", "FAILED"},
     "VALIDATING_DEMO": {"VALIDATING_FULL", "BLOCKED_REPRESENTATION", "FAILED"},
-    "VALIDATING_FULL": {"COMPLETED", "BLOCKED_REPRESENTATION", "FAILED"},
+    # COMPLETED_WITH_DIVERGENCE is reachable only from here, and only after a
+    # judge decision: there is no path to it that skips the full-data run.
+    "VALIDATING_FULL": {
+        "COMPLETED", "COMPLETED_WITH_DIVERGENCE",
+        "BLOCKED_REPRESENTATION", "FAILED",
+    },
     "COMPLETED":        set(),
-    "BLOCKED_REPRESENTATION": {"RUNNING"},
+    "COMPLETED_WITH_DIVERGENCE": set(),
+    # BLOCKED_REPRESENTATION is not terminal-terminal: it means "a human must
+    # look at this", and the two things a human can conclude are "you are right,
+    # try again" (RUNNING) and "this divergence is intrinsic and I accept it"
+    # (COMPLETED_WITH_DIVERGENCE). Without the second edge the only way to
+    # record a human override is to re-run the concept to manufacture a state
+    # the human has already decided -- an HPC run spent to satisfy a transition
+    # table. The acceptance still requires a justification, and records that a
+    # human and not the judge made it.
+    "BLOCKED_REPRESENTATION": {"RUNNING", "COMPLETED_WITH_DIVERGENCE"},
     "FAILED":           {"RUNNING"},
     "SKIPPED":          {"RUNNING"},
 }
@@ -109,10 +151,6 @@ class ValidationError(StateError):
 
 class TransitionError(StateError):
     """Illegal state transition attempted."""
-
-
-class ConcurrencyError(StateError):
-    """Another concept is already in an active state."""
 
 
 class DependencyError(StateError):
@@ -265,7 +303,8 @@ def dag_category(raw_dag: Dict[str, Any], concept: str) -> Optional[str]:
 
 StatusType = Literal[
     "PENDING", "RUNNING", "VALIDATING_DEMO", "VALIDATING_FULL",
-    "COMPLETED", "BLOCKED_REPRESENTATION", "FAILED", "SKIPPED",
+    "COMPLETED", "COMPLETED_WITH_DIVERGENCE",
+    "BLOCKED_REPRESENTATION", "FAILED", "SKIPPED",
 ]
 
 
@@ -281,8 +320,25 @@ class ConceptState:
     error_message: Optional[str] = None
     started_at: Optional[str] = None
     completed_at: Optional[str] = None
+    # Touched by every transition and by each `hpc-poll` iteration. It is the
+    # only evidence that a goal running in some other terminal is still alive:
+    # nothing else about a parked concept distinguishes "mid-run" from
+    # "abandoned three hours ago".
+    updated_at: Optional[str] = None
     dependencies: List[str] = field(default_factory=list)
     category: Optional[str] = None
+    # The reasoning for accepting a divergence, kept in its own field rather
+    # than in `error_message`: an accepted port did not error, and a results
+    # table that reads justifications out of an error field invites exactly the
+    # wrong reading.
+    divergence_justification: Optional[str] = None
+    # Who accepted it: "judge" (the loop's own equivalence judge) or "human" (a
+    # manual override of a BLOCKED_REPRESENTATION). Recorded because the two are
+    # not the same evidence. A judge-accepted divergence was decided inside the
+    # protocol; a human-accepted one was decided outside it, and a thesis that
+    # cannot tell the reader which is which is asking to be trusted on the point
+    # most worth checking.
+    divergence_decided_by: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -318,6 +374,13 @@ class ConceptState:
         if not isinstance(deps, list) or not all(isinstance(d, str) for d in deps):
             raise ValidationError("dependencies must be a list of strings")
 
+        decided_by = raw.get("divergence_decided_by")
+        if decided_by is not None and decided_by not in DIVERGENCE_DECIDERS:
+            raise ValidationError(
+                f"divergence_decided_by must be null or one of "
+                f"{sorted(DIVERGENCE_DECIDERS)}; got {decided_by!r}"
+            )
+
         return cls(
             concept_name=raw["concept_name"].strip(),
             status=raw["status"],  # type: ignore[arg-type]
@@ -328,9 +391,55 @@ class ConceptState:
             error_message=err,
             started_at=raw.get("started_at"),
             completed_at=raw.get("completed_at"),
+            updated_at=raw.get("updated_at"),
             dependencies=deps,
             category=raw.get("category"),
+            # Round-tripped, not dropped. These two fields ARE the record of an
+            # accepted divergence; a reload that silently discarded them would
+            # leave a COMPLETED_WITH_DIVERGENCE with no argument attached, which
+            # is the state `transition` refuses to create in the first place.
+            divergence_justification=raw.get("divergence_justification"),
+            divergence_decided_by=decided_by,
         )
+
+
+# ---------------------------------------------------------------------------
+# Staleness
+# ---------------------------------------------------------------------------
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def age_seconds(timestamp: Optional[str]) -> Optional[float]:
+    """Seconds since an ISO-8601 *timestamp*, or ``None`` if unusable.
+
+    A state written before ``updated_at`` existed has no age, and is therefore
+    never reported stale -- claiming a concept is dead on the strength of a
+    field that was never written would be a false alarm on every old state.
+    """
+    if not timestamp:
+        return None
+    try:
+        parsed = datetime.fromisoformat(timestamp)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return max(0.0, (datetime.now(timezone.utc) - parsed).total_seconds())
+
+
+def format_age(seconds: Optional[float]) -> str:
+    """``2h50m`` / ``12m`` / ``45s``. Compact because it sits inline in `status`."""
+    if seconds is None:
+        return "unknown"
+    total = int(seconds)
+    if total < 60:
+        return f"{total}s"
+    if total < 3600:
+        return f"{total // 60}m"
+    return f"{total // 3600}h{(total % 3600) // 60:02d}m"
 
 
 # ---------------------------------------------------------------------------
@@ -340,12 +449,19 @@ class ConceptState:
 
 @dataclass
 class StatusReport:
-    """Full status snapshot for all DAG concepts plus the active concept."""
-    active_concept: Optional[str]
-    active_status: Optional[str]
+    """Full status snapshot for all DAG concepts plus every active one.
+
+    ``active_concepts`` is a list because a wave runs several goals at once.
+    Each entry is ``{"concept", "status", "age_seconds", "stale"}``.
+    """
+    active_concepts: List[Dict[str, Any]]
     concepts: List[Dict[str, Any]]
 
-    def format(self, *, color: bool = True) -> str:
+    @property
+    def stale_concepts(self) -> List[Dict[str, Any]]:
+        return [a for a in self.active_concepts if a["stale"]]
+
+    def format(self, *, color: bool = True, stale_only: bool = False) -> str:
         lines: List[str] = []
         G = "\033[92m" if color else ""
         R = "\033[91m" if color else ""
@@ -353,24 +469,47 @@ class StatusReport:
         C = "\033[96m" if color else ""
         B = "\033[0m" if color else ""
 
+        def active_line(a: Dict[str, Any]) -> str:
+            age = f"no transition for {format_age(a['age_seconds'])}"
+            mark = f"{R}STALE — {age}{B}" if a["stale"] else age
+            return f"  Active: {C}{a['concept']}{B}  ->  {Y}{a['status']}{B} · {mark}"
+
+        if stale_only:
+            # Advisory only. Staleness never decides anything on its own; it
+            # says where to go and look, because with several goals in flight
+            # nothing else reports a loop that stopped.
+            lines.append("Stale active concepts")
+            lines.append("=" * 70)
+            stale = self.stale_concepts
+            if not stale:
+                lines.append("  (none)")
+            for a in stale:
+                lines.append(active_line(a))
+            return "\n".join(lines)
+
         lines.append("Conversion Status Report")
         lines.append("=" * 70)
 
-        if self.active_concept:
-            lines.append(f"  Active: {C}{self.active_concept}{B}  ->  {Y}{self.active_status}{B}")
+        if self.active_concepts:
+            for a in self.active_concepts:
+                lines.append(active_line(a))
         else:
             lines.append("  Active: (none)")
 
         lines.append("")
-        header = f"  {'Concept':<24} {'Lv':>2}  {'Status':<18} {'Att':>3}  Ready?"
+        header = f"  {'Concept':<24} {'Lv':>2}  {'Status':<26} {'Att':>3}  Ready?"
         lines.append(header)
-        lines.append(f"  {'-' * 66}")
+        lines.append(f"  {'-' * 74}")
 
         for c in self.concepts:
             status = c["status"]
             s = status
             if status == "COMPLETED":
                 s = f"{G}COMPLETED{B}"
+            elif status == "COMPLETED_WITH_DIVERGENCE":
+                # Yellow, not green. It is a result, not a clean one.
+                by = c.get("decided_by")
+                s = f"{Y}COMPLETED_WITH_DIVERGENCE{f' ({by})' if by else ''}{B}"
             elif status in ACTIVE_STATUSES:
                 s = f"{Y}{status}{B}"
             elif status == "FAILED":
@@ -378,12 +517,24 @@ class StatusReport:
 
             ready_mark = f"{G}yes{B}" if c["ready"] else f"{R}no{B}"
             lines.append(
-                f"  {c['concept']:<24} {c['level']:>2}  {s:<34} {c['attempt']:>3}  {ready_mark}"
+                f"  {c['concept']:<24} {c['level']:>2}  {s:<42} {c['attempt']:>3}  {ready_mark}"
             )
 
         completed = sum(1 for c in self.concepts if c["status"] == "COMPLETED")
+        divergent = [
+            c for c in self.concepts if c["status"] == "COMPLETED_WITH_DIVERGENCE"
+        ]
+        by_judge = sum(1 for c in divergent if c.get("decided_by") != "human")
+        by_human = sum(1 for c in divergent if c.get("decided_by") == "human")
         total = len(self.concepts)
-        lines.append(f"\n  {completed}/{total} completed")
+        # Reported on separate lines, never summed. The distinction between an
+        # exact port, one the judge accepted, and one a human accepted over a
+        # blocker is the finding, not a formatting detail.
+        lines.append(f"\n  {completed}/{total} exact match")
+        if by_judge:
+            lines.append(f"  {by_judge}/{total} divergence accepted by the judge")
+        if by_human:
+            lines.append(f"  {by_human}/{total} divergence accepted by a human (manual override)")
         return "\n".join(lines)
 
 
@@ -497,6 +648,10 @@ class ConversionController:
         return ConceptState.from_dict(raw)
 
     def _write_state(self, state: ConceptState) -> None:
+        # Stamped here rather than at each call site so no transition can be
+        # added later that forgets to, which would make a live concept look
+        # abandoned.
+        state.updated_at = _now_iso()
         path = self._path_for(state.concept_name)
         path.parent.mkdir(parents=True, exist_ok=True)
         payload = json.dumps(state.to_dict(), indent=2, sort_keys=True)
@@ -511,7 +666,13 @@ class ConversionController:
             os.unlink(tmpname)
             raise
 
-    def _active(self) -> Tuple[Optional[str], Optional[str]]:
+    def _active(self) -> List[Dict[str, Any]]:
+        """Every concept currently in an active status, in name order.
+
+        A list, not a single concept: a wave runs several goals at once, and
+        seeing siblings here is the normal case rather than corruption.
+        """
+        active: List[Dict[str, Any]] = []
         for child in sorted(self.state_dir.iterdir()):
             if not child.is_dir():
                 continue
@@ -522,8 +683,19 @@ class ConversionController:
             except StateError:
                 continue
             if st is not None and st.status in ACTIVE_STATUSES:
-                return (st.concept_name, st.status)
-        return (None, None)
+                active.append(self._liveness_row(st))
+        return active
+
+    @staticmethod
+    def _liveness_row(state: ConceptState) -> Dict[str, Any]:
+        age = age_seconds(state.updated_at)
+        threshold = STALENESS_THRESHOLDS.get(state.status)
+        return {
+            "concept": state.concept_name,
+            "status": state.status,
+            "age_seconds": age,
+            "stale": age is not None and threshold is not None and age > threshold,
+        }
 
     # -- public API -----------------------------------------------------------
 
@@ -554,7 +726,7 @@ class ConversionController:
         return state
 
     def status_report(self) -> StatusReport:
-        active_name, active_status = self._active()
+        active = self._active()
 
         concepts: List[Dict[str, Any]] = []
         nodes_by_level: Dict[int, List[str]] = {}
@@ -573,7 +745,7 @@ class ConversionController:
                     deps = self._dag.get(stem, set())
                     for dep in deps:
                         dep_st = self._read_state(dep)
-                        if dep_st is None or dep_st.status != "COMPLETED":
+                        if dep_st is None or dep_st.status not in self.SATISFYING_STATUSES:
                             missing.append(dep)
                     ready = len(missing) == 0
 
@@ -584,21 +756,23 @@ class ConversionController:
                     "ready": ready,
                     "missing_deps": sorted(missing),
                     "level": level,
+                    "decided_by": st.divergence_decided_by if st else None,
                 })
 
-        return StatusReport(
-            active_concept=active_name,
-            active_status=active_status,
-            concepts=concepts,
-        )
+        return StatusReport(active_concepts=active, concepts=concepts)
 
     def start(self, concept_name: str) -> ConceptState:
         """Transition *concept_name* to ``RUNNING``.
 
         Guards:
-        * Concurrency: no other concept is active (always enforced).
         * Status: concept must be in a startable status.
         * Dependencies: all must be COMPLETED.
+
+        There is deliberately no concurrency guard: other concepts being active
+        is the expected case under a wave of parallel goals.  What the old guard
+        was protecting -- the local Spark JVM, the remote module tree, the
+        shared notes file -- is protected directly now, each by its own
+        mechanism.
 
         Creates an immutable attempt directory under
         ``concepts/<category>/<concept>/attempt_NNNN/``.
@@ -606,14 +780,6 @@ class ConversionController:
         state = self._read_state(concept_name)
         if state is None:
             raise StateError(f"Concept '{concept_name}' has not been initialised")
-
-        # --- concurrency (always) ---
-        active_name, active_status = self._active()
-        if active_name is not None and active_name != concept_name:
-            raise ConcurrencyError(
-                f"Cannot start '{concept_name}': '{active_name}' "
-                f"is already {active_status}"
-            )
 
         # --- transition ---
         if state.status not in LEGAL_TRANSITIONS or "RUNNING" not in LEGAL_TRANSITIONS.get(state.status, set()):
@@ -649,6 +815,8 @@ class ConversionController:
         target: str,
         *,
         error_message: Optional[str] = None,
+        justification: Optional[str] = None,
+        decided_by: str = "judge",
         counter: Optional[Literal["semantic", "engineering", "hpc"]] = None,
     ) -> ConceptState:
         """Transition *concept_name* to *target*.
@@ -657,10 +825,20 @@ class ConversionController:
         ----------
         target :
             One of ``VALIDATING_DEMO``, ``VALIDATING_FULL``, ``COMPLETED``,
-            ``BLOCKED_REPRESENTATION``, ``FAILED``, or ``SKIPPED``.
+            ``COMPLETED_WITH_DIVERGENCE``, ``BLOCKED_REPRESENTATION``,
+            ``FAILED``, or ``SKIPPED``.
         error_message :
             Recorded when transitioning to ``FAILED`` or
             ``BLOCKED_REPRESENTATION``.
+        justification :
+            Required for ``COMPLETED_WITH_DIVERGENCE``: the cited reason.
+            Accepting a divergence without recording why would leave the
+            strongest claim in the thesis resting on an unrecorded argument.
+        decided_by :
+            ``"judge"`` or ``"human"``.  Only meaningful for
+            ``COMPLETED_WITH_DIVERGENCE``.  ``"human"`` is required to clear a
+            ``BLOCKED_REPRESENTATION``, because the judge, by construction, is
+            not what put it there.
         counter :
             Which of the three counters to increment.
         """
@@ -678,15 +856,49 @@ class ConversionController:
                 f"allowed: {sorted(allowed)}"
             )
 
+        if target == "COMPLETED_WITH_DIVERGENCE":
+            if not (justification or "").strip():
+                raise StateError(
+                    "COMPLETED_WITH_DIVERGENCE requires --justification: the "
+                    "cited reason for accepting the divergence, naming the FHIR "
+                    "element or path that is missing, or the upstream ETL "
+                    "statement that rewrote the value. An accepted divergence "
+                    "with no recorded argument is indistinguishable from an "
+                    "unchecked one."
+                )
+            if decided_by not in DIVERGENCE_DECIDERS:
+                raise StateError(
+                    f"--by must be one of {sorted(DIVERGENCE_DECIDERS)}; "
+                    f"got {decided_by!r}"
+                )
+            # The judge never sees a BLOCKED_REPRESENTATION -- it is either what
+            # the judge itself returned or what the loop recorded without
+            # convening one. Letting `--by judge` clear it would let the loop
+            # launder its own blocker into a judge decision that never happened.
+            if state.status == "BLOCKED_REPRESENTATION" and decided_by != "human":
+                raise StateError(
+                    f"'{concept_name}' is BLOCKED_REPRESENTATION, which only a "
+                    f"human can clear: pass --by human. The judge is not called "
+                    f"on a blocked concept, so recording its acceptance as the "
+                    f"judge's would misattribute the decision."
+                )
+
         state.status = target  # type: ignore[assignment]
 
-        if target in ("COMPLETED", "BLOCKED_REPRESENTATION", "FAILED", "SKIPPED"):
+        if target in (
+            "COMPLETED", "COMPLETED_WITH_DIVERGENCE",
+            "BLOCKED_REPRESENTATION", "FAILED", "SKIPPED",
+        ):
             state.completed_at = datetime.now(timezone.utc).isoformat()
 
         if target in ("FAILED", "BLOCKED_REPRESENTATION"):
             state.error_message = error_message
         else:
             state.error_message = None
+
+        if target == "COMPLETED_WITH_DIVERGENCE":
+            state.divergence_justification = justification
+            state.divergence_decided_by = decided_by
 
         if counter is not None:
             if counter not in COUNTER_NAMES:
@@ -698,9 +910,54 @@ class ConversionController:
         self._write_state(state)
         return state
 
+    def touch(self, concept_name: str) -> Optional[ConceptState]:
+        """Record that *concept_name* is still being worked on.
+
+        The heartbeat behind the ``VALIDATING_FULL`` staleness threshold: a
+        healthy full run makes no transition for its whole queue wait plus
+        runtime, so without this every full run would read as stale within
+        fifteen minutes and the signal would be trained away.  Returns ``None``
+        if the concept has no state yet, because a heartbeat is never a reason
+        to create one.
+        """
+        state = self._read_state(concept_name)
+        if state is None:
+            return None
+        self._write_state(state)
+        return state
+
+    def liveness(self, concept_name: str) -> Optional[Dict[str, Any]]:
+        """``{"concept", "status", "age_seconds", "stale"}`` if active, else ``None``.
+
+        Advisory. The only callers that act on it are ``resume --apply`` and
+        ``retry``, which refuse a concept that still looks live rather than
+        stealing an attempt out from under another terminal's goal.
+        """
+        state = self._read_state(concept_name)
+        if state is None or state.status not in ACTIVE_STATUSES:
+            return None
+        return self._liveness_row(state)
+
     def dependency_ready(self, concept_name: str) -> Tuple[bool, List[str]]:
         missing = self._missing_dependencies(concept_name)
         return len(missing) == 0, sorted(missing)
+
+    def divergent_dependencies(self, concept_name: str) -> List[str]:
+        """Dependencies that only reached ``COMPLETED_WITH_DIVERGENCE``.
+
+        These satisfy the dependency check -- refusing them would stall the DAG
+        at the first accepted gap and make the whole permissive policy
+        pointless -- but they are not silent.  A concept built on a divergent
+        dependency *inherits* that divergence, so its own judge must be told
+        which part of the gap it is being asked to assess is not this concept's
+        doing.
+        """
+        return sorted(
+            dep
+            for dep in self._dag.get(concept_name, set())
+            if (st := self._read_state(dep)) is not None
+            and st.status == "COMPLETED_WITH_DIVERGENCE"
+        )
 
     def attempt_dir(self, concept_name: str) -> Optional[Path]:
         state = self._read_state(concept_name)
@@ -711,11 +968,17 @@ class ConversionController:
 
     # -- internal -------------------------------------------------------------
 
+    #: Statuses that satisfy a dependency. A judge-accepted divergence counts:
+    #: the concept has a defensible port, and refusing to build on it would
+    #: halt the DAG at the first coverage gap. See `divergent_dependencies`,
+    #: which is how the inherited gap stays visible instead of vanishing.
+    SATISFYING_STATUSES = frozenset({"COMPLETED", "COMPLETED_WITH_DIVERGENCE"})
+
     def _missing_dependencies(self, concept_name: str) -> Set[str]:
         deps = self._dag.get(concept_name, set())
         missing: Set[str] = set()
         for dep in deps:
             dep_state = self._read_state(dep)
-            if dep_state is None or dep_state.status != "COMPLETED":
+            if dep_state is None or dep_state.status not in self.SATISFYING_STATUSES:
                 missing.add(dep)
         return missing
