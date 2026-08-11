@@ -1,0 +1,8 @@
+## Evidence block
+
+- Verdict: `accept` for the contested review; no divergent dependencies (`[]`).
+- The candidate and oracle each contain 735,462 rows with matching schema; 691,939 rows are identical (94.0822%). The residual is anchored 1:1 on `(antibiotic, hadm_id, route, subject_id)` and contains no genuine invented or missing prescriptions.
+- `MedicationRequest.dispenseRequest.validityPeriod.start/end` are omitted for reversed or incomplete intervals by `mimic-fhir/sql/fhir_medication_request.sql:172-177`; `authoredOn` is pharmacy `entertime` at `:55,124`; request identifiers and the hospital-only `encounter` at `:75,111-124` preserve neither original endpoints nor an ICU link. This explains 43,453 `differing_null_only` rows and the unrecoverable `stay_id` consequence.
+- Both endpoint values are cast through `TIMESTAMPTZ` at `mimic-fhir/sql/fhir_medication_request.sql:43-44`, irreversibly normalizing nonexistent America/New_York spring-forward 02:xx values to 03:xx. All 70 conflicts (52 `starttime`, 23 `stoptime`) have this cause after request-level re-pairing. The three apparent residuals are duplicate-group positional pairing artifacts at `src/mimic_utils/compare_port_results.py:1342-1355`, not port defects.
+- All defensible mappings were applied: direct and mix branches, multiplicity-preserving `UNION ALL`, source predicates, identifiers, and ICU half-open temporal join. The coverage and transformation loss is intrinsic to served FHIR and not severe enough to make this cease being a faithful port.
+- No files were produced by the judge and no dataset-wide note was added; existing curated notes already cover the validity-period omission and datetime transformation.
