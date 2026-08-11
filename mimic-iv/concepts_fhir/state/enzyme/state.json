@@ -1,0 +1,16 @@
+{
+  "attempt": 1,
+  "category": "measurement",
+  "completed_at": "2026-08-11T05:04:22.295557+00:00",
+  "concept_name": "enzyme",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Accepted 65/1,639,514 (0.004%) keyed charttime conflicts caused by irreversible DST normalization in mimic-fhir/sql/fhir_specimen_lab.sql:9,18,58 and mimic-fhir/sql/fhir_observation_labevents.sql:15,121. Normalized 02:xx and genuine 03:xx values are indistinguishable in Specimen.collection.collectedDateTime and Observation.effectiveDateTime; no other FHIR field preserves source charttime. The candidate correctly uses TIMESTAMP_NTZ and reproduces every other row and value.",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "semantic_counter": 1,
+  "started_at": "2026-08-11T04:23:01.709788+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-11T05:04:22.295806+00:00"
+}
