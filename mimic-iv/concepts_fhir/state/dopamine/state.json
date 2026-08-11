@@ -1,0 +1,16 @@
+{
+  "attempt": 1,
+  "category": "medication",
+  "completed_at": "2026-08-11T04:28:35.901149+00:00",
+  "concept_name": "dopamine",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "MIMIC-on-FHIR provides no populated ICU input-event identifier at MedicationAdministration.identifier.value for relational inputevents.linkorderid. The ICU ETL, mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,38-103, never selects or writes linkorderid or any input-event identifier; its resource ID is an opaque UUIDv5 derived from stay_id-orderid-itemid, which neither contains nor permits recovery of linkorderid. This absence explains all 16,892 keyed differing_null_only rows: every candidate linkorderid is the required typed NULL while every representable value agrees. There are zero missing, invented, or conflicting rows. All defensible mappings were exhausted: exact medication system/code filtering, ICU Encounter identifier recovery, both effective-time variants, wall-time parsing, and dosage Quantity casting were implemented. Overall identity is 0.00% solely because linkorderid differs on every row; identity over representable columns is 100.00%. There are no divergent dependencies. The result remains a faithful port rather than a representation block because the complete row set and every representable column are reproduced exactly within comparator tolerances.",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "semantic_counter": 1,
+  "started_at": "2026-08-11T03:17:41.207557+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-11T04:28:35.903797+00:00"
+}
