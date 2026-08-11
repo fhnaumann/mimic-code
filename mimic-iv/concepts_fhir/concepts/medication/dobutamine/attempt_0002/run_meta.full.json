@@ -1,0 +1,164 @@
+{
+  "attempt_dir": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/medication/dobutamine/attempt_0002",
+  "column_types": {
+    "endtime": "timestamp_ntz",
+    "linkorderid": "int",
+    "starttime": "timestamp_ntz",
+    "stay_id": "int",
+    "vaso_amount": "float",
+    "vaso_rate": "float"
+  },
+  "columns": [
+    "stay_id",
+    "linkorderid",
+    "vaso_rate",
+    "vaso_amount",
+    "starttime",
+    "endtime"
+  ],
+  "concept": "dobutamine",
+  "dataset": "full",
+  "divergence": {
+    "attributed": [
+      {
+        "attributed_rows": 1,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44"
+        ],
+        "class": "differing_conflict",
+        "columns": {
+          "endtime": 1
+        },
+        "count": 1,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element this column is sourced from, and (b) that the attributed fraction is consistent with DST-gap rarity. Either failing makes this `bug`.",
+        "proof": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "blocking": [
+      {
+        "class": "only_candidate",
+        "count": 1,
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      }
+    ],
+    "classification": "keyed",
+    "conflict_attribution": {
+      "attempted": true,
+      "attributed_rows": 1,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44"
+      ],
+      "columns": {
+        "endtime": 1
+      },
+      "columns_considered": [
+        "endtime"
+      ],
+      "complete": true,
+      "conflict_rows": 1,
+      "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+      "residual_rows": 0,
+      "timezone": "America/New_York"
+    },
+    "contested": [
+      {
+        "class": "only_candidate",
+        "count": 1,
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      }
+    ],
+    "declared_unrepresentable": {
+      "linkorderid": "No FHIR element. MedicationAdministration.identifier is absent across the served ICU MedicationAdministration resources, and the ICU ETL writes no linkorderid, orderid, or inputevent identifier; the opaque resource UUID cannot be inverted to the source linkorderid."
+    },
+    "diagnostician_required": true,
+    "gap_shaped": [
+      {
+        "class": "only_oracle",
+        "count": 1,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      },
+      {
+        "class": "differing_null_only",
+        "count": 8511,
+        "declared_unrepresentable": {
+          "linkorderid": "No FHIR element. MedicationAdministration.identifier is absent across the served ICU MedicationAdministration resources, and the ICU ETL writes no linkorderid, orderid, or inputevent identifier; the opaque resource UUID cannot be inverted to the source linkorderid."
+        },
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      }
+    ],
+    "identical_fraction": 0.0,
+    "identical_representable_rows": 8511,
+    "identical_rows": 0,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "notes": [
+      "1 of 1 conflicting rows -- all of them -- replay the upstream upstream_timestamptz_dst_shift exactly, over column(s) endtime. `differing_conflict` moved from `contested` to `attributed`; a diagnosis of this class would only re-derive the replay, so the diagnostician can be skipped. The judge cannot: it still has to confirm provenance and fraction, and still has to rule."
+    ],
+    "oracle_rows": 8513,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "representable_excludes": [
+      "linkorderid"
+    ],
+    "representable_fraction": 0.999765,
+    "reviewable": [
+      {
+        "class": "only_candidate",
+        "count": 1,
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      },
+      {
+        "class": "only_oracle",
+        "count": 1,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      },
+      {
+        "class": "differing_null_only",
+        "count": 8511,
+        "declared_unrepresentable": {
+          "linkorderid": "No FHIR element. MedicationAdministration.identifier is absent across the served ICU MedicationAdministration resources, and the ICU ETL writes no linkorderid, orderid, or inputevent identifier; the opaque resource UUID cannot be inverted to the source linkorderid."
+        },
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      },
+      {
+        "attributed_rows": 1,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44"
+        ],
+        "class": "differing_conflict",
+        "columns": {
+          "endtime": 1
+        },
+        "count": 1,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element this column is sourced from, and (b) that the attributed fraction is consistent with DST-gap rarity. Either failing makes this `bug`.",
+        "proof": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "engine": "pathling-embedded",
+  "format_version": "1.0",
+  "generated_at": "2026-08-11T08:25:03.965747+00:00",
+  "oracle": "/scratch3/nau025/oracle/mimic4-full.db",
+  "oracle_row_count": 8513,
+  "row_count": 8513,
+  "timings_seconds": {
+    "compare": 0.885,
+    "execute": 21.479
+  },
+  "verdict": "review",
+  "view_labels": [
+    "encounter_icu",
+    "medication_administration"
+  ],
+  "warehouse": "/scratch3/nau025/mimic-on-fhir-delta/spark_warehouse"
+}
