@@ -1,0 +1,3 @@
+{
+  "hospital_expire_flag": "No FHIR element. Encounter does not serialize admissions.hospital_expire_flag or admission-level admissions.deathtime; Patient.deceasedDateTime is patient-level and cannot recover the admission flag, so this column is emitted as a typed NULL."
+}

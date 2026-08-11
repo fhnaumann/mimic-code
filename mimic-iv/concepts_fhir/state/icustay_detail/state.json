@@ -1,0 +1,17 @@
+{
+  "attempt": 3,
+  "category": "demographics",
+  "completed_at": "2026-08-11T12:42:29.498960+00:00",
+  "concept_name": "icustay_detail",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accepted the contested divergence as intrinsic to upstream MIMIC-on-FHIR transformations: full keyed port preserves all 73,181 ICU stays with no missing or invented rows; 11,501 race conflicts are unrecoverable latest-admission and many-to-one OMB collapse (mimic-fhir/sql/fhir_patient.sql:17,23-30,59,110; fn/fn_patient_extension.sql:11-47,60-63; fhir_etl/map_race_omb.sql:13-45; fhir_etl/map_ethnicity.sql:13-47), 86 admission-age conflicts arise from synthesized Patient.birthDate (fhir_patient.sql:15,108), and endpoint/ICU LOS conflicts arise from irreversible TIMESTAMPTZ Encounter transforms (fhir_encounter.sql:65-66,149-152; fhir_encounter_icu.sql:31-32,44,97-100; source ICU LOS at line 33 is not serialized). The declared typed-NULL hospital_expire_flag is valid because the source flag and admission deathtime are absent from FHIR (fhir_patient.sql:52,109; fhir_encounter.sql:59-71,149-169). Representable fidelity is 61,587/73,181 (84.16%), and the judge found the divergence not severe enough to block.",
+  "engineering_counter": 3,
+  "error_message": null,
+  "hpc_counter": 3,
+  "reopen_history": [],
+  "semantic_counter": 3,
+  "started_at": "2026-08-11T12:08:10.465859+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-11T12:42:29.499392+00:00"
+}

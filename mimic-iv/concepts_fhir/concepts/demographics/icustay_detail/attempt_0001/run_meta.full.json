@@ -1,0 +1,125 @@
+{
+  "attempt_dir": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/demographics/icustay_detail/attempt_0001",
+  "column_types": {
+    "admission_age": "bigint",
+    "admittime": "timestamp_ntz",
+    "dischtime": "timestamp_ntz",
+    "dod": "date",
+    "first_hosp_stay": "boolean",
+    "first_icu_stay": "boolean",
+    "gender": "string",
+    "hadm_id": "int",
+    "hospital_expire_flag": "smallint",
+    "hospstay_seq": "bigint",
+    "icu_intime": "timestamp_ntz",
+    "icu_outtime": "timestamp_ntz",
+    "icustay_seq": "bigint",
+    "los_hospital": "bigint",
+    "los_icu": "decimal(38,2)",
+    "race": "string",
+    "stay_id": "int",
+    "subject_id": "int"
+  },
+  "columns": [
+    "subject_id",
+    "hadm_id",
+    "stay_id",
+    "gender",
+    "dod",
+    "admittime",
+    "dischtime",
+    "los_hospital",
+    "admission_age",
+    "race",
+    "hospital_expire_flag",
+    "hospstay_seq",
+    "first_hosp_stay",
+    "icu_intime",
+    "icu_outtime",
+    "los_icu",
+    "icustay_seq",
+    "first_icu_stay"
+  ],
+  "concept": "icustay_detail",
+  "dataset": "full",
+  "divergence": {
+    "attributed": [],
+    "blocking": [
+      {
+        "class": "differing_conflict",
+        "count": 13491,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "classification": "keyed",
+    "conflict_attribution": {
+      "attempted": true,
+      "attributed_rows": 2,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44"
+      ],
+      "columns": {
+        "admittime": 2
+      },
+      "columns_considered": [
+        "admittime",
+        "dischtime",
+        "icu_intime",
+        "icu_outtime"
+      ],
+      "complete": false,
+      "conflict_rows": 13491,
+      "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+      "residual_rows": 13489,
+      "timezone": "America/New_York"
+    },
+    "contested": [
+      {
+        "class": "differing_conflict",
+        "count": 13491,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "declared_unrepresentable": {},
+    "diagnostician_required": true,
+    "gap_shaped": [],
+    "identical_fraction": 0.815649,
+    "identical_rows": 59690,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "notes": [
+      "2 of 13,491 conflicting rows replay the upstream upstream_timestamptz_dst_shift; 13,489 do not and are unexplained. The tier stays `contested` on those residual rows: diagnose them, not the attributed ones."
+    ],
+    "oracle_rows": 73181,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [
+      {
+        "class": "differing_conflict",
+        "count": 13491,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "engine": "pathling-embedded",
+  "format_version": "1.0",
+  "generated_at": "2026-08-11T10:57:40.404231+00:00",
+  "oracle": "/scratch3/nau025/oracle/mimic4-full.db",
+  "oracle_row_count": 73181,
+  "row_count": 73181,
+  "timings_seconds": {
+    "compare": 1.607,
+    "execute": 20.057
+  },
+  "verdict": "review",
+  "view_labels": [
+    "icustay_detail_hospital_encounter",
+    "icustay_detail_icu_encounter",
+    "icustay_detail_patient"
+  ],
+  "warehouse": "/scratch3/nau025/mimic-on-fhir-delta/spark_warehouse"
+}
