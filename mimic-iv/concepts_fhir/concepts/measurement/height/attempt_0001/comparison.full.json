@@ -1,0 +1,155 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/height/attempt_0001/candidate.full.parquet/*.parquet",
+  "comparison": "keyed_join",
+  "concept": "height",
+  "dataset": "full",
+  "diagnostics": [
+    "CONTESTED \u2014 a value conflict. Either a port bug or upstream ETL transformation loss; the data cannot tell you which:",
+    "  4 \u00d7 differing_conflict (0.012% of oracle rows) \u2014 matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone",
+    "    column 'charttime' conflicts on 4 row(s) (0.012% of oracle rows)",
+    "  bar for an accept: A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "33,470 of 33,474 oracle rows reproduced identically (99.99%)"
+  ],
+  "diff": {
+    "classification": "keyed",
+    "columns_candidate_null": {},
+    "columns_conflicting": {
+      "charttime": 4
+    },
+    "columns_differing": {
+      "charttime": 4
+    },
+    "differing": 4,
+    "differing_conflict": 4,
+    "differing_null_only": 0,
+    "excluded_as_unrepresentable": [],
+    "identical": 33470,
+    "identical_representable": 33470,
+    "key": [
+      "stay_id"
+    ],
+    "only_candidate": 0,
+    "only_oracle": 0,
+    "samples": {
+      "differing_conflict": [
+        {
+          "charttime__candidate": "2176-03-10T03:16:00",
+          "charttime__oracle": "2176-03-10T02:16:00",
+          "height__candidate": "185.00",
+          "height__oracle": "185.00",
+          "stay_id": 33327596,
+          "subject_id__candidate": 17326358,
+          "subject_id__oracle": 17326358
+        },
+        {
+          "charttime__candidate": "2177-03-09T03:21:00",
+          "charttime__oracle": "2177-03-09T02:21:00",
+          "height__candidate": "157.00",
+          "height__oracle": "157.00",
+          "stay_id": 34048237,
+          "subject_id__candidate": 10806752,
+          "subject_id__oracle": 10806752
+        },
+        {
+          "charttime__candidate": "2185-10-02T03:19:00",
+          "charttime__oracle": "2185-10-02T02:19:00",
+          "height__candidate": "173.00",
+          "height__oracle": "173.00",
+          "stay_id": 34112958,
+          "subject_id__candidate": 19112585,
+          "subject_id__oracle": 19112585
+        },
+        {
+          "charttime__candidate": "2130-10-01T03:42:00",
+          "charttime__oracle": "2130-10-01T02:42:00",
+          "height__candidate": "170.00",
+          "height__oracle": "170.00",
+          "stay_id": 33738090,
+          "subject_id__candidate": 11084704,
+          "subject_id__oracle": 11084704
+        }
+      ],
+      "differing_null_only": [],
+      "only_candidate": [],
+      "only_oracle": []
+    }
+  },
+  "divergence": {
+    "blocking": [
+      {
+        "class": "differing_conflict",
+        "count": 4,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "classification": "keyed",
+    "contested": [
+      {
+        "class": "differing_conflict",
+        "count": 4,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "declared_unrepresentable": {},
+    "gap_shaped": [],
+    "identical_fraction": 0.999881,
+    "identical_rows": 33470,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "notes": [],
+    "oracle_rows": 33474,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which.",
+    "reviewable": [
+      {
+        "class": "differing_conflict",
+        "count": 4,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "308076288200394089208675",
+    "manifest_row_count": 33474,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.height"
+  },
+  "row_count": {
+    "candidate": 33474,
+    "delta": 0,
+    "gated": false,
+    "match": true,
+    "oracle": 33474
+  },
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "stay_id",
+      "charttime",
+      "height"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "stay_id",
+      "charttime",
+      "height"
+    ],
+    "extra_columns": [],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "verdict": "review"
+}

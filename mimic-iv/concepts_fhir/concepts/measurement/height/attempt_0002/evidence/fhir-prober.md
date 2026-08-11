@@ -1,0 +1,7 @@
+Evidence block — Corrected FHIR probe for `height`, attempt `0002`.
+
+The invalidated mapping was re-probed against the authoritative demo Delta and the chartevents/UUID ETL. Observation identity is projected via `getResourceKey()`. The ETL constructs the chartevents UUIDv5 name `stay_id-charttime-itemid-value` before TIMESTAMPTZ normalization (`mimic-fhir/sql/fhir_observation_chartevents.sql:21`, namespace `mimic-fhir/sql/fhir_etl/uuid_namespace.sql:27`), while normalized `effectiveDateTime` is written at line 67. Preserve the Quantity alias string and conditionally test UUIDv5 for the served time and exactly one hour earlier; use the earlier timestamp only on a UUID match, avoiding blanket shifts of genuine 03:xx rows.
+
+Mappings remain Patient/ICU Encounter identifier spines, exact chartevents system plus codes 226707/226730, Quantity value/unit/code, and `effective.ofType(dateTime)` cast directly to `TIMESTAMP_NTZ`. Demo checks: 142/142 source UUIDs reproduced, 142/142 served IDs reconstructed, 142/142 target joins resolved, and 69/69 filtered height tuples exact. No attempt 0001 artifact was modified. Carryover was overwritten and recorded at `mimic-iv/concepts_fhir/carryover/height/fhir-prober.md` and `carryover.json`.
+
+Dataset-wide note appended to `mimic-iv/concepts_fhir/MIMIC_NOTES.d/height.md`: UUID-v5 charttime recovery is conditional and does not shift genuine 03:xx rows.

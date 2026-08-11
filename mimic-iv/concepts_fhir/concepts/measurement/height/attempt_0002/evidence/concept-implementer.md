@@ -1,0 +1,5 @@
+Evidence block — Concept `height`, attempt `0002`.
+
+Produced `ViewDefinition.height_observation.json`, `ViewDefinition.height_patient.json`, `ViewDefinition.height_encounter.json`, and `concept.sql` in the attempt directory. The implementation retains exact item systems/codes 226707/226730, Quantity values, Patient/ICU Encounter identifier spines, source full-outer-join semantics, inch-to-centimetre conversion, rounding, centimetre precedence, and strict `(120,230)` filtering.
+
+The fix projects Observation resource keys and performs conditional UUID-v5 charttime recovery with namespace `36e18860-b4aa-5577-bc80-a5b07922cd3d`, testing the served wall time then exactly one hour earlier against the ETL name `stay_id-charttime-itemid-value`. The original Quantity alias string is preserved for UUID construction, and genuine 03:xx rows remain unchanged. Final output casts are `INTEGER`, `INTEGER`, `TIMESTAMP_NTZ`, and `DECIMAL(38,2)`. No `unrepresentable.json` was added and attempt 0001 was not modified. No new notes fragment entry was appended.

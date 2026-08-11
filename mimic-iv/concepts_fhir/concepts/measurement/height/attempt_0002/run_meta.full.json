@@ -1,0 +1,55 @@
+{
+  "attempt_dir": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/height/attempt_0002",
+  "column_types": {
+    "charttime": "timestamp_ntz",
+    "height": "decimal(38,2)",
+    "stay_id": "int",
+    "subject_id": "int"
+  },
+  "columns": [
+    "subject_id",
+    "stay_id",
+    "charttime",
+    "height"
+  ],
+  "concept": "height",
+  "dataset": "full",
+  "divergence": {
+    "attributed": [],
+    "blocking": [],
+    "classification": "keyed",
+    "conflict_attribution": null,
+    "contested": [],
+    "declared_unrepresentable": {},
+    "diagnostician_required": false,
+    "gap_shaped": [],
+    "identical_fraction": 1.0,
+    "identical_rows": 33474,
+    "judge_bar": null,
+    "judge_required": false,
+    "notes": [],
+    "oracle_rows": 33474,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [],
+    "tier": "none",
+    "unresolvable": [],
+    "verdict": "match"
+  },
+  "engine": "pathling-embedded",
+  "format_version": "1.0",
+  "generated_at": "2026-08-11T10:12:34.152807+00:00",
+  "oracle": "/scratch3/nau025/oracle/mimic4-full.db",
+  "oracle_row_count": 33474,
+  "row_count": 33474,
+  "timings_seconds": {
+    "compare": 1.139,
+    "execute": 143.972
+  },
+  "verdict": "match",
+  "view_labels": [
+    "height_encounter",
+    "height_observation",
+    "height_patient"
+  ],
+  "warehouse": "/scratch3/nau025/mimic-on-fhir-delta/spark_warehouse"
+}

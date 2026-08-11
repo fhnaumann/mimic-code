@@ -1,0 +1,17 @@
+{
+  "attempt": 2,
+  "category": "measurement",
+  "completed_at": "2026-08-11T10:16:55.904006+00:00",
+  "concept_name": "height",
+  "dependencies": [],
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 3,
+  "error_message": null,
+  "hpc_counter": 2,
+  "reopen_history": [],
+  "semantic_counter": 1,
+  "started_at": "2026-08-11T08:48:07.275560+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-11T10:16:55.904394+00:00"
+}

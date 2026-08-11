@@ -1,0 +1,7 @@
+Evidence block — Mismatch diagnosis for `height`, attempt `0001`.
+
+The full result is schema- and row-count-exact (33,474 each), with 4 `differing_conflict` rows only on `charttime`; all candidate values are exactly one hour after the oracle and subject/stay/height agree. The diagnosis is a fixable semantic port bug, not an intrinsic exception.
+
+Upstream ETL citation: `/Users/nau025/Documents/mimic-fhir/sql/fhir_observation_chartevents.sql:9` casts `ce.charttime` through `TIMESTAMPTZ`, and line 67 writes the normalized value to `Observation.effectiveDateTime`. However, line 21 constructs the Observation ID from the pre-normalization `stay_id || '-' || ce.charttime || '-' || itemid || '-' || value`; lines 41 and 45 write that UUID, using the namespace in `mimic-fhir/sql/fhir_etl/uuid_namespace.sql:27`. Therefore the original wall time is exactly recoverable by testing UUIDv5 names for the served time and one hour earlier. `ViewDefinition.height_observation.json` already projects `getResourceKey()` as `observation_key`, but `concept.sql` discarded it and joined on normalized effective time alone.
+
+Recommended fix: retain `observation_key`, reconstruct UUIDv5 names from stay, item code, and normalized Quantity string, correct charttime before splitting/full-joining streams, then retry. The `fhir-prober` carryover was invalidated because it incorrectly treated charttime as unrecoverable. Dataset-wide note appended: `mimic-iv/concepts_fhir/MIMIC_NOTES.d/height.md`, exact pre-normalization charttime witness in `Observation.id`.
