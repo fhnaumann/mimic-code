@@ -1,16 +1,32 @@
 {
-  "attempt": 2,
+  "attempt": 4,
   "category": "measurement",
-  "completed_at": "2026-08-10T05:04:09.605218+00:00",
+  "completed_at": "2026-08-11T07:00:09.915596+00:00",
   "concept_name": "cardiac_marker",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "Full-data cardiac_marker attempt_0002 reproduces 295,228/295,246 rows exactly. The remaining 18 keyed conflicts affect only charttime and are uniformly +1 hour. Upstream mimic-fhir/sql/fhir_observation_labevents.sql:15 casts source charttime through TIMESTAMPTZ and line 121 writes the transformed value to Observation.effectiveDateTime. fhir_specimen_lab.sql:9,18,58 transforms the same value identically, while Observation.issued contains storetime. DST-gap normalization is non-injective, so the original 02:xx wall time is unrecoverable from FHIR without corrupting genuine 03:xx values. All defensible mappings were exhausted; accept as intrinsic transformation loss.",
-  "engineering_counter": 3,
+  "divergence_justification": "Accepted by equivalence judge: 18 keyed charttime conflicts are uniformly candidate 03:xx versus oracle 02:xx, caused by mimic-fhir/sql/fhir_observation_labevents.sql:15 casting lab.charttime through TIMESTAMPTZ and :121 writing it to Observation.effectiveDateTime; the analogous specimen transform is fhir_specimen_lab.sql:9,18,58. The transformation is non-injective, and Observation.issued carries transformed storetime (fhir_observation_labevents.sql:16,122), so no FHIR query can recover original charttime without corrupting genuine 03:xx values. The port faithfully preserves the FHIR value with TRY_CAST(... AS TIMESTAMP_NTZ); all other values, keys, schema and rows agree.",
+  "engineering_counter": 5,
   "error_message": null,
-  "hpc_counter": 1,
-  "semantic_counter": 1,
-  "started_at": "2026-08-10T04:44:19.182811+00:00",
+  "hpc_counter": 2,
+  "reopen_history": [
+    {
+      "at": "2026-08-11T06:12:12.909288+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 3,
+        "hpc": 1,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "Type A cast defect: COALESCE fallback to TRY_TO_TIMESTAMP(..., \"yyyy-MM-dd'T'HH:mm:ssXXX\") re-renders the instant in spark.sql.session.timeZone (measured 0/275 against the oracle outside America/New_York), so the demo and full legs can return different values. Replace every datetime mapping with a bare TRY_CAST(col AS TIMESTAMP_NTZ) and remove the fallback branch entirely. See pathling-sql SKILL.md and MIMIC_NOTES.md:337.",
+      "superseded_decided_by": "judge",
+      "superseded_justification": "Full-data cardiac_marker attempt_0002 reproduces 295,228/295,246 rows exactly. The remaining 18 keyed conflicts affect only charttime and are uniformly +1 hour. Upstream mimic-fhir/sql/fhir_observation_labevents.sql:15 casts source charttime through TIMESTAMPTZ and line 121 writes the transformed value to Observation.effectiveDateTime. fhir_specimen_lab.sql:9,18,58 transforms the same value identically, while Observation.issued contains storetime. DST-gap normalization is non-injective, so the original 02:xx wall time is unrecoverable from FHIR without corrupting genuine 03:xx values. All defensible mappings were exhausted; accept as intrinsic transformation loss.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 2,
+  "started_at": "2026-08-11T06:36:29.727409+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-10T05:04:09.605650+00:00"
+  "updated_at": "2026-08-11T07:00:09.915984+00:00"
 }

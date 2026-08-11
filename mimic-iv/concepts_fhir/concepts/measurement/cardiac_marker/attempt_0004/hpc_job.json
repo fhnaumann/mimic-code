@@ -1,0 +1,8 @@
+{
+  "concept": "cardiac_marker",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "29720149",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/cardiac_marker/attempt_0004",
+  "submitted_at": "2026-08-11T06:44:20.250079+00:00",
+  "walltime": "2:00:00"
+}
