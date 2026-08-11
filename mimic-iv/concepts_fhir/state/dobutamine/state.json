@@ -1,0 +1,16 @@
+{
+  "attempt": 1,
+  "category": "medication",
+  "completed_at": "2026-08-11T04:08:48.785990+00:00",
+  "concept_name": "dobutamine",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge-accepted intrinsic contested divergence: MedicationAdministration.identifier is not populated by mimic-fhir/sql/fhir_medication_administration_icu.sql:42-100, so inputevents.linkorderid has no FHIR element or recoverable representation and the declared typed NULL explains the 8,510 null-only rows. The same ETL casts naive inputevents starttime/endtime through TIMESTAMPTZ at lines 8-9 and writes those normalized values at lines 64-65, irreversibly shifting DST-gap 02:28 values to 03:28; UUID construction at line 20 excludes timestamps, so the two key shifts and one endtime conflict cannot be recovered by any FHIR query. Representable fidelity is 8,510/8,513 (99.9648%), excluding linkorderid.",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "semantic_counter": 1,
+  "started_at": "2026-08-11T03:17:23.538824+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-11T04:08:48.786625+00:00"
+}

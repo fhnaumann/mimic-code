@@ -1,0 +1,42 @@
+{
+  "candidate": "/Users/nau025/Documents/mimic-code/mimic-iv/concepts_fhir/concepts/medication/dobutamine/attempt_0001/candidate.demo.parquet/*.parquet",
+  "candidate_row_count": 44,
+  "concept": "dobutamine",
+  "dataset": "demo",
+  "executed": true,
+  "format_version": "2.0",
+  "gated": [
+    "execution",
+    "column_names",
+    "column_types"
+  ],
+  "mode": "shape",
+  "not_gated": [
+    "row_count"
+  ],
+  "note": "Shape is correct. This earns permission to spend an HPC run; it is not evidence of correctness.",
+  "oracle_full_row_count": 8513,
+  "schema": {
+    "actual_columns": [
+      "stay_id",
+      "linkorderid",
+      "vaso_rate",
+      "vaso_amount",
+      "starttime",
+      "endtime"
+    ],
+    "expected_columns": [
+      "stay_id",
+      "linkorderid",
+      "vaso_rate",
+      "vaso_amount",
+      "starttime",
+      "endtime"
+    ],
+    "extra_columns": [],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": []
+  },
+  "verdict": "shape_ok"
+}
