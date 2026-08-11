@@ -1,0 +1,5 @@
+## Evidence
+
+The implementer read both ICP carryover analyses, the canonical SQL, the manifest, AGENTS.md, fhir-mapping and pathling-sql guidance, MIMIC_NOTES.md, and all current fragments. It authored `ViewDefinition.icp_observation.json`, `ViewDefinition.icp_patient.json`, `ViewDefinition.icp_icu_encounter.json`, and `concept.sql` in this attempt. The implementation filters the proprietary chartevents system plus codes 220765/227989, joins Patient and ICU Encounter identifiers, casts FHIR dateTime/Quantity aliases appropriately, applies the strict source value bounds, groups by subject/stay/charttime, and takes MAX across codes. It emits the manifest's four columns with explicit casts and does not emit UUID keys.
+
+The implementation's embedded Spark demo execution produced 303 rows and `shape.demo.json` with exact column names and compatible types. No unrepresentable declaration was needed and no new dataset-wide note was appended. Artifacts are under `mimic-iv/concepts_fhir/concepts/measurement/icp/attempt_0001/`.

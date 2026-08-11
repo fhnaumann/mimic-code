@@ -1,0 +1,44 @@
+WITH filtered_rows AS (
+    SELECT
+        p.subject_id_str,
+        e.stay_id_str,
+        CAST(
+            TRY_TO_TIMESTAMP(
+                REGEXP_REPLACE(
+                    o.effective_datetime,
+                    '(Z|[+-][0-9]{2}:[0-9]{2})$',
+                    ''
+                ),
+                "yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]"
+            ) AS TIMESTAMP_NTZ
+        ) AS charttime,
+        CAST(o.quantity_value AS DOUBLE) AS quantity_num
+    FROM icp_observation o
+    INNER JOIN icp_patient p
+        ON o.patient_key = p.patient_key
+    INNER JOIN icp_icu_encounter e
+        ON o.encounter_key = e.encounter_key
+        AND o.patient_key = e.patient_key
+    WHERE o.code_system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items'
+        AND o.item_code IN ('220765', '227989')
+), grouped AS (
+    SELECT
+        subject_id_str,
+        stay_id_str,
+        charttime,
+        MAX(
+            CASE
+                WHEN quantity_num > 0 AND quantity_num < 100 THEN quantity_num
+                ELSE NULL
+            END
+        ) AS icp
+    FROM filtered_rows
+    GROUP BY subject_id_str, stay_id_str, charttime
+)
+SELECT
+    CAST(subject_id_str AS INTEGER) AS subject_id,
+    CAST(stay_id_str AS INTEGER) AS stay_id,
+    CAST(charttime AS TIMESTAMP_NTZ) AS charttime,
+    CAST(icp AS FLOAT) AS icp
+FROM grouped
+;

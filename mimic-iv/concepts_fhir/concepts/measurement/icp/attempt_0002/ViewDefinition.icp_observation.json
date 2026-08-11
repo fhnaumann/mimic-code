@@ -1,0 +1,26 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/icp-0002-icp_observation",
+  "name": "icp_observation",
+  "resource": "Observation",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "observation_key" },
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
+        { "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_key" },
+        { "path": "(effective).ofType(dateTime)", "name": "effective_datetime" },
+        { "path": "(value).ofType(Quantity).value", "name": "quantity_value" },
+        { "path": "(value).ofType(string)", "name": "value_string" }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items' and (code='220765' or code='227989'))",
+      "column": [
+        { "path": "code", "name": "item_code" },
+        { "path": "system", "name": "code_system" }
+      ]
+    }
+  ]
+}

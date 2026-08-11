@@ -1,0 +1,15 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/icp-0002-icp_patient",
+  "name": "icp_patient",
+  "resource": "Patient",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "patient_key" },
+        { "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/patient').value", "name": "subject_id_str" }
+      ]
+    }
+  ]
+}
