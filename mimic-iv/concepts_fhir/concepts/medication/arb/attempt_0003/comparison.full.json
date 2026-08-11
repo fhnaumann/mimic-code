@@ -1,0 +1,630 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/medication/arb/attempt_0003/candidate.full.parquet/*.parquet",
+  "comparison": "full_tuple_multiset",
+  "concept": "arb",
+  "dataset": "full",
+  "diagnostics": [
+    "RESIDUAL PAIRED \u2014 3,181 rows matched 1:1 on (arb, hadm_id, subject_id), differing only in (starttime, stoptime). The multiset `only_oracle`/`only_candidate` counts of 3,181 are the two halves of these substitutions; they are classified per column below.",
+    "CONTESTED \u2014 a value conflict. Either a port bug or upstream ETL transformation loss; the data cannot tell you which:",
+    "  2 \u00d7 differing_conflict (0.005% of oracle rows) \u2014 matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone",
+    "    column 'starttime' conflicts on 1 row(s) (0.003% of oracle rows)",
+    "    column 'stoptime' conflicts on 1 row(s) (0.003% of oracle rows)",
+    "  bar for an accept: A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "GAP-SHAPED \u2014 consistent with a MIMIC-on-FHIR coverage gap:",
+    "  3,179 \u00d7 differing_null_only \u2014 matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing",
+    "    column 'starttime' is NULL in the candidate on 3,179 row(s)",
+    "    column 'stoptime' is NULL in the candidate on 3,178 row(s)",
+    "36,353 of 39,534 oracle rows reproduced identically (91.95%)",
+    "note: No unique key, but the residual paired 1:1 on arb, hadm_id, subject_id (anchored by subject_id, hadm_id), differing only in starttime, stoptime. The 3,181 multiset `only_candidate` rows are therefore the candidate half of those substitutions, not invented rows, and the classes below are classified per column as for a keyed concept."
+  ],
+  "diff": {
+    "classification": "paired_residual",
+    "columns_candidate_null": {
+      "starttime": 3179,
+      "stoptime": 3178
+    },
+    "columns_conflicting": {
+      "starttime": 1,
+      "stoptime": 1
+    },
+    "conflict_attribution": {
+      "attempted": true,
+      "attributed_rows": 2,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44"
+      ],
+      "columns": {
+        "starttime": 1,
+        "stoptime": 1
+      },
+      "columns_considered": [
+        "starttime",
+        "stoptime"
+      ],
+      "complete": true,
+      "conflict_rows": 2,
+      "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+      "residual_rows": 0,
+      "samples": [
+        {
+          "arb": "Valsartan",
+          "hadm_id": 28459908,
+          "starttime__candidate": "2124-03-10T10:00:00",
+          "starttime__oracle": "2124-03-10T10:00:00",
+          "starttime__replayed": "2124-03-10T10:00:00",
+          "stoptime__candidate": "2124-03-12T03:00:00",
+          "stoptime__oracle": "2124-03-12T02:00:00",
+          "stoptime__replayed": "2124-03-12T03:00:00",
+          "subject_id": 15943193
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 21223240,
+          "starttime__candidate": "2140-03-13T03:00:00",
+          "starttime__oracle": "2140-03-13T02:00:00",
+          "starttime__replayed": "2140-03-13T03:00:00",
+          "stoptime__candidate": "2140-03-13T04:00:00",
+          "stoptime__oracle": "2140-03-13T04:00:00",
+          "stoptime__replayed": "2140-03-13T04:00:00",
+          "subject_id": 15612272
+        }
+      ],
+      "timezone": "America/New_York"
+    },
+    "differing": 3181,
+    "differing_conflict": 2,
+    "differing_null_only": 3179,
+    "identical": 36353,
+    "key": null,
+    "multiset_only_candidate": 3181,
+    "multiset_only_oracle": 3181,
+    "only_candidate": 0,
+    "only_oracle": 0,
+    "residual_pairing": {
+      "anchor_columns": [
+        "subject_id",
+        "hadm_id"
+      ],
+      "anchored": true,
+      "attempted": true,
+      "column_drift": {
+        "arb": 0,
+        "hadm_id": 0,
+        "starttime": 6360,
+        "stoptime": 6358,
+        "subject_id": 0
+      },
+      "columns_candidate_null": {
+        "starttime": 3179,
+        "stoptime": 3178
+      },
+      "columns_conflicting": {
+        "starttime": 1,
+        "stoptime": 1
+      },
+      "conflict_attribution": {
+        "attempted": true,
+        "attributed_rows": 2,
+        "cause": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44"
+        ],
+        "columns": {
+          "starttime": 1,
+          "stoptime": 1
+        },
+        "columns_considered": [
+          "starttime",
+          "stoptime"
+        ],
+        "complete": true,
+        "conflict_rows": 2,
+        "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+        "residual_rows": 0,
+        "samples": [
+          {
+            "arb": "Valsartan",
+            "hadm_id": 28459908,
+            "starttime__candidate": "2124-03-10T10:00:00",
+            "starttime__oracle": "2124-03-10T10:00:00",
+            "starttime__replayed": "2124-03-10T10:00:00",
+            "stoptime__candidate": "2124-03-12T03:00:00",
+            "stoptime__oracle": "2124-03-12T02:00:00",
+            "stoptime__replayed": "2124-03-12T03:00:00",
+            "subject_id": 15943193
+          },
+          {
+            "arb": "Losartan Potassium",
+            "hadm_id": 21223240,
+            "starttime__candidate": "2140-03-13T03:00:00",
+            "starttime__oracle": "2140-03-13T02:00:00",
+            "starttime__replayed": "2140-03-13T03:00:00",
+            "stoptime__candidate": "2140-03-13T04:00:00",
+            "stoptime__oracle": "2140-03-13T04:00:00",
+            "stoptime__replayed": "2140-03-13T04:00:00",
+            "subject_id": 15612272
+          }
+        ],
+        "timezone": "America/New_York"
+      },
+      "paired": 3181,
+      "paired_conflict": 2,
+      "paired_null_only": 3179,
+      "pairing_columns": [
+        "arb",
+        "hadm_id",
+        "subject_id"
+      ],
+      "residual_candidate": 3181,
+      "residual_oracle": 3181,
+      "samples": [
+        {
+          "arb": "irbesartan",
+          "hadm_id": 27996267,
+          "starttime__candidate": null,
+          "starttime__oracle": "2148-01-24T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2148-01-24T07:00:00",
+          "subject_id": 10040025
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 28394474,
+          "starttime__candidate": null,
+          "starttime__oracle": "2185-09-01T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2185-08-31T13:00:00",
+          "subject_id": 10115586
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 28394474,
+          "starttime__candidate": null,
+          "starttime__oracle": "2185-09-01T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2185-08-31T19:00:00",
+          "subject_id": 10115586
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 25334400,
+          "starttime__candidate": null,
+          "starttime__oracle": "2171-01-22T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2171-01-21T16:00:00",
+          "subject_id": 10139314
+        },
+        {
+          "arb": "Valsartan",
+          "hadm_id": 25566836,
+          "starttime__candidate": null,
+          "starttime__oracle": "2147-10-29T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2147-10-28T19:00:00",
+          "subject_id": 10188275
+        },
+        {
+          "arb": "Valsartan",
+          "hadm_id": 25566836,
+          "starttime__candidate": null,
+          "starttime__oracle": "2147-10-29T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2147-10-28T19:00:00",
+          "subject_id": 10188275
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 28923834,
+          "starttime__candidate": null,
+          "starttime__oracle": "2139-05-21T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2139-05-21T07:00:00",
+          "subject_id": 10218060
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 24858476,
+          "starttime__candidate": null,
+          "starttime__oracle": "2130-01-07T15:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2130-01-07T14:00:00",
+          "subject_id": 10247690
+        },
+        {
+          "arb": "Valsartan",
+          "hadm_id": 23614192,
+          "starttime__candidate": null,
+          "starttime__oracle": "2180-06-04T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2180-06-04T01:00:00",
+          "subject_id": 10255052
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 28768772,
+          "starttime__candidate": null,
+          "starttime__oracle": "2182-10-17T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2182-10-17T06:00:00",
+          "subject_id": 10255052
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 28768772,
+          "starttime__candidate": null,
+          "starttime__oracle": "2182-10-19T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2182-10-18T16:00:00",
+          "subject_id": 10255052
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 25873734,
+          "starttime__candidate": null,
+          "starttime__oracle": "2118-04-18T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2118-04-17T13:00:00",
+          "subject_id": 10267286
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 28818620,
+          "starttime__candidate": null,
+          "starttime__oracle": "2147-02-23T21:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2147-02-23T20:00:00",
+          "subject_id": 10373824
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 22276420,
+          "starttime__candidate": null,
+          "starttime__oracle": "2197-04-29T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2197-04-28T12:00:00",
+          "subject_id": 10439484
+        },
+        {
+          "arb": "Valsartan",
+          "hadm_id": 28647792,
+          "starttime__candidate": null,
+          "starttime__oracle": "2181-12-29T12:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2181-12-28T10:00:00",
+          "subject_id": 10590766
+        },
+        {
+          "arb": "Sacubitril-Valsartan (24mg-26mg)",
+          "hadm_id": 22455973,
+          "starttime__candidate": null,
+          "starttime__oracle": "2139-12-10T20:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2139-12-10T09:00:00",
+          "subject_id": 10663695
+        },
+        {
+          "arb": "Valsartan",
+          "hadm_id": 21848474,
+          "starttime__candidate": null,
+          "starttime__oracle": "2134-06-23T20:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2134-06-23T17:00:00",
+          "subject_id": 10676783
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 26456097,
+          "starttime__candidate": null,
+          "starttime__oracle": "2143-12-06T23:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2143-12-06T22:00:00",
+          "subject_id": 10690012
+        },
+        {
+          "arb": "Valsartan",
+          "hadm_id": 28291342,
+          "starttime__candidate": null,
+          "starttime__oracle": "2146-01-04T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2146-01-03T16:00:00",
+          "subject_id": 10815687
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 23983593,
+          "starttime__candidate": null,
+          "starttime__oracle": "2151-07-23T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2151-07-22T14:00:00",
+          "subject_id": 10863998
+        }
+      ],
+      "substituted_columns": [
+        "starttime",
+        "stoptime"
+      ],
+      "unpaired_candidate": 0,
+      "unpaired_oracle": 0
+    },
+    "samples": {
+      "substitutions": [
+        {
+          "arb": "irbesartan",
+          "hadm_id": 27996267,
+          "starttime__candidate": null,
+          "starttime__oracle": "2148-01-24T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2148-01-24T07:00:00",
+          "subject_id": 10040025
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 28394474,
+          "starttime__candidate": null,
+          "starttime__oracle": "2185-09-01T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2185-08-31T13:00:00",
+          "subject_id": 10115586
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 28394474,
+          "starttime__candidate": null,
+          "starttime__oracle": "2185-09-01T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2185-08-31T19:00:00",
+          "subject_id": 10115586
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 25334400,
+          "starttime__candidate": null,
+          "starttime__oracle": "2171-01-22T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2171-01-21T16:00:00",
+          "subject_id": 10139314
+        },
+        {
+          "arb": "Valsartan",
+          "hadm_id": 25566836,
+          "starttime__candidate": null,
+          "starttime__oracle": "2147-10-29T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2147-10-28T19:00:00",
+          "subject_id": 10188275
+        },
+        {
+          "arb": "Valsartan",
+          "hadm_id": 25566836,
+          "starttime__candidate": null,
+          "starttime__oracle": "2147-10-29T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2147-10-28T19:00:00",
+          "subject_id": 10188275
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 28923834,
+          "starttime__candidate": null,
+          "starttime__oracle": "2139-05-21T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2139-05-21T07:00:00",
+          "subject_id": 10218060
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 24858476,
+          "starttime__candidate": null,
+          "starttime__oracle": "2130-01-07T15:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2130-01-07T14:00:00",
+          "subject_id": 10247690
+        },
+        {
+          "arb": "Valsartan",
+          "hadm_id": 23614192,
+          "starttime__candidate": null,
+          "starttime__oracle": "2180-06-04T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2180-06-04T01:00:00",
+          "subject_id": 10255052
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 28768772,
+          "starttime__candidate": null,
+          "starttime__oracle": "2182-10-17T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2182-10-17T06:00:00",
+          "subject_id": 10255052
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 28768772,
+          "starttime__candidate": null,
+          "starttime__oracle": "2182-10-19T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2182-10-18T16:00:00",
+          "subject_id": 10255052
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 25873734,
+          "starttime__candidate": null,
+          "starttime__oracle": "2118-04-18T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2118-04-17T13:00:00",
+          "subject_id": 10267286
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 28818620,
+          "starttime__candidate": null,
+          "starttime__oracle": "2147-02-23T21:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2147-02-23T20:00:00",
+          "subject_id": 10373824
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 22276420,
+          "starttime__candidate": null,
+          "starttime__oracle": "2197-04-29T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2197-04-28T12:00:00",
+          "subject_id": 10439484
+        },
+        {
+          "arb": "Valsartan",
+          "hadm_id": 28647792,
+          "starttime__candidate": null,
+          "starttime__oracle": "2181-12-29T12:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2181-12-28T10:00:00",
+          "subject_id": 10590766
+        },
+        {
+          "arb": "Sacubitril-Valsartan (24mg-26mg)",
+          "hadm_id": 22455973,
+          "starttime__candidate": null,
+          "starttime__oracle": "2139-12-10T20:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2139-12-10T09:00:00",
+          "subject_id": 10663695
+        },
+        {
+          "arb": "Valsartan",
+          "hadm_id": 21848474,
+          "starttime__candidate": null,
+          "starttime__oracle": "2134-06-23T20:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2134-06-23T17:00:00",
+          "subject_id": 10676783
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 26456097,
+          "starttime__candidate": null,
+          "starttime__oracle": "2143-12-06T23:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2143-12-06T22:00:00",
+          "subject_id": 10690012
+        },
+        {
+          "arb": "Valsartan",
+          "hadm_id": 28291342,
+          "starttime__candidate": null,
+          "starttime__oracle": "2146-01-04T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2146-01-03T16:00:00",
+          "subject_id": 10815687
+        },
+        {
+          "arb": "Losartan Potassium",
+          "hadm_id": 23983593,
+          "starttime__candidate": null,
+          "starttime__oracle": "2151-07-23T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2151-07-22T14:00:00",
+          "subject_id": 10863998
+        }
+      ]
+    }
+  },
+  "divergence": {
+    "blocking": [
+      {
+        "class": "differing_conflict",
+        "count": 2,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "classification": "paired_residual",
+    "contested": [
+      {
+        "class": "differing_conflict",
+        "count": 2,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "declared_unrepresentable": {},
+    "gap_shaped": [
+      {
+        "class": "differing_null_only",
+        "count": 3179,
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      }
+    ],
+    "identical_fraction": 0.919538,
+    "identical_rows": 36353,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "notes": [
+      "No unique key, but the residual paired 1:1 on arb, hadm_id, subject_id (anchored by subject_id, hadm_id), differing only in starttime, stoptime. The 3,181 multiset `only_candidate` rows are therefore the candidate half of those substitutions, not invented rows, and the classes below are classified per column as for a keyed concept."
+    ],
+    "oracle_rows": 39534,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which.",
+    "reviewable": [
+      {
+        "class": "differing_conflict",
+        "count": 2,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      },
+      {
+        "class": "differing_null_only",
+        "count": 3179,
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "363228205723639534517241",
+    "manifest_row_count": 39534,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.arb"
+  },
+  "row_count": {
+    "candidate": 39534,
+    "delta": 0,
+    "gated": false,
+    "match": true,
+    "oracle": 39534
+  },
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "hadm_id",
+      "arb",
+      "starttime",
+      "stoptime"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "hadm_id",
+      "arb",
+      "starttime",
+      "stoptime"
+    ],
+    "extra_columns": [],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "verdict": "review"
+}

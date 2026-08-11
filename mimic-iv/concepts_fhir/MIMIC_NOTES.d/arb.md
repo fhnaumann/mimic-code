@@ -1,0 +1,3 @@
+## MedicationRequest validity endpoints lose invalid intervals and DST-gap wall times
+- Affected: `MedicationRequest.dispenseRequest.validityPeriod.start` and `.end`
+- Verified: `arb` attempt 0003 full-data comparison paired all 3,181 residual rows on anchored `(subject_id, hadm_id, arb)` and found 3,179 `differing_null_only` rows plus 2 `differing_conflict` rows (one start, one stop); both conflicts were exactly +1 hour and all 2/2 replayed the `America/New_York` `TIMESTAMPTZ` round-trip with zero residual. `mimic-fhir/sql/fhir_medication_request.sql:43-44` casts the coalesced source endpoints through `TIMESTAMPTZ`, and lines 172-177 writes only the transformed complete, non-reversed period.
