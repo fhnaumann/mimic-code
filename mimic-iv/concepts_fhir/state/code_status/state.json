@@ -1,16 +1,32 @@
 {
-  "attempt": 2,
+  "attempt": 3,
   "category": "treatment",
-  "completed_at": "2026-08-10T09:20:10.572998+00:00",
+  "completed_at": "2026-08-11T07:20:18.320157+00:00",
   "concept_name": "code_status",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "The 197,931 only-oracle rows are the independently counted hospital POE/detail branch selected by General Care/Code status. The served FHIR warehouse has no resource/path carrying those POE events, poe_detail.field_value, or poe.ordertime. MedicationRequest's medication-request-poe identifier stream is a different medication/IV/TPN subset and was tested and rejected. The Observation chart branch is fully represented, and attempt 0002 completed Observation.id UUID-witness recovery for all nine prior timestamp substitutions, leaving 71,141 exact chart tuples and no candidate residual. No divergent dependencies exist.",
-  "engineering_counter": 3,
+  "divergence_justification": "The 197,931 only_oracle rows are an intrinsic row-level representation gap. Canonical mimic-iv/concepts/treatment/code_status.sql:36-65,67-77 unions ICU chart rows with hospital poe/poe_detail rows selected by poe.order_type='General Care' and poe.order_subtype='Code status'. The served MIMIC-on-FHIR warehouse has no resource or FHIR path preserving those hospital code-status POE events, poe.ordertime, or poe_detail.field_value. The nearest MedicationRequest.identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/medication-request-poe').value stream is unrelated: its identifiers had zero intersection with selected code-status POE IDs, and authoredOn/status do not carry the missing payload. An independent full-data source count found exactly 197,931 selected POE/detail rows, matching the entire residual; the candidate's 71,141 chart rows have zero only_candidate rows, so the representable branch is exact. Every defensible mapping was tried: exact Observation system/code 223758, valueString, effective variants with TIMESTAMP_NTZ, identifier.value casts, ICU Encounter/partOf/hospital spine, and Observation.id timestamp-witness recovery. No divergent dependencies exist.",
+  "engineering_counter": 4,
   "error_message": null,
-  "hpc_counter": 2,
-  "semantic_counter": 1,
-  "started_at": "2026-08-10T06:52:33.449553+00:00",
+  "hpc_counter": 3,
+  "reopen_history": [
+    {
+      "at": "2026-08-11T06:12:16.619465+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 3,
+        "hpc": 2,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "Type B cast defect: TRY_TO_TIMESTAMP(REGEXP_REPLACE(col, offset-strip), \"yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]\") returns NULL on any shape the pinned format misses (date-only values especially), and TRY_ makes it silent -- those NULLs reach the judge as differing_null_only/gap_shaped, i.e. a parse failure disguised as a FHIR coverage gap at the lower bar. Replace every datetime mapping with a bare TRY_CAST(col AS TIMESTAMP_NTZ). See pathling-sql SKILL.md and MIMIC_NOTES.md:337.",
+      "superseded_decided_by": "judge",
+      "superseded_justification": "The 197,931 only-oracle rows are the independently counted hospital POE/detail branch selected by General Care/Code status. The served FHIR warehouse has no resource/path carrying those POE events, poe_detail.field_value, or poe.ordertime. MedicationRequest's medication-request-poe identifier stream is a different medication/IV/TPN subset and was tested and rejected. The Observation chart branch is fully represented, and attempt 0002 completed Observation.id UUID-witness recovery for all nine prior timestamp substitutions, leaving 71,141 exact chart tuples and no candidate residual. No divergent dependencies exist.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 2,
+  "started_at": "2026-08-11T06:12:16.621201+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-10T09:20:10.573803+00:00"
+  "updated_at": "2026-08-11T07:20:18.321198+00:00"
 }

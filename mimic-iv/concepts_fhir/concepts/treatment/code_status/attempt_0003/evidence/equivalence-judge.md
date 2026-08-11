@@ -1,0 +1,7 @@
+Evidence block — `code_status`, attempt 0003
+
+The equivalence judge returned **accept** for the `review`, tier `gap_shaped`. The 197931 `only_oracle` rows are the intrinsic hospital `poe`/`poe_detail` representation gap: canonical `code_status.sql:36-65,67-77` selects General Care/Code status POEs, while served FHIR has no resource/path preserving those events, `poe.ordertime`, or `poe_detail.field_value`. The nearest `MedicationRequest.identifier` POE stream is unrelated and had zero selected-ID intersection. The independent full-data POE count from the prior diagnosis equals the entire 197931 residual; the candidate's 71141 chart rows have zero `only_candidate`, so the representable chart branch is exact and contained in the oracle.
+
+Every defensible chart mapping was tried: exact Observation system/code `223758`, `valueString`, effective variants with `TIMESTAMP_NTZ`, identifier-value casts, Encounter ICU/partOf/hospital spine, and Observation-ID timestamp witness recovery. No divergent dependencies were present. The owned `MIMIC_NOTES.d/code_status.md` already contains the dataset-wide POE absence claim, so no new notes section was appended.
+
+Judge citation: no served FHIR resource or element carries hospital General Care/Code-status POE events, `poe.ordertime`, or `poe_detail.field_value`; the tested MedicationRequest paths represent an unrelated medication stream. This is a row-level coverage gap, not a port bug.

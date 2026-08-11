@@ -1,0 +1,343 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/treatment/code_status/attempt_0003/candidate.full.parquet/*.parquet",
+  "comparison": "full_tuple_multiset",
+  "concept": "code_status",
+  "dataset": "full",
+  "diagnostics": [
+    "row count (not gated): oracle 269,072 vs candidate 71,141 (delta -197,931)",
+    "RESIDUAL DID NOT PAIR \u2014 197,931 oracle and 0 candidate residual rows do not correspond. Their counts being equal proves nothing: it follows from the row counts being equal.",
+    "GAP-SHAPED \u2014 consistent with a MIMIC-on-FHIR coverage gap:",
+    "  197,931 \u00d7 only_oracle \u2014 oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes",
+    "note: No unique key for this concept, and the residual did not pair: divergence classes cannot be separated. The judge is reasoning with strictly less evidence than a keyed concept would provide.",
+    "note: residual pairing: every column differs between the residuals; there is nothing left to align rows on, so the residual cannot be shown to be substitutions rather than invented and missing rows"
+  ],
+  "diff": {
+    "classification": "unavailable_no_key",
+    "differing": null,
+    "differing_conflict": null,
+    "differing_null_only": null,
+    "identical": null,
+    "key": null,
+    "only_candidate": 0,
+    "only_oracle": 197931,
+    "residual_pairing": {
+      "anchored": false,
+      "attempted": true,
+      "column_drift": {
+        "charttime": 197931,
+        "cmo": 197931,
+        "dni": 197931,
+        "dnr": 197931,
+        "fullcode": 197931,
+        "hadm_id": 197931,
+        "stay_id": 197931,
+        "subject_id": 197931
+      },
+      "paired": 0,
+      "pairing_columns": [],
+      "residual_candidate": 0,
+      "residual_oracle": 197931,
+      "substituted_columns": [
+        "charttime",
+        "cmo",
+        "dni",
+        "dnr",
+        "fullcode",
+        "hadm_id",
+        "stay_id",
+        "subject_id"
+      ],
+      "unpaired_candidate": 0,
+      "unpaired_oracle": 197931,
+      "why": "every column differs between the residuals; there is nothing left to align rows on, so the residual cannot be shown to be substitutions rather than invented and missing rows"
+    },
+    "samples": {
+      "only_candidate": [],
+      "only_oracle": [
+        {
+          "charttime": "2163-02-19T18:55:01",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 29546971,
+          "stay_id": null,
+          "subject_id": 18563813
+        },
+        {
+          "charttime": "2148-02-29T22:45:08",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 1,
+          "fullcode": 0,
+          "hadm_id": 27354999,
+          "stay_id": null,
+          "subject_id": 18564999
+        },
+        {
+          "charttime": "2175-11-22T14:10:28",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 21759601,
+          "stay_id": null,
+          "subject_id": 18566452
+        },
+        {
+          "charttime": "2175-09-15T17:26:54",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 22355109,
+          "stay_id": null,
+          "subject_id": 18566452
+        },
+        {
+          "charttime": "2174-12-30T19:21:43",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 28451825,
+          "stay_id": null,
+          "subject_id": 18566452
+        },
+        {
+          "charttime": "2153-11-24T17:55:08",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 1,
+          "fullcode": 0,
+          "hadm_id": 21777178,
+          "stay_id": null,
+          "subject_id": 18566482
+        },
+        {
+          "charttime": "2179-01-15T13:00:53",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 22529223,
+          "stay_id": null,
+          "subject_id": 18566508
+        },
+        {
+          "charttime": "2157-12-16T12:40:48",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 1,
+          "fullcode": 0,
+          "hadm_id": 20118116,
+          "stay_id": null,
+          "subject_id": 18566607
+        },
+        {
+          "charttime": "2160-04-25T17:00:55",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 24994795,
+          "stay_id": null,
+          "subject_id": 18566706
+        },
+        {
+          "charttime": "2175-10-27T23:44:11",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 24558429,
+          "stay_id": null,
+          "subject_id": 18567931
+        },
+        {
+          "charttime": "2158-02-20T16:09:49",
+          "cmo": 0,
+          "dni": 1,
+          "dnr": 1,
+          "fullcode": 0,
+          "hadm_id": 20581411,
+          "stay_id": null,
+          "subject_id": 18567979
+        },
+        {
+          "charttime": "2156-01-13T02:00:13",
+          "cmo": 0,
+          "dni": 1,
+          "dnr": 1,
+          "fullcode": 0,
+          "hadm_id": 20657294,
+          "stay_id": 30488687,
+          "subject_id": 18567979
+        },
+        {
+          "charttime": "2179-07-09T00:42:47",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 29634611,
+          "stay_id": null,
+          "subject_id": 18568321
+        },
+        {
+          "charttime": "2176-09-17T03:54:13",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 28420304,
+          "stay_id": 31069738,
+          "subject_id": 18568521
+        },
+        {
+          "charttime": "2176-09-17T03:54:13",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 28420304,
+          "stay_id": 31069738,
+          "subject_id": 18568521
+        },
+        {
+          "charttime": "2172-04-04T01:27:22",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 24424395,
+          "stay_id": null,
+          "subject_id": 18568661
+        },
+        {
+          "charttime": "2171-05-07T02:18:27",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 27782050,
+          "stay_id": null,
+          "subject_id": 18568661
+        },
+        {
+          "charttime": "2174-11-19T18:23:47",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 27202496,
+          "stay_id": null,
+          "subject_id": 18569886
+        },
+        {
+          "charttime": "2132-11-30T18:29:00",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 21183364,
+          "stay_id": null,
+          "subject_id": 18570563
+        },
+        {
+          "charttime": "2195-08-25T13:28:38",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 22593292,
+          "stay_id": 39403388,
+          "subject_id": 18571031
+        }
+      ]
+    }
+  },
+  "divergence": {
+    "blocking": [],
+    "classification": "unavailable_no_key",
+    "contested": [],
+    "declared_unrepresentable": {},
+    "gap_shaped": [
+      {
+        "class": "only_oracle",
+        "count": 197931,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "identical_fraction": null,
+    "identical_rows": null,
+    "judge_bar": "Cite the FHIR element or path that does not exist in the MIMIC-on-FHIR IG, show it explains the magnitude and shape of the divergence, and confirm every defensible mapping was tried.",
+    "judge_required": true,
+    "notes": [
+      "No unique key for this concept, and the residual did not pair: divergence classes cannot be separated. The judge is reasoning with strictly less evidence than a keyed concept would provide.",
+      "residual pairing: every column differs between the residuals; there is nothing left to align rows on, so the residual cannot be shown to be substitutions rather than invented and missing rows"
+    ],
+    "oracle_rows": 269072,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which.",
+    "reviewable": [
+      {
+        "class": "only_oracle",
+        "count": 197931,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "tier": "gap_shaped",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "2479683865358039166294707",
+    "manifest_row_count": 269072,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.code_status"
+  },
+  "row_count": {
+    "candidate": 71141,
+    "delta": -197931,
+    "gated": false,
+    "match": false,
+    "oracle": 269072
+  },
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "hadm_id",
+      "stay_id",
+      "charttime",
+      "fullcode",
+      "cmo",
+      "dni",
+      "dnr"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "hadm_id",
+      "stay_id",
+      "charttime",
+      "fullcode",
+      "cmo",
+      "dni",
+      "dnr"
+    ],
+    "extra_columns": [],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "verdict": "review"
+}
