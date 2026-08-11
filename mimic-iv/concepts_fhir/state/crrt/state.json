@@ -1,16 +1,16 @@
 {
-  "attempt": 1,
+  "attempt": 3,
   "category": "treatment",
-  "completed_at": null,
+  "completed_at": "2026-08-11T04:59:50.957153+00:00",
   "concept_name": "crrt",
   "dependencies": [],
   "divergence_decided_by": null,
   "divergence_justification": null,
-  "engineering_counter": 0,
+  "engineering_counter": 4,
   "error_message": null,
-  "hpc_counter": 0,
-  "semantic_counter": 0,
-  "started_at": "2026-08-11T01:20:27.941171+00:00",
-  "status": "RUNNING",
-  "updated_at": "2026-08-11T01:20:27.944133+00:00"
+  "hpc_counter": 3,
+  "semantic_counter": 2,
+  "started_at": "2026-08-11T04:45:05.011423+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-11T04:59:50.957724+00:00"
 }
