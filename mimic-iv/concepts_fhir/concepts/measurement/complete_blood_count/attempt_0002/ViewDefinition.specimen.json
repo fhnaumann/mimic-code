@@ -1,0 +1,15 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/complete_blood_count-0002-specimen",
+  "name": "specimen",
+  "resource": "Specimen",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "specimen_key" },
+        { "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/specimen-lab').value", "name": "specimen_id_str" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/complete_blood_count-0002-lab_observation",
+  "name": "lab_observation",
+  "resource": "Observation",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "observation_key" },
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
+        { "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_key" },
+        { "path": "specimen.getReferenceKey(Specimen)", "name": "specimen_key" },
+        { "path": "(value).ofType(Quantity).value", "name": "quantity_value" },
+        { "path": "(value).ofType(Quantity).comparator", "name": "quantity_comparator" },
+        { "path": "(value).ofType(string)", "name": "value_string" },
+        { "path": "(effective).ofType(dateTime)", "name": "effective_datetime" },
+        { "path": "(effective).ofType(Period).start", "name": "effective_period_start" }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-d-labitems' and (code='51221' or code='51222' or code='51248' or code='51249' or code='51250' or code='51265' or code='51279' or code='51277' or code='52159' or code='51301'))",
+      "column": [
+        { "path": "code", "name": "code" },
+        { "path": "system", "name": "system" }
+      ]
+    }
+  ]
+}
