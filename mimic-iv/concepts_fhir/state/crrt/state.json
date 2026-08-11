@@ -1,16 +1,32 @@
 {
-  "attempt": 3,
+  "attempt": 4,
   "category": "treatment",
-  "completed_at": "2026-08-11T04:59:50.957153+00:00",
+  "completed_at": "2026-08-11T08:37:47.978620+00:00",
   "concept_name": "crrt",
   "dependencies": [],
   "divergence_decided_by": null,
   "divergence_justification": null,
-  "engineering_counter": 4,
+  "engineering_counter": 6,
   "error_message": null,
-  "hpc_counter": 3,
+  "hpc_counter": 4,
+  "reopen_history": [
+    {
+      "at": "2026-08-11T06:12:17.408546+00:00",
+      "baseline": {
+        "attempt": 3,
+        "engineering": 4,
+        "hpc": 3,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "Type B cast defect: TRY_TO_TIMESTAMP(REGEXP_REPLACE(col, offset-strip), \"yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]\") returns NULL on any shape the pinned format misses (date-only values especially), and TRY_ makes it silent -- those NULLs reach the judge as differing_null_only/gap_shaped, i.e. a parse failure disguised as a FHIR coverage gap at the lower bar. Replace every datetime mapping with a bare TRY_CAST(col AS TIMESTAMP_NTZ). See pathling-sql SKILL.md and MIMIC_NOTES.md:337.",
+      "superseded_decided_by": null,
+      "superseded_justification": null,
+      "superseded_status": "COMPLETED"
+    }
+  ],
   "semantic_counter": 2,
-  "started_at": "2026-08-11T04:45:05.011423+00:00",
+  "started_at": "2026-08-11T06:12:17.410351+00:00",
   "status": "COMPLETED",
-  "updated_at": "2026-08-11T04:59:50.957724+00:00"
+  "updated_at": "2026-08-11T08:37:47.979023+00:00"
 }
