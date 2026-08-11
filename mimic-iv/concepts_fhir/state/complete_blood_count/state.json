@@ -1,0 +1,16 @@
+{
+  "attempt": 1,
+  "category": "measurement",
+  "completed_at": "2026-08-11T00:40:37.786223+00:00",
+  "concept_name": "complete_blood_count",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accepted COMPLETED_WITH_DIVERGENCE: 204 charttime differing_conflict rows (0.0061%), all candidate +1 hour, are intrinsic DST-gap transformation loss. mimic-fhir/sql/fhir_observation_labevents.sql:15 casts naive labevents.charttime through TIMESTAMPTZ and :121 writes Observation.effectiveDateTime; mimic-fhir/sql/fhir_specimen_lab.sql:9,18,58 repeats the loss. Observation.issued is storetime at fhir_observation_labevents.sql:16,122 and identifiers carry labevent_id at :12,62,95-98; no FHIR path preserves original charttime, so the oracle value is unrecoverable. Candidate otherwise reproduces 3,362,299/3,362,503 rows identically with schema and row count matching.",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "semantic_counter": 1,
+  "started_at": "2026-08-10T23:57:19.330290+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-11T00:40:37.786613+00:00"
+}

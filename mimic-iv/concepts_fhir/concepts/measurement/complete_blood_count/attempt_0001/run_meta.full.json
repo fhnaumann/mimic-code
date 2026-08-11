@@ -1,0 +1,91 @@
+{
+  "attempt_dir": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/complete_blood_count/attempt_0001",
+  "column_types": {
+    "charttime": "timestamp_ntz",
+    "hadm_id": "int",
+    "hematocrit": "double",
+    "hemoglobin": "double",
+    "mch": "double",
+    "mchc": "double",
+    "mcv": "double",
+    "platelet": "double",
+    "rbc": "double",
+    "rdw": "double",
+    "rdwsd": "double",
+    "specimen_id": "int",
+    "subject_id": "int",
+    "wbc": "double"
+  },
+  "columns": [
+    "subject_id",
+    "hadm_id",
+    "charttime",
+    "specimen_id",
+    "hematocrit",
+    "hemoglobin",
+    "mch",
+    "mchc",
+    "mcv",
+    "platelet",
+    "rbc",
+    "rdw",
+    "rdwsd",
+    "wbc"
+  ],
+  "concept": "complete_blood_count",
+  "dataset": "full",
+  "divergence": {
+    "blocking": [
+      {
+        "class": "differing_conflict",
+        "count": 204,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "classification": "keyed",
+    "contested": [
+      {
+        "class": "differing_conflict",
+        "count": 204,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "declared_unrepresentable": {},
+    "gap_shaped": [],
+    "identical_fraction": 0.999939,
+    "identical_rows": 3362299,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "notes": [],
+    "oracle_rows": 3362503,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which.",
+    "reviewable": [
+      {
+        "class": "differing_conflict",
+        "count": 204,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "engine": "pathling-embedded",
+  "format_version": "1.0",
+  "generated_at": "2026-08-11T00:29:32.614221+00:00",
+  "oracle": "/scratch3/nau025/oracle/mimic4-full.db",
+  "oracle_row_count": 3362503,
+  "row_count": 3362503,
+  "timings_seconds": {
+    "compare": 1.595,
+    "execute": 100.733
+  },
+  "verdict": "review",
+  "view_labels": [
+    "encounter",
+    "lab_observation",
+    "patient",
+    "specimen"
+  ],
+  "warehouse": "/scratch3/nau025/mimic-on-fhir-delta/spark_warehouse"
+}

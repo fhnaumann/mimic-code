@@ -1,0 +1,3 @@
+## Labevents comparator text can synthesize a FHIR Quantity when `valuenum` is NULL
+- Affected: `Observation.valueQuantity.value` and `Observation.valueQuantity.comparator` for labevents-derived Observations
+- Verified: `mimic-fhir/sql/fhir_observation_labevents.sql:27-47,123-136` was checked during `complete_blood_count` attempt_0001; the CBC Delta probe had 25,087 target codings, 25,011 Quantity values, 0 comparator-bearing values, and 76 `valueString` rows versus 25,011 DuckDB rows with non-NULL positive `valuenum`, confirming the ETL branch while this item set contained no comparator example.

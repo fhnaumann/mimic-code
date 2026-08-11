@@ -1,0 +1,3 @@
+Evidence block — Concept: `complete_blood_count`, attempt `0001`.
+
+Command `uv run mimic_utils run-demo complete_blood_count` exited 0 using embedded Pathling on Spark over `/Users/nau025/warehouses/mimic-iv-demo/delta`. All four ViewDefinitions registered and `concept.sql` executed cleanly. Produced `candidate.demo.parquet` and `shape.demo.json` in the attempt directory. Shape verdict: `shape_ok`; all 14 expected column names matched and all types were compatible (`subject_id`, `hadm_id`, `specimen_id` integer; `charttime` timestamp_ntz; measurements double). Candidate demo row count was 2,959; row count was reported only and not gated. No implementation artifacts were modified and no commit was made.

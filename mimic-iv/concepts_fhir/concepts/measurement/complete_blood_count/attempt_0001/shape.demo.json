@@ -1,0 +1,58 @@
+{
+  "candidate": "/Users/nau025/Documents/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/complete_blood_count/attempt_0001/candidate.demo.parquet/*.parquet",
+  "candidate_row_count": 2959,
+  "concept": "complete_blood_count",
+  "dataset": "demo",
+  "executed": true,
+  "format_version": "2.0",
+  "gated": [
+    "execution",
+    "column_names",
+    "column_types"
+  ],
+  "mode": "shape",
+  "not_gated": [
+    "row_count"
+  ],
+  "note": "Shape is correct. This earns permission to spend an HPC run; it is not evidence of correctness.",
+  "oracle_full_row_count": 3362503,
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "hadm_id",
+      "charttime",
+      "specimen_id",
+      "hematocrit",
+      "hemoglobin",
+      "mch",
+      "mchc",
+      "mcv",
+      "platelet",
+      "rbc",
+      "rdw",
+      "rdwsd",
+      "wbc"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "hadm_id",
+      "charttime",
+      "specimen_id",
+      "hematocrit",
+      "hemoglobin",
+      "mch",
+      "mchc",
+      "mcv",
+      "platelet",
+      "rbc",
+      "rdw",
+      "rdwsd",
+      "wbc"
+    ],
+    "extra_columns": [],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": []
+  },
+  "verdict": "shape_ok"
+}
