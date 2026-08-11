@@ -20,9 +20,8 @@ from typing import Any, Mapping, Optional, Sequence
 
 from mimic_utils.conversion_state import ConversionController, StateError
 
-METRICS_SCHEMA_VERSION = "conversion-metrics.v1"
+METRICS_SCHEMA_VERSION = "conversion-metrics.v2"
 TRACKER_SCHEMA_VERSION = "1"
-HPC_ROUND_ASSUMPTION_SECONDS = 300
 TERMINAL_STATUSES = frozenset({"COMPLETED", "COMPLETED_WITH_DIVERGENCE", "FAILED", "BLOCKED_REPRESENTATION"})
 SEMANTIC_TERMINAL_STATUSES = frozenset({"COMPLETED_WITH_DIVERGENCE", "BLOCKED_REPRESENTATION"})
 ATTEMPT_RE = re.compile(r"^attempt_(\d{4})$")
@@ -340,6 +339,22 @@ def _comparison_summary(raw: Optional[Mapping[str, Any]]) -> Optional[dict[str, 
     }
 
 
+def _job_runtime(
+    accounting: Optional[Mapping[str, Any]],
+    run_meta: Optional[Mapping[str, Any]],
+) -> tuple[Optional[float], Optional[str]]:
+    if accounting is not None:
+        elapsed = accounting.get("elapsed_seconds")
+        if isinstance(elapsed, (int, float)) and not isinstance(elapsed, bool) and elapsed >= 0:
+            return float(elapsed), "slurm_sacct_elapsed"
+    timings = run_meta.get("timings_seconds") if run_meta is not None else None
+    if isinstance(timings, dict):
+        values = [timings.get("execute"), timings.get("compare")]
+        if all(isinstance(value, (int, float)) and not isinstance(value, bool) and value >= 0 for value in values):
+            return float(sum(values)), "run_meta_execute_compare"
+    return None, None
+
+
 def _attempt_metrics(attempts: Sequence[tuple[int, Path]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], Optional[dict[str, Any]]]:
     summaries, jobs, latest = [], [], None
     for number, directory in attempts:
@@ -349,8 +364,20 @@ def _attempt_metrics(attempts: Sequence[tuple[int, Path]]) -> tuple[list[dict[st
         shape = _json_file(directory / "shape.demo.json")
         shape = {key: shape[key] for key in ("verdict", "executed", "candidate_row_count") if key in shape} if shape else None
         hpc_path, hpc = directory / "hpc_job.json", _json_file(directory / "hpc_job.json")
+        accounting_path = directory / "hpc_accounting.json"
+        accounting = _json_file(accounting_path)
+        runtime_seconds, runtime_source = _job_runtime(
+            accounting, _json_file(directory / "run_meta.full.json")
+        )
         if hpc_path.is_file():
-            jobs.append({"attempt": number, "job_id": str(hpc["job_id"]) if hpc and "job_id" in hpc else None, "full_result_present": comparison_path.is_file()})
+            jobs.append({
+                "attempt": number,
+                "job_id": str(hpc["job_id"]) if hpc and "job_id" in hpc else None,
+                "full_result_present": comparison_path.is_file(),
+                "accounting_present": accounting_path.is_file(),
+                "runtime_seconds": runtime_seconds,
+                "runtime_source": runtime_source,
+            })
         summaries.append({
             "attempt": number,
             "artifacts": sorted(path.name for path in directory.iterdir()),
@@ -469,6 +496,7 @@ def finalize_conversion_metrics(concept: str, *, run: int, session_ids: Sequence
     poll_by_job, unmatched_polls = _poll_intervals(parts, set(session_ids), concept, jobs)
     poll_intervals = [item for values in poll_by_job.values() for item in values]
     busy_seconds, poll_overlap, submitted_jobs = _duration(busy), _overlap(busy, poll_intervals), len(jobs)
+    hpc_accounted_seconds = sum(float(job["runtime_seconds"] or 0) for job in jobs)
     public_jobs = []
     for index, job in enumerate(jobs):
         intervals = poll_by_job.get(index, [])
@@ -476,6 +504,8 @@ def finalize_conversion_metrics(concept: str, *, run: int, session_ids: Sequence
             "attempt": job["attempt"], "job_id_present": job["job_id"] is not None,
             "full_result_present": job["full_result_present"], "poll_interval_discoverable": bool(intervals),
             "poll_interval_count": len(_union(intervals)), "actual_poll_interval_seconds": _round(_duration(intervals)),
+            "accounting_present": job["accounting_present"],
+            "runtime_seconds": _round(job["runtime_seconds"]), "runtime_source": job["runtime_source"],
         })
     per_stage = {}
     for agent in sorted(set(agents.values()) | set(busy_by_agent)):
@@ -500,20 +530,23 @@ def finalize_conversion_metrics(concept: str, *, run: int, session_ids: Sequence
     judge_invocations = sum((directory / "evidence" / "equivalence-judge.md").is_file() for _, directory in attempt_dirs)
     node, semantic = controller.dag_raw["nodes"][concept], _semantic_metrics(state.status, state.semantic_counter)
     artifact = {
-        "format_version": "1.0", "schema_version": METRICS_SCHEMA_VERSION, "concept": concept, "run": run,
+        "format_version": "2.0", "schema_version": METRICS_SCHEMA_VERSION, "concept": concept, "run": run,
         "terminal_status": state.status, "terminal_outcome": state.status,
         "session_scope": {"root_session_count": len(roots), "included_session_count": len(sessions), "session_resumptions": max(0, len(roots) - 1)},
         "session_resumptions": max(0, len(roots) - 1), "tokens": token_metrics,
         "runtime": {
-            "seconds": _round(max(0.0, busy_seconds - poll_overlap) + submitted_jobs * HPC_ROUND_ASSUMPTION_SECONDS),
+            "seconds": _round(max(0.0, busy_seconds - poll_overlap) + hpc_accounted_seconds),
             "method": (
                 "union completed assistant-message intervals across all included sessions; "
                 "subtract overlap from discovered hpc-poll tool intervals; "
-                f"add {HPC_ROUND_ASSUMPTION_SECONDS} seconds per submitted HPC job"
+                "add measured HPC runtime from Slurm accounting, falling back to "
+                "run_meta execute+compare timings when accounting is unavailable"
             ),
             "busy_union_seconds": _round(busy_seconds), "hpc_poll_overlap_seconds": _round(poll_overlap),
-            "hpc_fixed_accounted_seconds": submitted_jobs * HPC_ROUND_ASSUMPTION_SECONDS,
-            "hpc_round_assumption_seconds": HPC_ROUND_ASSUMPTION_SECONDS,
+            "hpc_accounted_seconds": _round(hpc_accounted_seconds),
+            "hpc_jobs_with_slurm_accounting": sum(job["runtime_source"] == "slurm_sacct_elapsed" for job in jobs),
+            "hpc_jobs_with_run_meta_fallback": sum(job["runtime_source"] == "run_meta_execute_compare" for job in jobs),
+            "hpc_jobs_without_runtime": sum(job["runtime_source"] is None for job in jobs),
             "hpc_poll_intervals_discovered": len(_union(poll_intervals)), "hpc_poll_intervals_unmatched": unmatched_polls,
             "hpc_jobs_submitted": submitted_jobs,
             "hpc_jobs_without_discoverable_poll_interval": sum(not job["poll_interval_discoverable"] for job in public_jobs),
@@ -537,7 +570,7 @@ def finalize_conversion_metrics(concept: str, *, run: int, session_ids: Sequence
             "tracker_schema_version": TRACKER_SCHEMA_VERSION,
             "opencode_source": {"kind": "sqlite", "filename": db_path.name, "tables": sorted(name for name in ("message", "part", "project", "session") if name in tables)},
             "opencode_versions": versions, "agents": sorted(set(agents.values())), "agent_model_list": model_list,
-            "config_hashes": _config_hashes(controller.artifact_root), "hpc_round_assumption_seconds": HPC_ROUND_ASSUMPTION_SECONDS,
+            "config_hashes": _config_hashes(controller.artifact_root),
             "root_session_count": len(roots), "semantic_rework_method": semantic["semantic_rework_method"],
             "semantic_rework_source": semantic["semantic_rework_source"], "finalized_before_terminal_response": True,
         },
@@ -546,4 +579,4 @@ def finalize_conversion_metrics(concept: str, *, run: int, session_ids: Sequence
     return output
 
 
-__all__ = ["HPC_ROUND_ASSUMPTION_SECONDS", "METRICS_SCHEMA_VERSION", "MetricsError", "finalize_conversion_metrics"]
+__all__ = ["METRICS_SCHEMA_VERSION", "MetricsError", "finalize_conversion_metrics"]

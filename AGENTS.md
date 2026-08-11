@@ -230,8 +230,10 @@ This exists because the state machine has no edge from `VALIDATING_DEMO` back to
 `RUNNING`: rerunning a concept parked there without a `fail` first dies at
 phase 2. Start every `/goal` with `resume`, not `init`.
 
-Do not commit, push, or create PRs. Each attempt is immutable in its own
-attempt subdirectory. State is managed by the `ConversionController` via
+Do not push or create PRs. The concept-port orchestrator makes one scoped git
+commit after a successful exact match or judge-accepted divergence; no other
+outcome or agent commits. Each attempt is immutable in its own attempt
+subdirectory. State is managed by the `ConversionController` via
 `mimic_utils init|start|validate-demo|validate-full|done|accept-divergence|fail|block`
 CLI commands. In an unactivated shell, prefix every command with `uv run`, for
 example `uv run mimic_utils status`.
@@ -249,8 +251,10 @@ calls `conversion_metrics_finalize` before its terminal marker. The tool reads
 OpenCode SQLite, controller state and immutable attempt artifacts, then writes
 the canonical write-once result to
 `mimic-iv/concepts_fhir/metrics/<concept>/run_NNNN.json`. It includes all bound
-root sessions and descendant subagents; human idle time is excluded and every
-submitted HPC job contributes a flat 300 seconds in place of polling/runtime.
+root sessions and descendant subagents; human idle and discovered polling time
+are excluded. HPC compute time comes from the job's final Slurm `ElapsedRaw`
+record in `hpc_accounting.json`; `run_meta.full.json` execute-plus-compare time
+is the measured fallback if Slurm accounting is unavailable.
 
 The one judgment-backed metric is semantic rework. When a diagnosis sends an
 executing but semantically wrong port to another attempt, transition with
@@ -306,7 +310,7 @@ Execution commands, distinct from the state transitions above:
 
 Per-attempt artifacts: `ViewDefinition.<label>.json`, `concept.sql`,
 `candidate.demo.parquet`, `shape.demo.json`, `submit.slurm`, `hpc_job.json`,
-`candidate.full.parquet` (stays on scratch), `comparison.full.json`,
+`hpc_accounting.json`, `candidate.full.parquet` (stays on scratch), `comparison.full.json`,
 `run_meta.full.json`, `evidence/<stage>.md`. All write-once.
 
 ---
@@ -484,8 +488,15 @@ full-data verdict.
 
 ## Rules for all agents
 
-- **No git commits.** Never run `git commit`, `git push`, `git tag`, or
-  `git merge`. The working tree tracks state through files only.
+- **Git commits are success-only and orchestrator-only.** Subagents never
+  commit. After metrics finalization, the concept-port orchestrator must make
+  one path-scoped commit for COMPLETED or COMPLETED_WITH_DIVERGENCE before it
+  emits the terminal marker. It stages and commits only this concept's attempt
+  tree, state, carryover, metrics, and `MIMIC_NOTES.d/<concept>.md` fragment;
+  it must use explicit pathspecs and `git commit --only` so unrelated or
+  already-staged changes from sibling goals are not included. FAILED and
+  BLOCKED_REPRESENTATION never commit. No agent pushes, tags, merges, amends,
+  or uses destructive git commands.
 - **No destructive reverts.** Never run `git checkout -- <file>` to revert
   an earlier attempt. Immutable attempts: each version is a new directory.
 - **Immutable attempts.** Attempt artifacts are write-once. Files may be

@@ -81,3 +81,6 @@ target/
 
 # Local OpenCode conversion metric bindings and run state
 .opencode/conversion-metrics/
+
+# Generated metrics rollup: regenerated from the committed run_NNNN.json artifacts
+mimic-iv/concepts_fhir/metrics/index.html

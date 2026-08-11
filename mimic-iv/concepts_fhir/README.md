@@ -21,6 +21,7 @@ concepts_fhir/
     concept.sql
     shape.demo.json                 # demo shape-gate result
     comparison.full.json            # full-data keyed diff (the real verdict)
+    hpc_accounting.json             # final Slurm elapsed runtime from sacct
     evidence/<stage>.md
 ```
 

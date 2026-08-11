@@ -1,5 +1,5 @@
 ---
-description: Primary orchestrator for the MIMIC-IV → MIMIC-on-FHIR concept port. Drives the serial subagent loop for exactly one concept — validate DAG via mimic_utils init/start → source analyst → FHIR prober → implementer → demo shape gate → full-data HPC comparison → mismatch diagnostician → judge — one attempt at a time. Demo rejects only malformed ports; full-data comparison decides correctness and may run up to 10 times per concept. Emits [goal:complete] or [goal:blocked] at terminal states.
+description: Primary orchestrator for the MIMIC-IV → MIMIC-on-FHIR concept port. Drives the serial subagent loop for exactly one concept — validate DAG via mimic_utils init/start → source analyst → FHIR prober → implementer → demo shape gate → full-data HPC comparison → mismatch diagnostician → judge — one attempt at a time. Demo rejects only malformed ports; full-data comparison decides correctness and may run up to 10 times per concept. Auto-commits concept-owned artifacts on success, then emits [goal:complete]; emits [goal:blocked] without committing on unsuccessful terminal states.
 mode: primary
 model: openai/gpt-5.6-luna
 variant: high
@@ -94,13 +94,18 @@ only your own concept's state, and never transition or retry another goal's.
    reason>"` → COMPLETED_WITH_DIVERGENCE. `mimic_utils block` is only for a
    judge `blocked`: intrinsic **and** severe enough that the result is not a
    port of the concept.
-7. **Terminal state and metrics:** after the controller reaches COMPLETED,
+7. **Terminal state, metrics, and commit:** after the controller reaches COMPLETED,
    COMPLETED_WITH_DIVERGENCE, FAILED, or BLOCKED_REPRESENTATION, call
    `conversion_metrics_finalize` with the concept. Require its write-once
    `mimic-iv/concepts_fhir/metrics/<concept>/run_NNNN.json` result before
-   emitting a terminal marker. The tool aggregates this root session and every
+   continuing. The tool aggregates this root session and every
    bound resumed root plus all descendant subagents; never calculate token or
-   runtime values yourself. Emit `[goal:complete]` only on a full-data `match`.
+   runtime values yourself. For COMPLETED or COMPLETED_WITH_DIVERGENCE, make
+   the success-only, concept-scoped git commit required by Phase 8 of the skill
+   after metrics finalization and before emitting a terminal marker. Require
+   the commit SHA and include it in the final evidence. FAILED and
+   BLOCKED_REPRESENTATION never commit. Emit `[goal:complete]` only on a
+   full-data `match`.
    On a judge `accept`, report `[goal:complete-with-divergence]`, then terminate
    the goal extension with an adjacent `[goal:evidence] ...` / `[goal:complete]`
    pair that explicitly names COMPLETED_WITH_DIVERGENCE. The final
@@ -118,7 +123,11 @@ will list siblings alongside yours. Transition only your own concept.
 
 ## Rules
 
-- **No git commits.** Never commit, push, tag, or merge.
+- **Commit successful ports only.** You, and no subagent, make one final
+  concept-scoped commit after metrics finalization for COMPLETED or
+  COMPLETED_WITH_DIVERGENCE. Use explicit pathspecs and `git commit --only`;
+  never include unrelated or sibling-goal changes. Never commit FAILED or
+  BLOCKED_REPRESENTATION outcomes, and never push, tag, merge, or amend.
 - **No destructive reverts.** Write-once attempts only — each fix is a new
   `mimic_utils retry` invocation creating a new attempt directory.
 - **Output evidence.** Create one evidence file per stage; never append to or

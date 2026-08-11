@@ -46,15 +46,18 @@
     "tier": "contested",
     "verdict": "review"
   },
-  "format_version": "1.0",
+  "format_version": "2.0",
   "hpc_jobs": [
     {
+      "accounting_present": true,
       "actual_poll_interval_seconds": 0.382,
       "attempt": 1,
       "full_result_present": true,
       "job_id_present": true,
       "poll_interval_count": 1,
-      "poll_interval_discoverable": true
+      "poll_interval_discoverable": true,
+      "runtime_seconds": 104.0,
+      "runtime_source": "slurm_sacct_elapsed"
     }
   ],
   "human_interventions": null,
@@ -71,6 +74,7 @@
           "comparison.full.json",
           "concept.sql",
           "evidence",
+          "hpc_accounting.json",
           "hpc_job.json",
           "run_meta.full.json",
           "shape.demo.json",
@@ -317,7 +321,6 @@
     },
     "dag_sha256": "8eb94ba8891e0effa66c7a62c76e648d9f42e8941f97f052c92a0823434bae92",
     "finalized_before_terminal_response": true,
-    "hpc_round_assumption_seconds": 300,
     "opencode_source": {
       "filename": "opencode.db",
       "kind": "sqlite",
@@ -349,20 +352,22 @@
       "invalid_assistant_intervals": 0
     },
     "busy_union_seconds": 2700.692,
-    "hpc_fixed_accounted_seconds": 300,
+    "hpc_accounted_seconds": 104.0,
     "hpc_jobs_submitted": 1,
+    "hpc_jobs_with_run_meta_fallback": 0,
+    "hpc_jobs_with_slurm_accounting": 1,
+    "hpc_jobs_without_runtime": 0,
     "hpc_jobs_without_discoverable_poll_interval": 0,
     "hpc_poll_intervals_discovered": 1,
     "hpc_poll_intervals_unmatched": 0,
     "hpc_poll_overlap_seconds": 0.382,
-    "hpc_round_assumption_seconds": 300,
     "incomplete_messages_excluded": 1,
     "invalid_message_intervals_excluded": 0,
-    "method": "union completed assistant-message intervals across all included sessions; subtract overlap from discovered hpc-poll tool intervals; add 300 seconds per submitted HPC job",
-    "seconds": 3000.31,
+    "method": "union completed assistant-message intervals across all included sessions; subtract overlap from discovered hpc-poll tool intervals; add measured HPC runtime from Slurm accounting, falling back to run_meta execute+compare timings when accounting is unavailable",
+    "seconds": 2804.31,
     "time_updated_fallback_used": false
   },
-  "schema_version": "conversion-metrics.v1",
+  "schema_version": "conversion-metrics.v2",
   "session_resumptions": 0,
   "session_scope": {
     "included_session_count": 9,

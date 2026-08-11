@@ -149,7 +149,9 @@ so a second full run means a new attempt.
 `hpc-poll` checks `squeue -u $USER` every 300 s and greps the job log for
 `Traceback|OutOfMemory|slurmstepd|CANCELLED|Error`, breaking early on any of
 them. Then it fetches `comparison.full.json` and `run_meta.full.json` back into
-the attempt directory.
+the attempt directory and writes `hpc_accounting.json` from the completed
+allocation's `sacct` record. This captures actual Slurm elapsed runtime without
+counting queue or polling time.
 
 **`squeue -u $USER` lists sibling concepts' jobs too.** Read exactly one id out
 of it — yours, from `hpc_job.json` — and ignore every other line. **Never
@@ -180,6 +182,7 @@ Written into `mimic-iv/concepts_fhir/concepts/<category>/<concept>/attempt_NNNN/
 |---|---|---|
 | `submit.slurm` | locally at launch | — |
 | `hpc_job.json` | locally at launch (job id, remote path) | — |
+| `hpc_accounting.json` | locally at poll completion from `sacct` | — |
 | `candidate.full.parquet` | remote | no (stays on scratch) |
 | `comparison.full.json` | remote | **yes — the verdict** |
 | `run_meta.full.json` | remote | yes |

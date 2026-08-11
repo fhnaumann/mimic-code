@@ -23,9 +23,9 @@ Four steps, in order:
     ``sbatch``, capturing the job id from ``Submitted batch job <id>``.
 ``poll`` / ``fetch``
     ``squeue`` every 5 minutes, watching the job's log for fatal markers, then
-    rsync the two small JSON artifacts back.  ``candidate.full.parquet`` is
-    deliberately left on scratch -- it can be hundreds of MB and the verdict
-    does not need it.
+    rsync the two small result artifacts and record final ``sacct`` accounting.
+    ``candidate.full.parquet`` is deliberately left on scratch -- it can be
+    hundreds of MB and the verdict does not need it.
 
 Polling is normally against cluster etiquette (jobs mail their own status).
 The concept-port loop is the sanctioned exception, on the same terms as the
@@ -104,6 +104,7 @@ SUBMIT_NAME = "submit.slurm"
 JOB_RECORD_NAME = "hpc_job.json"
 COMPARISON_NAME = "comparison.full.json"
 RUN_META_NAME = "run_meta.full.json"
+HPC_ACCOUNTING_NAME = "hpc_accounting.json"
 
 #: Sanctioned polling interval. See the module docstring.
 POLL_INTERVAL_SECONDS = 300
@@ -126,6 +127,7 @@ FATAL_MARKERS = (
 )
 
 _JOB_ID_RE = re.compile(r"Submitted batch job (\d+)")
+_JOB_ID_VALUE_RE = re.compile(r"^\d+$")
 
 
 class HPCError(RuntimeError):
@@ -568,6 +570,74 @@ def fetch_log(
     return str(attempt / name) if result.ok else None
 
 
+def query_job_accounting(
+    job_id: str, *, runner: Runner = run_command
+) -> Dict[str, object]:
+    """Read the completed allocation's elapsed time from Slurm accounting."""
+    if not _JOB_ID_VALUE_RE.fullmatch(job_id):
+        raise HPCError(f"Invalid Slurm job id: {job_id!r}")
+    result = runner(
+        [
+            "ssh",
+            HOST,
+            "sacct -X "
+            f"-j {shlex.quote(job_id)} --noheader --parsable2 "
+            "--format=JobIDRaw,State,ElapsedRaw,Start,End",
+        ]
+    )
+    if not result.ok:
+        raise HPCError(f"sacct failed: {result.stderr.strip() or result.stdout}")
+
+    row: Optional[List[str]] = None
+    for line in result.stdout.splitlines():
+        fields = line.strip().split("|")
+        if len(fields) >= 5 and fields[0] == job_id:
+            row = fields[:5]
+            break
+    if row is None:
+        raise HPCError(f"sacct returned no allocation row for job {job_id}")
+
+    _, state, elapsed_raw, started_at, ended_at = row
+    try:
+        elapsed_seconds = int(elapsed_raw)
+    except ValueError as exc:
+        raise HPCError(
+            f"sacct returned invalid ElapsedRaw for job {job_id}: {elapsed_raw!r}"
+        ) from exc
+    if elapsed_seconds < 0 or not ended_at or ended_at == "Unknown":
+        raise HPCError(f"sacct accounting for job {job_id} is not final")
+    return {
+        "format_version": "1.0",
+        "source": "slurm_sacct",
+        "job_id": job_id,
+        "state": state,
+        "elapsed_seconds": elapsed_seconds,
+        "started_at": started_at,
+        "ended_at": ended_at,
+    }
+
+
+def record_job_accounting(
+    attempt: Path,
+    job_id: str,
+    *,
+    runner: Runner = run_command,
+) -> Path:
+    """Write final Slurm accounting once after the job leaves the queue."""
+    path = attempt / HPC_ACCOUNTING_NAME
+    if path.is_file():
+        return path
+    payload = query_job_accounting(job_id, runner=runner)
+    payload["recorded_at"] = datetime.now(timezone.utc).isoformat()
+    try:
+        with path.open("x", encoding="utf-8") as stream:
+            json.dump(payload, stream, indent=2, sort_keys=True)
+            stream.write("\n")
+    except FileExistsError:
+        pass
+    return path
+
+
 @dataclass
 class PollResult:
     """The outcome of waiting for a job."""
@@ -582,6 +652,8 @@ class PollResult:
     verdict: Optional[str] = None
     fetched: List[str] = field(default_factory=list)
     log_path: Optional[str] = None
+    accounting_path: Optional[str] = None
+    elapsed_seconds: Optional[int] = None
     polls: int = 0
     diagnostics: List[str] = field(default_factory=list)
 
@@ -665,11 +737,27 @@ def poll_until_done(
     # A verdict artifact is the only proof of success. Leaving the queue is
     # not: a job that OOMs also leaves the queue.
     result.fetched = fetch_results(resolved, remote, runner=runner)
+    if status is not None and not status.in_queue:
+        try:
+            accounting_path = record_job_accounting(
+                resolved, resolved_job, runner=runner
+            )
+            result.accounting_path = str(accounting_path)
+            accounting = json.loads(accounting_path.read_text(encoding="utf-8"))
+            result.elapsed_seconds = int(accounting["elapsed_seconds"])
+        except (
+            HPCError,
+            OSError,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+        ) as exc:
+            result.diagnostics.append(f"Slurm accounting unavailable: {exc}")
     comparison = resolved / COMPARISON_NAME
     if comparison.is_file():
         payload = json.loads(comparison.read_text(encoding="utf-8"))
         result.verdict = payload.get("verdict")
-        result.diagnostics = list(payload.get("diagnostics") or [])
+        result.diagnostics.extend(payload.get("diagnostics") or [])
         result.outcome = "complete"
         return result
 
@@ -755,7 +843,7 @@ def hpc_poll_cli(args: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         description="Poll a submitted full-data job every 5 minutes until it "
         "leaves the queue or dies, then fetch comparison.full.json and "
-        "run_meta.full.json back into the attempt directory.",
+        "run_meta.full.json and record final Slurm accounting.",
     )
     parser.add_argument("concept", help="Concept stem (e.g. age).")
     parser.add_argument("--attempt-dir", default=None)
@@ -793,6 +881,10 @@ def hpc_poll_cli(args: Optional[List[str]] = None) -> int:
         print(f"fetched:  {path}")
     if result.log_path:
         print(f"log:      {result.log_path}")
+    if result.accounting_path:
+        print(f"accounting: {result.accounting_path}")
+    if result.elapsed_seconds is not None:
+        print(f"runtime:  {result.elapsed_seconds}s (Slurm elapsed)")
     for diag in result.diagnostics:
         print(f"  - {diag}")
 

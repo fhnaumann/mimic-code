@@ -1,0 +1,5 @@
+{
+  "openai/gpt-5.6-luna": {"input": 0.03513, "output": 0.6795},
+  "openai/gpt-5.6-sol": {"input": 1.784, "output": 30.41},
+  "openrouter/deepseek/deepseek-v4-flash-0731": {"input": 0.03912, "output": 0.2609}
+}

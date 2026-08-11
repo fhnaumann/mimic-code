@@ -76,6 +76,9 @@ shorter `mimic_utils ...` spelling below names the subcommand only.
     not a shell command. After any terminal conversion outcome, deterministically
     aggregates the dedicated root session(s) and descendant subagents and writes
     `mimic-iv/concepts_fhir/metrics/<concept>/run_NNNN.json` once.
+14. **Scoped git commit** — orchestrator-only and success-only. After metrics
+    finalization for COMPLETED or COMPLETED_WITH_DIVERGENCE, commit the
+    concept-owned paths listed in Phase 8. Never commit a failed or blocked run.
 
 The controller uses three counters: `semantic`, `engineering`, `hpc`.
 Lifecycle: `PENDING → RUNNING → VALIDATING_DEMO → VALIDATING_FULL →
@@ -364,10 +367,33 @@ that matters.
 After the state transition to COMPLETED, COMPLETED_WITH_DIVERGENCE, FAILED, or
 BLOCKED_REPRESENTATION, call `conversion_metrics_finalize` with the concept.
 Do not infer or write metric values in prose: the tool reads OpenCode SQLite,
-controller state and immutable attempt artifacts. Do not emit a terminal marker
-until it reports the write-once metrics path. Finalization happens before this
-last response, so the artifact records that the small terminal response itself
-is excluded.
+controller state and immutable attempt artifacts. Do not continue until it
+reports the write-once metrics path. Finalization happens before the final
+response, so the artifact records that the small terminal response itself is
+excluded.
+
+For **COMPLETED or COMPLETED_WITH_DIVERGENCE only**, the orchestrator's final
+operational step is one git commit. FAILED and BLOCKED_REPRESENTATION never
+commit. Build an explicit pathspec containing only paths owned by this concept:
+
+- `mimic-iv/concepts_fhir/concepts/<category>/<concept>/`
+- `mimic-iv/concepts_fhir/state/<concept>/state.json`
+- `mimic-iv/concepts_fhir/carryover/<concept>/`
+- `mimic-iv/concepts_fhir/metrics/<concept>/`
+- `mimic-iv/concepts_fhir/MIMIC_NOTES.d/<concept>.md`, if it exists or is tracked
+
+Run `git status --short` first. Stage only those paths with `git add -A` and an
+explicit `-- <pathspecs>` suffix. Inspect the staged names with
+`git diff --cached --name-only`, limited by the same pathspecs, and verify every
+selected file is concept-owned. Then commit with `git commit --only` and those
+explicit pathspecs. `--only` is load-bearing: sibling goals may have changes,
+or a human may already have unrelated changes staged, and neither may enter
+this commit. Use `Port <concept> to MIMIC-on-FHIR` as the commit message for an
+exact match; append ` with divergence` for a judge-accepted divergence. Do not
+amend, push, tag, merge, or clean the worktree. Require a commit SHA; if the
+scoped commit fails, do not claim the goal is fully finalized or emit a
+completion marker. Report the commit error without rolling back the successful
+controller state, then retry only the scoped commit when safe.
 
 Emit terminal markers:
 - On a full-data `match`, end with adjacent lines
@@ -384,7 +410,7 @@ Emit terminal markers:
   judge's citation if one was needed, artifact paths, and every entry this
   concept appended to `MIMIC_NOTES.d/<concept>.md` (or "none"), so the human
   merging between waves knows what is waiting. Include the metrics artifact
-  path too.
+  path and success commit SHA too.
 
 ## Attempt management (immutable, controller-driven)
 

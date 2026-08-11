@@ -18,7 +18,8 @@ uv run mimic_utils hpc-poll <concept>
 It reads the job id from `hpc_job.json`, polls `squeue -u $USER` every 300 s,
 greps the job log for `Traceback|OutOfMemory|slurmstepd|CANCELLED|Error` and
 breaks early on any of them, then fetches `comparison.full.json` and
-`run_meta.full.json` into the attempt directory.
+`run_meta.full.json` into the attempt directory and records final Slurm elapsed
+runtime in `hpc_accounting.json` using `sacct`.
 
 **Poll only your own job id — the one in `hpc_job.json`.** `squeue -u $USER`
 lists every job on this account, and several concepts are ported at once, so
@@ -68,4 +69,5 @@ false positive.
 - **Never git-commit.**
 
 End your reply with a plain-prose evidence block: concept name, job id, outcome,
-verdict (if any), row counts, the diagnostics lines, and the paths fetched.
+verdict (if any), Slurm elapsed runtime, row counts, the diagnostics lines, and
+the paths fetched.

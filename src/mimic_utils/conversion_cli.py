@@ -29,6 +29,7 @@ Commands
   depcheck CONCEPT [--artifact-root DIR]
   metrics-finalize CONCEPT --run N --session-id ID [--session-id ID ...]
                   [--artifact-root DIR] [--opencode-db PATH]
+  metrics-report [--out PATH] [--rates PATH] [--artifact-root DIR]
   preflight [--duckdb PATH] [--no-color]
 """
 
@@ -59,6 +60,7 @@ from mimic_utils.resume import (
     resume_plan,
 )
 from mimic_utils.conversion_metrics import finalize_conversion_metrics
+from mimic_utils.metrics_report import generate_metrics_report
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -421,6 +423,21 @@ def _h_metrics_finalize(
         return 4
 
 
+def _h_metrics_report(
+    out: Optional[str] = None,
+    rates: Optional[str] = None,
+    artifact_root: Optional[str] = None,
+) -> _Ec:
+    """Regenerate the self-contained HTML rollup of every metrics artifact."""
+    try:
+        path = generate_metrics_report(out=out, rates_path=rates, artifact_root=artifact_root)
+        print(f"Wrote metrics report: {path}")
+        return 0
+    except (StateError, OSError, ValueError) as exc:
+        print(f"ERROR: {exc}")
+        return 4
+
+
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
@@ -621,3 +638,20 @@ def register_commands(subparsers: _SubParsersAction) -> None:
         help="OpenCode SQLite database (default: ~/.local/share/opencode/opencode.db).",
     )
     p.set_defaults(func=_h_metrics_finalize)
+
+    # --- metrics rollup report ------------------------------------------------
+    p = subparsers.add_parser(
+        "metrics-report",
+        help="Regenerate the self-contained HTML rollup of every metrics artifact.",
+    )
+    p.add_argument(
+        "--out", default=None, metavar="PATH",
+        help="Output HTML file (default: <artifact-root>/mimic-iv/concepts_fhir/metrics/index.html).",
+    )
+    p.add_argument(
+        "--rates", default=None, metavar="PATH",
+        help="Pricing table (default: <artifact-root>/mimic-iv/concepts_fhir/metrics/rates.json). "
+             "Cost columns are omitted when it is missing or unreadable.",
+    )
+    p.add_argument("--artifact-root", **ar)
+    p.set_defaults(func=_h_metrics_report)

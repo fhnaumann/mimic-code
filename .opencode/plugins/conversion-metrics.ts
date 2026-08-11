@@ -188,7 +188,7 @@ async function bindingsFor(root: string, concept: string): Promise<BindingFile[]
   }
   const result: BindingFile[] = []
   for (const entry of entries) {
-    if (!entry.isFile() || !/^run-[1-9][0-9]*\.json$/.test(entry.name)) continue
+    if (!entry.isFile() || !/^run-0*[1-9][0-9]*\.json$/.test(entry.name)) continue
     result.push(await readBinding(join(directory, entry.name)))
   }
   return result
@@ -334,6 +334,39 @@ function shortOutput(stdout: string, stderr: string): string {
   return text.length > 2_000 ? `${text.slice(0, 1_997)}...` : text
 }
 
+function reportPath(text: string): string | undefined {
+  return text.match(/Wrote metrics report:\s*(\S+)/)?.[1]
+}
+
+/**
+ * Regenerate the HTML rollup after a successful finalize.  Cosmetic only: every
+ * failure mode -- non-zero exit, spawn failure, a thrown shell helper -- is
+ * swallowed, because a broken report must never fail a finalize that already
+ * wrote its artifact and its binding.
+ */
+async function refreshReport(root: string, $: PluginInput["$"]): Promise<string> {
+  try {
+    const result = await $.cwd(root).nothrow()`${["uv", "run", "mimic_utils", "metrics-report"]}`
+    const stdout = result.stdout.toString("utf8")
+    const stderr = result.stderr.toString("utf8")
+    if (result.exitCode !== 0) {
+      const reason = [stderr.trim(), stdout.trim()].filter(Boolean).join(" ").split("\n")[0] ?? ""
+      return `Report skipped: metrics-report exited ${result.exitCode}${reason ? ` (${reason.slice(0, 200)})` : ""}`
+    }
+    const path = reportPath(stdout) ?? reportPath(stderr)
+    return path ? `Report refreshed: ${path}` : "Report refreshed: metrics report regenerated"
+  } catch (error) {
+    // Even describing the failure must not throw (a Symbol or a throwing
+    // toString() would otherwise escape and take the finalize down with it).
+    try {
+      const reason = error instanceof Error ? error.message : String(error)
+      return `Report skipped: ${reason.slice(0, 200)}`
+    } catch {
+      return "Report skipped: metrics-report could not be run"
+    }
+  }
+}
+
 async function finalize(
   root: string,
   $: PluginInput["$"],
@@ -385,7 +418,7 @@ async function finalize(
     await writeAtomic(active.path, finalized)
     return {
       title: `Conversion metrics finalized: ${concept} run ${active.binding.run}`,
-      output: shortOutput(stdout, stderr),
+      output: `${shortOutput(stdout, stderr)}\n${await refreshReport(root, $)}`,
     }
   } finally {
     await release()
