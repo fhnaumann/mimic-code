@@ -1,0 +1,17 @@
+{
+  "attempt": 2,
+  "category": "measurement",
+  "completed_at": "2026-08-12T04:23:57.517860+00:00",
+  "concept_name": "inflammation",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accepted the attributed divergence: mimic-fhir/sql/fhir_observation_labevents.sql:15,121 casts labevents.charttime through TIMESTAMPTZ before writing Observation.effectiveDateTime, exactly the FHIR path used by the port. The sole conflict (1/117,898; 0.00085%) replayed completely as the America/New_York DST spring-forward normalization, consistent with DST-gap rarity and unrecoverable from FHIR; 117,897 rows otherwise matched.",
+  "engineering_counter": 3,
+  "error_message": null,
+  "hpc_counter": 2,
+  "reopen_history": [],
+  "semantic_counter": 1,
+  "started_at": "2026-08-12T04:09:38.024925+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-12T04:23:57.518201+00:00"
+}

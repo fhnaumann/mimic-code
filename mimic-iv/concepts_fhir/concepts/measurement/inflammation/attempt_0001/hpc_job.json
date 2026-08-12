@@ -1,0 +1,8 @@
+{
+  "concept": "inflammation",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "29781171",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/inflammation/attempt_0001",
+  "submitted_at": "2026-08-12T03:54:10.227304+00:00",
+  "walltime": "2:00:00"
+}

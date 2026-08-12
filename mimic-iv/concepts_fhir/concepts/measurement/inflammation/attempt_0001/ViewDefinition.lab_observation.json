@@ -1,0 +1,28 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/inflammation-0001-lab_observation",
+  "name": "lab_observation",
+  "resource": "Observation",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "observation_key" },
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
+        { "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_key" },
+        { "path": "specimen.getReferenceKey(Specimen)", "name": "specimen_key" },
+        { "path": "(effective).ofType(dateTime)", "name": "effective_datetime" },
+        { "path": "(value).ofType(Quantity).value", "name": "quantity_value" },
+        { "path": "(value).ofType(Quantity).comparator", "name": "quantity_comparator" },
+        { "path": "(value).ofType(string)", "name": "value_string" }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-d-labitems' and code='50889')",
+      "column": [
+        { "path": "code", "name": "code" },
+        { "path": "system", "name": "system" }
+      ]
+    }
+  ]
+}
