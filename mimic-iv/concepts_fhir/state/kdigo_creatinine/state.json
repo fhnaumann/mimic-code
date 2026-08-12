@@ -1,0 +1,17 @@
+{
+  "attempt": 1,
+  "category": "organfailure",
+  "completed_at": "2026-08-12T05:40:05.680639+00:00",
+  "concept_name": "kdigo_creatinine",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accepted the contested divergence: mimic-fhir/sql/fhir_observation_labevents.sql:15 casts labevents.charttime through TIMESTAMPTZ and line 121 writes the irreversibly DST-normalized value to Observation.effectiveDateTime; fhir_specimen_lab.sql:18,58 repeats the loss. FHIR retains only labevent_id, so normalized 03:xx cannot be distinguished from genuine 03:xx and exact source ordering and 48-hour/7-day window membership are unrecoverable. The full run reproduced 599447/599607 rows identically (99.9733%); 160 conflicts comprise charttime 145, creat 1, prior-48-hour 17, prior-seven-day 9, with 138 directly replay-attributed and 21 of the remaining 22 explained as downstream window effects; the final difference is within comparator tolerance.",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 1,
+  "started_at": "2026-08-12T04:30:47.815219+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-12T05:40:05.681186+00:00"
+}

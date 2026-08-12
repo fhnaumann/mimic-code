@@ -1,0 +1,8 @@
+{
+  "concept": "kdigo_creatinine",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "29786665",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/organfailure/kdigo_creatinine/attempt_0001",
+  "submitted_at": "2026-08-12T05:13:09.996046+00:00",
+  "walltime": "2:00:00"
+}

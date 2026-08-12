@@ -1,0 +1,5 @@
+# FHIR-prober evidence
+
+The prober read the source carryover, `MIMIC_NOTES.md`, and relevant provisional fragments, then probed the authoritative demo Delta with embedded Pathling/Spark and checked the DuckDB oracle. It confirmed ICU Encounters by the `encounter-icu` identifier system, hospital `hadm_id` through ICU `partOf` to the `encounter-hosp` identifier, and labevents Observations by system `http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-d-labitems` plus code `50912`. The target had 3,003 Quantity observations and effective dateTimes; Quantity aliases require numeric casts and dateTimes require direct `TIMESTAMP_NTZ`. Observation encounter references are incomplete, so the source patient/time join must be used. The probe reproduced 1,274 source stay-event pairs and found one irreversible DST-gap charttime shift. It appended the dataset-wide absence of served CodeSystem resources to `MIMIC_NOTES.d/kdigo_creatinine.md`.
+
+Reusable analysis: `mimic-iv/concepts_fhir/carryover/kdigo_creatinine/fhir-prober.md`.

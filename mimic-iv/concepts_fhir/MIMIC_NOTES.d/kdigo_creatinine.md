@@ -1,0 +1,11 @@
+## Authoritative Delta has no served CodeSystem resources
+- Affected: `CodeSystem` resources and any code-list validation that attempts to read them from the warehouse
+- Verified: `kdigo_creatinine` FHIR-prober embedded Pathling probe over `/Users/nau025/warehouses/mimic-iv-demo/delta` raised `IllegalArgumentException: No data found for resource type: CodeSystem`; Observation code/system validation therefore used the served `Observation.code.coding` rows instead.
+
+## Labevents DST normalization also changes downstream time-window aggregates
+- Affected: labevents `Observation.effectiveDateTime` and any ordering or elapsed-time window derived from it
+- Verified: `kdigo_creatinine` attempt_0001 full-data comparison found 145 `charttime` conflicts caused by the `TIMESTAMPTZ` conversion at `mimic-fhir/sql/fhir_observation_labevents.sql:15` and write at line 121. The comparator directly attributed 138 rows; of its 22 residual rows, 16 were further consequences of the same transform: 7 current measurements had a shifted charttime plus a changed prior-window minimum, and 9 unshifted current measurements had a changed minimum because a prior DST-gap measurement crossed a 48-hour or 7-day boundary (12 residual 48-hour conflicts and 4 residual 7-day conflicts in total). Once a source 02:xx wall time is served as 03:xx, FHIR does not distinguish it from an original 03:xx measurement, so exact source ordering and boundary membership are unrecoverable.
+
+## Correction: downstream-window residual counts
+- Affected: labevents `Observation.effectiveDateTime` and any ordering or elapsed-time window derived from it
+- Verified: The preceding section's residual count summary was transcribed incorrectly. The exact attempt_0001 residual inspection found **21 of 22 residual rows** explained by downstream effects of the same labevents DST transform: 7 rows had both a shifted current charttime and a changed minimum, while 14 had an unchanged current charttime but a changed minimum due to a shifted prior measurement. Across those 21 rows there were 17 `creat_low_past_48hr` and 9 `creat_low_past_7day` conflicts. The remaining one row was only an ordinary floating-point `AVG` representation difference (`0.5` versus `0.49999999999999994`), already within the comparator's declared tolerance and not an ETL-loss finding.
