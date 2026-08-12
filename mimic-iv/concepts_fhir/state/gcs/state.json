@@ -1,14 +1,14 @@
 {
   "attempt": 4,
   "category": "measurement",
-  "completed_at": null,
+  "completed_at": "2026-08-12T03:03:57.341470+00:00",
   "concept_name": "gcs",
   "dependencies": [],
   "divergence_decided_by": null,
   "divergence_justification": null,
-  "engineering_counter": 4,
+  "engineering_counter": 6,
   "error_message": null,
-  "hpc_counter": 2,
+  "hpc_counter": 3,
   "reopen_history": [
     {
       "at": "2026-08-12T02:41:42.975885+00:00",
@@ -27,6 +27,6 @@
   ],
   "semantic_counter": 2,
   "started_at": "2026-08-12T02:41:42.977353+00:00",
-  "status": "RUNNING",
-  "updated_at": "2026-08-12T02:41:42.977561+00:00"
+  "status": "COMPLETED",
+  "updated_at": "2026-08-12T03:03:57.341714+00:00"
 }

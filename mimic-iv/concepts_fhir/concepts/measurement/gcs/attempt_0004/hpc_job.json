@@ -1,0 +1,8 @@
+{
+  "concept": "gcs",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "29776217",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/gcs/attempt_0004",
+  "submitted_at": "2026-08-12T02:57:32.587126+00:00",
+  "walltime": "2:00:00"
+}
