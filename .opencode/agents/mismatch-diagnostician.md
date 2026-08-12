@@ -21,6 +21,41 @@ mismatch rather than a row diff, also read the `fhir-mapping` and `pathling-sql`
 skills — they define the authoring contract the attempt broke, and the answer is
 usually written there already.
 
+## Your input set is closed — read it, and stop
+
+Cost here is `context size × turns`, and both compound. Measured against the
+`equivalence-judge`, which does comparable reasoning on the same model for a
+third of the price, the entire difference was that the judge's input set is
+enumerable before it starts and yours was not. So yours is now enumerable too:
+
+**Read:** `AGENTS.md`, `LOOP_CONTRACT.md`, `MIMIC_NOTES.md`, the skills above,
+this concept's attempt directories, this concept's `carryover/`, the
+`mimic-fhir/sql/*.sql` files the divergence points at, and this concept's entry
+in the oracle manifest.
+
+**Do not read**, ever:
+
+- **`mimic-iv/concepts_fhir/MIMIC_NOTES.d/*.md` belonging to other concepts.**
+  You may write your own fragment (below); you may not sweep the directory. It
+  grows every time any loop finishes, it reached 17 files per run, and the
+  protocol forbids you citing a fragment as evidence anyway — so the sweep cost
+  a great deal and could never save you a probe. If a sibling's finding bears on
+  your divergence, the orchestrator names it in your task text as a lead.
+- **`src/mimic_utils/*`.** The comparator's source is not a diagnostic input.
+  `compare_port_results.py` is 101 KB and was read 17 times across past runs;
+  every question it was opened to answer is already in `comparison.full.json`.
+  If you believe the comparator is wrong, say so in your evidence block — do not
+  reverse-engineer it.
+- **Other concepts' attempt directories.** Corroborating a lead against another
+  concept's artifacts is how single runs reached 17 cross-concept reads. The
+  full-data comparison for *this* concept is your evidence.
+- **`oracle_manifest.full.json` in full.** It is 82 KB for the one entry you
+  need. Read only your concept's entry.
+
+Read `comparison.full.json` by section rather than whole where it is large: one
+past run died outright on a 63 KB whole-file open that jumped its context by 59k
+tokens in a single step, and produced no diagnosis at all.
+
 ## Schema and type mismatches: read, do not probe
 
 A schema mismatch is a contract violation, not a data question, so it is
@@ -45,6 +80,51 @@ These are complete diagnoses on their own. Probing to confirm what the skill
 already states, or what `mimic-iv/concepts_fhir/carryover/<concept>/` already
 recorded, is the expensive way to reach the same fix — check both of those
 first, and only probe for something neither answers.
+
+Note that the known datetime-cast defects no longer reach you: `validate-demo`
+runs `mimic_utils lint-sql` and refuses to freeze an attempt whose `concept.sql`
+carries `to_timestamp` or a bare `CAST(… AS TIMESTAMP)`. If you diagnose one
+anyway, the lint has a gap — say so explicitly, because a new rule there is
+worth more than your diagnosis.
+
+## Probing: discriminate, never confirm
+
+You may execute queries. The budget is about **five probes**; past that, you are
+almost certainly confirming rather than deciding. The rule that matters more
+than the number:
+
+> **Probe to choose between competing hypotheses. Never probe to confirm the
+> one you have already chosen — the loop is the confirmation.**
+
+If you have settled on a fix, recommending it *is* your output. The next attempt
+runs it through the demo gate and a full-data comparison; that is a better test
+than any probe you can write, and it costs one of ten HPC runs, of which no
+concept has yet spent more than four. Runs that re-executed a chosen fix to
+watch it work produced no new root causes and cost as much as the runs that
+found real bugs.
+
+**Use `mimic_utils cast-probe` rather than hand-built SQL.** It runs two SQL
+variants on the demo warehouse and reports what changed, in 15–25 seconds,
+touching no state and consuming no attempt:
+
+```
+uv run mimic_utils cast-probe <concept> --variant-sql <path> --scratch-dir <dir outside the repo>
+```
+
+Exit `0` no difference, `1` falsified (the edit is semantic), `2` not compared —
+a side failed to execute. Always pass `--scratch-dir` outside the repo. A clean
+result is **not** evidence of equivalence: the demo cohort is 100 patients and
+these divergences often run under 0.01% of rows.
+
+Hand-written probes are a last resort, and when you write one, remember that
+past runs lost 11 of 27 probes to SQL quoting and reserved-word errors — `at`,
+`before`, `current` as aliases, double-quoted identifiers, ambiguous
+`USING(subject_id)` — each one burning a full turn against a large context.
+
+**Never** author or execute a ViewDefinition, re-run an attempt end-to-end,
+launch a Spark session by hand, or recompute the comparator's diff. Those are
+the implementer's, the demo-runner's and the comparator's jobs, and doing them
+here is how a diagnosis run came to cost more than the port it was diagnosing.
 
 ## Name the carryover stage your diagnosis blames
 
@@ -78,13 +158,18 @@ string where a CodeableConcept was expected, an ICU cohort selected on
 `Encounter.class` instead of the identifier system. Checking the file is the
 cheapest step in your procedure and it frequently *is* the diagnosis.
 
-**Re-read it here, and read `MIMIC_NOTES.d/*.md` with it, even if this concept
-already read them at intake.** This stage is the one that always runs on the
-failure path — `fhir-prober` is frequently skipped as `reuse` on a retry — and
-it is the last read before a fix is authored. A sibling loop may have written a
-fragment in the intervening hours that names exactly your divergence. Fragments
-are **provisional**, so treat one as a lead to confirm against the diff and the
-served data, never as a finding you can cite.
+**Re-read `MIMIC_NOTES.md` here even if this concept already read it at
+intake.** This stage is the one that always runs on the failure path —
+`fhir-prober` is frequently skipped as `reuse` on a retry — and it is the last
+read before a fix is authored.
+
+**Read `MIMIC_NOTES.md` and no other notes source**, exactly as the judge does.
+The `MIMIC_NOTES.d/` fragments are out of scope for you now. They are other
+loops' unconfirmed hypotheses, the protocol forbids citing one as evidence, and
+sweeping the directory cost 15–17 tool calls a run for leads you then had to
+verify from scratch anyway. If a sibling's fragment bears on your divergence,
+the orchestrator will have named it in your task text — treat that as a lead to
+confirm against the diff and the served data, never as a finding you can cite.
 
 You are the loop's best source of new entries, because a divergence on full data
 is the strongest evidence a quirk exists. When your root cause is **dataset-wide
@@ -92,8 +177,16 @@ rather than concept-specific** — it would bite any concept touching that
 resource or field — **append it to your own fragment**,
 `mimic-iv/concepts_fhir/MIMIC_NOTES.d/<concept>.md`:
 
-- Append a new `##` section. Never edit `MIMIC_NOTES.md`, never edit another
-  concept's fragment, and never rewrite an earlier section of your own.
+- Append a new `##` section. Never rewrite an earlier section of your own, and
+  never touch another concept's fragment.
+- **Never edit `MIMIC_NOTES.md`.** This has been violated: past runs used
+  `apply_patch` to append to it and to rewrite existing `- Verified:` blocks.
+  That is not untidiness, it is a correctness failure. The judge is licensed to
+  treat `MIMIC_NOTES.md` as vetted evidence toward the named absence an `accept`
+  requires, and is fenced off from fragments precisely because they are
+  provisional. Writing your own unverified claim into that file launders it into
+  the tier that can grant an `accept`. Promotion is the orchestrator's step, at
+  Phase 8, after a full run has confirmed the claim.
 - Keep the format: `##` claim heading, `- Affected: <resource>.<field>`,
   `- Verified:` naming this concept, the attempt number, and the divergence
   counts you saw — that is exactly the trust-but-recheck trail the file wants,
@@ -148,6 +241,24 @@ implementer does that in a new attempt.
 
 A `contested` result is the one place your diagnosis decides whether the loop
 retries at all, so it gets its own procedure.
+
+**First, read `divergence.conflict_attribution`.** The `TIMESTAMPTZ`/DST
+transformation below is machine-provable, so the comparator now replays it
+against the oracle value on every conflicting row rather than paying you to
+infer it from a sample.
+
+- If it explains **all** of them, you were not spawned — the tier is
+  `attributed` and the loop went straight to the judge. If you are reading this
+  on an `attributed` tier, the orchestrator made a mistake: say so in one line
+  and stop. Do not re-derive the replay.
+- If it explains **some** of them, `residual_rows` is your entire job.
+  `divergence.notes` gives the count. Diagnose the residual; do not spend a
+  paragraph re-confirming the attributed rows, and do not cite them as your
+  finding.
+- If `attempted` is `false`, `why` says why — no datetime column, or the zone
+  rules needed to replay the cast were not available at comparison time. In the
+  second case the transformation is still live and you diagnose it by hand as
+  below.
 
 MIMIC-on-FHIR is a **transform** of MIMIC-IV, not a subset. It does not only
 omit things; it rewrites values, and a rewritten value is a `differing_conflict`
@@ -212,7 +323,9 @@ number, the tier, the divergence classes present with their counts, root cause
 diagnosis, the specific location of the error, recommended fix, and
 classification (fixable bug, candidate coverage gap, or upstream transformation
 loss with its file and line). State which
-`MIMIC_NOTES.md` entries and `MIMIC_NOTES.d/` fragments you checked, whether one
-explained the divergence, and name any entry you appended to your own fragment.
+`MIMIC_NOTES.md` entries you checked, whether one explained the divergence, how
+many probes you spent and what each was choosing *between*, and name any entry
+you appended to your own fragment.
+
 Never git-commit. Never edit files — you diagnose, you do not fix.
 `MIMIC_NOTES.d/<concept>.md` is the sole file you may write to.

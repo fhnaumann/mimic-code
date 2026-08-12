@@ -1,0 +1,16 @@
+{
+  "attempt": 1,
+  "category": "medication",
+  "completed_at": "2026-08-11T05:15:44.797681+00:00",
+  "concept_name": "epinephrine",
+  "dependencies": [],
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 1,
+  "error_message": "BLOCKED_REPRESENTATION: inputevents.linkorderid is required by the oracle key (linkorderid,starttime), but ICU MedicationAdministration omits linkorderid and exposes no exact recovery path; upstream mimic-fhir/sql/fhir_medication_administration_icu.sql:7-35,38-103 does not read or write it, and the resource UUID is derived from stay_id-orderid-itemid rather than linkorderid.",
+  "hpc_counter": 1,
+  "semantic_counter": 1,
+  "started_at": "2026-08-11T04:35:16.194441+00:00",
+  "status": "BLOCKED_REPRESENTATION",
+  "updated_at": "2026-08-11T05:15:44.798682+00:00"
+}

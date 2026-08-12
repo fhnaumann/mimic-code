@@ -91,6 +91,52 @@ Identifier columns have a second failure mode stacked on the cast: `subject_id`,
 or the cast is applied to a UUID. See "Identifier spine" in the `fhir-mapping`
 skill and the identifier entry in `MIMIC_NOTES.md`.
 
+### Datetimes: `CAST(… AS TIMESTAMP_NTZ)`, and nothing wrapped around it
+
+For a datetime column that cast is not merely the recommended form — it is the
+whole mapping. Do **not** add a parser, a fallback, or a fixed format string
+next to it. The two constructions below keep appearing in ports and both are
+defects, not defensive coding:
+
+```sql
+-- WRONG: the fallback re-renders the instant in spark.sql.session.timeZone.
+COALESCE(
+    TRY_CAST(effective_text AS TIMESTAMP_NTZ),
+    CAST(TRY_TO_TIMESTAMP(effective_text, "yyyy-MM-dd'T'HH:mm:ssXXX") AS TIMESTAMP_NTZ)
+)
+
+-- WRONG: a pinned format silently yields NULL on every shape it does not match.
+CAST(
+    TRY_TO_TIMESTAMP(
+        REGEXP_REPLACE(starttime_str, '(Z|[+-][0-9]{2}:[0-9]{2})$', ''),
+        "yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]"
+    ) AS TIMESTAMP_NTZ
+)
+
+-- RIGHT.
+TRY_CAST(effective_text AS TIMESTAMP_NTZ)
+```
+
+Why each is worse than the bare cast:
+
+- **The offset-aware parser scored 0/275** against the oracle at session zones
+  `Australia/Sydney` and `UTC`, and 275/275 only at `America/New_York`. Demo runs
+  on a laptop and the full leg runs on Petrichor, so a fallback that fires on
+  either engine makes one concept produce two answers. A branch that is dead
+  whenever `TRY_CAST` succeeds is *live* exactly when it is least observable.
+- **A pinned format returns NULL** on any shape it does not match — date-only
+  values, unexpected fractional-second widths — and `TRY_` converts that into
+  silence rather than a crash. Those NULLs then land in `differing_null_only`,
+  which is `gap_shaped`: the port's own parse failure arrives at the judge
+  disguised as a FHIR coverage gap, at the *lower* evidentiary bar. This is the
+  worst failure mode in the loop, because it is the one that gets accepted.
+- The bare cast already handles every shape the IG emits, fractional seconds
+  and date-only included. There is nothing left for a fallback to catch.
+
+Use `TRY_CAST` when a malformed value should become NULL instead of failing the
+run, and plain `CAST` otherwise. Full derivation, the measured comparison table
+and the DST-gap consequence: `MIMIC_NOTES.md`, "FHIR datetimes carry an offset".
+
 ## SQL authoring patterns
 
 ### Polymorphic field coalescing

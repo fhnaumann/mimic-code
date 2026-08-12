@@ -86,6 +86,44 @@ verdict and a two-tier ``review``:
         verdict, **higher bar**: an accept must cite the upstream ETL
         statement that makes the oracle value unrecoverable, not merely an
         absence.  ``divergence.judge_bar`` spells this out in the artifact.
+    ``attributed``
+        ``differing_conflict`` was the *only* contested class and the
+        comparator **replayed** it to a known upstream transformation over
+        every conflicting row -- see "Attributing a conflict" below.  Still
+        ``review``, still judged; what changes is that the citation the
+        ``contested`` bar demands is already in the artifact, so there is
+        nothing for a diagnosis to derive.
+
+Attributing a conflict
+----------------------
+
+``mimic-fhir`` casts naive MIMIC wall-clock times through ``TIMESTAMPTZ``
+before writing them into a resource.  For a wall time in the DST spring-forward
+gap that cast is not the identity -- 02:10 on a March Sunday becomes 03:10 --
+and the original is unrecoverable.  It is also *replayable*: round-tripping the
+oracle value through ``America/New_York`` reproduces exactly what the ETL wrote.
+
+So the comparator does that, per row, over the whole conflict set, and a
+conflict set it explains completely moves to tier ``attributed``.  This is
+strictly stronger evidence than a model inferring the same thing from a bounded
+sample -- and much cheaper, since the diagnosis it replaces was 72% of the
+loop's token spend.
+
+Deliberate limits, all of them stated in ``divergence.judge_bar``:
+
+* Attribution never yields ``match`` and never skips the judge.  The values do
+  differ from the oracle; accepting that is a ruling, not an arithmetic fact.
+* All-or-nothing.  A partially explained conflict set stays ``contested`` --
+  the unexplained rows decide the bar -- though the artifact records which rows
+  are already accounted for.
+* It proves the *operation*, not the *provenance*.  The citation list is the
+  set of known ETL sites, not a per-column proof, and the judge confirms which
+  one applies.
+* A large attributed fraction is evidence **against** the attribution: DST-gap
+  wall times are one hour a year.  The judge is told to answer ``bug`` when the
+  fraction is not consistent with that rarity.
+* If the zone rules available at comparison time do not reproduce the ETL's, a
+  canary catches it and nothing is attributed.
 
 Columns with no FHIR representation
 -----------------------------------
@@ -339,6 +377,246 @@ def _column_conflict_sql(column: str, type_name: str, rtol: float, atol: float) 
     """
     equal = _column_equality_sql(column, type_name, rtol, atol)
     return f"(NOT {equal} AND NOT {_column_candidate_null_sql(column)})"
+
+
+# ---------------------------------------------------------------------------
+# Upstream-ETL attribution
+#
+# A `differing_conflict` is the one class the comparator has never been able to
+# explain, because a port bug and upstream transformation loss look identical in
+# the data.  For *one* upstream transformation that is no longer true.
+#
+# `mimic-fhir` casts naive MIMIC wall-clock times through `TIMESTAMPTZ` before
+# writing them into a FHIR resource (`fhir_encounter.sql:65`,
+# `fhir_medication_request.sql:43-44`).  For a wall time inside the DST
+# spring-forward gap that cast is not the identity: the nonexistent 02:10 on a
+# March Sunday normalises to 03:10, and the original is gone.
+#
+# That operation is *replayable*.  Round-tripping the oracle value through the
+# same zone reproduces exactly what the ETL wrote, so the comparator can prove
+# -- per row, over every conflicting row rather than a sample -- that the
+# candidate holds the value the ETL produced from the oracle value, and not some
+# other value the port got wrong.  A conflict that replays is not a port bug,
+# and saying so here is strictly stronger than a model inferring it from a
+# bounded sample of "differs by an hour".
+#
+# What this does NOT establish, and the judge is told so explicitly:
+#
+# * *which* upstream statement wrote this concept's element.  The citation list
+#   is the set of known sites, not a per-column proof.
+# * that the shape is plausible.  DST-gap rows are rare by construction, so a
+#   large attributed fraction is evidence the replay is coincidental, not
+#   evidence of transformation loss.
+#
+# Attribution therefore never produces `match` and never skips the judge.  It
+# lowers the evidentiary bar on a class it has discharged the arithmetic for,
+# and it lets the loop skip a diagnosis whose entire content would have been
+# re-deriving this paragraph.
+# ---------------------------------------------------------------------------
+
+#: The zone the upstream ETL's `TIMESTAMPTZ` casts resolve against. MIMIC is a
+#: Boston dataset and the ETL runs without an explicit zone, so the naive
+#: value is interpreted as US Eastern local time.
+UPSTREAM_TZ = "America/New_York"
+
+_DST_REPLAY_CAUSE = "upstream_timestamptz_dst_shift"
+
+_DST_REPLAY_OPERATION = (
+    "For every conflicting row, the candidate value equals the oracle value "
+    f"round-tripped through a {UPSTREAM_TZ} TIMESTAMPTZ cast "
+    "(`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only "
+    "where that round-trip is not the identity -- i.e. the oracle wall time "
+    "falls in the DST spring-forward gap. This is the operation the upstream "
+    "mimic-fhir ETL performs before writing the FHIR element, replayed and "
+    "checked row by row over the whole conflict set, not sampled."
+)
+
+#: Known `mimic-fhir` statements that perform the cast. Not exhaustive, and not
+#: resolved per column -- the judge confirms which one applies here.
+_DST_REPLAY_CITATIONS = (
+    "mimic-fhir/sql/fhir_encounter.sql:65",
+    "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+)
+
+#: A DST-gap wall time and an ordinary one. The replay must shift the first by
+#: exactly one hour and leave the second alone; anything else means the zone
+#: rules available here are not the ones the ETL used, and nothing is attributed.
+_DST_CANARY = (
+    ("2153-03-11 02:30:00", "2153-03-11 03:30:00"),
+    ("2154-05-02 15:55:21", "2154-05-02 15:55:21"),
+)
+
+
+def _tz_roundtrip_sql(expr: str) -> str:
+    """The upstream cast, replayed: naive -> zoned -> naive in ``UPSTREAM_TZ``."""
+    tz = _lit(UPSTREAM_TZ)
+    return f"timezone({tz}, timezone({tz}, CAST({expr} AS TIMESTAMP)))"
+
+
+def _dst_replay_column_sql(column: str) -> str:
+    """SQL boolean: this column's conflict *is* the upstream DST shift.
+
+    Both sides hold a value, the candidate matches the oracle value replayed
+    through the upstream cast, and it differs from the oracle itself -- so the
+    row is inside the gap rather than merely surviving a no-op round-trip.
+    Compared at the comparator's own timestamp tolerance, not exactly, so
+    attribution and the conflict tally cannot disagree about a sub-second edge.
+    """
+    o, c = f"o.{_q(column)}", f"c.{_q(column)}"
+    replay = _tz_roundtrip_sql(o)
+    c_epoch = f"epoch(CAST({c} AS TIMESTAMP))"
+    return (
+        f"({o} IS NOT NULL AND {c} IS NOT NULL"
+        f" AND abs({c_epoch} - epoch({replay})) <= {TIMESTAMP_TOL_SECONDS}"
+        f" AND abs({c_epoch} - epoch(CAST({o} AS TIMESTAMP)))"
+        f" > {TIMESTAMP_TOL_SECONDS})"
+    )
+
+
+def _dst_replay_available(con: Any) -> Optional[str]:
+    """``None`` when the replay is trustworthy here, else why it is not.
+
+    Named-zone arithmetic is DuckDB's ICU extension, which the Python wheel
+    bundles and autoloads. `LOAD` is attempted anyway and **`INSTALL` is
+    deliberately not**: the comparison runs inside a Slurm job on a compute node
+    that may have no egress, and a blocking extension fetch would burn the run's
+    wall clock. Not attributing costs one diagnostician; a hung comparison costs
+    the whole HPC run.
+
+    There is also no fallback to a hand-rolled "second Sunday in March" rule.
+    A weaker proof carried under the same tier name is exactly the erosion this
+    tier has to avoid -- if the zone database is not here, the conflict stays
+    `contested` and the diagnostician does the work it does today.
+
+    The canary is then checked explicitly rather than trusting the load, because
+    an extension that resolves the zone differently than the ETL's zone database
+    did must not be allowed to attribute anything either.
+    """
+    try:
+        con.execute("LOAD icu")
+    except Exception:  # noqa: BLE001 - bundled/autoloaded builds need no LOAD
+        pass
+
+    for naive, expected in _DST_CANARY:
+        try:
+            got = con.execute(
+                f"SELECT {_tz_roundtrip_sql(f'TIMESTAMP {_lit(naive)}')}"
+            ).fetchone()[0]
+        except Exception as exc:  # noqa: BLE001
+            return (
+                f"named-zone arithmetic unavailable ({exc}); the upstream "
+                "TIMESTAMPTZ cast cannot be replayed. Fix by making DuckDB's "
+                "`icu` extension available where the comparison runs (a one-off "
+                "`INSTALL icu`, or ship it with the job) -- it is never "
+                "installed from inside the comparison"
+            )
+        if got is None or str(got)[:19] != expected:
+            return (
+                f"zone canary failed: {UPSTREAM_TZ} maps {naive} to {got!r}, "
+                f"expected {expected!r}. The DST rules available here are not "
+                "the ones the upstream ETL used, so a replay would prove nothing"
+            )
+    return None
+
+
+def _attribute_dst_conflicts(
+    con: Any,
+    *,
+    cte: str,
+    from_sql: str,
+    row_conflict: str,
+    conflict_by_column: Dict[str, str],
+    types_by_column: Dict[str, str],
+    sample_select: str,
+    sample_limit: int,
+) -> Dict[str, Any]:
+    """How much of the conflict set is the upstream DST shift, and which columns.
+
+    *cte* / *from_sql* are the caller's row-alignment scaffolding, so the keyed
+    join and the paired residual are attributed by the same predicate over their
+    own alignment. *conflict_by_column* must be the very expressions the caller
+    tallied ``differing_conflict`` from -- attribution partitions that set, it
+    does not recompute it.
+    """
+    datetime_columns = sorted(
+        name
+        for name in conflict_by_column
+        if classify_logical_type(types_by_column.get(name, "")) == "datetime"
+    )
+    if not datetime_columns:
+        return {
+            "attempted": False,
+            "complete": False,
+            "why": "no datetime column in this concept; the DST cast cannot apply",
+        }
+
+    unavailable = _dst_replay_available(con)
+    if unavailable:
+        return {"attempted": False, "complete": False, "why": unavailable}
+
+    replay_by_column = {name: _dst_replay_column_sql(name) for name in datetime_columns}
+
+    # A row is attributed only if EVERY column it conflicts on replays. One
+    # conflict in a non-datetime column, or in a datetime column the replay does
+    # not explain, leaves the whole row unattributed -- the row is the unit the
+    # tier is decided on, so partial explanation must not count.
+    per_column = [
+        f"(NOT {conflict} OR {replay_by_column[name]})"
+        if name in replay_by_column
+        else f"(NOT {conflict})"
+        for name, conflict in sorted(conflict_by_column.items())
+    ]
+    attributed = f"({row_conflict}) AND ({' AND '.join(per_column)})"
+
+    tallies = ",\n  ".join(
+        f'count(*) FILTER (WHERE {attributed} AND {conflict_by_column[name]}) '
+        f'AS {_q("a__" + name)}'
+        for name in datetime_columns
+    )
+    row = con.execute(
+        f"{cte} SELECT\n"
+        f"  count(*) FILTER (WHERE {row_conflict}) AS conflict_rows,\n"
+        f"  count(*) FILTER (WHERE {attributed}) AS attributed_rows,\n"
+        f"  {tallies}\n{from_sql}"
+    ).fetchone()
+    counts = dict(zip([d[0] for d in con.description], row))
+
+    conflict_rows = counts["conflict_rows"] or 0
+    attributed_rows = counts["attributed_rows"] or 0
+    result: Dict[str, Any] = {
+        "attempted": True,
+        "cause": _DST_REPLAY_CAUSE,
+        "operation": _DST_REPLAY_OPERATION,
+        "timezone": UPSTREAM_TZ,
+        "citations": list(_DST_REPLAY_CITATIONS),
+        "columns_considered": datetime_columns,
+        "conflict_rows": conflict_rows,
+        "attributed_rows": attributed_rows,
+        "residual_rows": conflict_rows - attributed_rows,
+        # `complete` is the only field that moves a tier, and it is deliberately
+        # all-or-nothing: a partially attributed conflict set still holds rows
+        # nothing has explained, and those rows decide the bar.
+        "complete": bool(conflict_rows) and attributed_rows == conflict_rows,
+        "columns": dict(
+            sorted(
+                ((name, counts["a__" + name]) for name in datetime_columns
+                 if counts.get("a__" + name)),
+                key=lambda kv: (-kv[1], kv[0]),
+            )
+        ),
+    }
+    if attributed_rows and sample_limit > 0:
+        replay_select = "".join(
+            f", {_tz_roundtrip_sql('o.' + _q(name))} AS {_q(name + '__replayed')}"
+            for name in datetime_columns
+        )
+        cur = con.execute(
+            f"{cte} SELECT {sample_select}{replay_select}\n{from_sql}\n"
+            f"WHERE {attributed}\nLIMIT {int(sample_limit)}"
+        )
+        cols = [d[0] for d in cur.description]
+        result["samples"] = [dict(zip(cols, r)) for r in cur.fetchall()]
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -837,6 +1115,29 @@ FULL OUTER JOIN {scan} c ON {join_on}
             con, oracle_ref, scan, key, value_columns, all_equal, join_on,
             anchor, both, sample_limit, row_conflict, row_null_only,
         )
+
+    # Attempted only when there is a conflict to explain: attribution can lower
+    # the judge's bar, so it must never run -- and never appear in the artifact
+    # -- for a result that has nothing contested about it.
+    if counts["differing_conflict"]:
+        key_select = ", ".join(
+            f"coalesce(o.{_q(k)}, c.{_q(k)}) AS {_q(k)}" for k in key
+        )
+        pairs = "".join(
+            f", o.{_q(c['name'])} AS {_q(c['name'] + '__oracle')}"
+            f", c.{_q(c['name'])} AS {_q(c['name'] + '__candidate')}"
+            for c in value_columns
+        )
+        diff["conflict_attribution"] = _attribute_dst_conflicts(
+            con,
+            cte="",
+            from_sql=f"FROM {oracle_ref} o FULL OUTER JOIN {scan} c ON {join_on}",
+            row_conflict=row_conflict,
+            conflict_by_column=conflict_by_column,
+            types_by_column={c["name"]: c["type"] for c in value_columns},
+            sample_select=key_select + pairs,
+            sample_limit=sample_limit,
+        )
     return diff
 
 
@@ -902,6 +1203,7 @@ def _residual_pairing(
     con: Any,
     names: Sequence[str],
     sample_limit: int,
+    types_by_column: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     """Decide whether the two residuals are *substitutions* or unmatched rows.
 
@@ -1020,7 +1322,11 @@ def _residual_pairing(
     if not substituted:
         return result
 
-    result.update(_paired_columns(con, stable, substituted, sample_limit))
+    result.update(
+        _paired_columns(
+            con, stable, substituted, sample_limit, types_by_column or {}
+        )
+    )
     return result
 
 
@@ -1029,6 +1335,7 @@ def _paired_columns(
     stable: Sequence[str],
     substituted: Sequence[str],
     sample_limit: int,
+    types_by_column: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     """Classify the paired residual per column, as the keyed diff would.
 
@@ -1081,17 +1388,33 @@ def _paired_columns(
         "columns_conflicting": _by_column("k__"),
         "columns_candidate_null": _by_column("n__"),
     }
+    pairs = "".join(
+        f", o.{_q(n)} AS {_q(n + '__oracle')}, c.{_q(n)} AS {_q(n + '__candidate')}"
+        for n in substituted
+    )
+    stable_select = ", ".join("o." + _q(n) for n in stable)
     if sample_limit > 0:
-        pairs = "".join(
-            f", o.{_q(n)} AS {_q(n + '__oracle')}, c.{_q(n)} AS {_q(n + '__candidate')}"
-            for n in substituted
-        )
         cur = con.execute(
-            f"{ranked} SELECT {', '.join('o.' + _q(n) for n in stable)}{pairs} "
+            f"{ranked} SELECT {stable_select}{pairs} "
             f"FROM o JOIN c ON {join_on} AND o._rn = c._rn LIMIT {int(sample_limit)}"
         )
         cols = [d[0] for d in cur.description]
         out["samples"] = [dict(zip(cols, r)) for r in cur.fetchall()]
+
+    # Same predicate, over the pairing's own alignment rather than a key join --
+    # an unkeyed concept whose residual paired is diagnosed like a keyed one, so
+    # it earns the same attribution.
+    if counts["conflict"]:
+        out["conflict_attribution"] = _attribute_dst_conflicts(
+            con,
+            cte=ranked,
+            from_sql=f"FROM o JOIN c ON {join_on} AND o._rn = c._rn",
+            row_conflict=f"({any_conflict})",
+            conflict_by_column=conflict_sql,
+            types_by_column=types_by_column or {},
+            sample_select=stable_select + pairs,
+            sample_limit=sample_limit,
+        )
     return out
 
 
@@ -1137,7 +1460,9 @@ def _multiset_diff(
     only_oracle = con.execute("SELECT count(*) FROM _resid_o").fetchone()[0]
     only_candidate = con.execute("SELECT count(*) FROM _resid_c").fetchone()[0]
 
-    pairing = _residual_pairing(con, names, sample_limit)
+    pairing = _residual_pairing(
+        con, names, sample_limit, {c["name"]: c["type"] for c in columns}
+    )
     paired = (
         pairing.get("attempted")
         and pairing.get("anchored")
@@ -1178,6 +1503,10 @@ def _multiset_diff(
             multiset_only_oracle=only_oracle,
             multiset_only_candidate=only_candidate,
         )
+        # Lifted out of the pairing so the classifier reads it from one place
+        # regardless of whether the concept has a key.
+        if pairing.get("conflict_attribution"):
+            diff["conflict_attribution"] = pairing["conflict_attribution"]
     if sample_limit > 0:
         def _sample(table: str) -> List[Dict[str, Any]]:
             cur = con.execute(f"SELECT * FROM {table} LIMIT {int(sample_limit)}")
@@ -1394,6 +1723,52 @@ _CONTESTED_BAR = (
     "claim from one spread across the table."
 )
 
+#: What the judge must still establish once the comparator has replayed the
+#: upstream cast over the whole conflict set. Deliberately explicit about the
+#: two things the replay does NOT prove, because this is the tier that could
+#: otherwise become a rubber stamp.
+_ATTRIBUTED_BAR = (
+    "The only value conflict present has been machine-attributed to an upstream "
+    "mimic-fhir transformation: the comparator replayed the ETL's TIMESTAMPTZ "
+    "cast over EVERY conflicting row -- not a sample -- and the candidate value "
+    "is what that cast produces from the oracle value. So the arithmetic half "
+    "of the `contested` bar is already discharged: the oracle value was "
+    "overwritten before the FHIR resource was written and no query can recover "
+    "it. Do NOT ask the port to fix it, and do NOT ask for the diagnostician's "
+    "citation -- see `divergence.attributed[].citations`.\n"
+    "Two things the replay does NOT establish, and they are yours:\n"
+    "(1) PROVENANCE. The citations are the known sites of that cast, not a "
+    "per-column proof. Confirm one of them writes the FHIR element this "
+    "column is actually sourced from; if none does, the replay is a "
+    "coincidence and the answer is `bug`.\n"
+    "(2) SHAPE. DST-gap wall times are rare by construction -- one hour per "
+    "year. A large attributed fraction is evidence AGAINST the attribution, "
+    "not for it: state the fraction, and answer `bug` if it is not consistent "
+    "with that rarity.\n"
+    "Everything else the two bars require of you is unchanged: an accept is "
+    "still an explicit ruling, and the gap must still be the best the data "
+    "allows."
+)
+
+#: Appended to the gap bar when a conflict was attributed but gap-shaped
+#: divergence remains. The gap is what the judge is deciding; the attribution is
+#: context it must not silently absorb into that decision.
+_ATTRIBUTED_ADDENDUM = (
+    "A value conflict is also present but has been machine-attributed to an "
+    "upstream transformation (see `divergence.attributed`), which is why this "
+    "result is gap-shaped rather than contested. Rule on the gap on its own "
+    "merits, and check the attribution's provenance and fraction as "
+    "`divergence.attributed[].judge_must_confirm` states."
+)
+
+#: Handed to the judge on every attributed class, so the obligation travels with
+#: the finding rather than only with the bar.
+_ATTRIBUTED_CONFIRM = (
+    "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR "
+    "element this column is sourced from, and (b) that the attributed fraction "
+    "is consistent with DST-gap rarity. Either failing makes this `bug`."
+)
+
 
 def _classify_divergence(
     diff: Dict[str, Any],
@@ -1435,6 +1810,43 @@ def _classify_divergence(
     unresolvable: List[Dict[str, Any]] = []
 
     notes: List[str] = []
+
+    # A conflict class the comparator proved is an upstream transformation moves
+    # out of `contested` and into `attributed`. It stays a divergence and the
+    # judge still rules on it -- only the bar changes, and only because the
+    # comparator has already met the part of that bar it can meet by machine.
+    attributed: List[Dict[str, Any]] = []
+    attribution = diff.get("conflict_attribution") or {}
+    if attribution.get("complete"):
+        remaining: List[Dict[str, Any]] = []
+        for item in contested:
+            if item["class"] != "differing_conflict":
+                remaining.append(item)
+                continue
+            item = dict(item)
+            item.update(
+                attributed_to=attribution["cause"],
+                attributed_rows=attribution["attributed_rows"],
+                proof=attribution["operation"],
+                citations=attribution["citations"],
+                columns=attribution.get("columns") or {},
+                judge_must_confirm=_ATTRIBUTED_CONFIRM,
+            )
+            attributed.append(item)
+        contested = remaining
+    elif attribution.get("attempted") and attribution.get("attributed_rows"):
+        # Partial attribution changes nothing about the tier -- the unexplained
+        # rows decide it -- but the diagnostician should not spend a run
+        # re-deriving the part that is already proved.
+        notes.append(
+            f"{attribution['attributed_rows']:,} of "
+            f"{attribution['conflict_rows']:,} conflicting rows replay the "
+            f"upstream {attribution['cause']}; {attribution['residual_rows']:,} "
+            "do not and are unexplained. The tier stays `contested` on those "
+            "residual rows: diagnose them, not the attributed ones."
+        )
+    elif attribution.get("attempted") is False and attribution.get("why"):
+        notes.append(f"upstream conflict attribution not attempted: {attribution['why']}")
     pairing = diff.get("residual_pairing") or {}
     if diff.get("classification") == "paired_residual":
         # The residual paired on an anchored column set, so the classes below
@@ -1515,8 +1927,27 @@ def _classify_divergence(
         verdict, tier, bar = "review", "contested", _CONTESTED_BAR
     elif gap_shaped:
         verdict, tier, bar = "review", "gap_shaped", _GAP_BAR
+        if attributed:
+            bar = _GAP_BAR + "\n" + _ATTRIBUTED_ADDENDUM
+    elif attributed:
+        # Still `review`, never `match`: the values genuinely differ from the
+        # oracle, and who gets to accept that is the judge. Attribution buys a
+        # lower bar and a skipped diagnosis, not a pass.
+        verdict, tier, bar = "review", "attributed", _ATTRIBUTED_BAR
     else:
         verdict, tier, bar = "match", "none", None
+
+    if attributed:
+        notes.append(
+            f"{attribution['attributed_rows']:,} of "
+            f"{attribution['conflict_rows']:,} conflicting rows -- all of them "
+            f"-- replay the upstream {attribution['cause']} exactly, over "
+            f"column(s) {', '.join(attribution.get('columns') or {}) or 'n/a'}. "
+            "`differing_conflict` moved from `contested` to `attributed`; a "
+            "diagnosis of this class would only re-derive the replay, so the "
+            "diagnostician can be skipped. The judge cannot: it still has to "
+            "confirm provenance and fraction, and still has to rule."
+        )
 
     reproduced = diff.get("identical")
     representable = diff.get("identical_representable")
@@ -1536,9 +1967,22 @@ def _classify_divergence(
         "unresolvable": unresolvable,
         "contested": contested,
         "gap_shaped": gap_shaped,
-        # Union of everything the judge rules on, in bar order.
-        "reviewable": contested + gap_shaped,
+        # Conflict classes the comparator proved are upstream transformation.
+        # Reviewable, never blocking, never a `match`.
+        "attributed": attributed,
+        # Counts and provenance only -- the sample rows stay in
+        # `diff.conflict_attribution`, so the artifact carries them once.
+        "conflict_attribution": (
+            {k: v for k, v in attribution.items() if k != "samples"}
+            if attribution else None
+        ),
+        # Union of everything the judge rules on, in bar order (highest first).
+        "reviewable": contested + gap_shaped + attributed,
         "judge_required": verdict == "review",
+        # The one stage attribution is allowed to skip. Written explicitly so
+        # the orchestrator reads a decision rather than inferring one from a
+        # tier name it may not recognise.
+        "diagnostician_required": verdict == "mismatch" or bool(contested),
         "judge_bar": bar,
         "oracle_rows": oracle_rows,
         "identical_rows": reproduced,
@@ -1552,8 +1996,13 @@ def _classify_divergence(
             "`review`: tier `gap_shaped` needs a named absent FHIR element; "
             "tier `contested` carries a value conflict, which an absence "
             "cannot explain, and needs the upstream ETL statement that "
-            "rewrote the value. A conflict is NOT presumed to be a bug and is "
-            "NOT presumed to be intrinsic -- the judge decides which."
+            "rewrote the value; tier `attributed` carries a conflict the "
+            "comparator has already replayed to an upstream ETL cast over "
+            "every conflicting row, so the judge confirms provenance and "
+            "fraction rather than re-deriving the cause. A conflict is NOT "
+            "presumed to be a bug and is NOT presumed to be intrinsic -- the "
+            "judge decides which, and the judge is called on EVERY `review` "
+            "including `attributed`."
         ),
     }
     if excluded:
@@ -1623,6 +2072,29 @@ def _diagnostics(result: Dict[str, Any]) -> List[str]:
         for column, n in (diff.get("columns_conflicting") or {}).items():
             out.append(f"    column {column!r} conflicts on {n:,} row(s){_share(n)}")
         out.append(f"  bar for an accept: {_CONTESTED_BAR}")
+
+    if divergence.get("attributed"):
+        attribution = diff.get("conflict_attribution") or {}
+        out.append(
+            "ATTRIBUTED — a value conflict the comparator replayed to an "
+            "upstream mimic-fhir transformation over every conflicting row. "
+            "No port can invert it, so there is nothing to diagnose; the judge "
+            "still rules:"
+        )
+        for item in divergence["attributed"]:
+            out.append(
+                f"  {item['count']:,} × {item['class']}{_share(item['count'])} "
+                f"— all {item['attributed_rows']:,} replay {item['attributed_to']}"
+            )
+            for column, n in (item.get("columns") or {}).items():
+                out.append(f"    column {column!r}: {n:,} row(s) attributed")
+            out.append(f"    citations: {', '.join(item.get('citations') or [])}")
+        for sample in (attribution.get("samples") or [])[:1]:
+            out.append(f"    example row: {sample}")
+        out.append(
+            "  the judge must still confirm: "
+            f"{divergence['attributed'][0].get('judge_must_confirm', '')}"
+        )
 
     if divergence.get("gap_shaped"):
         out.append("GAP-SHAPED — consistent with a MIMIC-on-FHIR coverage gap:")
@@ -1696,7 +2168,7 @@ def write_comparison(result: Dict[str, Any], output_path: str | Path) -> Path:
 
 # Exit codes: 0 pass, 1 fail, 2 neither.
 #
-# 2 covers both `unsure` (demo, 0 rows) and `review` (full, either tier).
+# 2 covers both `unsure` (demo, 0 rows) and `review` (full, any tier).
 # Neither is a pass or a failure, and collapsing either onto 1 would let a
 # caller's `if rc:` turn "the judge must look at this" into "this port is
 # wrong" -- which is exactly the error a contested tier is most likely to
@@ -1704,6 +2176,54 @@ def write_comparison(result: Dict[str, Any], output_path: str | Path) -> Path:
 EXIT_PASS = 0
 EXIT_FAIL = 1
 EXIT_UNSURE = 2
+
+
+def report_verdict(result: Dict[str, Any]) -> int:
+    """Log a comparison result and return its exit code.
+
+    Shared by both entry points on purpose. This logic previously existed twice
+    -- here and in ``mimic_utils.__main__`` -- and the copy drifted: it never
+    grew the ``review`` branch, so `mimic_utils compare-port-results full`
+    returned ``EXIT_FAIL`` for every ``review``, turning "the judge must look at
+    this" into "this port is wrong" for exactly the verdict the exit-code
+    comment above warns about.
+    """
+    verdict = result.get("verdict")
+    if verdict in ("match", "shape_ok"):
+        logging.info("Comparison: %s", str(verdict).upper())
+        return EXIT_PASS
+    if verdict == "unsure":
+        logging.warning("Comparison: UNSURE — %s", result.get("note", ""))
+        return EXIT_UNSURE
+
+    if verdict == "review":
+        tier = (result.get("divergence") or {}).get("tier")
+        logging.warning(
+            "Comparison: REVIEW (tier=%s) — the equivalence judge decides. "
+            "This is NOT a failure.%s",
+            tier,
+            (
+                " A value conflict is present: an accept must cite the upstream "
+                "ETL statement that rewrote the value, not merely an absence."
+                if tier == "contested" else
+                " The value conflict was replayed to a known upstream ETL cast "
+                "over every conflicting row; no diagnosis is needed, but the "
+                "judge still rules."
+                if tier == "attributed" else ""
+            ),
+        )
+    else:
+        logging.warning("Comparison: %s", str(verdict).upper())
+
+    for line in result.get("diagnostics", []) or []:
+        logging.warning("  %s", line)
+    if result.get("error"):
+        logging.warning("  error: %s", result["error"])
+    schema = result.get("schema") or {}
+    for field in ("missing_columns", "extra_columns", "incompatible_types"):
+        if schema.get(field):
+            logging.warning("  %s: %s", field, schema[field])
+    return EXIT_UNSURE if verdict == "review" else EXIT_FAIL
 
 
 def compare_port_results_cli(argv: Optional[List[str]] = None) -> int:
@@ -1770,39 +2290,7 @@ def compare_port_results_cli(argv: Optional[List[str]] = None) -> int:
 
     out = write_comparison(result, args.output)
     logging.info("Comparison artifact written: %s", out)
-
-    verdict = result.get("verdict")
-    if verdict in ("match", "shape_ok"):
-        logging.info("Comparison: %s", verdict.upper())
-        return EXIT_PASS
-    if verdict == "unsure":
-        logging.warning("Comparison: UNSURE — %s", result.get("note", ""))
-        return EXIT_UNSURE
-    if verdict == "review":
-        tier = (result.get("divergence") or {}).get("tier")
-        logging.warning(
-            "Comparison: REVIEW (tier=%s) — the equivalence judge decides. "
-            "This is NOT a failure.%s",
-            tier,
-            (
-                " A value conflict is present: an accept must cite the upstream "
-                "ETL statement that rewrote the value, not merely an absence."
-                if tier == "contested" else ""
-            ),
-        )
-        for line in result.get("diagnostics", []) or []:
-            logging.warning("  %s", line)
-        return EXIT_UNSURE
-    logging.warning("Comparison: %s", str(verdict).upper())
-    for line in result.get("diagnostics", []) or []:
-        logging.warning("  %s", line)
-    if result.get("error"):
-        logging.warning("  error: %s", result["error"])
-    schema = result.get("schema") or {}
-    for field in ("missing_columns", "extra_columns", "incompatible_types"):
-        if schema.get(field):
-            logging.warning("  %s: %s", field, schema[field])
-    return EXIT_FAIL
+    return report_verdict(result)
 
 
 if __name__ == "__main__":

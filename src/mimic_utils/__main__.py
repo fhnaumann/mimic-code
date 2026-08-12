@@ -81,8 +81,9 @@ def _export_oracle_command(**kwargs) -> int:
 def _compare_port_results_command(**kwargs) -> int:
     """Dispatch for ``mimic_utils compare-port-results``.
 
-    Exit codes: 0 pass, 1 fail, 2 unsure (demo shape gate with 0 rows -- neither
-    a pass nor a failure; proceed to full data).
+    Exit codes: 0 pass, 1 fail, 2 neither -- covering both `unsure` (demo shape
+    gate with 0 rows) and `review` (full data, any tier). A `review` is the
+    judge's to decide and must not read as a failure.
     """
     import logging
 
@@ -118,25 +119,10 @@ def _compare_port_results_command(**kwargs) -> int:
 
     out = write_comparison(result, kwargs["output"])
     logging.info("Comparison artifact written: %s", out)
-
-    verdict = result.get("verdict")
-    if verdict in ("match", "shape_ok"):
-        logging.info("Comparison: %s", verdict.upper())
-        return EXIT_PASS
-    if verdict == "unsure":
-        logging.warning("Comparison: UNSURE — %s", result.get("note", ""))
-        return EXIT_UNSURE
-
-    logging.warning("Comparison: %s", str(verdict).upper())
-    for line in result.get("diagnostics", []) or []:
-        logging.warning("  %s", line)
-    if result.get("error"):
-        logging.warning("  error: %s", result["error"])
-    schema = result.get("schema") or {}
-    for field in ("missing_columns", "extra_columns", "incompatible_types"):
-        if schema.get(field):
-            logging.warning("  %s: %s", field, schema[field])
-    return EXIT_FAIL
+    # Shared with `compare_port_results_cli` rather than reimplemented. The copy
+    # that used to live here had no `review` branch, so every `review` fell
+    # through to EXIT_FAIL.
+    return _cpr.report_verdict(result)
 
 
 def _run_demo_command(**kwargs) -> int:

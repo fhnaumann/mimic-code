@@ -42,7 +42,7 @@ The CLI prints an `outcome`, and it is not the same thing as a verdict:
 
 | outcome | what it means | what you report |
 |---|---|---|
-| `complete` | a comparison was fetched | the `verdict`: `match`, `mismatch` or `review`, plus the diagnostics |
+| `complete` | a comparison was fetched | the `verdict`: `match`, `mismatch` or `review` — and on a `review`, `divergence.tier` **and** `divergence.diagnostician_required`, since those decide which agent runs next — plus the diagnostics |
 | `crash` | the job left the queue with **no** comparison | `crash`, with the fetched Slurm log excerpt |
 | `timeout` | still queued after the poll budget | `timeout` — do not resubmit |
 
@@ -53,10 +53,16 @@ to the diagnostician.
 
 Three verdicts, three exit codes: **0** `match`, **1** `mismatch`, **2**
 `review`. Report the verdict verbatim; never collapse `review` onto either
-neighbour. A `review` means the schema matched and the only divergence left is
-shaped like a MIMIC-on-FHIR coverage gap — the run succeeded, the port may well
-be correct, and the judge decides. Reporting it as a failure pre-empts the one
+neighbour. A `review` means the schema matched and the divergence left is
+something the judge decides — shaped like a MIMIC-on-FHIR coverage gap
+(`gap_shaped`), a value conflict the comparator already replayed to an upstream
+ETL cast (`attributed`), or one it could not (`contested`). The run succeeded,
+the port may well be correct. Reporting it as a failure pre-empts the one
 decision this loop reserves for the judge.
+
+Carry `divergence.tier` and `divergence.diagnostician_required` into your report
+verbatim too. You do not route, but the orchestrator routes off those two fields
+and re-reading the artifact to recover them is a wasted read.
 
 If the diagnostics say the job is **still in the queue**, the wait ended on a
 log marker rather than on job exit. Say so prominently: the job is still holding

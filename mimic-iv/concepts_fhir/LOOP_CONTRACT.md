@@ -108,7 +108,7 @@ in which the normal case is a hard failure is measuring the wrong thing.
 `mismatch` is now narrow on purpose. It means "this result is not comparable, or
 the port contradicted itself" — never "these values look wrong to me".
 
-### The two review tiers
+### The three review tiers
 
 `divergence.tier` and `divergence.judge_bar` are in every comparison artifact.
 
@@ -116,17 +116,50 @@ the port contradicted itself" — never "these values look wrong to me".
 |---|---|---|
 | `gap_shaped` | only `only_oracle` / `differing_null_only` | the **FHIR element or path that does not exist**, that it explains the magnitude and shape, and that every defensible mapping was tried |
 | `contested` | `differing_conflict` or `only_candidate` | all of the above **plus** the **upstream `mimic-fhir` ETL statement (file and line)** that writes a different value than relational MIMIC-IV holds, and that the oracle value is unrecoverable by **any** query — not merely that this port did not recover it |
+| `attributed` | `differing_conflict` **only**, and the comparator replayed it to a known upstream ETL cast on **every** conflicting row | the citation is already in the artifact, so instead: that one cited statement writes the FHIR element **this** column is sourced from, and that the attributed fraction is consistent with the transformation's rarity |
 
 A conflict outranks a gap: a result with both is `contested`. The raised bar is
 what keeps the relaxation honest — a conflict is not presumed to be a bug, and
 is **not presumed to be intrinsic either**. Without the ETL citation the answer
 is `bug`, and the loop continues exactly as before.
 
+**`attributed` is the one case where the comparator supplies the citation
+itself.** `mimic-fhir` casts naive MIMIC wall times through `TIMESTAMPTZ`, which
+rewrites a DST spring-forward wall time irreversibly — and that cast is
+*replayable*, so the comparator round-trips the oracle value through
+`America/New_York` and checks it reproduces the candidate, per row, over the
+whole conflict set. It is a stronger proof than an agent inferring the same
+thing from a bounded sample, and it is why the diagnosis is skippable here:
+`divergence.diagnostician_required` is `false` and the loop routes straight to
+the judge.
+
+Its limits are part of the contract, not implementation detail:
+
+- **It never yields `match`, and it never skips the judge.** The values do
+  differ from the oracle; accepting that is a ruling.
+- **All-or-nothing.** A partly explained conflict set stays `contested` and
+  `diagnostician_required` stays `true` — the unexplained rows set the bar. The
+  artifact still records which rows are accounted for, so the diagnosis is
+  scoped to the residual.
+- **It proves the operation, not the provenance.** `attributed[].citations` is
+  the set of known ETL sites, not a per-column proof.
+- **A large attributed fraction argues against the attribution.** DST-gap wall
+  times are one hour a year; the judge answers `bug` when the fraction does not
+  fit that. This is the check that stops the tier becoming a rubber stamp.
+- **If the zone rules available at comparison time do not reproduce the ETL's,
+  nothing is attributed.** A canary establishes that before any row is judged.
+
 **No floor.** A divergence of any size reaches the judge; there is no coverage
 threshold below which the loop auto-fails, and none above which it auto-accepts.
 The judge argues every case from the IG and the ETL source rather than from an
 arbitrary percentage. Magnitude is still evidence — the artifact reports the
 affected fraction per column — but it is never the argument.
+
+**The judge is never skipped; the diagnostician is.** Those are separate
+decisions and the artifact states each: `divergence.judge_required` is `true` for
+every `review` tier without exception, and
+`divergence.diagnostician_required` is the only stage a machine proof is allowed
+to remove.
 
 ### Fidelity is reported twice when a declaration is confirmed
 
@@ -419,6 +452,75 @@ transition, and `--stale` filters to the ones past their threshold — see
 
 The judge can never override a `mismatch`. It decides `review` results, at the
 bar its tier sets.
+
+### Reopening a finished port
+
+Added 2026-08-11. `COMPLETED` and `COMPLETED_WITH_DIVERGENCE` were sinks, on the
+reasoning that a recorded verdict is final. That is right about the verdict and
+wrong about the SQL, which is a separate artifact that can turn out to be
+defective after the verdict is sound — a cast idiom whose behaviour depends on
+the session timezone, a construction that yields NULL where it should yield a
+value. The loop had no way to express "this port is finished and its query is
+wrong", so the only available move was to edit `concept.sql` inside the finished
+attempt.
+
+That move is worse than it looks. `export_mappings` reads the **current**
+attempt, so the edit silently becomes the exported mapping, while
+`comparison.full.json`, `run_meta.full.json` and the recorded justification stay
+behind describing a query that no longer exists. Nothing in the loop hashes
+`concept.sql` — only the DAG's oracle SQL and the config files are hashed — so
+no artifact would ever contradict the pair, and "M of 65 accepted with
+documented divergence" would quietly stop being a claim the artifacts support.
+
+So the edge exists, and costs a full run:
+
+```
+COMPLETED                  → RUNNING   (reopen)
+COMPLETED_WITH_DIVERGENCE  → RUNNING   (reopen)
+```
+
+```
+mimic_utils reopen <concept> --by human --reason "..."
+```
+
+`--by human` is fixed, not defaulted: there is no agent-initiated route into
+this. An orchestrator that could reopen its own finished concept could retry its
+way out of any verdict it disliked, and the ten-full-run cap would bound
+nothing. `retry` and `resume --apply` both refuse these two statuses and name
+`reopen` instead — a flag on `retry` would have been one keystroke from
+discarding a verdict by accident, which is the same reason `accept-divergence`
+is not `done --with-divergence`.
+
+Reopening **withdraws the concept as a satisfied dependency** for as long as it
+is running. That is not a side effect to work around: a dependent built against
+SQL now known to be defective would inherit the defect, and `depcheck` refusing
+to start it is the DAG doing its job.
+
+The superseded verdict is copied into `reopen_history` — status, justification,
+decider, and the attempt/counter watermarks — and then cleared from the live
+fields. A reopened concept has no verdict and earns a new one through the full
+run like any other. `status` reports reopened concepts on their own line,
+never summed into the other three:
+
+```
+  N/65 exact match
+  M/65 divergence accepted by the judge
+  K/65 divergence accepted by a human (manual override)
+  J/65 reopened by a human after a recorded verdict
+```
+
+A reopened concept's final verdict is as sound as any other — it was re-earned
+on full data — but the reader should know the loop was re-entered by hand rather
+than converging on its own.
+
+**Metrics are scoped per run, not per concept.** Attempt directories accumulate
+across a reopen and the three state counters are cumulative, so the second run's
+artifact reports attempts, judge invocations, HPC jobs and HPC seconds for
+`attempt > baseline` only, where the baseline is the watermark stamped at
+reopen. The first run's artifact is already written and stays correct. Cumulative
+figures live under `run_scope` in the same artifact; the two are reported
+separately and never summed, because a reader who cannot tell one run's cost
+from a concept's total cost has a number that means neither.
 
 ### Divergent dependencies
 

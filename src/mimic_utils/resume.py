@@ -44,6 +44,7 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+import textwrap
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -288,7 +289,17 @@ class ResumePlan:
     fresh_stages: List[str] = field(default_factory=list)
     stale_stages: List[str] = field(default_factory=list)
     applied: bool = False
+    #: Whether ``--apply`` was passed, regardless of whether anything needed
+    #: doing. Without this the plan printed "pass --apply to perform the
+    #: transitions" to a caller that had just passed it, which reads as "you did
+    #: not do the thing" and invites a retry loop.
+    apply_requested: bool = False
     new_attempt_dir: Optional[Path] = None
+    #: The newest ``reopen_history`` entry, when this concept was reopened. It
+    #: names the defect in the SQL the previous run shipped, so it is the
+    #: instruction set for the attempt about to be authored -- not history.
+    reopen_reason: Optional[str] = None
+    reopen_count: int = 0
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -303,7 +314,10 @@ class ResumePlan:
             "fresh_stages": list(self.fresh_stages),
             "stale_stages": list(self.stale_stages),
             "applied": self.applied,
+            "apply_requested": self.apply_requested,
             "new_attempt_dir": str(self.new_attempt_dir) if self.new_attempt_dir else None,
+            "reopen_reason": self.reopen_reason,
+            "reopen_count": self.reopen_count,
         }
 
     def format(self) -> str:
@@ -322,10 +336,41 @@ class ResumePlan:
             lines.append(f"  reuse (skip):  {', '.join(self.fresh_stages)}")
         if self.stale_stages:
             lines.append(f"  must re-run:   {', '.join(self.stale_stages)}")
+        if self.reopen_reason:
+            # Printed loudly and last-but-one because it is the one thing on this
+            # plan that the implementer must act on. It used to live only in
+            # state.json: crrt's first reopen said "replace every datetime
+            # mapping with a bare TRY_CAST", nothing surfaced it, and the next
+            # attempt shipped the same defect twice and was marked COMPLETED.
+            lines.append("")
+            lines.append(
+                f"  REOPENED (x{self.reopen_count}) -- this is the instruction set for "
+                f"this attempt,"
+            )
+            lines.append("  not background. The previous run's SQL was defective:")
+            lines.append("")
+            for line in textwrap.wrap(self.reopen_reason, width=76):
+                lines.append(f"      {line}")
+            lines.append("")
+            lines.append(
+                "  Pass this verbatim to the implementer. Do not reproduce the "
+                "superseded"
+            )
+            lines.append(
+                "  justification as your own -- the SQL it argued about is not the "
+                "SQL being"
+            )
+            lines.append("  judged now.")
+            lines.append("")
         if self.applied:
             lines.append("  APPLIED: transitions performed.")
             if self.new_attempt_dir:
                 lines.append(f"  new attempt:   {self.new_attempt_dir}")
+        elif self.apply_requested:
+            lines.append(
+                "  --apply requested, but this plan needs no transitions. Nothing to\n"
+                "  do here: proceed to the phase named above."
+            )
         else:
             lines.append("  (nothing changed -- pass --apply to perform the transitions)")
         return "\n".join(lines)
@@ -387,6 +432,13 @@ def resume_plan(
     fresh = store.fresh_stages(concept)
     stale = store.stale_stages(concept)
 
+    # The newest reopen entry, if any. Surfaced on every plan rather than only
+    # on the reopened-and-unstarted one: a reopened concept can be resumed many
+    # times before its new SQL is written, and the defect being fixed stays
+    # relevant for every one of them.
+    reopen_history = list(state.reopen_history or [])
+    reopen_reason = reopen_history[-1].get("reason") if reopen_history else None
+
     def plan(action: str, phase: Optional[str], reason: str, transitions: Sequence[str] = ()) -> ResumePlan:
         return ResumePlan(
             concept=concept,
@@ -399,12 +451,21 @@ def resume_plan(
             transitions=list(transitions),
             fresh_stages=fresh,
             stale_stages=stale,
+            reopen_reason=reopen_reason,
+            reopen_count=len(reopen_history),
         )
 
     status = state.status
 
     if status in ("COMPLETED", "COMPLETED_WITH_DIVERGENCE"):
-        result = plan("nothing_to_do", None, f"concept is {status}; the port is finished")
+        result = plan(
+            "nothing_to_do",
+            None,
+            f"concept is {status}; the port is finished. If the SQL it shipped "
+            f"is defective, that is not a resume -- it discards a recorded "
+            f"verdict, so it goes through `reopen <concept> --by human "
+            f"--reason \"...\"`, which costs a fresh attempt and a full run.",
+        )
     elif status == "BLOCKED_REPRESENTATION":
         result = plan(
             "blocked",
@@ -530,6 +591,7 @@ def resume_plan(
     else:  # pragma: no cover -- STATUS_VALUES is closed
         raise StateError(f"Unhandled status {status!r} for '{concept}'")
 
+    result.apply_requested = apply
     if apply and result.transitions:
         _apply(ctrl, concept, result)
 

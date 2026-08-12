@@ -491,7 +491,16 @@ def finalize_conversion_metrics(concept: str, *, run: int, session_ids: Sequence
     agents = {row["id"]: (_text(row["agent"]) or "unknown") for row in sessions}
     token_metrics, model_list, versions = _token_metrics(sessions)
     busy, busy_by_agent, message_counts = _message_metrics(messages, agents)
-    attempt_dirs = _attempt_dirs(controller, concept)
+    # Scope the run to the attempts it actually produced. Attempt directories
+    # accumulate on disk across a `reopen`, and the three state counters are
+    # cumulative, so an unscoped read would bill this run for a previous run's
+    # attempts, judge invocations and HPC seconds -- work whose own metrics
+    # artifact is already written, making the same run appear in both and any
+    # sum over runs an overcount. `run_baseline` is all zeroes on a concept that
+    # was never reopened, which leaves the single-run case exactly as it was.
+    baseline = state.run_baseline
+    all_attempt_dirs = _attempt_dirs(controller, concept)
+    attempt_dirs = [item for item in all_attempt_dirs if item[0] > baseline["attempt"]]
     attempt_summaries, jobs, latest_comparison = _attempt_metrics(attempt_dirs)
     poll_by_job, unmatched_polls = _poll_intervals(parts, set(session_ids), concept, jobs)
     poll_intervals = [item for values in poll_by_job.values() for item in values]
@@ -525,10 +534,11 @@ def finalize_conversion_metrics(concept: str, *, run: int, session_ids: Sequence
         elapsed_time = _iso_epoch(state.updated_at)
         elapsed_source = "state.updated_at" if elapsed_time is not None else None
     elapsed = elapsed_time - min(root_times) if root_times and elapsed_time is not None else None
-    attempts_total = max(state.attempt, len(attempt_dirs))
+    attempts_total = max(state.attempt - baseline["attempt"], len(attempt_dirs))
     comparison_rounds = sum((directory / "comparison.full.json").is_file() for _, directory in attempt_dirs)
     judge_invocations = sum((directory / "evidence" / "equivalence-judge.md").is_file() for _, directory in attempt_dirs)
-    node, semantic = controller.dag_raw["nodes"][concept], _semantic_metrics(state.status, state.semantic_counter)
+    node = controller.dag_raw["nodes"][concept]
+    semantic = _semantic_metrics(state.status, state.semantic_counter - baseline["semantic"])
     artifact = {
         "format_version": "2.0", "schema_version": METRICS_SCHEMA_VERSION, "concept": concept, "run": run,
         "terminal_status": state.status, "terminal_outcome": state.status,
@@ -558,10 +568,33 @@ def finalize_conversion_metrics(concept: str, *, run: int, session_ids: Sequence
         "per_stage": per_stage,
         "per_attempt": {"attempts_total": attempts_total, "usage_attribution": "unavailable", "attempts": attempt_summaries},
         "convergence": {
-            "attempts_total": attempts_total, **semantic, "engineering_counter": state.engineering_counter,
-            "hpc_counter": state.hpc_counter, "submitted_jobs": submitted_jobs, "full_validation_rounds": comparison_rounds,
+            "attempts_total": attempts_total, **semantic,
+            "engineering_counter": state.engineering_counter - baseline["engineering"],
+            "hpc_counter": state.hpc_counter - baseline["hpc"],
+            "submitted_jobs": submitted_jobs, "full_validation_rounds": comparison_rounds,
             "judge_invocations": judge_invocations, "divergence_decided_by": state.divergence_decided_by,
             "human_manual_override": state.divergence_decided_by == "human", "terminal_outcome": state.status,
+        },
+        # Every number under `convergence`, `per_attempt`, `hpc_jobs` and
+        # `runtime` above describes THIS run only. The cumulative figures live
+        # here, and the two are reported separately and never summed across
+        # runs -- the same discipline the status report applies to COMPLETED vs
+        # COMPLETED_WITH_DIVERGENCE, for the same reason: a reader who cannot
+        # tell one run's cost from a concept's total cost is being handed a
+        # number that means neither.
+        "run_scope": {
+            "run": run,
+            "reopen_count": state.reopen_count,
+            "attempt_window": {"after": baseline["attempt"], "through": state.attempt},
+            "attempts_this_run": attempts_total,
+            "attempts_all_runs": max(state.attempt, len(all_attempt_dirs)),
+            "attempt_dirs_excluded": len(all_attempt_dirs) - len(attempt_dirs),
+            "cumulative_counters": {
+                "semantic": state.semantic_counter,
+                "engineering": state.engineering_counter,
+                "hpc": state.hpc_counter,
+            },
+            "reopen_history": state.reopen_history,
         },
         "hpc_jobs": public_jobs, "final_comparator": latest_comparison, "human_interventions": None,
         "human_interventions_reason": "Stored OpenCode data cannot reliably distinguish human messages from plugin/orchestrator continuation messages.",

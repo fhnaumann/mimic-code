@@ -176,7 +176,13 @@ Timestamps compare within 1 second. Strings and integers compare exactly.
 | `unsure` | demo only: executed, shape fine, 0 rows. Proceed to full data. Never a failure. |
 | `match` | **full data only**: nothing diverged. Permits `mimic_utils done <concept>`. |
 | `mismatch` | **full data only**: a machine-provable contradiction — execution, schema, or a declaration the data refutes. The diagnostician must be invoked. The judge is not called. |
-| `review` | **full data only**: divergence the judge decides. Tier `gap_shaped` needs a named absent FHIR element; tier `contested` needs the upstream ETL statement that rewrote the value. Never a failure. |
+| `review` | **full data only**: divergence the judge decides — at every tier, without exception. Tier `gap_shaped` needs a named absent FHIR element; tier `contested` needs the upstream ETL statement that rewrote the value; tier `attributed` already carries that statement, because the comparator replayed the upstream `TIMESTAMPTZ` cast over every conflicting row, so the judge confirms provenance and fraction instead and the diagnostician is skipped. Never a failure. |
+
+Route the two agent decisions off the artifact, not off the tier name:
+`divergence.judge_required` is `true` for every `review`, and
+`divergence.diagnostician_required` is `false` only when nothing is left to
+diagnose (tier `attributed`, or a `gap_shaped` result). A machine proof may
+remove the diagnosis; it never removes the judge.
 
 A demo result never yields `match` and never permits `done`. Correctness is
 decided only on full data, which may be run as many times as needed up to the

@@ -587,3 +587,153 @@ class TestArtifactRoot:
         (d / "concept_dag.json").write_text(json.dumps(simple_dag))
         ctrl = ConversionController(artifact_root=tmp_root)
         assert ctrl.artifact_root == tmp_root.resolve()
+
+
+# ---------------------------------------------------------------------------
+# reopen — the human-intervention edge out of a finished verdict
+# ---------------------------------------------------------------------------
+
+
+def _finish_with_divergence(ctrl, concept="a", justification="cited reason"):
+    ctrl.initialize(concept)
+    ctrl.start(concept)
+    ctrl.transition(concept, "VALIDATING_DEMO")
+    ctrl.transition(concept, "VALIDATING_FULL")
+    return ctrl.transition(
+        concept, "COMPLETED_WITH_DIVERGENCE",
+        justification=justification, counter="semantic",
+    )
+
+
+class TestReopen:
+    def test_retry_refuses_a_finished_verdict(self, ctrl_dag):
+        _finish_with_divergence(ctrl_dag)
+        with pytest.raises(TransitionError, match="reopen"):
+            ctrl_dag.start("a")
+
+    def test_reopen_requires_a_reason(self, ctrl_dag):
+        _finish_with_divergence(ctrl_dag)
+        with pytest.raises(StateError, match="--reason"):
+            ctrl_dag.reopen("a", reason="   ")
+
+    def test_reopen_refuses_a_non_human_decider(self, ctrl_dag):
+        _finish_with_divergence(ctrl_dag)
+        with pytest.raises(StateError, match="--by human"):
+            ctrl_dag.reopen("a", reason="bad cast", decided_by="judge")
+
+    def test_reopen_refuses_an_unfinished_concept(self, ctrl_dag):
+        ctrl_dag.initialize("a")
+        ctrl_dag.start("a")
+        with pytest.raises(TransitionError, match="not a\n?\\s*finished result"):
+            ctrl_dag.reopen("a", reason="bad cast")
+
+    def test_reopen_starts_a_fresh_attempt(self, ctrl_dag):
+        before = _finish_with_divergence(ctrl_dag)
+        after = ctrl_dag.reopen("a", reason="TRY_TO_TIMESTAMP is session-tz dependent")
+        assert after.status == "RUNNING"
+        assert after.attempt == before.attempt + 1
+        assert ctrl_dag.attempt_dir("a").name == f"attempt_{after.attempt:04d}"
+
+    def test_reopen_clears_the_superseded_verdict_but_keeps_it(self, ctrl_dag):
+        _finish_with_divergence(ctrl_dag, justification="the old argument")
+        after = ctrl_dag.reopen("a", reason="bad cast")
+
+        # Cleared: a reopened concept has no verdict and must earn a new one.
+        assert after.divergence_justification is None
+        assert after.divergence_decided_by is None
+
+        # Kept: the argument that was set aside is still on the record.
+        assert after.reopen_count == 1
+        entry = after.reopen_history[-1]
+        assert entry["superseded_status"] == "COMPLETED_WITH_DIVERGENCE"
+        assert entry["superseded_justification"] == "the old argument"
+        assert entry["superseded_decided_by"] == "judge"
+        assert entry["by"] == "human"
+        assert entry["reason"] == "bad cast"
+
+    def test_reopen_stamps_the_metrics_baseline(self, ctrl_dag):
+        finished = _finish_with_divergence(ctrl_dag)
+        after = ctrl_dag.reopen("a", reason="bad cast")
+        assert after.run_baseline == {
+            "attempt": finished.attempt,
+            "semantic": finished.semantic_counter,
+            "engineering": finished.engineering_counter,
+            "hpc": finished.hpc_counter,
+        }
+
+    def test_baseline_is_zero_when_never_reopened(self, ctrl_dag):
+        state = _finish_with_divergence(ctrl_dag)
+        assert state.reopen_count == 0
+        assert state.run_baseline == {
+            "attempt": 0, "semantic": 0, "engineering": 0, "hpc": 0,
+        }
+
+    def test_reopen_history_round_trips_through_state_json(self, ctrl_dag):
+        _finish_with_divergence(ctrl_dag)
+        ctrl_dag.reopen("a", reason="bad cast")
+        reloaded = ConversionController(artifact_root=ctrl_dag.artifact_root)
+        state = reloaded._read_state("a")  # noqa: SLF001 -- same package
+        assert state.reopen_count == 1
+        assert state.reopen_history[-1]["reason"] == "bad cast"
+
+    def test_reopened_concept_can_finish_again(self, ctrl_dag):
+        _finish_with_divergence(ctrl_dag)
+        ctrl_dag.reopen("a", reason="bad cast")
+        ctrl_dag.transition("a", "VALIDATING_DEMO")
+        ctrl_dag.transition("a", "VALIDATING_FULL")
+        final = ctrl_dag.transition("a", "COMPLETED")
+        assert final.status == "COMPLETED"
+        assert final.reopen_count == 1
+
+    def test_status_report_counts_reopened_separately(self, ctrl_dag):
+        _finish_with_divergence(ctrl_dag)
+        ctrl_dag.reopen("a", reason="bad cast")
+        rows = {c["concept"]: c for c in ctrl_dag.status_report().concepts}
+        assert rows["a"]["reopen_count"] == 1
+        assert rows["b"]["reopen_count"] == 0
+        rendered = ctrl_dag.status_report().format(color=False)
+        assert "reopened by a human after a recorded verdict" in rendered
+
+    def test_a_reopened_dependency_still_satisfies_depcheck_only_when_done(self, ctrl_dag):
+        """Reopening withdraws the dependency: it is RUNNING, not finished."""
+        _finish_with_divergence(ctrl_dag)
+        assert ctrl_dag.dependency_ready("b")[0] is True
+        ctrl_dag.reopen("a", reason="bad cast")
+        ready, missing = ctrl_dag.dependency_ready("b")
+        assert ready is False and missing == ["a"]
+
+
+class TestReopenIsAtomic:
+    """A reopen that cannot complete must not leave the verdict half-cleared."""
+
+    def test_refuses_when_the_next_attempt_dir_exists(self, ctrl_dag):
+        state = _finish_with_divergence(ctrl_dag)
+        # Simulate the collision: a goal is already working in attempt_0002.
+        ctrl_dag._attempt_dir("a", state.attempt + 1).mkdir(parents=True)  # noqa: SLF001
+
+        with pytest.raises(StateError, match="already exists"):
+            ctrl_dag.reopen("a", reason="bad cast")
+
+        after = ctrl_dag._read_state("a")  # noqa: SLF001 -- same package
+        assert after.status == "COMPLETED_WITH_DIVERGENCE"
+        assert after.attempt == state.attempt
+        assert after.divergence_justification == "cited reason"
+        assert after.divergence_decided_by == "judge"
+        assert after.reopen_history == []
+
+    def test_refuses_on_a_withdrawn_dependency_without_mutating(self, ctrl_dag):
+        _finish_with_divergence(ctrl_dag, concept="a")
+        ctrl_dag.initialize("b")
+        ctrl_dag.start("b")
+        ctrl_dag.transition("b", "VALIDATING_DEMO")
+        ctrl_dag.transition("b", "VALIDATING_FULL")
+        ctrl_dag.transition("b", "COMPLETED")
+        # Withdraw 'a' by reopening it, then try to reopen its dependent.
+        ctrl_dag.reopen("a", reason="bad cast")
+
+        with pytest.raises(DependencyError):
+            ctrl_dag.reopen("b", reason="same bad cast downstream")
+
+        after = ctrl_dag._read_state("b")  # noqa: SLF001 -- same package
+        assert after.status == "COMPLETED"
+        assert after.reopen_history == []

@@ -47,7 +47,9 @@ shorter `mimic_utils ...` spelling below names the subcommand only.
    concurrency: other concepts being active is expected, because the human
    composes waves of parallel goals.
 4. **`mimic_utils validate-demo <concept>`** — freezes implementation
-   artifacts and transitions to VALIDATING_DEMO before demo execution.
+   artifacts and transitions to VALIDATING_DEMO before demo execution. It first
+   runs the deterministic SQL lint and **refuses the transition** if the
+   attempt's `concept.sql` carries a known defect class. See Phase 4.
 5. **`mimic_utils validate-full <concept>`** — transitions to VALIDATING_FULL
    before the full-MIMIC HPC execution.
 6. **`mimic_utils done <concept>`** — transitions to COMPLETED. Legal **only**
@@ -138,6 +140,19 @@ and tells you either **poll job `<id>`** (with the time it was submitted) or
 has a job record hits *"hpc_job.json already exists"*, and obeying that error
 abandons a live cluster job and spends one of the ten runs.
 
+**If the plan prints a `REOPENED (xN)` block, that block is your primary
+instruction for this attempt.** It is the newest `reopen_history` reason: a
+human set aside a recorded verdict because the SQL that earned it was
+defective, and the block names the construction, the file and line, and the
+remedy. Carry it verbatim into the implementer's task text at Phase 3 — do not
+summarise it and do not treat it as context.
+
+This is not a hypothetical failure mode. `crrt` was reopened with the
+instruction "replace every datetime mapping with a bare `TRY_CAST`"; nothing
+surfaced that reason to the implementer, the next attempt shipped the same
+defect in two places, and it was marked COMPLETED. One reopen was spent for
+nothing. `resume` prints the block now precisely so that cannot recur.
+
 `resume --apply` and `retry` **refuse a concept that still looks live** — the
 sign that another terminal is porting it right now. Report the refusal and
 stop. Do **not** reach for `--force`: that flag is for a human who knows a
@@ -181,18 +196,50 @@ Spawn the stages you did not skip, one at a time, each feeding off the previous:
    `MIMIC_NOTES.md` plus the `MIMIC_NOTES.d/` fragments and appends its own
    findings to `MIMIC_NOTES.d/<concept>.md`.
 3. **concept-implementer** — creates one or more
-   `ViewDefinition.<label>.json` files and `concept.sql`
-    once in the write-once `attempt_NNNN/` directory, using the proven
-   ViewDefinition format (select.column `path`/`name`, `forEach`/`forEachOrNull`)
-   from
+   `ViewDefinition.<label>.json` files and `concept.sql` once in the write-once
+   `attempt_NNNN/` directory, using the proven ViewDefinition format
+   (select.column `path`/`name`, `forEach`/`forEachOrNull`) from
    `../master_thesis_pipeline/orchestration-new/scripts/sofa_provisioning/`.
    The SQL selects from each ViewDefinition's label, which the runner binds as a
    Spark temp view — there is no registration step.
 
-### Phase 4 — Demo shape gate (demo-runner)
+   **On a reopened concept, paste the `REOPENED` block from the Phase 1 resume
+   plan into this agent's task text verbatim**, and say plainly that the named
+   construction must not appear in the new SQL. The implementer authors fresh
+   SQL each attempt with no memory of what the last one got wrong, so if you do
+   not hand it the defect it will reproduce it — that is exactly how `crrt`
+   burned a reopen. Tell it to run `mimic_utils lint-sql <concept>` on its own
+   output before reporting back: `validate-demo` will refuse the attempt
+   otherwise, and catching it here costs nothing.
+
+### Phase 4 — SQL lint, then demo shape gate (demo-runner)
+
 Run `mimic_utils validate-demo <concept>` before execution, then spawn
 `demo-runner`, which runs `mimic_utils run-demo <concept>` against the local
 demo Delta warehouse.
+
+**`validate-demo` lints the attempt's `concept.sql` first and refuses to
+transition on a violation.** It exits 1 and names the rule, the line, and the
+remedy. This is not advisory and there is no agent override: fix the SQL in the
+attempt and run `validate-demo` again. `mimic_utils lint-sql <concept>` runs the
+same check without touching state, so the implementer can check its own work.
+
+The lint gates *this* transition rather than `run-demo` because this is the one
+that freezes implementation artifacts — so a resume that re-enters at Phase 6
+cannot route around it.
+
+It exists because documentation was not a control. The rule "cast to
+`TIMESTAMP_NTZ`, never to `TIMESTAMP`" is in `MIMIC_NOTES.md` and printed as a
+labelled `-- WRONG` block in `pathling-sql`, which the implementer loads — and
+29 of 56 `concept.sql` files across 19 concepts carried the forbidden form
+anyway. `gcs` removed it at attempt_0002 and reintroduced it at attempt_0003,
+which then shipped as COMPLETED. Each attempt authors fresh SQL with no memory
+of what the last one got wrong; the lint is that memory.
+
+The rules cover **known** defect classes only. Discovering a new one is still
+the `mismatch-diagnostician`'s job — when it finds one, add a rule to
+`src/mimic_utils/sql_lint.py` so no later attempt can repeat it. That is what
+makes the expensive agent's findings compound instead of being re-derived.
 
 **Both legs run Spark.** The demo gate uses embedded Pathling on Spark (the
 default engine) because the full-data gate has no alternative — compute nodes
@@ -233,17 +280,45 @@ Target shape comes from `mimic-iv/concepts_fhir/oracle/oracle_manifest.full.json
    `mismatch` or a `contested` review it reads `divergence.unresolvable` /
    `divergence.contested` and `diff.columns_conflicting`, which name the
    offending class and column.
-   Skip this step when you already hold a diagnosis — a resumed session whose
-   plan named the failure, or a `shape.demo.json` whose `schema.hints` state the
-   remedy outright. The diagnostician exists to produce a diagnosis, not to
-   confirm one.
 
-   It re-reads `MIMIC_NOTES.md` and `MIMIC_NOTES.d/*.md` here even though Phase
-   0 already read them. This is the high-value re-read: it is the last look
-   before a fix is authored, and it is the only stage guaranteed to run on the
-   failure path, because `fhir-prober` is frequently skipped as `reuse` on a
-   retry. Hours may have passed, and a sibling loop's fragment may name exactly
-   this divergence.
+   **Read `divergence.diagnostician_required` first and obey it.** The
+   comparator sets it `false` when there is nothing left for a diagnosis to
+   establish, and it is by far the most expensive stage in the loop — around
+   70% of the port's token spend, dominated by the context it reads before it
+   reasons at all. So the decision to spawn is the saving; instructing it to
+   exit early is not.
+
+   Skip this step when:
+   - `divergence.diagnostician_required` is `false` — see **Attributed
+     conflicts** below;
+   - you already hold a diagnosis — a resumed session whose plan named the
+     failure, or a `shape.demo.json` whose `schema.hints` state the remedy
+     outright. The diagnostician exists to produce a diagnosis, not to confirm
+     one.
+
+   Never skip it on `divergence.diagnostician_required: true`. A `contested`
+   result reaching the judge with no diagnosis attached wastes a judge run,
+   because the bar it must clear is a citation only the diagnostician produces.
+
+   It re-reads `MIMIC_NOTES.md` here even though Phase 0 already read it. This
+   is the high-value re-read: it is the last look before a fix is authored, and
+   it is the only stage guaranteed to run on the failure path, because
+   `fhir-prober` is frequently skipped as `reuse` on a retry.
+
+   **It no longer reads `MIMIC_NOTES.d/` — that is now your job, and you must
+   do it.** The diagnostician is fenced to `MIMIC_NOTES.md` exactly as the judge
+   is, because sweeping the fragment directory cost it 15–17 tool calls a run
+   for leads the protocol forbade it citing anyway, and the directory grows every
+   time any loop finishes. You already read every fragment at Phase 0 and you run
+   on the cheap model, so the filtering belongs here.
+
+   When you spawn it, **name in the task text any sibling fragment that bears on
+   this divergence** — the concept, the claim, and one line of why you think it
+   is relevant — and label them explicitly as unconfirmed leads to verify, not
+   findings to cite. If none is relevant, say "no relevant fragments" rather than
+   staying silent, so the diagnostician knows the check was made and does not go
+   looking. Omitting a fragment that mattered is a silent failure it cannot
+   detect, so err toward naming one.
 
 2. **Invalidate the carryover stage the diagnosis blames**, if any:
    `mimic_utils carryover-invalidate <concept> --stage <stage> --reason "..."`.
@@ -287,6 +362,42 @@ fix" is not a citation, and neither is "this looks intrinsic".
 A conflict still outranks a gap: a result carrying both is `contested`, and the
 gap remaining after a genuine fix is often smaller than it first appeared.
 
+**Attributed conflicts — the comparator already did this diagnosis.**
+
+One upstream transformation is machine-provable, so the comparator proves it
+instead of paying a diagnostician to infer it. `mimic-fhir` casts naive MIMIC
+wall times through `TIMESTAMPTZ`, which rewrites a DST spring-forward wall time
+(02:10 on a March Sunday → 03:10) irreversibly. The comparator **replays** that
+cast against the oracle value on **every** conflicting row and, when it explains
+all of them, emits:
+
+- `divergence.tier: "attributed"` — or `gap_shaped`, if gap-shaped divergence
+  is also present and outranks it;
+- `divergence.attributed[]` — the class, the row count, the replayed operation,
+  and the `mimic-fhir/sql` citations, i.e. exactly the payload a `contested`
+  diagnosis would have produced;
+- `divergence.diagnostician_required: false`.
+
+Skip Phase 5 entirely and go to Phase 7. Do not spawn the diagnostician to
+confirm it: it would read the notes, the skills and the artifact — the whole
+cost — to re-derive a fact the artifact already carries with a stronger proof
+than a bounded sample can support.
+
+Two things this does **not** do, both deliberate:
+
+- **It never skips the judge, and it never yields `match`.** The values do
+  differ from the oracle. Accepting that is a ruling, and `judge_required` stays
+  `true`. `divergence.judge_bar` hands the judge the two things the replay does
+  not establish — which upstream statement writes *this* element, and whether
+  the affected fraction is consistent with DST-gap rarity.
+- **Partial attribution changes nothing.** If some conflicting rows replay and
+  others do not, the tier stays `contested` and `diagnostician_required` stays
+  `true`. Diagnose the **residual** rows; `divergence.notes` names their count
+  so the diagnostician need not re-derive the explained half. The huge
+  all-rows-shifted conflicts (`chemistry` 3.8M, `coagulation` 1.5M) are the
+  port's own offset-aware-cast defect and correctly do **not** attribute — a
+  plain one-hour offset is not the signature, reproducing the *cast* is.
+
 ### Phase 6 — Full-data correctness (the real gate)
 Run `mimic_utils validate-full <concept>`, then spawn `hpc-launcher`
 (`mimic_utils hpc-launch <concept>`) and `hpc-poller`
@@ -322,9 +433,19 @@ Route on the comparator's verdict, never on the row-count delta:
 - **`mismatch`** → go to Phase 5. The result is not comparable or the port
   contradicted itself; the judge cannot help.
 - **`review`, tier `gap_shaped`** → go to Phase 7.
+- **`review`, tier `attributed`** → go to Phase 7. The conflict was replayed to
+  an upstream ETL cast over every conflicting row, so there is nothing for a
+  diagnosis to add; the judge still rules. See **Attributed conflicts** in
+  Phase 5.
 - **`review`, tier `contested`** → go to Phase 5 for a diagnosis **first**, then
   Phase 7 if and only if the diagnostician cites the upstream ETL statement.
   This is the one route that visits Phase 5 without necessarily retrying.
+
+`divergence.diagnostician_required` encodes the three rows above: route on it
+rather than on the tier name, so a tier added later cannot silently take the
+wrong branch. The judge, by contrast, is called on **every** `review` tier
+without exception — it is the loop's final guard and it is not the expensive
+stage.
 - **10 full runs reached without convergence** → hard cap. Run
   `mimic_utils fail <concept> --error "full-run cap reached"` and terminate
   with `[goal:blocked]` for human review.
@@ -341,6 +462,15 @@ so it can separate inherited divergence from this concept's own.
 On a `contested` tier, the diagnostician's ETL citation is the centre of the
 case — pass it verbatim, including the file and line. A `contested` review with
 no diagnosis attached should not be sent to the judge at all; go to Phase 5.
+
+On an `attributed` tier there is no diagnostician output to pass, and none is
+needed: the citation lives in `divergence.attributed[].citations` and the proof
+in `.proof`. Say so explicitly when you spawn the judge, so it does not treat
+the missing diagnosis as the Phase 5 omission above. What it must still decide
+is in `.judge_must_confirm` — provenance, and whether the affected fraction is
+consistent with DST-gap rarity. A large attributed fraction argues *against* the
+attribution, and the judge answering `bug` there is the mechanism working, not
+failing.
 
 Do **not** retry blindly and do **not** mark a `review` failed: `hpc-poll` exits
 **2** here, not 1, and a caller that reads any non-zero exit as failure will get
@@ -362,6 +492,20 @@ serious.
 the user's decision about your loop's output; taking it on your own authority
 would make the `judge` / `human` distinction meaningless in the one direction
 that matters.
+
+**You never run `reopen` yourself either**, and the CLI refuses it without
+`--by human`. `reopen` discards a verdict that is already recorded, cited and
+counted in the results table. An orchestrator that could reopen its own finished
+concept could retry its way out of any judgement it disliked, and the ten-run
+cap would bound nothing.
+
+If a goal starts on a concept whose state shows `reopen_history`, that is normal
+and it is your instruction set: the newest entry's `reason` says what was wrong
+with the SQL the previous run shipped, and `superseded_justification` is the
+argument that was set aside. Read both. Fix the named defect, and do not
+reproduce the superseded justification as your own — you must re-derive the
+divergence from this run's comparison, because the reason the concept was
+reopened is that the old SQL is no longer the SQL being judged.
 
 ### Phase 8 — Terminal state
 After the state transition to COMPLETED, COMPLETED_WITH_DIVERGENCE, FAILED, or
@@ -457,7 +601,7 @@ Who touches what:
 |---|---|---|
 | `fhir-prober` | both, before mapping | yes — the primary discoverer, it is the agent looking at served data |
 | `concept-implementer` | both, before authoring SQL | yes — constructs that fail over this warehouse |
-| `mismatch-diagnostician` | both, before diagnosing | yes — a full-data divergence is the strongest evidence a quirk exists |
+| `mismatch-diagnostician` | `MIMIC_NOTES.md` **only** — you pass it relevant fragment leads in its task text | yes — a full-data divergence is the strongest evidence a quirk exists |
 | `equivalence-judge` | `MIMIC_NOTES.md` **only** — fragments are provisional and its bar is evidence | **no** — verdict-only, changes no files |
 | `demo-runner`, `hpc-launcher`, `hpc-poller` | not required | no |
 
@@ -474,6 +618,34 @@ Your job across the loop:
    rewrite a section already in your own.
 3. **After the judge (Phase 7)** — the judge cannot write. If its rationale names
    an unrecorded quirk, append that entry before emitting the terminal marker.
+3b. **Promote a confirmed sibling claim into `MIMIC_NOTES.md` (Phase 8).** This
+   is the one case where a loop writes to the curated file, and it is narrow.
+
+   When **all** of the following hold, copy the entry into `MIMIC_NOTES.md`:
+
+   - the claim came from another concept's `MIMIC_NOTES.d/` fragment, and you
+     passed it to a subagent as a lead;
+   - **this concept's own full run confirmed it** — the divergence behaved as
+     the claim predicts, and you can say so with counts from
+     `comparison.full.json`;
+   - the terminal outcome is COMPLETED or COMPLETED_WITH_DIVERGENCE.
+
+   Merge into the existing entry if one is there; otherwise append a `##`
+   section in the file's format, and add a `- Verified:` line naming **this**
+   concept, its attempt number, and the counts you observed — beneath the
+   originating concept's line, not replacing it. Leave the source fragment in
+   place as provenance.
+
+   Why this is safe when a diagnostician writing to the same file was not: the
+   bar the fragment protocol sets is "a full run and a human", and the reason
+   given for it is that one loop's wrong claim must not be adopted as fact by
+   four siblings. A claim that a *second* concept's independent full run
+   reproduced is no longer that risk. A claim you merely read, or that only your
+   subagent's reasoning supports, does **not** qualify — that is the laundering
+   path this rule exists to keep closed.
+
+   Say in the final evidence block which entries you promoted and on what
+   evidence, or that you promoted none.
 4. **At terminal state (Phase 8)** — list in the final evidence block every
    entry this concept appended, or say plainly that it appended none. That list
    is what the human merges from.

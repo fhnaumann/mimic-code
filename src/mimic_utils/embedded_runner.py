@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -131,7 +132,9 @@ def _acquire_spark_lease(holder: Optional[str]) -> Optional[Any]:
         + "\n"
     )
     handle.flush()
-    print(f"spark lease acquired after {waited:.0f}s", flush=True)
+    # stderr, not stdout: this is progress, and a caller running with --json
+    # parses stdout. Two of these lines ahead of the object made `jq` fail.
+    print(f"spark lease acquired after {waited:.0f}s", file=sys.stderr, flush=True)
     return handle
 
 

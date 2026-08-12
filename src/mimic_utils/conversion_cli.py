@@ -11,6 +11,7 @@ nonzero exit codes -- no tracebacks.
 
 Commands
 --------
+  export-mappings [--artifact-root DIR]
   init CONCEPT [--artifact-root DIR]
   status [--artifact-root DIR] [--no-color] [--stale]
   start CONCEPT [--artifact-root DIR]
@@ -22,6 +23,8 @@ Commands
   accept-divergence CONCEPT --justification MSG [--by judge|human]
   skip CONCEPT [--artifact-root DIR] [--counter C]
   retry CONCEPT [--artifact-root DIR] [--force]
+  reopen CONCEPT --reason MSG [--by human] [--force] [--artifact-root DIR]
+  cast-probe CONCEPT --variant-sql PATH [--baseline-sql PATH] [--json]
   resume CONCEPT [--apply] [--json] [--artifact-root DIR] [--force]
   carryover CONCEPT [--json] [--artifact-root DIR]
   carryover-record CONCEPT --stage S [--artifact-root DIR]
@@ -54,6 +57,7 @@ from mimic_utils.duckdb_oracle import (
     ENV_KEY as DUCKDB_ENV_KEY,
     resolve_duckdb_path,
 )
+from mimic_utils.export_mappings import export_mappings
 from mimic_utils.resume import (
     CARRYOVER_STAGES,
     CarryoverStore,
@@ -140,6 +144,32 @@ def cmd_start(
     ), 0
 
 
+def cmd_reopen(
+    concept: str,
+    *,
+    reason: str,
+    decided_by: str = "human",
+    artifact_root: Optional[str] = None,
+    force: bool = False,
+) -> tuple[str, int]:
+    ctrl = ConversionController(artifact_root=artifact_root)
+    _refuse_if_live(ctrl, concept, force=force, action="reopen")
+    previous = ctrl._read_state(concept)  # noqa: SLF001 -- same package
+    superseded = previous.status if previous else "?"
+    st = ctrl.reopen(concept, reason=reason, decided_by=decided_by)
+    return (
+        f"Reopened '{st.concept_name}' from {superseded} -> {st.status} "
+        f"(attempt {st.attempt}, reopen #{st.reopen_count})\n"
+        f"  attempt dir: {ctrl.attempt_dir(concept)}\n"
+        f"  reason: {reason}\n"
+        f"  NOTE: the superseded verdict is kept in reopen_history and cleared "
+        f"from the live fields. This concept now has no verdict and must earn a "
+        f"new one on full data.\n"
+        f"  NOTE: metrics for this run are scoped to attempts > "
+        f"{st.run_baseline['attempt']}; the previous run's artifact stands."
+    ), 0
+
+
 def cmd_transition(
     concept: str,
     target: str,
@@ -190,10 +220,23 @@ def cmd_resume(
     if apply:
         # Only `--apply` is gated. A read-only `resume` on a live concept is
         # exactly how a second terminal finds out it is a second terminal.
-        _refuse_if_live(
-            ConversionController(artifact_root=artifact_root),
-            concept, force=force, action="resume --apply",
-        )
+        #
+        # ...but gate it on whether `--apply` would actually DO anything. The
+        # guard exists to stop a second terminal failing a live attempt and
+        # opening a new one, i.e. throwing away work in progress. When the plan
+        # lists no transitions, `--apply` performs none, so there is nothing to
+        # seize and refusing protects nothing.
+        #
+        # This is not hypothetical: `reopen` stamps `updated_at` and leaves the
+        # concept RUNNING with an empty attempt, and RUNNING goes stale after 45
+        # minutes -- so every reopen blocked the very `/goal` it exists to set
+        # up, for 45 minutes, on an attempt that by construction held no work.
+        preview = resume_plan(concept, artifact_root=artifact_root, apply=False)
+        if preview.transitions:
+            _refuse_if_live(
+                ConversionController(artifact_root=artifact_root),
+                concept, force=force, action="resume --apply",
+            )
     plan = resume_plan(concept, artifact_root=artifact_root, apply=apply)
     if as_json:
         import json as _json
@@ -317,6 +360,41 @@ def _h_start(
     return code
 
 
+def _h_cast_probe(
+    concept: str,
+    variant_sql: str,
+    baseline_sql: Optional[str] = None,
+    artifact_root: Optional[str] = None,
+    scratch_dir: Optional[str] = None,
+    warehouse: Optional[str] = None,
+    json: bool = False,
+) -> _Ec:
+    from mimic_utils.cast_probe import cmd_cast_probe
+
+    msg, code = _safe_run(
+        cmd_cast_probe, concept, variant_sql=variant_sql, baseline_sql=baseline_sql,
+        artifact_root=artifact_root, scratch_dir=scratch_dir, warehouse=warehouse,
+        as_json=json,
+    )
+    print(msg)
+    return code
+
+
+def _h_reopen(
+    concept: str,
+    reason: str,
+    by: str = "human",
+    artifact_root: Optional[str] = None,
+    force: bool = False,
+) -> _Ec:
+    msg, code = _safe_run(
+        cmd_reopen, concept, reason=reason, decided_by=by,
+        artifact_root=artifact_root, force=force,
+    )
+    print(msg)
+    return code
+
+
 def _h_transition(target: str, default_counter: str = "engineering"):
     def handler(
         concept: str,
@@ -337,6 +415,69 @@ def _h_transition(target: str, default_counter: str = "engineering"):
         print(msg)
         return code
     return handler
+
+
+def _h_validate_demo(
+    concept: str,
+    artifact_root: Optional[str] = None,
+    counter: str = "engineering",
+    skip_lint: bool = False,
+    error: Optional[str] = None,
+) -> _Ec:
+    """Lint the attempt's SQL, then transition to VALIDATING_DEMO.
+
+    The lint gates *this* transition rather than `run-demo` because this is the
+    one that freezes the implementation artifacts. Gating the freeze means a
+    resume that re-enters at the full-data leg cannot route around the check:
+    the SQL it would run was already vetted on the way in.
+    """
+    from mimic_utils.sql_lint import format_findings, lint_attempt
+
+    if not skip_lint:
+        sql_path, findings = lint_attempt(concept, artifact_root=artifact_root)
+        if findings:
+            print(format_findings(concept, sql_path, findings))
+            print()
+            print(
+                "REFUSED: not transitioning to VALIDATING_DEMO. Fix the SQL in this\n"
+                "attempt, then run validate-demo again. A human may override with\n"
+                "--skip-lint; no agent does."
+            )
+            return 1
+
+    msg, code = _safe_run(
+        cmd_transition, concept, "VALIDATING_DEMO",
+        artifact_root=artifact_root,
+        error_message=error,
+        counter=counter,
+    )
+    print(msg)
+    return code
+
+
+def _h_lint_sql(concept: Optional[str] = None, artifact_root: Optional[str] = None) -> _Ec:
+    """Report lint violations. Changes nothing; exits 1 if anything was found."""
+    from mimic_utils.sql_lint import format_findings, lint_attempt
+    from mimic_utils.conversion_state import ConversionController
+
+    if concept:
+        concepts = [concept]
+    else:
+        controller = ConversionController(artifact_root=artifact_root)
+        concepts = sorted(controller.dag_concepts)
+
+    total = 0
+    for name in concepts:
+        sql_path, findings = lint_attempt(name, artifact_root=artifact_root)
+        if sql_path is None:
+            continue
+        total += len(findings)
+        if findings or concept:
+            print(format_findings(name, sql_path, findings))
+    if not concept:
+        print()
+        print(f"sql-lint: {total} violation(s) across {len(concepts)} concept(s).")
+    return 1 if total else 0
 
 
 def _h_resume(
@@ -438,6 +579,17 @@ def _h_metrics_report(
         return 4
 
 
+def _h_export_mappings(artifact_root: Optional[str] = None) -> _Ec:
+    """Rebuild the canonical-layout export of finalized concept SQL."""
+    try:
+        path, count = export_mappings(artifact_root=artifact_root)
+        print(f"Exported {count} finalized mapping(s) -> {path}")
+        return 0
+    except (StateError, OSError) as exc:
+        print(f"ERROR: {exc}")
+        return 4
+
+
 # ---------------------------------------------------------------------------
 # Registration
 # ---------------------------------------------------------------------------
@@ -447,6 +599,14 @@ def register_commands(subparsers: _SubParsersAction) -> None:
     """Register conversion-loop sub-commands on an existing subparsers."""
 
     ar = dict(default=None, help="Artifact root directory (default: auto-detect from CWD).")
+
+    # --- finalized mapping export --------------------------------------------
+    p = subparsers.add_parser(
+        "export-mappings",
+        help="Rebuild finalized concept SQL in the canonical concept layout.",
+    )
+    p.add_argument("--artifact-root", **ar)
+    p.set_defaults(func=_h_export_mappings)
 
     # --- init -----------------------------------------------------------------
     p = subparsers.add_parser("init", help="Initialise a concept (DAG-validated).")
@@ -472,12 +632,28 @@ def register_commands(subparsers: _SubParsersAction) -> None:
     p.set_defaults(func=_h_start)
 
     # --- validate-demo --------------------------------------------------------
-    p = subparsers.add_parser("validate-demo", help="-> VALIDATING_DEMO.")
+    p = subparsers.add_parser(
+        "validate-demo",
+        help="-> VALIDATING_DEMO (refuses on a concept.sql lint violation).",
+    )
     p.add_argument("concept")
     p.add_argument("--counter", default="engineering",
                    choices=["semantic", "engineering", "hpc"])
+    p.add_argument("--skip-lint", action="store_true",
+                   help="Transition despite a lint violation. Human escape hatch; "
+                        "no agent runs this.")
     p.add_argument("--artifact-root", **ar)
-    p.set_defaults(func=_h_transition("VALIDATING_DEMO"))
+    p.set_defaults(func=_h_validate_demo)
+
+    # --- lint-sql -------------------------------------------------------------
+    p = subparsers.add_parser(
+        "lint-sql",
+        help="Check attempt concept.sql for known defect classes (no state change).",
+    )
+    p.add_argument("concept", nargs="?",
+                   help="Omit to sweep every concept's current attempt.")
+    p.add_argument("--artifact-root", **ar)
+    p.set_defaults(func=_h_lint_sql)
 
     # --- validate-full --------------------------------------------------------
     p = subparsers.add_parser("validate-full", help="-> VALIDATING_FULL.")
@@ -561,6 +737,59 @@ def register_commands(subparsers: _SubParsersAction) -> None:
              "session you KNOW is dead — never for an undiagnosed error.",
     )
     p.set_defaults(func=_h_start)
+
+    # --- reopen ---------------------------------------------------------------
+    # Separate from `retry` for the same reason `accept-divergence` is separate
+    # from `done`: they are different acts. `retry` resumes an unfinished port;
+    # this sets aside a finished one, and the flag that made it a one-keystroke
+    # difference is exactly the flag that would get used by accident.
+    p = subparsers.add_parser(
+        "reopen",
+        help="Set aside a COMPLETED / COMPLETED_WITH_DIVERGENCE verdict and "
+             "start a new attempt (human only, reason required).",
+    )
+    p.add_argument("concept")
+    p.add_argument(
+        "--reason", required=True,
+        help="What is wrong with the shipped SQL -- the construction being "
+             "replaced and why it changes what the query means. Recorded in "
+             "reopen_history beside the verdict being superseded.",
+    )
+    p.add_argument(
+        "--by", default="human", choices=["human"],
+        help="Only a human reopens a finished port. The choice is fixed and "
+             "explicit so the record says who decided rather than leaving it "
+             "to be inferred from a default.",
+    )
+    p.add_argument(
+        "--force", action="store_true",
+        help="Proceed even though the concept still looks live.",
+    )
+    p.add_argument("--artifact-root", **ar)
+    p.set_defaults(func=_h_reopen)
+
+    # --- cast-probe -----------------------------------------------------------
+    p = subparsers.add_parser(
+        "cast-probe",
+        help="Run two versions of a concept's SQL on demo data and report what "
+             "the edit changed. Touches no state and consumes no attempt.",
+    )
+    p.add_argument("concept")
+    p.add_argument(
+        "--variant-sql", required=True,
+        help="The proposed SQL. Compared against the current attempt's "
+             "concept.sql unless --baseline-sql is given.",
+    )
+    p.add_argument("--baseline-sql", default=None)
+    p.add_argument(
+        "--scratch-dir", default=None,
+        help="Where to stage the two throwaway attempt copies "
+             "(default: <concept>/.cast_probe).",
+    )
+    p.add_argument("--warehouse", default=None)
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--artifact-root", **ar)
+    p.set_defaults(func=_h_cast_probe)
 
     # --- resume ---------------------------------------------------------------
     p = subparsers.add_parser(

@@ -104,6 +104,34 @@ def oracle(tmp_path):
     # No identity column at all: pairing must refuse to claim an anchor.
     con.execute("CREATE TABLE mimiciv_derived.anon (label VARCHAR, amount INTEGER)")
     con.execute("INSERT INTO mimiciv_derived.anon VALUES ('a', 1), ('b', 2)")
+    # Two DST spring-forward wall times and two ordinary ones. The gap rows are
+    # what `mimic-fhir`'s TIMESTAMPTZ cast rewrites and no port can invert; the
+    # ordinary ones must stay unexplained by the same replay, or attribution
+    # would be a licence rather than a proof.
+    con.execute(
+        """CREATE TABLE mimiciv_derived.dst (
+               subject_id INTEGER, hadm_id INTEGER, charttime TIMESTAMP,
+               value DOUBLE)"""
+    )
+    con.execute(
+        """INSERT INTO mimiciv_derived.dst VALUES
+               (1, 100, TIMESTAMP '2153-03-11 02:30:00', 3.0),
+               (2, 200, TIMESTAMP '2181-03-11 02:52:00', 2.0),
+               (3, 300, TIMESTAMP '2154-05-02 15:55:21', 1.0),
+               (4, 400, TIMESTAMP '2160-05-06 07:08:00', 4.0)"""
+    )
+    # The same shape without a key, so the paired residual earns the same
+    # attribution the keyed join does.
+    con.execute(
+        """CREATE TABLE mimiciv_derived.dst_unkeyed (
+               subject_id INTEGER, drug VARCHAR, starttime TIMESTAMP)"""
+    )
+    con.execute(
+        """INSERT INTO mimiciv_derived.dst_unkeyed VALUES
+               (1, 'Lisinopril', TIMESTAMP '2153-03-11 02:30:00'),
+               (2, 'Captopril',  TIMESTAMP '2181-03-11 02:52:00'),
+               (3, 'Ramipril',   TIMESTAMP '2154-05-02 15:55:21')"""
+    )
     con.close()
     return path
 
@@ -153,6 +181,27 @@ def manifest(tmp_path, oracle):
                         "columns": [
                             {"name": "label", "type": "VARCHAR"},
                             {"name": "amount", "type": "INTEGER"},
+                        ],
+                        "key": None,
+                        "comparison": "full_tuple_multiset",
+                    },
+                    "dst": {
+                        "row_count": 4,
+                        "columns": [
+                            {"name": "subject_id", "type": "INTEGER"},
+                            {"name": "hadm_id", "type": "INTEGER"},
+                            {"name": "charttime", "type": "TIMESTAMP"},
+                            {"name": "value", "type": "DOUBLE"},
+                        ],
+                        "key": ["hadm_id"],
+                        "comparison": "keyed_join",
+                    },
+                    "dst_unkeyed": {
+                        "row_count": 3,
+                        "columns": [
+                            {"name": "subject_id", "type": "INTEGER"},
+                            {"name": "drug", "type": "VARCHAR"},
+                            {"name": "starttime", "type": "TIMESTAMP"},
                         ],
                         "key": None,
                         "comparison": "full_tuple_multiset",
@@ -705,7 +754,7 @@ class TestResidualPairing:
     def test_rewritten_timestamp_pairs_and_is_contested(
         self, manifest, oracle, candidate
     ):
-        """The DST shape: the value is present on both sides and disagrees."""
+        """A rewritten value is present on both sides and disagrees."""
         sql = f"""SELECT subject_id, hadm_id, drug,
                          starttime + INTERVAL 1 HOUR AS starttime, stoptime
                   FROM ({self.ALL}) WHERE subject_id = 2
@@ -717,6 +766,11 @@ class TestResidualPairing:
         assert div["tier"] == "contested"
         assert diff["differing_conflict"] == 1
         assert diff["columns_conflicting"] == {"starttime": 1}
+        # `2151-03-12 02:30` is a Friday, so a plain +1h is NOT the upstream
+        # DST cast. Attribution must not fire on the arithmetic alone.
+        assert diff["conflict_attribution"]["complete"] is False
+        assert diff["conflict_attribution"]["attributed_rows"] == 0
+        assert div["attributed"] == []
 
     def test_invented_row_does_not_pair(self, manifest, oracle, candidate):
         """A row the oracle never had must not be absorbed as a substitution."""
@@ -762,6 +816,371 @@ class TestResidualPairing:
         r = compare_full("meds", manifest, oracle, candidate(self.ALL))
         assert r["verdict"] == "match"
         assert r["diff"]["residual_pairing"]["attempted"] is False
+
+
+# ---------------------------------------------------------------------------
+# upstream-ETL attribution
+# ---------------------------------------------------------------------------
+
+
+class TestUpstreamAttribution:
+    """The conflict class the comparator can now explain by itself.
+
+    `mimic-fhir` casts naive MIMIC wall times through `TIMESTAMPTZ`, which is
+    not the identity inside the DST spring-forward gap. That operation is
+    replayable, so a `differing_conflict` that reproduces it is provably
+    upstream transformation loss rather than a port bug -- established here over
+    every conflicting row, not a sample.
+
+    The tests are weighted towards the ways attribution must *refuse*: a
+    licence to call any inconvenient conflict "upstream" would be far worse than
+    the diagnosis it replaces.
+    """
+
+    ALL = "SELECT * FROM mimiciv_derived.dst"
+
+    #: What the upstream cast writes for the two gap rows. Literal rather than
+    #: computed, so the candidate is a stand-in for the ETL's output and the
+    #: replay is exercised only inside the comparator.
+    REPLAYED = f"""SELECT subject_id, hadm_id,
+                          CASE hadm_id
+                              WHEN 100 THEN TIMESTAMP '2153-03-11 03:30:00'
+                              WHEN 200 THEN TIMESTAMP '2181-03-11 03:52:00'
+                              ELSE charttime END AS charttime,
+                          value
+                   FROM ({ALL})"""
+
+    def test_replayed_dst_shift_is_attributed_not_contested(
+        self, manifest, oracle, candidate
+    ):
+        """The cardiac_marker / enzyme / complete_blood_count shape."""
+        r = compare_full("dst", manifest, oracle, candidate(self.REPLAYED))
+        diff, div = r["diff"], r["divergence"]
+
+        assert diff["differing_conflict"] == 2
+        assert diff["columns_conflicting"] == {"charttime": 2}
+
+        attribution = diff["conflict_attribution"]
+        assert attribution["attempted"] is True
+        assert attribution["complete"] is True
+        assert attribution["conflict_rows"] == 2
+        assert attribution["attributed_rows"] == 2
+        assert attribution["residual_rows"] == 0
+        assert attribution["columns"] == {"charttime": 2}
+        assert attribution["timezone"] == "America/New_York"
+
+        # The whole point: out of `contested`, into `attributed`.
+        assert div["tier"] == "attributed"
+        assert div["contested"] == []
+        assert div["blocking"] == []
+        assert [item["class"] for item in div["attributed"]] == ["differing_conflict"]
+        assert div["attributed"][0]["attributed_rows"] == 2
+
+    def test_attribution_never_produces_a_match(self, manifest, oracle, candidate):
+        """The values still differ from the oracle; only a judge may accept that."""
+        r = compare_full("dst", manifest, oracle, candidate(self.REPLAYED))
+
+        assert r["verdict"] == "review"
+        assert r["match"] is False
+        assert r["divergence"]["judge_required"] is True
+
+    def test_the_judge_is_never_skipped_but_the_diagnostician_is(
+        self, manifest, oracle, candidate
+    ):
+        """The saving is the diagnosis, never the final guard."""
+        r = compare_full("dst", manifest, oracle, candidate(self.REPLAYED))
+        div = r["divergence"]
+
+        assert div["judge_required"] is True
+        assert div["diagnostician_required"] is False
+
+    def test_contested_still_requires_the_diagnostician(
+        self, manifest, oracle, candidate
+    ):
+        sql = f"""SELECT subject_id, hadm_id, charttime, value + 100 AS value
+                  FROM ({self.ALL})"""
+        r = compare_full("dst", manifest, oracle, candidate(sql))
+
+        assert r["divergence"]["tier"] == "contested"
+        assert r["divergence"]["diagnostician_required"] is True
+
+    def test_citations_and_the_confirmation_obligation_travel_with_the_finding(
+        self, manifest, oracle, candidate
+    ):
+        """The judge must not have to go and find the citation itself."""
+        r = compare_full("dst", manifest, oracle, candidate(self.REPLAYED))
+        item = r["divergence"]["attributed"][0]
+
+        assert any("fhir_encounter.sql" in c for c in item["citations"])
+        assert "TIMESTAMPTZ" in item["proof"]
+        assert "fraction" in item["judge_must_confirm"]
+
+    def test_the_bar_names_what_the_replay_does_not_prove(
+        self, manifest, oracle, candidate
+    ):
+        """Provenance and shape stay the judge's, explicitly."""
+        r = compare_full("dst", manifest, oracle, candidate(self.REPLAYED))
+        bar = r["divergence"]["judge_bar"]
+
+        assert "PROVENANCE" in bar
+        assert "SHAPE" in bar
+        # The falsification test: a large fraction argues against attribution.
+        assert "`bug`" in bar
+
+    def test_a_plain_hour_shift_off_a_gap_date_is_not_attributed(
+        self, manifest, oracle, candidate
+    ):
+        """`+1 hour` is not the signature; reproducing the *cast* is.
+
+        The two ordinary rows are outside the gap, so round-tripping them
+        through the zone is the identity and a shifted candidate cannot match it.
+        A diagnostician reading "differs by exactly an hour" off a sample would
+        get this wrong.
+        """
+        sql = f"""SELECT subject_id, hadm_id,
+                         charttime + INTERVAL 1 HOUR AS charttime, value
+                  FROM ({self.ALL}) WHERE hadm_id IN (300, 400)
+                  UNION ALL SELECT * FROM ({self.ALL}) WHERE hadm_id IN (100, 200)"""
+        r = compare_full("dst", manifest, oracle, candidate(sql))
+        diff, div = r["diff"], r["divergence"]
+
+        assert diff["differing_conflict"] == 2
+        assert diff["conflict_attribution"]["attributed_rows"] == 0
+        assert diff["conflict_attribution"]["complete"] is False
+        assert div["tier"] == "contested"
+        assert div["attributed"] == []
+
+    def test_partial_attribution_stays_contested(self, manifest, oracle, candidate):
+        """Unexplained rows decide the bar, however many explained ones sit beside them."""
+        sql = f"""SELECT subject_id, hadm_id,
+                         CASE hadm_id
+                             WHEN 100 THEN TIMESTAMP '2153-03-11 03:30:00'
+                             WHEN 200 THEN TIMESTAMP '2181-03-11 03:52:00'
+                             ELSE charttime + INTERVAL 1 HOUR END AS charttime,
+                         value
+                  FROM ({self.ALL})"""
+        r = compare_full("dst", manifest, oracle, candidate(sql))
+        diff, div = r["diff"], r["divergence"]
+
+        assert diff["differing_conflict"] == 4
+        assert diff["conflict_attribution"]["attributed_rows"] == 2
+        assert diff["conflict_attribution"]["residual_rows"] == 2
+        assert diff["conflict_attribution"]["complete"] is False
+        assert div["tier"] == "contested"
+        assert div["attributed"] == []
+        assert div["diagnostician_required"] is True
+        # ...but the diagnostician is told not to re-derive the explained half.
+        notes = " ".join(div["notes"])
+        assert "2 do not" in notes and "residual rows" in notes
+
+    def test_a_non_datetime_conflict_on_the_same_row_blocks_attribution(
+        self, manifest, oracle, candidate
+    ):
+        """The row is the unit: one unexplained column leaves the whole row out."""
+        sql = f"""SELECT subject_id, hadm_id,
+                         CASE hadm_id
+                             WHEN 100 THEN TIMESTAMP '2153-03-11 03:30:00'
+                             WHEN 200 THEN TIMESTAMP '2181-03-11 03:52:00'
+                             ELSE charttime END AS charttime,
+                         CASE WHEN hadm_id = 100 THEN value + 100 ELSE value END
+                             AS value
+                  FROM ({self.ALL})"""
+        r = compare_full("dst", manifest, oracle, candidate(sql))
+        diff, div = r["diff"], r["divergence"]
+
+        assert diff["differing_conflict"] == 2
+        # Row 200 replays; row 100 also has a `value` conflict nothing explains.
+        assert diff["conflict_attribution"]["attributed_rows"] == 1
+        assert diff["conflict_attribution"]["complete"] is False
+        assert div["tier"] == "contested"
+
+    def test_attribution_alongside_a_gap_is_gap_shaped_with_the_addendum(
+        self, manifest, oracle, candidate
+    ):
+        """A gap the judge must still rule on outranks the attributed conflict."""
+        sql = f"""SELECT subject_id, hadm_id,
+                         CASE hadm_id
+                             WHEN 100 THEN TIMESTAMP '2153-03-11 03:30:00'
+                             WHEN 200 THEN TIMESTAMP '2181-03-11 03:52:00'
+                             ELSE charttime END AS charttime,
+                         CASE WHEN hadm_id = 300 THEN NULL ELSE value END AS value
+                  FROM ({self.ALL})"""
+        r = compare_full("dst", manifest, oracle, candidate(sql))
+        diff, div = r["diff"], r["divergence"]
+
+        assert diff["differing_conflict"] == 2
+        assert diff["differing_null_only"] == 1
+        assert div["tier"] == "gap_shaped"
+        assert div["contested"] == []
+        assert len(div["attributed"]) == 1
+        # The gap bar, plus a pointer so the attribution is not absorbed silently.
+        assert "coverage gap" not in div["judge_bar"] or "machine-attributed" in div["judge_bar"]
+        assert "machine-attributed" in div["judge_bar"]
+        # The diagnostician is still not needed: nothing contested remains.
+        assert div["diagnostician_required"] is False
+
+    def test_a_match_carries_no_attribution_at_all(self, manifest, oracle, candidate):
+        """Attribution can lower a bar, so it must not appear where none is needed."""
+        r = compare_full("dst", manifest, oracle, candidate(self.ALL))
+
+        assert r["verdict"] == "match"
+        assert "conflict_attribution" not in r["diff"]
+        assert r["divergence"]["tier"] == "none"
+        assert r["divergence"]["attributed"] == []
+        assert r["divergence"]["conflict_attribution"] is None
+
+    def test_attribution_does_not_depend_on_samples(
+        self, manifest, oracle, candidate
+    ):
+        """It is a count over every conflicting row, not a read of the sample."""
+        r = compare_full(
+            "dst", manifest, oracle, candidate(self.REPLAYED), sample_limit=0
+        )
+        attribution = r["diff"]["conflict_attribution"]
+
+        assert attribution["complete"] is True
+        assert attribution["attributed_rows"] == 2
+        assert "samples" not in attribution
+        assert r["divergence"]["tier"] == "attributed"
+
+    def test_samples_show_the_replayed_value_beside_both_sides(
+        self, manifest, oracle, candidate
+    ):
+        """The judge should be able to eyeball the proof without re-running SQL."""
+        r = compare_full("dst", manifest, oracle, candidate(self.REPLAYED))
+        sample = r["diff"]["conflict_attribution"]["samples"][0]
+
+        assert sample["charttime__replayed"] == sample["charttime__candidate"]
+        assert sample["charttime__replayed"] != sample["charttime__oracle"]
+
+    def test_a_concept_with_no_datetime_column_is_not_attempted(
+        self, manifest, oracle, candidate
+    ):
+        sql = "SELECT label, amount + 1 AS amount FROM mimiciv_derived.anon"
+        r = compare_full("anon", manifest, oracle, candidate(sql))
+        attribution = (r["diff"].get("residual_pairing") or {}).get(
+            "conflict_attribution"
+        )
+
+        if attribution is not None:  # only reached if the residual paired
+            assert attribution["attempted"] is False
+            assert "no datetime column" in attribution["why"]
+
+    def test_unkeyed_paired_residual_earns_the_same_attribution(
+        self, manifest, oracle, candidate
+    ):
+        """An unkeyed concept whose residual paired is diagnosed like a keyed one."""
+        sql = """SELECT subject_id, drug,
+                        CASE subject_id
+                            WHEN 1 THEN TIMESTAMP '2153-03-11 03:30:00'
+                            WHEN 2 THEN TIMESTAMP '2181-03-11 03:52:00'
+                            ELSE starttime END AS starttime
+                 FROM mimiciv_derived.dst_unkeyed"""
+        r = compare_full("dst_unkeyed", manifest, oracle, candidate(sql))
+        diff, div = r["diff"], r["divergence"]
+
+        assert diff["classification"] == "paired_residual"
+        assert diff["differing_conflict"] == 2
+        assert diff["conflict_attribution"]["complete"] is True
+        assert diff["conflict_attribution"]["attributed_rows"] == 2
+        assert div["tier"] == "attributed"
+        assert div["judge_required"] is True
+        assert div["diagnostician_required"] is False
+
+    def test_no_zone_database_means_no_attribution_and_no_fallback(
+        self, manifest, oracle, candidate, monkeypatch
+    ):
+        """Without the ETL's zone rules the conflict stays the diagnostician's.
+
+        There is deliberately no hand-rolled "second Sunday in March" fallback:
+        a weaker proof under the same tier name is the erosion this tier exists
+        to avoid. Degrading to today's behaviour is the correct failure.
+        """
+        import mimic_utils.compare_port_results as cpr
+
+        monkeypatch.setattr(
+            cpr, "_dst_replay_available", lambda con: "icu extension not available"
+        )
+        r = compare_full("dst", manifest, oracle, candidate(self.REPLAYED))
+        diff, div = r["diff"], r["divergence"]
+
+        assert diff["conflict_attribution"]["attempted"] is False
+        assert diff["conflict_attribution"]["complete"] is False
+        assert div["tier"] == "contested"
+        assert div["attributed"] == []
+        assert div["diagnostician_required"] is True
+        assert "not attempted" in " ".join(div["notes"])
+
+    def test_the_sample_payload_is_not_duplicated_into_divergence(
+        self, manifest, oracle, candidate
+    ):
+        r = compare_full("dst", manifest, oracle, candidate(self.REPLAYED))
+
+        assert r["diff"]["conflict_attribution"]["samples"]
+        assert "samples" not in r["divergence"]["conflict_attribution"]
+        # ...but the counts and provenance are on both, so either is routable.
+        assert r["divergence"]["conflict_attribution"]["complete"] is True
+        assert r["divergence"]["conflict_attribution"]["citations"]
+
+    def test_diagnostics_state_the_attribution_and_the_obligation(
+        self, manifest, oracle, candidate
+    ):
+        r = compare_full("dst", manifest, oracle, candidate(self.REPLAYED))
+        text = "\n".join(r["diagnostics"])
+
+        assert "ATTRIBUTED" in text
+        assert "fhir_encounter.sql" in text
+        assert "judge still rules" in text
+
+    def test_attributed_result_exits_unsure_not_fail(
+        self, manifest, oracle, candidate, tmp_path
+    ):
+        """`review` is not a failure, and this tier reads least like one."""
+        out = tmp_path / "attributed.json"
+        rc = compare_port_results_cli([
+            "full", "--concept", "dst", "--manifest", str(manifest),
+            "--oracle", str(oracle), "--candidate", str(candidate(self.REPLAYED)),
+            "--output", str(out),
+        ])
+        assert rc == EXIT_UNSURE
+        assert json.loads(out.read_text())["divergence"]["tier"] == "attributed"
+
+    @pytest.mark.parametrize("tier_sql,tier", [
+        (REPLAYED, "attributed"),
+        ("SELECT subject_id, hadm_id, charttime, value + 100 AS value "
+         "FROM mimiciv_derived.dst", "contested"),
+        ("SELECT subject_id, hadm_id, charttime, NULL::DOUBLE AS value "
+         "FROM mimiciv_derived.dst", "gap_shaped"),
+    ])
+    def test_every_review_tier_exits_unsure_on_both_entry_points(
+        self, manifest, oracle, candidate, tmp_path, tier_sql, tier
+    ):
+        """`mimic_utils compare-port-results` had no `review` branch at all.
+
+        It reimplemented the reporting tail instead of sharing it, and the copy
+        never grew one -- so every `review`, at every tier, exited 1. A caller
+        reading that as failure turns "the judge must look at this" into "this
+        port is wrong", which is precisely what the exit-code contract exists to
+        prevent. Both entry points are pinned here so the copy cannot drift again.
+        """
+        from mimic_utils.__main__ import _compare_port_results_command
+
+        cand = candidate(tier_sql, name=f"cand_{tier}")
+        rc_lib = compare_port_results_cli([
+            "full", "--concept", "dst", "--manifest", str(manifest),
+            "--oracle", str(oracle), "--candidate", str(cand),
+            "--output", str(tmp_path / f"{tier}_lib.json"),
+        ])
+        rc_main = _compare_port_results_command(
+            mode="full", concept="dst", manifest=str(manifest), oracle=str(oracle),
+            candidate=str(cand), output=str(tmp_path / f"{tier}_main.json"),
+        )
+
+        artifact = json.loads((tmp_path / f"{tier}_lib.json").read_text())
+        assert artifact["divergence"]["tier"] == tier
+        assert artifact["verdict"] == "review"
+        assert rc_lib == EXIT_UNSURE
+        assert rc_main == EXIT_UNSURE
 
 
 # ---------------------------------------------------------------------------

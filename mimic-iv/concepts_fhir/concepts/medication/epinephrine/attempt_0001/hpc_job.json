@@ -1,0 +1,8 @@
+{
+  "concept": "epinephrine",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "29714574",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/medication/epinephrine/attempt_0001",
+  "submitted_at": "2026-08-11T05:02:53.045583+00:00",
+  "walltime": "2:00:00"
+}

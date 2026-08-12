@@ -347,6 +347,21 @@ def format_full_report(result: FullRunResult, *, color: bool = True) -> str:
             lines.append(
                 "    Still not a failure: the judge decides, at the raised bar."
             )
+        elif tier == "attributed":
+            attributed = result.divergence.get("attributed") or [{}]
+            lines.append(
+                "    A value conflict, replayed to a known upstream mimic-fhir ETL"
+            )
+            lines.append(
+                "    cast on every conflicting row — so no port can invert it and"
+            )
+            lines.append(
+                "    there is nothing for a diagnosis to add. Citation(s): "
+                + ", ".join(attributed[0].get("citations") or [])
+            )
+            lines.append(
+                "    The judge still rules: it confirms provenance and fraction."
+            )
         else:
             lines.append(
                 "    Only divergence a MIMIC-on-FHIR coverage gap could explain."

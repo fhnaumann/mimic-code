@@ -88,6 +88,18 @@ only your own concept's state, and never transition or retry another goal's.
      that **plus** the upstream `mimic-fhir` ETL statement, file and line, that
      writes a different value than relational MIMIC-IV holds. Diagnose a
      `contested` result before convening the judge at all.
+   - `attributed` (`differing_conflict` only, replayed by the comparator to a
+     known upstream ETL cast on every conflicting row) — the citation is
+     already in `divergence.attributed[]`, so **skip the diagnostician** and
+     convene the judge directly. It confirms provenance and the affected
+     fraction instead of re-deriving the cause.
+
+   Decide whom to spawn from `divergence.judge_required` and
+   `divergence.diagnostician_required`, not from the tier name. The judge runs on
+   every `review` tier without exception — it is the loop's final guard and it is
+   not the expensive stage. The diagnostician is ~70% of the port's token spend,
+   so **not spawning it** is the saving; it is the only stage a machine proof may
+   remove.
 
    On `accept`, record it with
    `mimic_utils accept-divergence <concept> --justification "<the judge's cited

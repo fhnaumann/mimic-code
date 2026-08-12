@@ -145,8 +145,12 @@ same quirk is not re-derived, at HPC-run cost, once per concept. Protocol:
 
 1. **Read it before probing the IG or authoring a ViewDefinition or SQL**, along
    with the fragments in `mimic-iv/concepts_fhir/MIMIC_NOTES.d/`. The
-   `fhir-prober`, `concept-implementer` and `mismatch-diagnostician` ground
-   themselves in both; `equivalence-judge` reads `MIMIC_NOTES.md` only.
+   `fhir-prober` and `concept-implementer` ground themselves in both.
+   `equivalence-judge` and `mismatch-diagnostician` read `MIMIC_NOTES.md` only —
+   the orchestrator reads the fragments for them and names any relevant ones as
+   leads in the task text. Both are fenced for the same reason: their input set
+   has to be enumerable before they start, and the fragment directory grows
+   without bound while the protocol forbids either of them citing one.
 2. When you discover a **dataset/IG-level** quirk — true regardless of concept —
    append it to `MIMIC_NOTES.d/<concept>.md`, the fragment your goal owns.
    Concept-specific findings stay in that attempt's `evidence/<stage>.md`.
@@ -155,13 +159,24 @@ same quirk is not re-derived, at HPC-run cost, once per concept. Protocol:
 4. Name the files in the evidence block whenever you read a quirk that changed
    your mapping, or wrote one — so the promotion is auditable from the attempt.
 
-**`MIMIC_NOTES.md` is read-only for a running loop.** Several goals run at once
-as a wave the human composes, and five loops editing one markdown file in place
-lose each other's writes. Each writes to its own append-only fragment instead,
-and a human merges them into `MIMIC_NOTES.md` between waves — which is also what
-makes an entry there mean "checked" against a fragment's "one loop currently
-believes". Treat another concept's fragment as a lead to verify, never as
-evidence. Protocol in `MIMIC_NOTES.d/README.md`.
+**`MIMIC_NOTES.md` is read-only for a running loop, with one narrow exception.**
+Several goals run at once as a wave the human composes, and five loops editing
+one markdown file in place lose each other's writes. Each writes to its own
+append-only fragment instead, and a human merges them into `MIMIC_NOTES.md`
+between waves — which is also what makes an entry there mean "checked" against a
+fragment's "one loop currently believes". Treat another concept's fragment as a
+lead to verify, never as evidence. Protocol in `MIMIC_NOTES.d/README.md`.
+
+The exception is **self-promotion at Phase 8**, and only the orchestrator does
+it: when a sibling's fragment claim was passed to this loop as a lead and
+**this concept's own full run confirmed it**, the orchestrator merges that entry
+into `MIMIC_NOTES.md` with its own `- Verified:` line. Without this the wave pays
+to rediscover the same fact once per concept — `icp`, `gcs` and `height` each
+independently re-derived that chartevents `Observation.id` is a UUIDv5 over the
+pre-cast `charttime`, each ran its own confirming probe, and each appended a
+near-duplicate fragment, because the protocol correctly forbade them citing one
+another. A claim two independent full runs reproduced is no longer the risk the
+provisional tier exists to contain. A claim only reasoning supports still is.
 
 The judge is the exception in the other direction: it reads `MIMIC_NOTES.md` and
 never writes, because it changes no files at all — a quirk it discovers goes in
@@ -235,7 +250,11 @@ commit after a successful exact match or judge-accepted divergence; no other
 outcome or agent commits. Each attempt is immutable in its own attempt
 subdirectory. State is managed by the `ConversionController` via
 `mimic_utils init|start|validate-demo|validate-full|done|accept-divergence|fail|block`
-CLI commands. In an unactivated shell, prefix every command with `uv run`, for
+CLI commands. Two further commands are human-only and no agent runs them:
+`accept-divergence --by human` (clears a `BLOCKED_REPRESENTATION`) and `reopen`
+(sets aside a finished `COMPLETED` / `COMPLETED_WITH_DIVERGENCE` verdict when
+its SQL turns out to be defective, at the cost of a fresh attempt and a full
+run — see "Reopening a finished port" in `LOOP_CONTRACT.md`). In an unactivated shell, prefix every command with `uv run`, for
 example `uv run mimic_utils status`.
 
 ## Conversion metrics
@@ -303,6 +322,8 @@ Execution commands, distinct from the state transitions above:
 
 | Command | Does |
 |---|---|
+| `lint-sql [<concept>]` | deterministic check of an attempt's `concept.sql` for known defect classes; no state change, exits 1 on a violation. Omit the concept to sweep every current attempt. Run automatically by `validate-demo`, which refuses to freeze a violating attempt |
+| `cast-probe <concept> --variant-sql <f>` | run two SQL variants on demo data and report what the edit changed. Touches no state, consumes no attempt. Exit 0 no difference, 1 falsified, 2 not compared |
 | `run-demo <concept>` | demo shape gate — embedded Pathling on Spark over the demo Delta warehouse, writing Parquet |
 | `run-full <concept>` | full-data execution + keyed diff — runs *on the HPC node*, invoked by the Slurm job, not by hand |
 | `hpc-launch <concept>` | render `submit.slurm`, rsync, login-node smoke test, `sbatch`, record `hpc_job.json` |
@@ -427,7 +448,7 @@ rather than merely counting it, and the verdict follows from the classes:
 | `only_oracle` | yes — this is what a gap looks like | `gap_shaped` |
 | `differing_null_only` | yes — the FHIR element does not exist | `gap_shaped` |
 | `only_candidate` | no — fan-out or a wrong filter | `contested` |
-| `differing_conflict` | no — the row exists on both sides | `contested` |
+| `differing_conflict` | no — the row exists on both sides | `contested`, or `attributed` when the comparator replays it to a known upstream ETL cast on **every** conflicting row |
 | `false_unrepresentable_declaration` | no — the port's claim and its own data contradict | `mismatch`, no judge |
 
 - `match` — nothing diverged. The judge is **never** called.
@@ -450,8 +471,28 @@ unrecoverable by any query. Without that citation the answer is `bug` and the
 loop continues as before. A conflict still outranks a gap — a result with both
 is `contested`.
 
+**One conflict cause is machine-provable, and the comparator proves it.** The
+`TIMESTAMPTZ` cast above is *replayable*: round-tripping the oracle value through
+`America/New_York` reproduces exactly what the ETL wrote. So the comparator
+replays it on **every** conflicting row, and a conflict set it explains
+completely becomes tier `attributed` — carrying the row count, the operation and
+the `mimic-fhir/sql` citations that a `contested` diagnosis would have produced,
+with a stronger proof than a bounded sample supports. This is a deliberate cost
+decision: the diagnostician was ~70% of the loop's token spend, mostly in the
+context it reads before reasoning, so the saving is in **not spawning it**, not
+in telling it to stop early.
+
+It removes the diagnosis and nothing else. `divergence.judge_required` stays
+`true` for every `review` tier, `attributed` never becomes `match`, a partly
+explained conflict set stays `contested`, and a large attributed fraction is
+evidence *against* the attribution — DST-gap wall times are one hour a year, so
+the judge answers `bug` when the numbers do not fit. Route the two agents off
+`divergence.judge_required` and `divergence.diagnostician_required` rather than
+off the tier name.
+
 The class lists above are defined in `src/mimic_utils/compare_port_results.py`
-(`_GAP_CLASSES`, `_CONTESTED_CLASSES`, `_UNRESOLVABLE_CLASSES`), and
+(`_GAP_CLASSES`, `_CONTESTED_CLASSES`, `_UNRESOLVABLE_CLASSES`, and the
+attribution helpers around `_attribute_dst_conflicts`), and
 `mimic-iv/concepts_fhir/LOOP_CONTRACT.md` is authoritative on what they mean.
 
 The 13 unkeyed concepts cannot have their classes separated (a NULL-for-value

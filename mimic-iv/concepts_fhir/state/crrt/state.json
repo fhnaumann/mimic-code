@@ -1,7 +1,7 @@
 {
-  "attempt": 4,
+  "attempt": 5,
   "category": "treatment",
-  "completed_at": "2026-08-11T08:37:47.978620+00:00",
+  "completed_at": null,
   "concept_name": "crrt",
   "dependencies": [],
   "divergence_decided_by": null,
@@ -23,10 +23,24 @@
       "superseded_decided_by": null,
       "superseded_justification": null,
       "superseded_status": "COMPLETED"
+    },
+    {
+      "at": "2026-08-12T02:41:54.079882+00:00",
+      "baseline": {
+        "attempt": 4,
+        "engineering": 6,
+        "hpc": 4,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "attempt_0004/concept.sql:31 and :41 map Observation.effective_datetime and effective_period_start through CAST(TRY_TO_TIMESTAMP(REGEXP_REPLACE(...), pinned-format) AS TIMESTAMP_NTZ). The offset-aware parser re-renders the instant in spark.sql.session.timeZone and the pinned format silently NULLs any shape it misses (date-only values especially), so the recorded exact match holds only at session zone America/New_York and is not reproducible elsewhere. This is the same defect the first reopen was meant to clear; attempt_0004 still carries it. Replace both with a bare TRY_CAST(col AS TIMESTAMP_NTZ), nothing wrapped around it. The REGEXP_REPLACE at :58-59 is unrelated trailing-zero stripping on quantity_value and must stay. mimic_utils validate-demo now refuses this construction (sql_lint datetime-parser).",
+      "superseded_decided_by": null,
+      "superseded_justification": null,
+      "superseded_status": "COMPLETED"
     }
   ],
   "semantic_counter": 2,
-  "started_at": "2026-08-11T06:12:17.410351+00:00",
-  "status": "COMPLETED",
-  "updated_at": "2026-08-11T08:37:47.979023+00:00"
+  "started_at": "2026-08-12T02:41:54.081251+00:00",
+  "status": "RUNNING",
+  "updated_at": "2026-08-12T02:41:54.081490+00:00"
 }

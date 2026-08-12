@@ -84,6 +84,11 @@ COUNTER_NAMES = frozenset({"semantic", "engineering", "hpc"})
 #: Who may accept a divergence. "judge" is the loop's own equivalence judge;
 #: "human" is a manual override recorded against a BLOCKED_REPRESENTATION.
 DIVERGENCE_DECIDERS = frozenset({"judge", "human"})
+#: Statuses a concept can only leave through `reopen`, never through
+#: `start`/`retry`.  Both are finished results with a recorded verdict, so
+#: re-entering one is a decision about evidence rather than a scheduling step,
+#: and it is made by a human with a reason or not at all.
+REOPEN_ONLY_STATUSES = frozenset({"COMPLETED", "COMPLETED_WITH_DIVERGENCE"})
 ATTEMPT_DIR_PATTERN = re.compile(r"^attempt_(\d{4})$")
 CACHE_FILENAME = "state.json"
 
@@ -121,8 +126,19 @@ LEGAL_TRANSITIONS: Dict[str, Set[str]] = {
         "COMPLETED", "COMPLETED_WITH_DIVERGENCE",
         "BLOCKED_REPRESENTATION", "FAILED",
     },
-    "COMPLETED":        set(),
-    "COMPLETED_WITH_DIVERGENCE": set(),
+    # Not sinks, but not ordinarily re-enterable either. The edge exists for one
+    # case: a human found a defect in the *shipped SQL* of a finished port -- a
+    # cast idiom, a construction that is engine-dependent, anything that changes
+    # what the query means. Editing that file in place would leave the attempt's
+    # comparison.full.json and its recorded justification describing a query
+    # that no longer exists, and nothing in the loop hashes concept.sql, so the
+    # drift would be undetectable from the artifacts alone. Re-entry costs a
+    # full run and re-earns the verdict instead.
+    #
+    # `start`/`retry` refuse both (see REOPEN_ONLY_STATUSES): the only way in is
+    # `reopen`, which requires a human and a recorded reason.
+    "COMPLETED":                 {"RUNNING"},
+    "COMPLETED_WITH_DIVERGENCE": {"RUNNING"},
     # BLOCKED_REPRESENTATION is not terminal-terminal: it means "a human must
     # look at this", and the two things a human can conclude are "you are right,
     # try again" (RUNNING) and "this divergence is intrinsic and I accept it"
@@ -339,6 +355,36 @@ class ConceptState:
     # cannot tell the reader which is which is asking to be trusted on the point
     # most worth checking.
     divergence_decided_by: Optional[str] = None
+    # One entry per `reopen`, appended never rewritten. Each records who decided,
+    # why, the verdict being set aside (status, justification, decider), and the
+    # attempt/counter watermarks at that moment.
+    #
+    # The watermarks are what let `metrics-finalize` scope a run to the work that
+    # run actually did. Attempt directories accumulate on disk across reopens and
+    # the three counters are cumulative on this state, so without a baseline the
+    # second run's artifact would bill it for the first run's attempts, judge
+    # invocations and HPC seconds -- and the first run's metrics are already
+    # written and correct, so the same work would appear in both.
+    reopen_history: List[Dict[str, Any]] = field(default_factory=list)
+
+    @property
+    def reopen_count(self) -> int:
+        return len(self.reopen_history)
+
+    @property
+    def run_baseline(self) -> Dict[str, int]:
+        """Attempt/counter watermarks the current run started from.
+
+        All zeroes on a concept that was never reopened, which makes
+        "this run" and "all time" the same numbers -- as they should be.
+        """
+        if not self.reopen_history:
+            return {"attempt": 0, "semantic": 0, "engineering": 0, "hpc": 0}
+        baseline = self.reopen_history[-1].get("baseline") or {}
+        return {
+            key: int(baseline.get(key, 0) or 0)
+            for key in ("attempt", "semantic", "engineering", "hpc")
+        }
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -381,6 +427,14 @@ class ConceptState:
                 f"{sorted(DIVERGENCE_DECIDERS)}; got {decided_by!r}"
             )
 
+        history = raw.get("reopen_history", [])
+        if not isinstance(history, list) or not all(isinstance(h, dict) for h in history):
+            raise ValidationError("reopen_history must be a list of objects")
+        for entry in history:
+            baseline = entry.get("baseline")
+            if baseline is not None and not isinstance(baseline, dict):
+                raise ValidationError("reopen_history[].baseline must be an object or null")
+
         return cls(
             concept_name=raw["concept_name"].strip(),
             status=raw["status"],  # type: ignore[arg-type]
@@ -400,6 +454,7 @@ class ConceptState:
             # is the state `transition` refuses to create in the first place.
             divergence_justification=raw.get("divergence_justification"),
             divergence_decided_by=decided_by,
+            reopen_history=history,
         )
 
 
@@ -515,6 +570,9 @@ class StatusReport:
             elif status == "FAILED":
                 s = f"{R}FAILED{B}"
 
+            if c.get("reopen_count"):
+                s += f" {C}[reopened x{c['reopen_count']}]{B}"
+
             ready_mark = f"{G}yes{B}" if c["ready"] else f"{R}no{B}"
             lines.append(
                 f"  {c['concept']:<24} {c['level']:>2}  {s:<42} {c['attempt']:>3}  {ready_mark}"
@@ -535,6 +593,13 @@ class StatusReport:
             lines.append(f"  {by_judge}/{total} divergence accepted by the judge")
         if by_human:
             lines.append(f"  {by_human}/{total} divergence accepted by a human (manual override)")
+        # A fourth line, also never summed into the others. A reopened concept's
+        # current verdict is sound -- it was re-earned on full data like any
+        # other -- but the reader should know the loop was re-entered by hand
+        # rather than converging on its own.
+        reopened = sum(1 for c in self.concepts if c.get("reopen_count"))
+        if reopened:
+            lines.append(f"  {reopened}/{total} reopened by a human after a recorded verdict")
         return "\n".join(lines)
 
 
@@ -757,11 +822,12 @@ class ConversionController:
                     "missing_deps": sorted(missing),
                     "level": level,
                     "decided_by": st.divergence_decided_by if st else None,
+                    "reopen_count": st.reopen_count if st else 0,
                 })
 
         return StatusReport(active_concepts=active, concepts=concepts)
 
-    def start(self, concept_name: str) -> ConceptState:
+    def start(self, concept_name: str, *, _reopening: bool = False) -> ConceptState:
         """Transition *concept_name* to ``RUNNING``.
 
         Guards:
@@ -788,6 +854,19 @@ class ConversionController:
                 f"allowed from: {sorted(s for s, ts in LEGAL_TRANSITIONS.items() if 'RUNNING' in ts)}"
             )
 
+        # The edge out of a finished result exists, but not on this route. A
+        # `retry` is a scheduling action and takes no argument; setting aside a
+        # verdict that is already recorded, cited and counted in the results
+        # table is not, so it is routed through `reopen` where a human and a
+        # reason are mandatory.
+        if state.status in REOPEN_ONLY_STATUSES and not _reopening:
+            raise TransitionError(
+                f"'{concept_name}' is {state.status} -- a finished result with a "
+                f"recorded verdict. Use `mimic_utils reopen {concept_name} "
+                f"--by human --reason \"...\"` to set that verdict aside and "
+                f"start a new attempt. `retry` will not do it silently."
+            )
+
         # --- deps ---
         missing = self._missing_dependencies(concept_name)
         if missing:
@@ -808,6 +887,106 @@ class ConversionController:
 
         self._write_state(state)
         return state
+
+    def reopen(
+        self,
+        concept_name: str,
+        *,
+        reason: str,
+        decided_by: str = "human",
+    ) -> ConceptState:
+        """Set aside a finished verdict and start a fresh attempt.
+
+        For the case the loop cannot otherwise express: the port is finished and
+        recorded, and a human has found a defect in the SQL it shipped. The
+        alternative -- editing ``concept.sql`` inside the finished attempt -- is
+        worse than it looks. ``export_mappings`` reads the *current* attempt, so
+        the edit silently becomes the exported mapping, while
+        ``comparison.full.json``, ``run_meta.full.json`` and the recorded
+        justification stay behind describing a query that no longer exists.
+        Nothing hashes ``concept.sql``, so no artifact would ever contradict the
+        pair. Re-entry costs a full run and makes the new SQL earn its own
+        verdict.
+
+        The superseded verdict is copied into ``reopen_history`` and then
+        cleared from the live fields, so a reopened concept cannot carry an
+        argument for a divergence it may no longer have.
+
+        ``decided_by`` must be ``"human"``. There is no agent-initiated route
+        into this: an orchestrator that could reopen its own finished concept
+        could retry its way out of any verdict it disliked, and the run cap that
+        bounds a concept at ten full runs would bound nothing.
+        """
+        if decided_by != "human":
+            raise StateError(
+                "reopen requires --by human. Setting aside a recorded verdict is "
+                "a decision taken outside the protocol; an agent that could take "
+                "it could retry its way past any judgement, and the ten-run cap "
+                "would stop bounding anything."
+            )
+        if not (reason or "").strip():
+            raise StateError(
+                "reopen requires --reason: what is wrong with the shipped SQL. "
+                "The superseded verdict was recorded with a cited justification, "
+                "and replacing it with nothing would make the results table "
+                "unreadable at exactly the point a reader would want to check."
+            )
+
+        state = self._read_state(concept_name)
+        if state is None:
+            raise StateError(f"Concept '{concept_name}' has not been initialised")
+        if state.status not in REOPEN_ONLY_STATUSES:
+            raise TransitionError(
+                f"Cannot reopen '{concept_name}': it is {state.status}, not a "
+                f"finished result. reopen applies to {sorted(REOPEN_ONLY_STATUSES)}; "
+                f"use `retry` or `resume` for anything else."
+            )
+
+        # Pre-flight everything `start` will check, BEFORE touching state.
+        # `reopen` is two writes -- the history entry, then the transition --
+        # and a `start` that raises between them leaves a half-applied reopen:
+        # the verdict cleared, the history appended, and the status still
+        # terminal. That intermediate state is one `transition` refuses to
+        # create (a COMPLETED_WITH_DIVERGENCE with no justification), and a
+        # goal already running against the new attempt directory would fail at
+        # its next transition with no way back.
+        next_dir = self._attempt_dir(concept_name, state.attempt + 1)
+        if next_dir.exists():
+            raise StateError(
+                f"Cannot reopen '{concept_name}': {next_dir.name}/ already exists. "
+                f"Either a goal is already running against it -- in which case the "
+                f"reopen it belongs to already happened and repeating it is the "
+                f"error -- or a previous reopen half-applied and needs repairing. "
+                f"Check `status` before retrying; do not delete the directory, it "
+                f"may hold a live attempt's work."
+            )
+        missing = self._missing_dependencies(concept_name)
+        if missing:
+            raise DependencyError(
+                f"Cannot reopen '{concept_name}': unmet dependencies {sorted(missing)}"
+            )
+
+        state.reopen_history = list(state.reopen_history) + [{
+            "at": datetime.now(timezone.utc).isoformat(),
+            "by": decided_by,
+            "reason": reason.strip(),
+            "superseded_status": state.status,
+            "superseded_justification": state.divergence_justification,
+            "superseded_decided_by": state.divergence_decided_by,
+            # Watermarks. Everything at or below these belongs to a previous run
+            # whose metrics artifact is already written.
+            "baseline": {
+                "attempt": state.attempt,
+                "semantic": state.semantic_counter,
+                "engineering": state.engineering_counter,
+                "hpc": state.hpc_counter,
+            },
+        }]
+        state.divergence_justification = None
+        state.divergence_decided_by = None
+        self._write_state(state)
+
+        return self.start(concept_name, _reopening=True)
 
     def transition(
         self,
