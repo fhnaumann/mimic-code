@@ -1,0 +1,17 @@
+{
+  "attempt": 1,
+  "category": "treatment",
+  "completed_at": "2026-08-12T05:21:44.404038+00:00",
+  "concept_name": "invasive_line",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accepted the contested paired-residual review: 92,714/93,378 rows (99.29%) are identical and all 664 conflicts are accounted for by irreversible upstream MIMIC-on-FHIR transformations. The 657 line_site conflicts (555 source 'Right Antecube ' and 102 'L Ventricular ') are caused by mimic-fhir/sql/fhir_procedure_icu.sql:12,62-69 trimming and serializing only Procedure.bodySite.coding.code, with no raw location retained. The 7 starttime conflicts and 1 overlapping endtime conflict are DST-gap rewrites from mimic-fhir/sql/fhir_procedure_icu.sql:10-11,73-76, with no pre-cast endpoint retained; the affected fraction is consistent with DST-gap rarity. The port used the defensible Procedure mapping and TIMESTAMP_NTZ parsing; no fix or carryover invalidation remains.",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 1,
+  "started_at": "2026-08-12T04:30:26.088564+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-12T05:21:44.404448+00:00"
+}

@@ -1,0 +1,34 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/invasive_line-0001-invasive_line_procedure",
+  "name": "invasive_line_procedure",
+  "resource": "Procedure",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "procedure_key" },
+        { "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_key" },
+        { "path": "(performed).ofType(dateTime)", "name": "performed_datetime" },
+        { "path": "(performed).ofType(Period).start", "name": "performed_period_start" },
+        { "path": "(performed).ofType(Period).end", "name": "performed_period_end" }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-d-items' and (code='227719' or code='225752' or code='224269' or code='224267' or code='224270' or code='224272' or code='226124' or code='228169' or code='225202' or code='228286' or code='225204' or code='224263' or code='224560' or code='224264' or code='225203' or code='224273' or code='225789' or code='225761' or code='228201' or code='228202' or code='224268' or code='225199' or code='225315' or code='225205'))",
+      "column": [
+        { "path": "code", "name": "item_code" },
+        { "path": "system", "name": "item_system" },
+        { "path": "display", "name": "item_display" }
+      ]
+    },
+    {
+      "forEachOrNull": "bodySite.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-bodysite')",
+      "column": [
+        { "path": "code", "name": "site_code" },
+        { "path": "system", "name": "site_system" },
+        { "path": "display", "name": "site_display" }
+      ]
+    }
+  ]
+}
