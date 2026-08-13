@@ -1,0 +1,17 @@
+{
+  "attempt": 2,
+  "category": "medication",
+  "completed_at": "2026-08-13T06:15:10.148324+00:00",
+  "concept_name": "milrinone",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "ICU MedicationAdministration carries no inputevents.linkorderid FHIR element or identifier, explaining the declared typed-NULL ancillary column and 9,569 differing_null_only rows; exact medication, Encounter identifier, both effective variants, TIMESTAMP_NTZ, numeric casts, and opaque equality joins were tried. The remaining 4 underlying affected administrations (2 endtime conflicts plus 2 shifted starttime key pairs) are fully and exactly attributed with zero residual to mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69, whose TIMESTAMPTZ DST-gap normalization is irreversible and affects 0.0418% of 9,573 rows. No resource-id inversion was used and no divergent dependencies exist.",
+  "engineering_counter": 3,
+  "error_message": null,
+  "hpc_counter": 2,
+  "reopen_history": [],
+  "semantic_counter": 1,
+  "started_at": "2026-08-13T06:01:41.626394+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-13T06:15:10.149191+00:00"
+}

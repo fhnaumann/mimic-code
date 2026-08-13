@@ -1,0 +1,5 @@
+# Concept-implementer evidence
+
+The implementer read the source and FHIR-prober carryover, LOOP_CONTRACT.md, AGENTS.md, curated notes, and sibling ICU medication findings. It created two ViewDefinitions and one derived SQL query in the immutable attempt. The medication view filters the exact ICU medication coding system and code `221986`, projects context identity, both effective[x] forms, and dosage Quantity values. The Encounter view restricts identifiers to the ICU system and exposes the identifier value for the integer `stay_id` cast. SQL uses equality joins on opaque reference keys only, bounded numeric/datetime casts, a typed NULL `linkorderid`, and an explicit `unrepresentable.json` declaration.
+
+JSON validation, `git diff --check`, and `uv run mimic_utils lint-sql milrinone` passed. Artifacts created: `ViewDefinition.medication_administration.json`, `ViewDefinition.encounter_icu.json`, `concept.sql`, and `unrepresentable.json` under `attempt_0001/`. No new dataset-wide note was appended.

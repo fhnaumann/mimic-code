@@ -1,0 +1,7 @@
+# Equivalence-judge evidence
+
+The independent judge reviewed attempt 0002's full comparison, implementation, prior attempt history, curated notes, and essentiality evidence. It returned `accept` for the `gap_shaped` review. The absent element is `MedicationAdministration.identifier` (and no other FHIR path) carrying `inputevents.linkorderid`; the prober found 0/20,404 ICU MedicationAdministration resources with a non-empty identifier. The typed NULL explains the 9,569 null-only rows and is ancillary to inclusion, comparator key `(stay_id,starttime)`, grouping, carry-forward, and clinical derivation. Exact medication coding, ICU Encounter identifier mapping, both effective variants, TIMESTAMP_NTZ, numeric casts, and opaque equality joins were tried; no resource-id inversion was used.
+
+The corrected provenance is accepted: `mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69` writes the effective endpoints projected by the view. Four underlying affected administrations out of 9,573 (0.0418%) replay exactly as the New York DST-gap transformation, with zero residual. Fidelity is 9,569/9,573 (99.96%) on representable columns and 0/9,573 total due solely to the declared column. No divergent dependencies.
+
+Judge verdict: `accept`; justification: ICU MedicationAdministration carries no `inputevents.linkorderid`, explaining the declared all-NULL ancillary column, while the remaining timestamp divergences are fully and exactly attributable to the cited irreversible DST-gap ETL normalization. No files were modified by the judge.

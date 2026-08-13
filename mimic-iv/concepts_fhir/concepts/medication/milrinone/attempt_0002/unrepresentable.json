@@ -1,0 +1,3 @@
+{
+  "linkorderid": "No FHIR element. ICU MedicationAdministration has no identifier carrying inputevents.linkorderid; the authoritative Delta probe found no non-empty identifier on 20,404 ICU medication resources, and the ICU ETL writes no linkorderid. This ancillary output is emitted as typed NULL rather than inferred from an opaque resource id."
+}
