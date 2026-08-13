@@ -13,3 +13,7 @@
 ## Chartevents Observation.id preserves a recoverable witness for DST-normalized charttime
 - Affected: `Observation.id` and `Observation.effectiveDateTime` on resources generated from `mimiciv_icu.chartevents`.
 - Verified: `icp` attempt `0001` reported 38 `only_oracle`, 4 `only_candidate`, and 12 `differing_conflict` rows; all 20 sampled missing keys were source 02:xx, all 4 candidate-only keys were served 03:xx (each paired at +1 hour to a sampled missing key), and all 12 conflicts were 03:xx collision groups. `mimic-fhir/sql/fhir_observation_chartevents.sql:9,67` normalizes the source time before writing `effectiveDateTime`, but lines 21, 41, and 45 write an Observation UUIDv5 generated from the original `stay_id-charttime-itemid-value`; an ICP-specific embedded probe regenerated 313/313 served demo IDs from the projected stay identifier, item code, effective wall time, and normalized Quantity string. Test the served time and one hour earlier against the resource ID before grouping rather than blanket-shifting 03:xx rows.
+
+## Superseded: Observation.id is opaque identity, not a charttime recovery path
+- Affected: `Observation.id` / `getResourceKey()` on chartevents-derived resources.
+- Verified: policy review on 2026-08-13 retained the historical measurement above but rejected its recommendation. Reconstructing UUIDv5 from candidate source values uses ETL row identity as a semantic side channel and is forbidden even when exact. Reopened ICP must use served `effectiveDateTime`; the comparator and judge handle proven New York DST normalization.

@@ -1,0 +1,333 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/icp/attempt_0003/candidate.full.parquet/*.parquet",
+  "comparison": "keyed_join",
+  "concept": "icp",
+  "dataset": "full",
+  "diagnostics": [
+    "row count (not gated): oracle 173,273 vs candidate 173,258 (delta -15)",
+    "CONTESTED \u2014 a value conflict. Either a port bug or upstream ETL transformation loss; the data cannot tell you which:",
+    "  2 \u00d7 only_candidate (0.001% of oracle rows) \u2014 rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it",
+    "  4 \u00d7 differing_conflict (0.002% of oracle rows) \u2014 matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone",
+    "    column 'icp' conflicts on 4 row(s) (0.002% of oracle rows)",
+    "  bar for an accept: A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "GAP-SHAPED \u2014 consistent with a MIMIC-on-FHIR coverage gap:",
+    "  17 \u00d7 only_oracle \u2014 oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes",
+    "173,252 of 173,273 oracle rows reproduced identically (99.99%)",
+    "note: upstream conflict attribution not attempted: no datetime column in this concept; the DST cast cannot apply",
+    "note: 2 of 17 `only_oracle` rows re-pair with an unpaired candidate row once the oracle key is replayed through the upstream upstream_timestamptz_dst_shift; 15 do not. The tier stays on those residual rows."
+  ],
+  "diff": {
+    "classification": "keyed",
+    "columns_candidate_null": {},
+    "columns_conflicting": {
+      "icp": 4
+    },
+    "columns_differing": {
+      "icp": 4
+    },
+    "conflict_attribution": {
+      "attempted": false,
+      "complete": false,
+      "why": "no datetime column in this concept; the DST cast cannot apply"
+    },
+    "differing": 4,
+    "differing_conflict": 4,
+    "differing_null_only": 0,
+    "excluded_as_unrepresentable": [],
+    "identical": 173252,
+    "identical_representable": 173252,
+    "key": [
+      "subject_id",
+      "charttime"
+    ],
+    "key_attribution": {
+      "attempted": true,
+      "attributed_only_candidate": 2,
+      "attributed_only_oracle": 2,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44"
+      ],
+      "complete": false,
+      "keys_considered": [
+        "charttime"
+      ],
+      "only_candidate": 2,
+      "only_oracle": 17,
+      "operation": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+      "residual_only_candidate": 0,
+      "residual_only_oracle": 15,
+      "samples": [
+        {
+          "charttime": "2172-03-08T02:20:00",
+          "charttime__replayed": "2172-03-08T03:20:00",
+          "subject_id": 16129000
+        },
+        {
+          "charttime": "2172-03-08T02:10:00",
+          "charttime__replayed": "2172-03-08T03:10:00",
+          "subject_id": 16129000
+        }
+      ],
+      "timezone": "America/New_York"
+    },
+    "only_candidate": 2,
+    "only_oracle": 17,
+    "samples": {
+      "differing_conflict": [
+        {
+          "charttime": "2148-03-10T03:00:00",
+          "icp__candidate": 11.0,
+          "icp__oracle": 9.0,
+          "stay_id__candidate": 35951426,
+          "stay_id__oracle": 35951426,
+          "subject_id": 10739652
+        },
+        {
+          "charttime": "2187-03-11T03:00:00",
+          "icp__candidate": 9.0,
+          "icp__oracle": 4.0,
+          "stay_id__candidate": 34552544,
+          "stay_id__oracle": 34552544,
+          "subject_id": 13269046
+        },
+        {
+          "charttime": "2132-03-09T03:00:00",
+          "icp__candidate": 4.0,
+          "icp__oracle": 3.0,
+          "stay_id__candidate": 31510978,
+          "stay_id__oracle": 31510978,
+          "subject_id": 11540384
+        },
+        {
+          "charttime": "2185-03-13T03:00:00",
+          "icp__candidate": 16.0,
+          "icp__oracle": 13.0,
+          "stay_id__candidate": 39972274,
+          "stay_id__oracle": 39972274,
+          "subject_id": 16438315
+        }
+      ],
+      "differing_null_only": [],
+      "only_candidate": [
+        {
+          "charttime": "2172-03-08T03:10:00",
+          "subject_id": 16129000
+        },
+        {
+          "charttime": "2172-03-08T03:20:00",
+          "subject_id": 16129000
+        }
+      ],
+      "only_oracle": [
+        {
+          "charttime": "2172-03-08T02:00:00",
+          "subject_id": 16129000
+        },
+        {
+          "charttime": "2148-03-10T02:00:00",
+          "subject_id": 10739652
+        },
+        {
+          "charttime": "2172-03-08T02:10:00",
+          "subject_id": 16129000
+        },
+        {
+          "charttime": "2133-03-08T02:00:00",
+          "subject_id": 17170682
+        },
+        {
+          "charttime": "2163-03-13T02:00:00",
+          "subject_id": 13817882
+        },
+        {
+          "charttime": "2147-03-12T02:00:00",
+          "subject_id": 11275795
+        },
+        {
+          "charttime": "2160-03-09T02:00:00",
+          "subject_id": 10445331
+        },
+        {
+          "charttime": "2155-03-09T02:00:00",
+          "subject_id": 12543250
+        },
+        {
+          "charttime": "2173-03-14T02:00:00",
+          "subject_id": 15552902
+        },
+        {
+          "charttime": "2172-03-08T02:20:00",
+          "subject_id": 16129000
+        },
+        {
+          "charttime": "2185-03-13T02:00:00",
+          "subject_id": 16438315
+        },
+        {
+          "charttime": "2165-03-10T02:00:00",
+          "subject_id": 13301658
+        },
+        {
+          "charttime": "2118-03-13T02:00:00",
+          "subject_id": 16835786
+        },
+        {
+          "charttime": "2187-03-11T02:00:00",
+          "subject_id": 13269046
+        },
+        {
+          "charttime": "2143-03-10T02:00:00",
+          "subject_id": 11008656
+        },
+        {
+          "charttime": "2132-03-09T02:00:00",
+          "subject_id": 11540384
+        },
+        {
+          "charttime": "2158-03-12T02:00:00",
+          "subject_id": 17548402
+        }
+      ]
+    }
+  },
+  "divergence": {
+    "attributed": [],
+    "blocking": [
+      {
+        "class": "only_candidate",
+        "count": 2,
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      },
+      {
+        "class": "differing_conflict",
+        "count": 4,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "classification": "keyed",
+    "conflict_attribution": {
+      "attempted": false,
+      "complete": false,
+      "why": "no datetime column in this concept; the DST cast cannot apply"
+    },
+    "contested": [
+      {
+        "class": "only_candidate",
+        "count": 2,
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      },
+      {
+        "class": "differing_conflict",
+        "count": 4,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "declared_unrepresentable": {},
+    "diagnostician_required": true,
+    "gap_shaped": [
+      {
+        "class": "only_oracle",
+        "count": 17,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "identical_fraction": 0.999879,
+    "identical_rows": 173252,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "key_attribution": {
+      "attempted": true,
+      "attributed_only_candidate": 2,
+      "attributed_only_oracle": 2,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44"
+      ],
+      "complete": false,
+      "keys_considered": [
+        "charttime"
+      ],
+      "only_candidate": 2,
+      "only_oracle": 17,
+      "operation": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+      "residual_only_candidate": 0,
+      "residual_only_oracle": 15,
+      "timezone": "America/New_York"
+    },
+    "notes": [
+      "upstream conflict attribution not attempted: no datetime column in this concept; the DST cast cannot apply",
+      "2 of 17 `only_oracle` rows re-pair with an unpaired candidate row once the oracle key is replayed through the upstream upstream_timestamptz_dst_shift; 15 do not. The tier stays on those residual rows."
+    ],
+    "oracle_rows": 173273,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [
+      {
+        "class": "only_candidate",
+        "count": 2,
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      },
+      {
+        "class": "differing_conflict",
+        "count": 4,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      },
+      {
+        "class": "only_oracle",
+        "count": 17,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "1600144389317208984087802",
+    "manifest_row_count": 173273,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.icp"
+  },
+  "row_count": {
+    "candidate": 173258,
+    "delta": -15,
+    "gated": false,
+    "match": false,
+    "oracle": 173273
+  },
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "stay_id",
+      "charttime",
+      "icp"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "stay_id",
+      "charttime",
+      "icp"
+    ],
+    "extra_columns": [],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "verdict": "review"
+}

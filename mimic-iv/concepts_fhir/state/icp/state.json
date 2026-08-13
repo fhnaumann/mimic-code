@@ -1,17 +1,32 @@
 {
-  "attempt": 2,
+  "attempt": 3,
   "category": "measurement",
-  "completed_at": "2026-08-11T11:08:25.068215+00:00",
+  "completed_at": "2026-08-13T03:20:01.109995+00:00",
   "concept_name": "icp",
   "dependencies": [],
-  "divergence_decided_by": null,
-  "divergence_justification": null,
-  "engineering_counter": 3,
+  "divergence_decided_by": "judge",
+  "divergence_justification": "The chartevents ETL casts source charttime through TIMESTAMPTZ at fhir_observation_chartevents.sql:9 and writes the irreversibly normalized value to Observation.effectiveDateTime at line 67. All 17 shifted source rows are explained: two re-key to candidate rows and 15 collide at 03:00, causing four MAX conflicts. The original wall time is absent from admissible FHIR fields\u2014issued is storetime, and UUID inversion is forbidden\u2014so attempt 0003 is faithful to the served representation.",
+  "engineering_counter": 4,
   "error_message": null,
-  "hpc_counter": 2,
-  "reopen_history": [],
-  "semantic_counter": 1,
-  "started_at": "2026-08-11T10:50:05.290944+00:00",
-  "status": "COMPLETED",
-  "updated_at": "2026-08-11T11:08:25.068485+00:00"
+  "hpc_counter": 3,
+  "reopen_history": [
+    {
+      "at": "2026-08-13T03:01:30.119723+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 3,
+        "hpc": 2,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "concept.sql recomputes the ETL's Observation.id UUIDv5 (SHA1 over a hardcoded namespace) to detect and undo a one-hour DST shift. Resource ids are opaque identity, so this is not a FHIR mapping and is refused by sql_lint (resource-id-inversion). No warehouse rebuild is needed: UTC-pinned reads remove the false Sydney effect, and comparator key_attribution exposes the residual upstream New York shift as an attributed divergence without inversion.",
+      "superseded_decided_by": null,
+      "superseded_justification": null,
+      "superseded_status": "COMPLETED"
+    }
+  ],
+  "semantic_counter": 2,
+  "started_at": "2026-08-13T03:01:30.120893+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-13T03:20:01.110276+00:00"
 }
