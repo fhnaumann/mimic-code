@@ -1,0 +1,25 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/crrt-0006-crrt_observation",
+  "name": "crrt_observation",
+  "resource": "Observation",
+  "select": [
+    {
+      "column": [
+        { "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_key" },
+        { "path": "(effective).ofType(dateTime)", "name": "effective_datetime" },
+        { "path": "(effective).ofType(Period).start", "name": "effective_period_start" },
+        { "path": "(value).ofType(Quantity).value", "name": "quantity_value" },
+        { "path": "(value).ofType(string)", "name": "string_value" }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items' and (code='227290' or code='224146' or code='224149' or code='224144' or code='228004' or code='225183' or code='225977' or code='224154' or code='224151' or code='224150' or code='225958' or code='224145' or code='224191' or code='228005' or code='228006' or code='225976' or code='224153' or code='224152' or code='226457'))",
+      "column": [
+        { "path": "code", "name": "item_code" },
+        { "path": "system", "name": "code_system" }
+      ]
+    }
+  ]
+}

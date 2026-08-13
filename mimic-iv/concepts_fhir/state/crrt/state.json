@@ -1,14 +1,14 @@
 {
-  "attempt": 5,
+  "attempt": 6,
   "category": "treatment",
-  "completed_at": "2026-08-12T03:06:59.206748+00:00",
+  "completed_at": "2026-08-13T04:29:49.853065+00:00",
   "concept_name": "crrt",
   "dependencies": [],
-  "divergence_decided_by": null,
-  "divergence_justification": null,
-  "engineering_counter": 8,
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accepted attempt_0006: mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 irreversibly normalizes spring-forward chartevents charttime before writing Observation.effectiveDateTime. The comparator found 287078/287152 identical rows, with 16 key-shift pairs and 32 residual collision losses producing 26 conflicts; the original wall time is unrecoverable by permissible FHIR queries because it survives only in opaque Observation.id identity. All defensible mappings were exhausted and this is the contract's accepted New York DST transformation loss.",
+  "engineering_counter": 9,
   "error_message": null,
-  "hpc_counter": 5,
+  "hpc_counter": 6,
   "reopen_history": [
     {
       "at": "2026-08-11T06:12:17.408546+00:00",
@@ -37,10 +37,24 @@
       "superseded_decided_by": null,
       "superseded_justification": null,
       "superseded_status": "COMPLETED"
+    },
+    {
+      "at": "2026-08-13T04:04:52.002135+00:00",
+      "baseline": {
+        "attempt": 5,
+        "engineering": 8,
+        "hpc": 5,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "Same Observation.id UUIDv5 inversion as icp, plus a REGEXP_REPLACE that guesses how the source value was stringified in order to rebuild the hash input. Refused by sql_lint (resource-id-inversion); UTC-pinned reads plus comparator key_attribution make it unnecessary. The 100% exact match was earned through an opaque-id side channel and is withdrawn.",
+      "superseded_decided_by": null,
+      "superseded_justification": null,
+      "superseded_status": "COMPLETED"
     }
   ],
-  "semantic_counter": 2,
-  "started_at": "2026-08-12T02:41:54.081251+00:00",
-  "status": "COMPLETED",
-  "updated_at": "2026-08-12T03:06:59.206988+00:00"
+  "semantic_counter": 3,
+  "started_at": "2026-08-13T04:04:52.003622+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-13T04:29:49.853364+00:00"
 }
