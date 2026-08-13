@@ -1,17 +1,32 @@
 {
-  "attempt": 1,
+  "attempt": 2,
   "category": "demographics",
-  "completed_at": "2026-08-12T03:52:21.027457+00:00",
+  "completed_at": "2026-08-13T04:42:18.652340+00:00",
   "concept_name": "icustay_times",
   "dependencies": [],
-  "divergence_decided_by": null,
-  "divergence_justification": null,
-  "engineering_counter": 2,
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Equivalence judge accepted the contested 8-row divergence (7 intime_hr and 1 outtime_hr; 8/73,181 = 0.011%) as intrinsic upstream MIMIC-on-FHIR transformation loss. mimic-fhir/sql/fhir_observation_chartevents.sql:9 casts source chartevents.charttime through TIMESTAMPTZ and line 67 writes Observation.effectiveDateTime, so spring-forward-gap 02:mm values become 03:mm; MIN after this many-to-one transformation can select a genuine 03:00/03:02 row, and the original wall time is unrecoverable from FHIR. Observation.id is opaque and UUID reconstruction is forbidden. Schema and row identity matched, 73,173/73,181 rows were identical, and the localized endpoint loss is ancillary: it changes no row inclusion, key, grouping, carry-forward, or clinical branch.",
+  "engineering_counter": 3,
   "error_message": null,
-  "hpc_counter": 1,
-  "reopen_history": [],
-  "semantic_counter": 0,
-  "started_at": "2026-08-12T03:12:23.228206+00:00",
-  "status": "COMPLETED",
-  "updated_at": "2026-08-12T03:52:21.028157+00:00"
+  "hpc_counter": 2,
+  "reopen_history": [
+    {
+      "at": "2026-08-13T04:05:14.700771+00:00",
+      "baseline": {
+        "attempt": 1,
+        "engineering": 2,
+        "hpc": 1,
+        "semantic": 0
+      },
+      "by": "human",
+      "reason": "Same Observation.id UUIDv5 inversion as icp. Refused by sql_lint (resource-id-inversion); UTC-pinned reads plus comparator key_attribution make it unnecessary.",
+      "superseded_decided_by": null,
+      "superseded_justification": null,
+      "superseded_status": "COMPLETED"
+    }
+  ],
+  "semantic_counter": 1,
+  "started_at": "2026-08-13T04:05:14.702191+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-13T04:42:18.652620+00:00"
 }

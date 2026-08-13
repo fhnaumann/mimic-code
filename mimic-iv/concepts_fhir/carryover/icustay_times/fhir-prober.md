@@ -1,53 +1,62 @@
 # FHIR prober mapping: `icustay_times`
 
-**Probe date:** 2026-08-12  
+**Probe date:** 2026-08-13  
+**Attempt:** `0002` (re-run after invalidation)  
 **Authoritative Delta:** `/Users/nau025/warehouses/mimic-iv-demo/delta`  
-**Engine:** embedded Pathling 9.6.0 / Spark 4.0.2  
+**Engine:** embedded Pathling 9.6.0 / Spark 4.0.2, session timezone pinned to UTC  
 **DuckDB oracle:** `/Users/nau025/warehouses/mimic4-demo.db` (read-only)  
 **Source analysis:** `mimic-iv/concepts_fhir/carryover/icustay_times/source-analyst.md`  
-**Manifest:** 73,181 rows, keyed by `stay_id`; `subject_id`, `hadm_id`, and
-`stay_id` are `INTEGER`, `intime_hr` and `outtime_hr` are `TIMESTAMP`.
+**Manifest:** 73,181 rows keyed by `stay_id`; `subject_id`, `hadm_id`, and
+`stay_id` are `INTEGER`; `intime_hr` and `outtime_hr` are `TIMESTAMP`.
 
-## Resource mapping
+## Reopened-attempt prohibition
 
-| MIMIC-IV source | FHIR resource/stream | Selection and role |
+The previous carryover used `Observation.id` / `getResourceKey()` UUIDv5
+reconstruction to infer pre-normalization `charttime`. That mapping is
+invalidated and is not reproduced here. Resource and reference IDs are opaque
+identity only: they may be compared for equality to join resources or group
+resources, but must never be parsed, regenerated, guessed, hashed, hardcoded,
+or used to recover `charttime` or any other source value. The port must use the
+served `Observation.effectiveDateTime` and let comparator `key_attribution` and
+the equivalence judge handle any proven upstream DST transformation.
+
+The new probe deliberately used no Observation ID value in a mapping, join,
+comparison, correction, or aggregation.
+
+## Source table to FHIR resource mapping
+
+| MIMIC-IV source | FHIR resource and stream | Selection / role |
 |---|---|---|
-| `mimiciv_icu.icustays` | `Encounter`, ICU identifier stream | `identifier.system = 'http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu'`; 140/140 demo ICU Encounters, one ICU identifier per resource |
-| `mimiciv_icu.chartevents` | `Observation`, chartevents stream | `code.coding.system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items'` and exact `code = '220045'`; 13,913 target demo Observations |
-| MIMIC subject spine | `Patient` | `identifier.system = 'http://mimic.mit.edu/fhir/mimic/identifier/patient'`; 100/100 demo Patients |
-| MIMIC hospital-admission spine for `hadm_id` | `Encounter`, hospital identifier stream | `identifier.system = 'http://mimic.mit.edu/fhir/mimic/identifier/encounter-hosp'`; 275/275 demo hospital Encounters. ICU `partOf` resolves to this stream 140/140. |
+| `mimiciv_icu.icustays` | `Encounter`, ICU stream | Select `Encounter.identifier.system = 'http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu'`. The ICU Encounter identifier carries `stay_id`; its `subject` joins to Patient and its `partOf` joins to the hospital Encounter. The probe found 140 selected ICU resources, one per demo `icustays` row. |
+| `mimiciv_icu.chartevents` | `Observation`, chartevents stream | Select `code.coding.system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items'` and exact `code = '220045'`. The probe found 13,913 target Observations and one target coding per resource. |
+| MIMIC patient spine needed by `icustays.subject_id` | `Patient` | Select `identifier.system = 'http://mimic.mit.edu/fhir/mimic/identifier/patient'`; `identifier.value` carries `subject_id` as a FHIR string. The probe found 100/100 Patient identifiers. |
+| MIMIC hospital-admission spine needed by `icustays.hadm_id` | `Encounter`, hospital stream | Select `identifier.system = 'http://mimic.mit.edu/fhir/mimic/identifier/encounter-hosp'`; `identifier.value` carries `hadm_id` as a FHIR string. The probe found 275/275 hospital Encounters. Join the ICU Encounter `partOf` reference key to this Encounter's resource key. |
 
-The unfiltered Delta `Encounter` table contains 637 resources: 222 ED, 275
-hospital, and 140 ICU. `Encounter.class` is not a discriminator; use the exact
-identifier system. The ICU Encounter is the identifier spine for `stay_id`, and
-its `partOf` reference is the exact UUID join to the hospital Encounter for
-`hadm_id`. Do not use `getResourceKey()` or `getReferenceKey()` as numeric MIMIC
-IDs: those are UUID join keys.
+The unfiltered Delta `Encounter` resource table has 637 rows: 275 hospital,
+140 ICU, and 222 ED. `Encounter.class` is not a stream discriminator. In the
+probe, the exact identifier-system selections produced the expected 140 ICU
+and 275 hospital rows. Do not use `meta.profile` for Observation stream
+selection.
 
-## Confirmed code set and coding cardinality
+## Confirmed coded filter
 
-The source literal is exactly `itemid = 220045`. The served Delta carries it as
-the string code below:
+The source analyst lifted exactly one code: `mimiciv_icu.chartevents.itemid =
+220045`. The authoritative Delta carries the itemid unchanged as a string
+FHIR coding:
 
-| source itemid | FHIR `Coding.code` | FHIR `Coding.system` | display | coding rows | distinct resources | ratio |
+| Source itemid | `Coding.system` | `Coding.code` | `Coding.display` | coding rows | distinct resources | codings/resource |
 |---:|---|---|---|---:|---:|---:|
-| 220045 | `"220045"` | `http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items` | `Heart Rate` | 13,913 | 13,913 | 1.000 |
+| 220045 | `http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items` | `220045` | `Heart Rate` | 13,913 | 13,913 | 1.000 |
 
-The authoritative Delta probe found no alternate system for code `220045` and
-no dead lifted code. The complete chartevents system had 668,862 coding rows on
-668,862 distinct Observation resources (1.000); the target query was 13,913 /
-13,913 (1.000). A constrained coding `forEach` is still required so a future
-second coding cannot fan out the result.
+The exact target code has no alternate system and no dead lifted code. As a
+stream-level check, all chartevents-system codings were 668,862 over 668,862
+distinct resource IDs (ratio 1.000). A served `CodeSystem` resource is not
+available; the system/code/display above were read from the Delta Observation
+codings. `d_items.itemid` is a global primary key with one `linksto` value per
+item, so system plus exact code separates this chartevents stream from other
+ICU item streams. The rule is still system + exact code, never profile.
 
-The discriminator is **`system` plus exact string `code`**, never
-`meta.profile`. `d_items.itemid` is a global primary key with one `linksto`
-value per item, so the exact code separates this chartevents stream from the
-other ICU item streams; profile metadata is not a safe discriminator in merged
-warehouse variants. The Delta contains no served `CodeSystem` resource; code
-presence was established from the Observation codings and the ETL, not a
-terminology lookup.
-
-Canonical coding group:
+Use this constrained coding group, not an unconstrained `code.coding` group:
 
 ```json
 {
@@ -60,16 +69,16 @@ Canonical coding group:
 }
 ```
 
-Comparing against an unfiltered `code.coding` projection gives the same result
-in this warehouse because the measured ratio is 1.000, but retain the
-constraint in the ViewDefinition.
+For this concept the bare and constrained coding projections have the same
+cardinality because the measured ratio is 1.000. Keep the constraint because
+the ratio is a warehouse property, not a FHIR guarantee.
 
 ## Canonical ViewDefinition projections
 
-These are mapping projections only, not an attempt ViewDefinition. The
-`*_key` aliases are UUID/reference strings for joins. The `*_str` aliases are
-FHIR `Identifier.value` strings and must remain string-like in the view before
-the final SQL casts them to the manifest's integer types.
+These are mapping projections, not an attempt ViewDefinition. Identifier
+values remain string-like in the materialized views and are cast only in the
+final SQL. Resource/reference keys are opaque strings used only for equality
+joins.
 
 ### Patient
 
@@ -90,16 +99,17 @@ the final SQL casts them to the manifest's integer types.
     { "path": "getResourceKey()", "name": "encounter_key" },
     { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
     { "path": "partOf.getReferenceKey(Encounter)", "name": "parent_encounter_key" },
-    { "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu').value", "name": "stay_id_str" },
-    { "path": "period.start", "name": "period_start" },
-    { "path": "period.end", "name": "period_end" }
+    { "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu').value", "name": "stay_id_str" }
   ]
 }
 ```
 
-Filter/use the ICU Encounter view with `stay_id_str IS NOT NULL` (or constrain
-the identifier system in the FHIRPath). `parent_encounter_key` joins to the
-hospital Encounter's `encounter_key`; the hospital view needs:
+Filter the materialized ICU view with `stay_id_str IS NOT NULL`. The probe
+found 140/140 selected rows with non-null `encounter_key`, `patient_key`,
+`parent_encounter_key`, and `stay_id_str`; all 140 stay identifiers were
+distinct.
+
+### Hospital Encounter
 
 ```json
 {
@@ -110,7 +120,10 @@ hospital Encounter's `encounter_key`; the hospital view needs:
 }
 ```
 
-### Chart Observation
+Filter the materialized hospital view with `hadm_id_str IS NOT NULL`. The
+probe found 275/275 selected rows with non-null hospital identifiers.
+
+### Heart-rate Observation
 
 ```json
 {
@@ -118,231 +131,222 @@ hospital Encounter's `encounter_key`; the hospital view needs:
     { "path": "getResourceKey()", "name": "observation_key" },
     { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
     { "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_key" },
-    { "path": "(effective).ofType(dateTime)", "name": "effective_datetime" },
-    { "path": "(effective).ofType(Period).start", "name": "effective_period_start" },
-    { "path": "(effective).ofType(instant)", "name": "effective_instant" }
+    { "path": "(effective).ofType(dateTime)", "name": "effective_datetime" }
   ]
 }
 ```
 
-Add the constrained coding group shown above. The source only needs the
-dateTime choice: on the 220045 target, `effective_datetime` was populated
-13,913/13,913; `effective_period_start` 0/13,913; `effective_instant`
-0/13,913. It is useful to project the unused variants during probing to make
-choice behavior explicit, but the implementer can use the confirmed dateTime
-variant alone. Pathling materialized the aliases as:
+Append the constrained coding group above. The source charttime mapping is
+the `dateTime` choice only. On the 13,913 target Observations:
 
-| alias | FHIR type | materialized Spark type | total/non-null |
+| View alias | FHIR type | Materialized Spark type | rows / non-null |
 |---|---|---|---:|
-| `observation_key` | resource key | `STRING` | 13,913 / 13,913 |
+| `observation_key` | opaque `Observation` resource key | `STRING` | 13,913 / 13,913 |
 | `patient_key` | `Reference(Patient)` key | `STRING` | 13,913 / 13,913 |
 | `encounter_key` | `Reference(Encounter)` key | `STRING` | 13,913 / 13,913 |
 | `effective_datetime` | `dateTime` | `STRING` | 13,913 / 13,913 |
-| `effective_period_start` | `Period.start` | `STRING` | 0 / 13,913 |
-| `effective_instant` | `instant` | `TIMESTAMP` | 0 / 13,913 |
-| `item_code` | `Coding.code` | `STRING` | 13,913 / 13,913 |
-| `item_system` | `Coding.system` | `STRING` | 13,913 / 13,913 |
-| `item_display` | `Coding.display` | `STRING` | 13,913 / 13,913 |
-| `(value).ofType(Quantity).value` | `Quantity.value` | `STRING` alias; raw field `DECIMAL(32,6)` | 13,913 / 13,913 |
+| `effective_period_start` (probe-only) | `Period.start` | `STRING` | 13,913 / 0 |
+| `effective_instant` (probe-only) | `instant` | `TIMESTAMP` | 13,913 / 0 |
+| `quantity_value` (probe-only) | `Quantity.value` decimal | ViewDefinition alias `STRING` | 13,913 / 13,913 |
 
-`valueQuantity` was populated 13,913/13,913 for the target; the source
-`valuenum` and `value` were non-null in all 13,913 demo target rows. The value
-is not needed by the source aggregation, but it is an identity witness for
-the two DST-normalized rows described below.
+The `Period`, `instant`, and Quantity aliases above are probe evidence only;
+the source SQL does not need them. In particular, do not coalesce the unused
+native `instant` alias with the string `dateTime` alias: that can cause Spark
+to parse the offset as an instant before the wall-clock cast.
 
-## Source-column to FHIRPath mapping
+## Source-column to FHIRPath mapping and target types
 
-| Source column / output | Canonical mapping `{path, name}` | FHIR type / served type | Required final output and use |
+| Source column / output | Canonical mapping `{path, name}` | FHIR type and served type | Final SQL requirement |
 |---|---|---|---|
-| `icustays.subject_id` → `subject_id` | ICU `{ "path": "subject.getReferenceKey(Patient)", "name": "patient_key" }`; Patient `{ "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/patient').value", "name": "subject_id_str" }` | `Reference(Patient)` key `STRING`; `Identifier.value` `string` / `STRING` | join on UUID key, then `CAST(subject_id_str AS INTEGER)` → manifest `subject_id INTEGER` |
-| `icustays.hadm_id` → `hadm_id` | ICU `{ "path": "partOf.getReferenceKey(Encounter)", "name": "parent_encounter_key" }`; hospital `{ "path": "getResourceKey()", "name": "encounter_key" }` plus `{ "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-hosp').value", "name": "hadm_id_str" }` | Reference/resource keys `STRING`; identifier `string` / `STRING` | exact ICU `partOf` join, then `CAST(hadm_id_str AS INTEGER)` → `hadm_id INTEGER` |
-| `icustays.stay_id` → `stay_id` | ICU `{ "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu').value", "name": "stay_id_str" }` | `Identifier.value` `string` / `STRING` | `CAST(stay_id_str AS INTEGER)` → `stay_id INTEGER`, natural key |
-| `chartevents.charttime` → `intime_hr`, `outtime_hr` input | Observation `{ "path": "(effective).ofType(dateTime)", "name": "effective_datetime" }` | FHIR `dateTime`, offset-bearing `string`; materialized `STRING` | `CAST(effective_datetime AS TIMESTAMP_NTZ)` gives the served wall clock; aggregate `MIN`/`MAX` by `stay_id`. Do not offset-convert. |
-| `chartevents.itemid` | constrained coding `{ "path": "code", "name": "item_code" }` | FHIR `Coding.code` `code`, materialized `STRING` | filter exact string `item_code = '220045'` inside the chartevents system; cast only after system/code filtering if needed |
-| coded system | constrained coding `{ "path": "system", "name": "item_system" }` | FHIR `Coding.system` `uri`, materialized `STRING` | exact discriminator `item_system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items'` |
-| dimension label (not source output) | constrained coding `{ "path": "display", "name": "item_display" }` | FHIR `Coding.display` `string`, materialized `STRING` | `Heart Rate` on 13,913/13,913; no filtering or output use |
-| resource identity (support only) | `{ "path": "getResourceKey()", "name": "observation_key" }` | `Observation` resource key `STRING` | not a source output or natural key; retain for conditional UUID/charttime recovery only |
-| `chartevents.value` / `valuenum` (not source output) | `{ "path": "(value).ofType(Quantity).value", "name": "quantity_value" }` | FHIR `Quantity.value` decimal; ViewDefinition alias `STRING`; raw Delta decimal `DECIMAL(32,6)` | preserve the uncast alias string if recreating the ETL UUID witness; no value arithmetic is needed for `MIN`/`MAX` |
+| `icustays.subject_id` → `subject_id` | ICU Encounter `{ "path": "subject.getReferenceKey(Patient)", "name": "patient_key" }`; Patient `{ "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/patient').value", "name": "subject_id_str" }` | `Reference(Patient)` key is opaque `STRING`; `Identifier.value` is FHIR `string`, materialized `STRING` | Join `patient_key`; `CAST(subject_id_str AS INTEGER)` for manifest `subject_id INTEGER`. Never use `getReferenceKey(Patient)` as the numeric output. |
+| `icustays.hadm_id` → `hadm_id` | ICU Encounter `{ "path": "partOf.getReferenceKey(Encounter)", "name": "parent_encounter_key" }`; hospital Encounter `{ "path": "getResourceKey()", "name": "encounter_key" }` and `{ "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-hosp').value", "name": "hadm_id_str" }` | Reference/resource keys are opaque `STRING`; `Identifier.value` is FHIR `string`, materialized `STRING` | Equality join parent key to hospital resource key; `CAST(hadm_id_str AS INTEGER)` for manifest `hadm_id INTEGER`. |
+| `icustays.stay_id` → `stay_id` | ICU Encounter `{ "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu').value", "name": "stay_id_str" }` | FHIR `Identifier.value` `string`, materialized `STRING` | `CAST(stay_id_str AS INTEGER)` for manifest `stay_id INTEGER`; natural key. |
+| `chartevents.itemid` | constrained coding `{ "path": "code", "name": "item_code" }` | FHIR `Coding.code`, materialized `STRING` | Filter `item_system` plus exact string `item_code = '220045'`; cast only after filtering if needed. |
+| Coding system | constrained coding `{ "path": "system", "name": "item_system" }` | FHIR `uri`, materialized `STRING` | Require the exact chartevents system URI shown above. |
+| Item label | constrained coding `{ "path": "display", "name": "item_display" }` | FHIR `string`, materialized `STRING` | `Heart Rate` on 13,913/13,913; informational only, not a discriminator. |
+| `chartevents.charttime` → `intime_hr` / `outtime_hr` input | `{ "path": "(effective).ofType(dateTime)", "name": "effective_datetime" }` | FHIR `dateTime` with an offset-bearing lexical string; materialized `STRING` | `TRY_CAST(effective_datetime AS TIMESTAMP_NTZ)` directly, then `MIN`/`MAX` by `stay_id_str`. Final output must be the manifest timestamp type while retaining NTZ wall-clock semantics; do not use plain `TIMESTAMP` or offset-aware `to_timestamp`. |
+| Observation reference to ICU stay | `{ "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_key" }` | FHIR `Reference(Encounter)` key, opaque `STRING` | Equality join to ICU `encounter_key`; never parse the reference key. |
+| Observation patient reference | `{ "path": "subject.getReferenceKey(Patient)", "name": "patient_key" }` | FHIR `Reference(Patient)` key, opaque `STRING` | Equality join/provenance only; numeric `subject_id` comes from Patient `identifier.value`. |
+| Resource identity support | `{ "path": "getResourceKey()", "name": "observation_key" }` for Observation; `{ "path": "getResourceKey()", "name": "encounter_key" }` for Encounter; `{ "path": "getResourceKey()", "name": "patient_key" }` for Patient | Opaque resource key, materialized `STRING` | Join/group identity only. Do not use an ID or UUID to infer, correct, or compare a source timestamp or any source value. |
 
-The final SQL must cast all three identifier values to `INTEGER`. It must also
-cast the datetime alias directly to `TIMESTAMP_NTZ`; `CAST(... AS TIMESTAMP)`
-session timezone and can produce different values on the laptop and HPC. There
-is no need to cast `quantity_value` for this concept's MIN/MAX aggregation.
+## NULL preservation and SQL shape
 
-## Cardinality and null probes
+The source creates one row for every `icustays` row and uses a `LEFT JOIN` to
+the heart-rate aggregate. The FHIR implementation must preserve that shape:
 
-Authoritative Delta results:
-
-| Check | Result |
-|---|---:|
-| ICU Encounter resources | 140 |
-| ICU identifier rows / distinct ICU resources | 140 / 140 |
-| ICU `stay_id_str`, Patient key, `parent_encounter_key`, period start/end | 140 / 140 each |
-| Hospital Encounter resources after exact stream selection | 275 |
-| Hospital identifier rows / distinct hospital resources | 275 / 275 |
-| Patient resources / patient identifiers | 100 / 100 |
-| target Observation rows/resources | 13,913 / 13,913 |
-| target Observation subject references | 13,913 / 13,913 |
-| target Observation ICU Encounter references | 13,913 / 13,913 |
-| target effective dateTime | 13,913 / 13,913 |
-| target `Period.start` / `instant` variants | 0 / 0 |
-| target Quantity value | 13,913 / 13,913 |
-| target code/system/display | 13,913 / 13,913 each |
-
-The source DuckDB demo checks found 140 `icustays`, 13,913
-`chartevents.itemid=220045` rows, 140 distinct heart-rate `stay_id` values,
-and 140 stays after the left join. All 140 stays have a heart-rate row and
-therefore non-null `MIN` and `MAX` in the demo; there are no target source NULL
-`value` rows or NULL `valuenum` rows. The target has no duplicate
-`(stay_id, charttime)` heart-rate rows (13,913 rows and 13,913 groups).
-
-The global chartevents ETL predicates still matter on full data: it excludes
-source rows with `value IS NULL` and one hard-coded duplicate tuple
-`(stay_id=34934165, charttime='2151-10-03 05:14:00')` before Observation
-creation. The exact demo query found 0 rows for that tuple and 0/13,913 target
-heart-rate NULL values, so neither omission affected this demo. A source stay
-with no served heart-rate Observation is an intrinsic coverage gap; preserve
-the left-join output row with typed NULL `intime_hr`/`outtime_hr`, not an inner
-join that drops the ICU stay.
-
-## UUID/charttime recovery and DST normalization
-
-The served `Observation.effectiveDateTime` is normally the source charttime
-rendered with an offset. The upstream ETL first computes the Observation UUID
-from the pre-normalization PostgreSQL text and only then casts charttime through
-`TIMESTAMPTZ`:
-
-```text
-uuid = uuid_generate_v5(
-  ns_observation_chartevents,
-  ce.stay_id || '-' || ce.charttime || '-' || ce.itemid || '-' || ce.value
+```sql
+WITH heart_rate_times AS (
+    SELECT
+        i.stay_id_str,
+        MIN(TRY_CAST(o.effective_datetime AS TIMESTAMP_NTZ)) AS intime_hr,
+        MAX(TRY_CAST(o.effective_datetime AS TIMESTAMP_NTZ)) AS outtime_hr
+    FROM icustay_times_observation o
+    JOIN icustay_times_icu_encounter i
+      ON o.encounter_key = i.encounter_key
+    WHERE i.stay_id_str IS NOT NULL
+      AND o.item_system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items'
+      AND o.item_code = '220045'
+    GROUP BY i.stay_id_str
 )
-effectiveDateTime = CAST(ce.charttime AS TIMESTAMPTZ)
+SELECT
+    CAST(p.subject_id_str AS INTEGER) AS subject_id,
+    CAST(h.hadm_id_str AS INTEGER) AS hadm_id,
+    CAST(i.stay_id_str AS INTEGER) AS stay_id,
+    hr.intime_hr,
+    hr.outtime_hr
+FROM icustay_times_icu_encounter i
+LEFT JOIN icustay_times_hospital_encounter h
+  ON i.parent_encounter_key = h.encounter_key
+LEFT JOIN icustay_times_patient p
+  ON i.patient_key = p.patient_key
+LEFT JOIN heart_rate_times hr
+  ON i.stay_id_str = hr.stay_id_str
+WHERE i.stay_id_str IS NOT NULL;
 ```
 
-Relevant files/lines: `/Users/nau025/Documents/mimic-fhir/sql/`
-`fhir_observation_chartevents.sql:8-10,20-23,60-67` and
-`fhir_etl/uuid_namespace.sql:7-32`. The namespace chain is:
+The ICU-stay backbone is the left side. A stay with no served target
+Observation must remain a row with typed NULL `intime_hr` and `outtime_hr`;
+an inner join to the aggregate would change an absent timestamp into a
+missing row. The hospital and Patient joins are also left joins so an absent
+FHIR parent/reference cannot silently drop an ICU stay. Do not replace a
+missing `hadm_id` with a patient/time heuristic.
 
-```text
-uuid_ns_oid() = 6ba7b812-9dad-11d1-80b4-00c04fd430c8
-MIMIC-IV      = 24ba6d92-ae8e-56f9-8898-873d8cba02da
-ObservationChartevents = 36e18860-b4aa-5577-bc80-a5b07922cd3d
-```
+## Offset-bearing FHIR datetime handling
 
-For this concept, direct `TIMESTAMP_NTZ` parsing of the served effective time
-matched the demo source charttime for 13,911/13,913 target Observations. Two
-served effective times were 03:00 while their exact UUID matched source 02:00
-rows, so they are conditional DST-gap recoveries:
+The authoritative target has strings such as
+`2110-04-11T15:54:00-04:00`. `CAST(... AS TIMESTAMP_NTZ)` preserves the served
+wall-clock `2110-04-11 15:54:00` regardless of the session timezone. The probe
+confirmed all 13,913 target strings were non-null and parseable by this direct
+cast. Do not use `to_timestamp` with an offset format, because it converts to
+the session-zone instant; do not use a plain `TIMESTAMP` cast after NTZ
+parsing, because it reintroduces timezone conversion. Cast before `MIN`/`MAX`
+and before any `COALESCE`; no choice variant needs coalescing for item 220045.
 
-| stay_id | source charttime | served effectiveDateTime | value |
+The served FHIR effective time is not guaranteed to preserve every original
+MIMIC wall clock. A direct source/FHIR row check using only `stay_id`, wall
+time, and Quantity value matched 13,911/13,913 target rows. Two source rows
+were served one hour later by the upstream New York DST-gap normalization:
+
+| stay_id | source charttime | served `effectiveDateTime` wall clock | value |
 |---:|---|---|---:|
-| 30,932,571 | 2116-03-08 02:00 | 2116-03-08T03:00:00-04:00 | 109 |
-| 32,128,372 | 2137-03-10 02:00 | 2137-03-10T03:00:00-04:00 | 100 |
+| 30,932,571 | 2116-03-08 02:00 | 2116-03-08 03:00 | 109 |
+| 32,128,372 | 2137-03-10 02:00 | 2137-03-10 03:00 | 100 |
 
-The demo source had exactly two March 02:xx target rows, no duplicate
-`(stay_id, charttime)` target groups, and all 13,913 served resource IDs were
-accounted for by either the direct effective wall-time UUID or the one-hour
-earlier UUID. The recovery is therefore:
+These two row-level losses were identified without reading or manipulating
+Observation IDs. They did not change the demo `MIN`/`MAX` endpoint for any
+stay: the direct, no-ID aggregate matched the DuckDB oracle for all five
+output columns on 140/140 demo stays. On full data, any residual from this
+upstream transformation must remain visible to the comparator/judge; it is
+not a reason to reconstruct an ID.
 
-1. Preserve `observation_key` and extract the UUID after `Observation/`.
-2. Parse `effective_datetime` with `CAST(... AS TIMESTAMP_NTZ)`.
-3. Recreate the ETL UUID using the ICU `stay_id_str`, exact `item_code`, and
-   **uncast** `quantity_value` string at the served wall time.
-4. Use that wall time if the UUID matches.
-5. Otherwise test exactly one hour earlier; use it only if that UUID matches.
-6. Never blanket-shift 03:xx rows. A genuine 03:xx row matches the direct
-   candidate. Do not use Spark `DATE_FORMAT` for the UUID name after subtracting
-   an hour; it can re-normalize an NTZ value in a session-zone DST gap. Preserve
-   the wall-clock string with an NTZ-safe string cast.
+## Probe counts and oracle checks
 
-For `intime_hr`/`outtime_hr`, recover the pre-normalization charttime before
-grouping if exact oracle equality is required. If an Observation has neither
-UUID candidate match, there is no warrant to invent a correction; retain the
-served wall clock and document the residual.
+Authoritative embedded Pathling/Spark counts:
 
-## Oracle agreement and gaps
+- selected ICU Encounter rows/resources: 140/140; `stay_id_str`, Patient key,
+  and ICU parent key all 140/140 non-null and distinct where expected;
+- selected hospital Encounter rows/resources: 275/275, with `hadm_id_str`
+  275/275 non-null;
+- Patient rows/resources: 100/100, with `subject_id_str` 100/100 non-null;
+- target Observation rows/resources: 13,913/13,913;
+- target Observation patient references and Encounter references: 13,913/13,913;
+- target dateTime: 13,913/13,913; Period.start and instant variants: 0/13,913;
+- target Quantity value: 13,913/13,913; target code/system/display:
+  13,913/13,913 each;
+- ICU `partOf` to hospital Encounter: 140/140 in the selected ICU stream;
+- target Observation Encounter references resolving to selected ICU Encounters:
+  13,913/13,913, covering all 140 ICU stays.
 
-A pandas comparison was run after materializing ICU Encounter, hospital
-Encounter, Patient, and constrained chart Observation views and joining on the
-UUID spine. The demo candidate had 140 rows and the DuckDB oracle had 140 rows:
+Read-only DuckDB checks:
 
-```text
-subject_id + hadm_id + stay_id exact: 140/140
-intime_hr exact:                       140/140
-outtime_hr exact:                      140/140
-candidate nulls:                       0 in every output column
-oracle nulls:                          0 in every output column
-```
+- `mimiciv_icu.icustays`: 140 rows;
+- `itemid = 220045`: 13,913 rows across 140 stays;
+- target `value IS NULL`: 0/13,913; target `valuenum IS NULL`: 0/13,913;
+- target `charttime IS NULL`: 0/13,913;
+- target `(stay_id, charttime)` groups: 13,913 rows and 13,913 groups;
+- the global ETL duplicate tuple `(34934165, 2151-10-03 05:14:00)` was absent
+  (0 rows) in this demo target;
+- direct FHIR aggregate versus source oracle: `subject_id` 140/140 exact,
+  `hadm_id` 140/140, `stay_id` 140/140, `intime_hr` 140/140, and `outtime_hr`
+  140/140; both sides had zero NULLs in the demo.
 
-The exact candidate used `CAST(identifier_value AS INTEGER)` for IDs,
-`CAST(effective_datetime AS TIMESTAMP_NTZ)` for the initial charttime, and the
-source `MIN`/`MAX` aggregation by the ICU stay. The UUID check then identified
-the two demo DST-gap rows above; after conditional correction, all 140 stay
-tuples and both aggregate endpoints remain exact. The source chartevents target
-had 13,913 rows and the FHIR target had 13,913 rows/resources, with a 1.000
-coding-per-resource ratio.
+The source ETL also globally excludes chartevents rows with NULL `value` and
+one hard-coded duplicate tuple. The target-specific demo checks above found
+neither condition exercised. A full-data source row absent from FHIR cannot
+be recovered from a missing resource; preserve the ICU backbone and typed
+NULL aggregate endpoints rather than dropping the stay.
 
-Gaps:
+## Gaps and essentiality
 
-1. **Numeric IDs:** absent from Observation/Encounter references as numeric
-   values, but exactly derivable through the Patient and ICU Encounter
-   identifier spine. This is not a representability loss; cast the FHIR strings.
-2. **Heart-rate charttime:** served `effectiveDateTime` is normally the value,
-   but two demo rows required the ETL UUID witness because DST-gap normalization
-   changed 02:00 to 03:00. It is absent from the effective element alone but
-   exactly recoverable for this ETL when the UUID candidate matches. Without a
-   match it is not safely derivable.
-3. **Potential omitted chartevents rows:** the upstream ETL's NULL-value and
-   hard-coded duplicate predicates can make source rows absent rather than
-   NULL-valued FHIR rows. This is not representable from a missing resource.
-   It was not exercised by the demo target (0 affected rows). The source's
-   left join still requires typed NULL endpoints for any stay lacking a target
-   Observation.
-4. **`hadm_id` from ICU `partOf`:** exactly derivable in the authoritative demo
-   (140/140 parents). If a future warehouse has an ICU Encounter without
-   `partOf`, no exact admission identifier is available from this source's FHIR
-   stream; do not substitute an ambiguous patient/time heuristic.
+1. **Numeric identifier values:** FHIR references/resource keys do not carry
+   numeric MIMIC IDs as keys, but `subject_id`, `hadm_id`, and `stay_id` are
+   exactly derivable from the three `Identifier.value` paths and the ICU
+   `partOf` equality join. This is absent-but-derivable, not a gap. The
+   materialized aliases are `STRING`; final SQL casts are required for the
+   manifest `INTEGER` columns.
+2. **Original charttime at DST-gap rows:** the served effective element
+   carries the transformed wall clock. The two demo source rows above are
+   absent-but-not-recoverable from allowed FHIR semantics; their original
+   `02:00` is not in another mapped element. UUID inversion is a forbidden
+   side channel and is not an approximation. For this concept's demo
+   `MIN`/`MAX`, the loss is ancillary because the endpoints remain exact. On
+   full data, if a transformed measurement changes which row supplies a
+   per-stay minimum or maximum, it can change a clinically meaningful output
+   and therefore becomes essential to that row's endpoint; the comparator and
+   judge must assess it. Do not block or accept it at the prober stage.
+3. **Rows omitted by the chartevents ETL:** a source row excluded before
+   Observation creation is not representable as a FHIR value. For this
+   source query the omitted row can alter a per-stay MIN/MAX if it is the only
+   or an endpoint heart-rate row, so the missing information is potentially
+   essential. The demo showed no such omission; whole-concept treatment is a
+   later judge decision, not a prober decision.
+4. **Missing ICU parent or Patient reference:** no exact numeric `hadm_id` or
+   `subject_id` can be obtained if the corresponding resource/reference is
+   absent. Patient/time reconstruction would be a heuristic and can be
+   ambiguous; do not manufacture a value. Keep the ICU row with a typed NULL.
+   In the authoritative demo, both spines resolved exactly for all 140 stays.
 
 ## Notes and fragments consulted
 
-Established `MIMIC_NOTES.md` entries that changed this mapping decision:
+The following established `MIMIC_NOTES.md` entries changed this mapping:
 
-- **Raw NDJSON is stale; Delta is authoritative:** all system/code/cardinality
-  claims above used embedded Pathling over Delta. The local snapshots were only
-  sanity-checked; `MimicEncounterICU.ndjson.gz` had 140 resources and
-  `MimicObservationChartevents.ndjson.gz` had 13,913 target codings, but neither
-  was treated as the source of truth.
-- **MIMIC IDs live in `identifier.value` strings:** required the Patient and
-  Encounter identifier spine, UUID-only joins, and final integer casts.
-- **Encounter identifier systems/class:** required the exact ICU/hospital
-  identifier filters and `partOf` join; `class` was not used.
-- **Observation itemid codes are verbatim and use the chartevents system:**
-  required exact system + code filtering, no terminology resolution, and the
-  `forEach` code/system/display projection.
-- **Observation subtype profiles are unstable:** prohibited `meta.profile` as
-  the discriminator.
-- **FHIR datetimes carry offsets; use `TIMESTAMP_NTZ`:** required wall-clock
-  parsing and led to the conditional UUID recovery for DST-gap rows.
+- **Raw NDJSON is stale; Delta is authoritative:** all resource, coding, and
+  population claims above came from embedded Pathling over the Delta, not raw
+  NDJSON or the unavailable live server.
+- **MIMIC IDs live in `identifier.value` as strings:** required the separate
+  opaque UUID join keys, string identifier aliases, and final integer casts.
+- **Encounter has three identifier systems and class discriminates none:**
+  required exact ICU/hospital identifier-system selection and prohibited class
+  filtering; ICU `partOf` supplies the hospital Encounter equality join.
+- **Observation itemid codes are verbatim:** required exact string code
+  `220045`, the observed chartevents system, and no terminology translation.
+- **Observation subtype profiles are warehouse-version dependent:** prohibited
+  `meta.profile` as the stream discriminator.
+- **FHIR datetimes carry offsets; use `TIMESTAMP_NTZ`:** required direct
+  wall-clock parsing, casting before aggregation, and no plain `TIMESTAMP`.
+- **Resource IDs are opaque identity and essential-loss policy:** prohibited
+  the invalidated UUID/charttime inversion and requires any essential loss to
+  proceed to the comparator/judge rather than be hidden by a heuristic.
 
-All existing sibling fragments in `mimic-iv/concepts_fhir/MIMIC_NOTES.d/` were
-read as provisional leads: `README.md`, `arb.md`, `blood_differential.md`,
+All existing fragments in `mimic-iv/concepts_fhir/MIMIC_NOTES.d/` were read as
+provisional leads: `README.md`, `arb.md`, `blood_differential.md`,
 `cardiac_marker.md`, `chemistry.md`, `code_status.md`,
 `complete_blood_count.md`, `coagulation.md`, `crrt.md`, `dobutamine.md`,
-`dopamine.md`, `epinephrine.md`, `gcs.md`, `height.md`, `icp.md`, and
-`icustay_detail.md`. The applicable sibling leads on ICU identifier spine,
-chartevents ETL omissions, effective datetime choices, and UUID/charttime DST
-recovery were independently checked against this concept's target. Sibling
-concept-specific counts were not adopted as evidence. The `icustay_detail.md`
-ICU period transformation lead was read but is not a mapping decision here;
-this source uses chart Observation effective time, not ICU period endpoints.
+`dopamine.md`, `epinephrine.md`, `gcs.md`, `height.md`, `icp.md`,
+`invasive_line.md`, `kdigo_creatinine.md`, and `icustay_detail.md`. The
+relevant ICU identifier, chartevents omission, datetime-choice, and superseded
+UUID/id leads were independently checked against this target. The
+`icustay_detail.md` ICU period/LOS finding was not substituted for heart-rate
+Observation effective time. The superseded UUID/id warnings in `icp.md`,
+`gcs.md`, `height.md`, `crrt.md`, and `code_status.md` were treated as
+prohibitions, not mappings.
 
-No new dataset-wide quirk was appended to
-`mimic-iv/concepts_fhir/MIMIC_NOTES.d/icustay_times.md`: the owned fragment did
-not exist before this probe, and the confirmed findings are already covered by
-the curated identifier, coding, datetime, and chartevents UUID/ETL notes. The
-two-row DST count is concept-specific evidence and belongs here, not in a
-shared note.
+No `MIMIC_NOTES.d/icustay_times.md` fragment existed before this re-probe. No
+new dataset-wide quirk was found that is not already covered by
+`MIMIC_NOTES.md` or the provisional leads, so no own fragment entry was
+appended. The two DST rows and all other target-specific counts remain in this
+concept carryover rather than being promoted as dataset-wide facts.
 
-No ViewDefinition, concept SQL, or attempt artifact was authored. This file is
-the reusable FHIR-prober carryover.
+This reusable mapping was written for the invalidated-stage retry. It authors
+no ViewDefinition or concept SQL and uses no Observation/resource UUID as a
+source-value channel.
