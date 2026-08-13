@@ -1,17 +1,17 @@
 {
   "attempt": 2,
   "category": "medication",
-  "completed_at": null,
+  "completed_at": "2026-08-13T09:48:13.573055+00:00",
   "concept_name": "neuroblock",
   "dependencies": [],
-  "divergence_decided_by": null,
-  "divergence_justification": null,
-  "engineering_counter": 1,
+  "divergence_decided_by": "judge",
+  "divergence_justification": "inputevents.orderid is irreversibly incorporated into opaque MedicationAdministration.id by mimic-fhir/sql/fhir_medication_administration_icu.sql:20,40,44, while lines 43-100 serialize no independent identifier/request/orderid path. The canonical concept uses orderid only as an administrative output; full-oracle (stay_id,starttime,endtime) uniquely identifies all 14,174 clinical rows. All defensible FHIR mappings and documented workarounds were applied, UUID inversion is forbidden, and there are no divergent dependencies. Typed NULL orderid is therefore an ancillary intrinsic divergence; the manifest-key VOID DIFF counts are not fidelity evidence.",
+  "engineering_counter": 2,
   "error_message": null,
-  "hpc_counter": 1,
+  "hpc_counter": 2,
   "reopen_history": [],
-  "semantic_counter": 1,
+  "semantic_counter": 2,
   "started_at": "2026-08-13T06:53:51.514932+00:00",
-  "status": "RUNNING",
-  "updated_at": "2026-08-13T06:53:51.517152+00:00"
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-13T09:48:13.573365+00:00"
 }
