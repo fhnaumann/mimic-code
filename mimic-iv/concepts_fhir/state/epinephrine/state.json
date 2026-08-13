@@ -1,16 +1,17 @@
 {
-  "attempt": 1,
+  "attempt": 2,
   "category": "medication",
-  "completed_at": "2026-08-11T05:15:44.797681+00:00",
+  "completed_at": "2026-08-13T05:41:11.715805+00:00",
   "concept_name": "epinephrine",
   "dependencies": [],
-  "divergence_decided_by": null,
-  "divergence_justification": null,
-  "engineering_counter": 1,
-  "error_message": "BLOCKED_REPRESENTATION: inputevents.linkorderid is required by the oracle key (linkorderid,starttime), but ICU MedicationAdministration omits linkorderid and exposes no exact recovery path; upstream mimic-fhir/sql/fhir_medication_administration_icu.sql:7-35,38-103 does not read or write it, and the resource UUID is derived from stay_id-orderid-itemid rather than linkorderid.",
-  "hpc_counter": 1,
-  "semantic_counter": 1,
-  "started_at": "2026-08-11T04:35:16.194441+00:00",
-  "status": "BLOCKED_REPRESENTATION",
-  "updated_at": "2026-08-11T05:15:44.798682+00:00"
+  "divergence_decided_by": "judge",
+  "divergence_justification": "MIMIC-on-FHIR's ICU MedicationAdministration ETL never selects or serializes inputevents.linkorderid: mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,40-100 omits it and MedicationAdministration.identifier.value, while line 20 creates only an opaque UUID from stay_id/orderid/itemid. The candidate correctly emits typed NULL. Because linkorderid belongs to the manifest key, the reported only-candidate and only-oracle counts are VOID DIFF artifacts, not fidelity evidence. The field is ancillary and every defensible FHIR mapping was implemented.",
+  "engineering_counter": 2,
+  "error_message": null,
+  "hpc_counter": 2,
+  "reopen_history": [],
+  "semantic_counter": 2,
+  "started_at": "2026-08-13T05:21:53.255330+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-13T05:41:11.716170+00:00"
 }

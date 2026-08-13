@@ -236,6 +236,35 @@ had 36 distinct keys; `(linkorderid,starttime)` had 36 distinct keys; and
 the six projected tuples had zero duplicates. The FHIR target had 36 distinct
 resource keys and 36 distinct `(stay_id,starttime)` keys.
 
+> **CORRECTION (2026-08-13, human — do not carry the demo result forward).**
+> `(stay_id,starttime)` being unique on these 36 demo rows is a small-sample
+> artefact. **It is not unique at full scale.** `oracle_manifest.py:99-131`
+> emits a deterministic candidate order for these six columns — `1:(stay_id)`,
+> `2:(linkorderid)`, `3:(stay_id,linkorderid)`, `4:(stay_id,starttime)`,
+> `5:(stay_id,endtime)`, `6:(linkorderid,starttime)` — and the manifest records
+> `key_probes: 6` for `epinephrine`, so probe 4 was tried on the full 24,470
+> rows and **failed**. Compare `dopamine`, `dobutamine`, `vasopressin` and
+> `milrinone`, all `key_probes: 4`: for them probe 4 succeeded, which is the
+> only reason they keyed on `(stay_id,starttime)` and reached the judge while
+> `epinephrine` and `norepinephrine` (both `key_probes: 6`) keyed on
+> `linkorderid` and were auto-blocked.
+>
+> Concretely: the full data contains at least one stay with two concurrent
+> epinephrine orders sharing a `starttime`, distinguishable in relational MIMIC
+> only by `linkorderid`. Do not assume a clean representable key exists. If a
+> future attempt needs one, `(stay_id,starttime,endtime)` is the only remaining
+> representable candidate and its uniqueness is **untested** — the key search
+> stops at first success, so it was never probed. Note that `phenylephrine`
+> reports `key_probes: 11`, meaning it exhausted every candidate including the
+> three-column ones and found nothing unique at all.
+>
+> The demo agreement figures below remain valid *as demo figures*. They are not
+> full-scale evidence, and `attempt_0001` produced no usable full-scale diff:
+> its comparison was void because the join keyed on the all-NULL
+> `linkorderid` (`comparison.full.json` reports `only_oracle: 48,940` against
+> `oracle_rows: 24,470`, which is arithmetically impossible and is a separate
+> anchor-column bug in `compare_port_results.py:1168`, still open).
+
 The exact DuckDB/FHIR join on `(stay_id,starttime)` paired 36/36 rows with no
 oracle-only or FHIR-only rows. After parsing the offset-bearing FHIR strings as
 wall-clock values with `TIMESTAMP_NTZ` semantics, agreement was:
