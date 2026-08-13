@@ -1,0 +1,17 @@
+{
+  "attempt": 1,
+  "category": "medication",
+  "completed_at": "2026-08-13T06:56:51.476046+00:00",
+  "concept_name": "norepinephrine",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "The port faithfully reproduces all representable norepinephrine outputs. inputevents.linkorderid is irrecoverably absent because mimic-fhir/sql/fhir_medication_administration_icu.sql:8-23,38-100 neither selects nor writes it or MedicationAdministration.identifier; line 20 uses only orderid inside an opaque UUID, which cannot be inverted. Because linkorderid is declared unrepresentable and is in manifest key (linkorderid,starttime), the comparator's keyed diff is explicitly VOID DIFF and its only-candidate/only-oracle counts carry no fidelity information. The missing ancillary identifier is only projected by norepinephrine.sql:4 and does not affect inclusion or derivation. The small timing residual follows upstream TIMESTAMPTZ casts at mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69.",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 1,
+  "started_at": "2026-08-13T05:42:36.917473+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-13T06:56:51.476368+00:00"
+}
