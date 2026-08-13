@@ -1,0 +1,17 @@
+{
+  "attempt": 2,
+  "category": "medication",
+  "completed_at": "2026-08-13T23:21:05.157347+00:00",
+  "concept_name": "phenylephrine",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Phenylephrine attempt 0002 faithfully maps the exact ICU MedicationAdministration code, preserves all 193,260 source-event rows and multiplicity, and uses every available FHIR path. ICU ETL irreversibly casts start/end times through TIMESTAMPTZ (mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69) and writes amount into six-decimal dosage.dose.value (:12,85-90), while omitting linkorderid and patientweight (:7-23,38-100). Rate unit survives in dosage.rateQuantity.unit (:91-98), so the one uncomputable mcg/min rate is correctly NULL rather than estimated. The reported residual conflicts are amplified by unkeyed stay-only pairing, not evidence of another mapping defect. These losses are intrinsic and ancillary: they do not change row inclusion, grain, grouping, carry-forward, or other clinically meaningful outputs.",
+  "engineering_counter": 2,
+  "error_message": null,
+  "hpc_counter": 2,
+  "reopen_history": [],
+  "semantic_counter": 2,
+  "started_at": "2026-08-13T12:26:27.492572+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-13T23:21:05.157636+00:00"
+}

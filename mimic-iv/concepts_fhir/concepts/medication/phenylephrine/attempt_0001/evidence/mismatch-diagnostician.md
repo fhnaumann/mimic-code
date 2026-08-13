@@ -1,0 +1,9 @@
+Evidence block — phenylephrine contested review diagnosis
+
+Read the canonical source SQL, carryover analyses, attempt ViewDefinitions, `concept.sql`, `unrepresentable.json`, curated `MIMIC_NOTES.md`, relevant ETL source, and `comparison.full.json`. The implementation uses the correct MedicationAdministration dosage/effective paths and preserves one candidate row per resource. The very large conflict count is inflated by unkeyed residual pairing on repeated `stay_id`, which permutes administrations; it is not evidence that nearly all dosage values were extracted incorrectly.
+
+Upstream transformation losses were cited as follows: dosage rate/amount are written by `mimic-fhir/sql/fhir_medication_administration_icu.sql:12-15,85-99` and served at decimal scale six, losing low-order precision; `patientweight` is absent from the exhaustive input projection/resource construction at `:7-23,78-100`, while the canonical SQL conditionally computes `rate / patientweight` for `mcg/min`, making that clinically meaningful rate branch unrecoverable; `linkorderid` is absent from the ETL/resource construction (`:20,38-100`) and resource identity is opaque; effective timestamps are normalized by `:8-9,61-69`, explaining the one attributed DST row.
+
+Classification: intrinsic upstream transformation loss with an essential loss of `patientweight`; no carryover stage is blamed and no implementation retry is recommended. The diagnostician recommended sending the `contested` review to the equivalence judge with the pairing limitation and citations, with a possible whole-concept block rather than an estimate.
+
+Artifacts read: attempt `comparison.full.json`, source/implementation artifacts, `MIMIC_NOTES.md`, and `mimic-fhir/sql/fhir_medication_administration_icu.sql`. No attempt artifact was modified, no fragment was appended, and no commit was made.

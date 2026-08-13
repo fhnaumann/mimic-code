@@ -1,0 +1,5 @@
+Evidence: Read `AGENTS.md`, the canonical phenylephrine SQL, DAG entry, MIMIC notes, relevant ICU medication fragments, source DDL/schema, loop contract, oracle manifest, downstream consumer SQL, and ICU MedicationAdministration ETL context. Verified the canonical SQL SHA256 against the DAG.
+
+The source table is `mimiciv_icu.inputevents`; columns are `stay_id`, `linkorderid`, `rateuom`, `rate`, `patientweight`, `amount`, `starttime`, and `endtime`, filtered by exact `itemid = 221749`. There are no joins, derived dependencies, aggregations, windows, or time/value exclusions. Output schema is `(stay_id, linkorderid, vaso_rate, vaso_amount, starttime, endtime)`. Raw grain is one filtered inputevent row; source identity is `(orderid, itemid)`, while the oracle uses full-tuple multiset comparison.
+
+Artifacts: `mimic-iv/concepts_fhir/carryover/phenylephrine/source-analyst.md`; `mimic-iv/concepts_fhir/carryover/phenylephrine/carryover.json`. No implementation files or commit were produced by the agent.

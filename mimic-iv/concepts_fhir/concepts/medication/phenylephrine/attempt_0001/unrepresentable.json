@@ -1,0 +1,3 @@
+{
+  "linkorderid": "No FHIR element. ICU MedicationAdministration resources carry no inputevent identifier, orderid, or linkorderid; the opaque MedicationAdministration resource key cannot be inverted to recover inputevents.linkorderid. The authoritative Delta probe found no non-empty MedicationAdministration.identifier values (0/56,535 overall and 0/20,404 in the ICU medication stream), and the ICU ETL writes no such identifier, so the manifest column is emitted as typed NULL."
+}
