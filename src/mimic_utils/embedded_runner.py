@@ -30,6 +30,12 @@ and hand-building a bare ``SparkSession`` is what produces the
 is fixed through ``PYSPARK_SUBMIT_ARGS`` *before* first context creation --
 ``SparkConf`` cannot resize a heap that already exists.
 
+**Both legs run in one fixed zone** (:data:`SESSION_TIMEZONE`), pinned here
+rather than in any ``concept.sql``.  A session zone can only damage MIMIC's
+de-identified wall-clock datetimes, and the damage is silent and rare enough to
+survive review -- so it is removed once, at the single point where the JVM is
+created, instead of being re-argued in every generated query.
+
 ``pathling`` and ``pyspark`` are optional dependencies (extra ``fhir``).  They
 are imported lazily so that the rest of ``mimic_utils`` -- the state machine,
 the DAG, the comparator -- keeps working on a machine that has neither.
@@ -67,6 +73,41 @@ SPARK_LEASE_TIMEOUT_SECONDS = 3600
 SPARK_LEASE_POLL_SECONDS = 5
 
 DEFAULT_DRIVER_MEMORY = "4g"
+
+#: The one zone every leg of the loop runs in.  MIMIC datetimes are de-identified
+#: *wall-clock* values, not instants, so the only thing a session zone can do to
+#: them is damage: Spark 4.0.2 ``DATE_FORMAT`` and ``DATE_TRUNC`` consult
+#: ``spark.sql.session.timeZone`` even for a zone-*less* ``TIMESTAMP_NTZ``, and a
+#: wall time that lands in that zone's DST spring-forward gap comes back an hour
+#: later.  Under the machine default here -- ``Australia/Sydney`` on both the
+#: laptop and Petrichor -- 02:xx on the first Sunday in October became 03:xx,
+#: which is the whole "October family" of phantom divergences.  ``UTC`` has no
+#: DST in any year, so no wall clock can be normalised by accident.
+#:
+#: Overridable for a deliberate experiment, never for convenience: setting this
+#: to a DST-observing zone reintroduces the defect.
+SESSION_TIMEZONE_ENV_KEY = "MIMIC_SPARK_TIMEZONE"
+SESSION_TIMEZONE = os.environ.get(SESSION_TIMEZONE_ENV_KEY) or "UTC"
+
+
+def _pin_session_timezone() -> None:
+    """Fix the process zone before the JVM reads it.
+
+    Ordering is the whole point: the JVM samples ``TZ`` once at startup and
+    derives Spark's default session zone from it, so this must run before
+    ``PathlingContext.create()``.  It also pins DuckDB and Python ``datetime``
+    in this same process, which is why it is an env export rather than a Spark
+    conf alone -- the comparator runs in here too.
+
+    ``spark.sql.session.timeZone`` is set again after the context exists (see
+    :meth:`_EmbeddedContext._context`); this half only covers what the JVM
+    decides at boot.
+    """
+    os.environ["TZ"] = SESSION_TIMEZONE
+    # No-op on Windows, where tzset does not exist; every host that runs this
+    # loop is POSIX.
+    if hasattr(time, "tzset"):
+        time.tzset()
 
 
 class EmbeddedRunError(RuntimeError):
@@ -215,6 +256,7 @@ class EmbeddedExecutor:
         if self._ctx is None:
             # Before the JVM, not after: the point is that only one exists.
             self._lease = _acquire_spark_lease(self.holder)
+            _pin_session_timezone()
             self._configure_spark_launch(self.driver_memory)
             try:
                 from pathling import PathlingContext
@@ -225,6 +267,10 @@ class EmbeddedExecutor:
                 ) from exc
             self._ctx = PathlingContext.create()
             conf = self._ctx.spark.conf
+            # Belt to the TZ export's braces. TZ fixes the zone the JVM starts
+            # with; this fixes the zone Spark SQL actually resolves against, and
+            # survives a caller who set PYSPARK_SUBMIT_ARGS or TZ themselves.
+            conf.set("spark.sql.session.timeZone", SESSION_TIMEZONE)
             # Adaptive execution coalesces the demo's tiny shuffles (the
             # 200-partition default is pure overhead on 100 patients) and
             # still scales up on full MIMIC.

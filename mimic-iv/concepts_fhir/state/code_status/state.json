@@ -1,14 +1,14 @@
 {
-  "attempt": 3,
+  "attempt": 4,
   "category": "treatment",
-  "completed_at": "2026-08-11T07:20:18.320157+00:00",
+  "completed_at": "2026-08-13T04:55:40.086724+00:00",
   "concept_name": "code_status",
   "dependencies": [],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "The 197,931 only_oracle rows are an intrinsic row-level representation gap. Canonical mimic-iv/concepts/treatment/code_status.sql:36-65,67-77 unions ICU chart rows with hospital poe/poe_detail rows selected by poe.order_type='General Care' and poe.order_subtype='Code status'. The served MIMIC-on-FHIR warehouse has no resource or FHIR path preserving those hospital code-status POE events, poe.ordertime, or poe_detail.field_value. The nearest MedicationRequest.identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/medication-request-poe').value stream is unrelated: its identifiers had zero intersection with selected code-status POE IDs, and authoredOn/status do not carry the missing payload. An independent full-data source count found exactly 197,931 selected POE/detail rows, matching the entire residual; the candidate's 71,141 chart rows have zero only_candidate rows, so the representable branch is exact. Every defensible mapping was tried: exact Observation system/code 223758, valueString, effective variants with TIMESTAMP_NTZ, identifier.value casts, ICU Encounter/partOf/hospital spine, and Observation.id timestamp-witness recovery. No divergent dependencies exist.",
-  "engineering_counter": 4,
-  "error_message": null,
-  "hpc_counter": 3,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 5,
+  "error_message": "Equivalence judge blocked: essential General Care/Code-status hospital poe/poe_detail branch is absent from served MIMIC-on-FHIR. The missing branch changes row inclusion, event time, multiplicity, ICU association, and status outputs; 197,931 of 269,072 oracle rows are missing (approximately 73.56%), leaving only 71,141 represented chart rows (approximately 26.44%). Upstream omission is evidenced by mimic-fhir/sql/fhir_medication_request.sql:188-205,250-288, with no separate code-status transform. Four residual chart rows additionally reflect irrecoverable DST normalization at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67. Formal identical/representable fractions unavailable because comparison is unkeyed and residual pairing failed.",
+  "hpc_counter": 4,
   "reopen_history": [
     {
       "at": "2026-08-11T06:12:16.619465+00:00",
@@ -23,10 +23,24 @@
       "superseded_decided_by": "judge",
       "superseded_justification": "The 197,931 only-oracle rows are the independently counted hospital POE/detail branch selected by General Care/Code status. The served FHIR warehouse has no resource/path carrying those POE events, poe_detail.field_value, or poe.ordertime. MedicationRequest's medication-request-poe identifier stream is a different medication/IV/TPN subset and was tested and rejected. The Observation chart branch is fully represented, and attempt 0002 completed Observation.id UUID-witness recovery for all nine prior timestamp substitutions, leaving 71,141 exact chart tuples and no candidate residual. No divergent dependencies exist.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-13T04:33:25.462418+00:00",
+      "baseline": {
+        "attempt": 3,
+        "engineering": 4,
+        "hpc": 3,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "concept.sql hardcodes nine literal Observation UUIDs, each mapped to an oracle timestamp read from attempt_0001's divergence report. That is evaluation-fitted row identity, not a FHIR mapping, and sql_lint refuses it (hardcoded-resource-id). The omitted POE branch changes row inclusion and must be presented to the judge as essential representation loss, not automatically re-accepted as a partial table.",
+      "superseded_decided_by": "judge",
+      "superseded_justification": "The 197,931 only_oracle rows are an intrinsic row-level representation gap. Canonical mimic-iv/concepts/treatment/code_status.sql:36-65,67-77 unions ICU chart rows with hospital poe/poe_detail rows selected by poe.order_type='General Care' and poe.order_subtype='Code status'. The served MIMIC-on-FHIR warehouse has no resource or FHIR path preserving those hospital code-status POE events, poe.ordertime, or poe_detail.field_value. The nearest MedicationRequest.identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/medication-request-poe').value stream is unrelated: its identifiers had zero intersection with selected code-status POE IDs, and authoredOn/status do not carry the missing payload. An independent full-data source count found exactly 197,931 selected POE/detail rows, matching the entire residual; the candidate's 71,141 chart rows have zero only_candidate rows, so the representable branch is exact. Every defensible mapping was tried: exact Observation system/code 223758, valueString, effective variants with TIMESTAMP_NTZ, identifier.value casts, ICU Encounter/partOf/hospital spine, and Observation.id timestamp-witness recovery. No divergent dependencies exist.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
-  "semantic_counter": 2,
-  "started_at": "2026-08-11T06:12:16.621201+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-11T07:20:18.321198+00:00"
+  "semantic_counter": 3,
+  "started_at": "2026-08-13T04:33:25.466193+00:00",
+  "status": "BLOCKED_REPRESENTATION",
+  "updated_at": "2026-08-13T04:55:40.087299+00:00"
 }

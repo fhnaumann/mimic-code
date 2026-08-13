@@ -104,8 +104,20 @@ only your own concept's state, and never transition or retry another goal's.
    On `accept`, record it with
    `mimic_utils accept-divergence <concept> --justification "<the judge's cited
    reason>"` → COMPLETED_WITH_DIVERGENCE. `mimic_utils block` is only for a
-   judge `blocked`: intrinsic **and** severe enough that the result is not a
-   port of the concept.
+    judge `blocked`: intrinsic **and** severe enough that the result is not a
+    port of the concept.
+
+   Terminal semantic authority is exclusive: the comparator decides `match`
+   and mechanical `mismatch`; the judge decides every non-exact semantic result
+   as `accept`, `bug`, or `blocked`. Do not early-block on another agent's
+   representability opinion. Pass essentiality evidence to the judge. Essential
+   loss changes row inclusion, keys, grouping, temporal carry-forward, or a
+   clinically meaningful output and requires judge `blocked`.
+
+   Treat resource/reference ids as opaque identity only. Equality joins,
+   grouping/deduplication, and provenance are allowed; parsing, ETL UUID
+   regeneration, candidate hashing, hardcoded ids, or semantic inference from
+   id equality are forbidden even when historical attempts reached exact match.
 7. **Terminal state, metrics, and commit:** after the controller reaches COMPLETED,
    COMPLETED_WITH_DIVERGENCE, FAILED, or BLOCKED_REPRESENTATION, call
    `conversion_metrics_finalize` with the concept. Require its write-once

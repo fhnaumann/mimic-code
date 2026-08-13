@@ -1,4 +1,4 @@
-WITH filtered_rows AS (
+WITH target_medication_administrations AS (
     SELECT
         ma.encounter_key,
         ma.effective_datetime,
@@ -11,42 +11,15 @@ WITH filtered_rows AS (
     FROM medication_administration ma
     WHERE ma.code_system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-medication-icu'
         AND ma.item_code = '221662'
-), typed_rows AS (
+), joined_rows AS (
     SELECT
-        e.stay_id_str,
-        CAST(
-            TRY_TO_TIMESTAMP(
-                REGEXP_REPLACE(
-                    ma.effective_period_start,
-                    '(Z|[+-][0-9]{2}:[0-9]{2})$',
-                    ''
-                ),
-                "yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]"
-            ) AS TIMESTAMP_NTZ
-        ) AS effective_period_start_ntz,
-        CAST(
-            TRY_TO_TIMESTAMP(
-                REGEXP_REPLACE(
-                    ma.effective_period_end,
-                    '(Z|[+-][0-9]{2}:[0-9]{2})$',
-                    ''
-                ),
-                "yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]"
-            ) AS TIMESTAMP_NTZ
-        ) AS effective_period_end_ntz,
-        CAST(
-            TRY_TO_TIMESTAMP(
-                REGEXP_REPLACE(
-                    ma.effective_datetime,
-                    '(Z|[+-][0-9]{2}:[0-9]{2})$',
-                    ''
-                ),
-                "yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]"
-            ) AS TIMESTAMP_NTZ
-        ) AS effective_datetime_ntz,
-        CAST(ma.rate_value AS DOUBLE) AS rate_value,
-        CAST(ma.amount_value AS DOUBLE) AS amount_value
-    FROM filtered_rows ma
+        ma.effective_datetime,
+        ma.effective_period_start,
+        ma.effective_period_end,
+        ma.rate_value,
+        ma.amount_value,
+        e.stay_id_str
+    FROM target_medication_administrations ma
     LEFT JOIN encounter_icu e
         ON ma.encounter_key = e.encounter_key
         AND e.stay_system = 'http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu'
@@ -56,7 +29,10 @@ SELECT
     CAST(NULL AS INTEGER) AS linkorderid,
     CAST(rate_value AS FLOAT) AS vaso_rate,
     CAST(amount_value AS FLOAT) AS vaso_amount,
-    CAST(effective_period_start_ntz AS TIMESTAMP_NTZ) AS starttime,
-    CAST(COALESCE(effective_period_end_ntz, effective_datetime_ntz) AS TIMESTAMP_NTZ) AS endtime
-FROM typed_rows
+    TRY_CAST(effective_period_start AS TIMESTAMP_NTZ) AS starttime,
+    COALESCE(
+        TRY_CAST(effective_period_end AS TIMESTAMP_NTZ),
+        TRY_CAST(effective_datetime AS TIMESTAMP_NTZ)
+    ) AS endtime
+FROM joined_rows
 ;

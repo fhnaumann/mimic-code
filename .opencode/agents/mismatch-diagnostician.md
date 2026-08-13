@@ -285,6 +285,13 @@ Then classify explicitly, one or the other:
   query, not merely by this one. The orchestrator routes this to the judge
   instead of retrying.
 
+Resource/reference ids count only as opaque identity, not as information FHIR
+"carries" about the source. Never recommend parsing an id, reconstructing its
+ETL UUID algorithm, hashing candidate inputs, hardcoding ids from the diff, or
+using id equality to recover a source value. Historical evidence that an exact
+UUID witness worked records a forbidden implementation side channel, not a
+fixable mapping. If a new inversion shape evades `sql_lint`, report the lint gap.
+
 The citation is load-bearing. Without a file and line the judge is required to
 return `bug`, so an uncited "looks intrinsic" costs a full loop iteration and
 tells no one anything. When you genuinely cannot find the ETL cause, say
@@ -298,7 +305,14 @@ tells no one anything. When you genuinely cannot find the ETL cause, say
    - Is it a SQL translation error? (wrong JOIN, wrong aggregation,
      missing COALESCE)
    - Is it a representability gap? (the concept uses data that has no
-     FHIR equivalent)
+      FHIR equivalent)
+
+   For a representability gap, state whether the missing information is
+   essential: can it change row inclusion, a key, grouping, temporal
+   carry-forward, or a clinically meaningful output? Essential loss is a
+   recommendation for whole-concept `blocked`, not a recommendation for a
+   best-effort value or a partially declared table. You still do not decide the
+   terminal state; the judge does.
 
 3. **Produce a diagnosis:**
    - Root cause: one sentence describing what went wrong

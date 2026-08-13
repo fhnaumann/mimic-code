@@ -1,0 +1,42 @@
+{
+  "candidate": "/Users/nau025/Documents/mimic-code/mimic-iv/concepts_fhir/concepts/medication/neuroblock/attempt_0001/candidate.demo.parquet/*.parquet",
+  "candidate_row_count": 0,
+  "concept": "neuroblock",
+  "dataset": "demo",
+  "executed": true,
+  "format_version": "2.0",
+  "gated": [
+    "execution",
+    "column_names",
+    "column_types"
+  ],
+  "mode": "shape",
+  "not_gated": [
+    "row_count"
+  ],
+  "note": "0 demo rows: the 100-patient cohort may legitimately contain nothing for this concept. Not a failure. Proceed to full data.",
+  "oracle_full_row_count": 14174,
+  "schema": {
+    "actual_columns": [
+      "stay_id",
+      "orderid",
+      "drug_rate",
+      "drug_amount",
+      "starttime",
+      "endtime"
+    ],
+    "expected_columns": [
+      "stay_id",
+      "orderid",
+      "drug_rate",
+      "drug_amount",
+      "starttime",
+      "endtime"
+    ],
+    "extra_columns": [],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": []
+  },
+  "verdict": "unsure"
+}

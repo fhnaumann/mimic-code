@@ -183,6 +183,15 @@ The UUID keys are still needed, as the **join** keys between resources
 (`Observation.subject.getReferenceKey(Patient)` = `Patient.getResourceKey()`).
 Project both: the UUID to join on, the identifier value to emit.
 
+Resource and reference ids are opaque identity, not encoded clinical data.
+They may be compared for equality to join resources, group/deduplicate one
+resource, and retain provenance. Never parse them, reconstruct the ETL's UUID
+algorithm, hash candidate source values, hardcode ids from a comparison report,
+or use id equality to infer a timestamp, label, identifier, or other source
+value. This is forbidden even when the ETL algorithm is known and the inferred
+value matches every checked row: it is an implementation side channel, not a
+FHIR mapping.
+
 - Affected: `Patient.identifier`, `Encounter.identifier`; every concept whose
   output carries `subject_id`, `hadm_id` or `stay_id` — i.e. nearly all of them.
 - Verified: 2026-08-07, `demographics/age` attempt_0001 — SQL executed, 275 rows,
@@ -191,6 +200,36 @@ Project both: the UUID to join on, the identifier value to emit.
   `identifier.value`, uncast) against `INTEGER` in the manifest. See that
   attempt's `shape.demo.json` and `carryover/age/fhir-prober.md`, which had both
   systems and the VARCHAR typing right before the SQL was written.
+
+## Essential source loss blocks the whole derived concept
+
+A typed-NULL declaration is appropriate for an ancillary output whose absence
+does not change the meaning of the remaining table. It is not appropriate when
+the missing source information changes row inclusion, a natural key, grouping,
+temporal carry-forward, or a clinically meaningful derived output. In that
+case, publishing the remaining ordinary values hides ambiguity from downstream
+consumers; the judge must block the entire concept.
+
+`gcs` is the concrete case. For chartevents with non-NULL `valuenum`, the ETL
+writes `valueQuantity` and drops source `value`. Both `No Response` and
+`No Response-ETT` therefore arrive as Quantity `1`, but the canonical SQL uses
+the distinction to set `gcs_unable`, `gcs_verbal`, total `gcs`, and subsequent
+six-hour carry-forward values. The resource id must not be used to recover the
+discarded label. Until upstream preserves that discriminator, `gcs` is a
+whole-concept representation block rather than a partial table.
+
+The prober and diagnostician collect this evidence but do not make the terminal
+decision. Exact/mechanical outcomes belong to the deterministic comparator;
+every non-exact semantic outcome belongs to the independent equivalence judge.
+Ancillary gaps may still be accepted explicitly, and the irrecoverable one-hour
+New York DST normalization may be accepted when proven.
+
+- Affected: every resource id; every concept whose core derivation consumes a
+  source field omitted or many-to-one transformed by MIMIC-on-FHIR.
+- Verified: policy adopted 2026-08-13 after auditing the six completed ports
+  that reconstructed or hardcoded `Observation.id`; the GCS source branches are
+  `mimic-iv/concepts/measurement/gcs.sql:33,45,62-95`, and the text-dropping ETL
+  branch is `mimic-fhir/sql/fhir_observation_chartevents.sql:69-80`.
 
 ## Some fields are always null
 

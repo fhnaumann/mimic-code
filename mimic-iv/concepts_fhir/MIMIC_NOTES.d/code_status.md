@@ -17,3 +17,11 @@
 ## Hospital General Care code-status POE events are absent from served FHIR
 - Affected: `mimiciv_hosp.poe` / `poe_detail`, especially `poe.ordertime` and `poe_detail.field_value` for `order_type='General Care'` and `order_subtype='Code status'`
 - Verified: `code_status` attempt 0002 judge review found 197,931 independently counted source POE/detail rows absent from the served FHIR representation; the nearest `MedicationRequest.identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/medication-request-poe')` stream had zero intersection with the selected code-status POE IDs and represents medication/IV/TPN orders instead.
+
+## Superseded: hardcoded or reconstructed Observation ids are not recovery paths
+- Affected: `Observation.id` / `getResourceKey()` and the missing `poe` / `poe_detail` branch.
+- Verified: policy review on 2026-08-13 preserved the historical ETL findings but rejected id-based correction. Resource ids are opaque identity. The absent POE branch changes row inclusion, so the reopened concept must present that essential loss to the equivalence judge for `BLOCKED_REPRESENTATION` unless an exact FHIR representation is found; it is not an ancillary gap eligible for automatic re-acceptance.
+
+## Hospital General Care code-status POE omission confirmed on the fourth full run
+- Affected: hospital `poe` / `poe_detail`, including `poe.ordertime` and `poe_detail.field_value` for `order_type='General Care'` and `order_subtype='Code status'`.
+- Verified: `code_status` attempt 0004 reported 197,935 `only_oracle` and 4 `only_candidate` residual tuples; the four candidate tuples are the DST-normalized charttime cases, leaving the independently counted 197,931-row POE/detail branch absent. `mimic-fhir/sql/fhir_medication_request.sql:188-205,250-252` limits POE-derived MedicationRequests to EMAR medication rows or `IV therapy`/`TPN`, and `:254-288` emits no `poe_detail.field_value`; the ETL has no General Care/Code-status resource branch.

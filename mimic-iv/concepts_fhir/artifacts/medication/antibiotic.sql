@@ -202,7 +202,8 @@ WITH expanded_prescriptions AS (
         END AS antibiotic
     FROM expanded_prescriptions
     WHERE route_system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-medication-route'
-        -- drug_type NOT IN ('BASE') cannot be applied: drug_type has no FHIR element.
+        -- prescriptions.drug_type NOT IN ('BASE') is not recoverable: no FHIR
+        -- element carries drug_type, and no output column is being estimated.
         AND route_code NOT IN ('OU', 'OS', 'OD', 'AU', 'AS', 'AD', 'TP')
         AND LOWER(route_code) NOT LIKE '%ear%'
         AND LOWER(route_code) NOT LIKE '%eye%'
@@ -230,43 +231,15 @@ WITH expanded_prescriptions AS (
         p.encounter_key,
         p.drug_name,
         p.route_code,
-        TRY_TO_TIMESTAMP(
-            REGEXP_REPLACE(
-                p.starttime_str,
-                '(Z|[+-][0-9]{2}:[0-9]{2})$',
-                ''
-            ),
-            "yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]"
-        ) AS starttime_ts,
-        TRY_TO_TIMESTAMP(
-            REGEXP_REPLACE(
-                p.stoptime_str,
-                '(Z|[+-][0-9]{2}:[0-9]{2})$',
-                ''
-            ),
-            "yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]"
-        ) AS stoptime_ts
+        TRY_CAST(p.starttime_str AS TIMESTAMP_NTZ) AS starttime_ts,
+        TRY_CAST(p.stoptime_str AS TIMESTAMP_NTZ) AS stoptime_ts
     FROM prescription_rows p
 ), parsed_icu AS (
     SELECT
         i.hospital_encounter_key,
         i.stay_id_str,
-        TRY_TO_TIMESTAMP(
-            REGEXP_REPLACE(
-                i.intime_str,
-                '(Z|[+-][0-9]{2}:[0-9]{2})$',
-                ''
-            ),
-            "yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]"
-        ) AS intime_ts,
-        TRY_TO_TIMESTAMP(
-            REGEXP_REPLACE(
-                i.outtime_str,
-                '(Z|[+-][0-9]{2}:[0-9]{2})$',
-                ''
-            ),
-            "yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]"
-        ) AS outtime_ts
+        TRY_CAST(i.intime_str AS TIMESTAMP_NTZ) AS intime_ts,
+        TRY_CAST(i.outtime_str AS TIMESTAMP_NTZ) AS outtime_ts
     FROM encounter_icu i
     WHERE i.stay_id_str IS NOT NULL
 ), resolved_rows AS (

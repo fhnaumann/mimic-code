@@ -35,6 +35,11 @@ Two checks on that `SELECT`, both of which have cost a run:
   value.** `subject_id`, `hadm_id`, `stay_id` come from `identifier.value`
   (`fhir-mapping` → "Identifier spine"); the resource keys are UUIDs and exist
   only to join resources to each other.
+- Resource/reference ids are opaque identity. You may use equality joins,
+  grouping/deduplication, and provenance, but never parse them, regenerate the
+  ETL's UUID algorithm, hash candidate source values, hardcode ids, or infer any
+  source value from id equality. Prior attempts or notes that call an id a
+  "witness" do not override this rule.
 - **The prober reports FHIR types, not target types.** A mapping table saying
   `hadm_id … VARCHAR` is telling you a cast is required, not that the column is
   finished. Reconcile every prober column against the manifest yourself.
@@ -158,6 +163,14 @@ The comparator verifies the declaration: a declared column that holds any value
 is a blocking `false_unrepresentable_declaration`. Declare only what you have
 confirmed is absent, and say in the justification how you confirmed it. Most
 concepts need no such file — its absence is normal.
+
+Do not use `unrepresentable.json` to make an essentially different table look
+partially usable. If a missing source field can change row inclusion, keys,
+grouping, temporal carry-forward, or a clinically meaningful derived output,
+state that the concept has essential representation loss. Author the most
+literal non-inverting candidate the orchestrator requests so the comparator can
+measure it, but do not choose a likely source state or describe the result as a
+faithful partial port. Only the equivalence judge may decide `blocked`.
 
 ## Output location
 

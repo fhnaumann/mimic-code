@@ -107,6 +107,14 @@ ignore its provisioning code.
   - `(effective).ofType(Period).start` → `effective_period_start`
   - The derived SQL then `COALESCE`s the variants as needed.
 
+Resource and reference keys are **opaque identity only**. Equality joins,
+resource grouping/deduplication, and provenance are allowed. Parsing an id,
+reconstructing the ETL's UUID algorithm, hashing candidate source values,
+hardcoding ids from a comparison report, or using id equality to infer any
+timestamp, label, identifier, or clinical value is forbidden. This remains
+forbidden when the algorithm is known and candidate enumeration is exact: that
+is an ETL implementation side channel, not a FHIR element mapping.
+
 ## Identifier spine
 
 **Do not author this from scratch. Copy the block below.** Nearly every concept

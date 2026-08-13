@@ -8,8 +8,7 @@ WITH filtered_rows AS (
         l.effective_datetime,
         l.effective_period_start,
         l.quantity_value,
-        l.quantity_comparator,
-        l.value_string
+        l.quantity_comparator
     FROM lab_observation l
     INNER JOIN patient p
         ON l.patient_key = p.patient_key
@@ -24,50 +23,19 @@ WITH filtered_rows AS (
         )
         AND l.quantity_value IS NOT NULL
         AND l.quantity_comparator IS NULL
-), typed_rows AS (
+        AND CAST(l.quantity_value AS DOUBLE) > 0
+), eligible_rows AS (
     SELECT
         CAST(subject_id_str AS INTEGER) AS subject_id,
         CAST(hadm_id_str AS INTEGER) AS hadm_id,
         CAST(specimen_id_str AS INTEGER) AS specimen_id,
         code,
-        CAST(quantity_value AS DOUBLE) AS value_num,
         COALESCE(
             TRY_CAST(effective_datetime AS TIMESTAMP_NTZ),
-            CAST(
-                TRY_TO_TIMESTAMP(
-                    regexp_replace(
-                        regexp_replace(effective_datetime, '(Z|[+-][0-9]{2}:[0-9]{2})$', ''),
-                        'T',
-                        ' '
-                    ),
-                    'yyyy-MM-dd HH:mm:ss'
-                ) AS TIMESTAMP_NTZ
-            )
-        ) AS effective_datetime_ntz,
-        COALESCE(
-            TRY_CAST(effective_period_start AS TIMESTAMP_NTZ),
-            CAST(
-                TRY_TO_TIMESTAMP(
-                    regexp_replace(
-                        regexp_replace(effective_period_start, '(Z|[+-][0-9]{2}:[0-9]{2})$', ''),
-                        'T',
-                        ' '
-                    ),
-                    'yyyy-MM-dd HH:mm:ss'
-                ) AS TIMESTAMP_NTZ
-            )
-        ) AS effective_period_start_ntz
+            TRY_CAST(effective_period_start AS TIMESTAMP_NTZ)
+        ) AS charttime,
+        CAST(quantity_value AS DOUBLE) AS value_num
     FROM filtered_rows
-), eligible_rows AS (
-    SELECT
-        subject_id,
-        hadm_id,
-        specimen_id,
-        code,
-        COALESCE(effective_datetime_ntz, effective_period_start_ntz) AS charttime,
-        value_num
-    FROM typed_rows
-    WHERE value_num > 0
 ), grouped AS (
     SELECT
         MAX(subject_id) AS subject_id,

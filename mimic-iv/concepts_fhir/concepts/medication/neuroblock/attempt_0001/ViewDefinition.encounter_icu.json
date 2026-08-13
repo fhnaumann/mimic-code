@@ -1,0 +1,21 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/neuroblock-0001-encounter_icu",
+  "name": "encounter_icu",
+  "resource": "Encounter",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "encounter_key" }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu')",
+      "column": [
+        { "path": "system", "name": "stay_system" },
+        { "path": "value", "name": "stay_id_str" }
+      ]
+    }
+  ]
+}

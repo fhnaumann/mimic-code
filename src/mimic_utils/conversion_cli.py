@@ -30,6 +30,7 @@ Commands
   carryover-record CONCEPT --stage S [--artifact-root DIR]
   carryover-invalidate CONCEPT --stage S --reason MSG [--artifact-root DIR]
   depcheck CONCEPT [--artifact-root DIR]
+  metrics-finalize [--artifact-root DIR]            (bare: rebuild SQL export)
   metrics-finalize CONCEPT --run N --session-id ID [--session-id ID ...]
                   [--artifact-root DIR] [--opencode-db PATH]
   metrics-report [--out PATH] [--rates PATH] [--artifact-root DIR]
@@ -542,13 +543,25 @@ def _h_preflight(duckdb: Optional[str] = None, no_color: bool = False) -> _Ec:
 
 
 def _h_metrics_finalize(
-    concept: str,
-    run: int,
+    concept: Optional[str] = None,
+    run: Optional[int] = None,
     session_id: Optional[list[str]] = None,
     artifact_root: Optional[str] = None,
     opencode_db: Optional[str] = None,
 ) -> _Ec:
-    """Finalize the terminal conversion metrics artifact."""
+    """Finalize the terminal conversion metrics artifact.
+
+    Bare (no CONCEPT): rebuild the canonical SQL export, wholesale overwriting
+    the artifact directory -- the common case that needs no per-run scoping.
+    """
+    if concept is None:
+        if run is not None or session_id:
+            print("ERROR: --run/--session-id require a CONCEPT argument")
+            return 2
+        return _h_export_mappings(artifact_root=artifact_root)
+    if run is None or not session_id:
+        print("ERROR: CONCEPT requires --run N and at least one --session-id ID")
+        return 2
     try:
         path = finalize_conversion_metrics(
             concept,
@@ -690,9 +703,9 @@ def register_commands(subparsers: _SubParsersAction) -> None:
     p.add_argument(
         "--by", default="judge", choices=["judge", "human"],
         help="Who decided. 'human' is a manual override and is the ONLY way to "
-             "clear a BLOCKED_REPRESENTATION -- the judge is never called on a "
-             "blocked concept, so recording that decision as the judge's would "
-             "misattribute it. Reported separately in `status`.",
+             "clear a BLOCKED_REPRESENTATION -- the judge already returned "
+             "blocked and is not called again to reconsider its own ruling. "
+             "Reported separately in `status`.",
     )
     p.add_argument("--counter", default="semantic",
                    choices=["semantic", "engineering", "hpc"])
@@ -853,12 +866,13 @@ def register_commands(subparsers: _SubParsersAction) -> None:
     # --- deterministic conversion metrics ------------------------------------
     p = subparsers.add_parser(
         "metrics-finalize",
-        help="Write the write-once terminal conversion metrics artifact.",
+        help="Bare: rebuild the SQL artifact export. With CONCEPT --run/"
+             "--session-id: write the write-once conversion metrics artifact.",
     )
-    p.add_argument("concept")
-    p.add_argument("--run", type=int, required=True, metavar="N")
+    p.add_argument("concept", nargs="?", default=None)
+    p.add_argument("--run", type=int, default=None, metavar="N")
     p.add_argument(
-        "--session-id", action="append", required=True, metavar="ID",
+        "--session-id", action="append", metavar="ID",
         help="Root OpenCode session id; repeat for resumed/root session trees.",
     )
     p.add_argument("--artifact-root", **ar)

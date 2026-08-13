@@ -44,6 +44,13 @@ Read `mimic-iv/concepts/<path>.sql`.
    MIMIC-IV 2.2. Note it as present-in-SQL, expected-absent-in-data rather than
    omitting it, so the prober's count of 0 reads as confirmation instead of a
    discrepancy.
+8. **Semantically essential inputs.** Identify every source field or
+   discriminator whose value can change row inclusion, a natural key, grouping,
+   temporal carry-forward, or a clinically meaningful derived output. Trace
+   each one to the branches and output columns it controls. This is descriptive,
+   not a terminal representability decision; the FHIR prober checks whether the
+   input survives, and only the equivalence judge may ultimately accept or block
+   a non-exact port.
 
 Ground yourself in `AGENTS.md` and the DAG at
 `mimic-iv/concept_dag/concept_dag.json`.

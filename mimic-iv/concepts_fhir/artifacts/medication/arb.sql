@@ -59,34 +59,12 @@ WITH arb_drug AS (
         AND mr.medication_key IS NOT NULL
         AND a.arb = 1
         AND e.hadm_id_str IS NOT NULL
-), parsed_prescriptions AS (
-    SELECT
-        subject_id_str,
-        hadm_id_str,
-        arb_str,
-        TRY_TO_TIMESTAMP(
-            REGEXP_REPLACE(
-                starttime_str,
-                '(Z|[+-][0-9]{2}:[0-9]{2})$',
-                ''
-            ),
-            "yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]"
-        ) AS starttime_ts,
-        TRY_TO_TIMESTAMP(
-            REGEXP_REPLACE(
-                stoptime_str,
-                '(Z|[+-][0-9]{2}:[0-9]{2})$',
-                ''
-            ),
-            "yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]"
-        ) AS stoptime_ts
-    FROM prescription_rows
 )
 SELECT
     CAST(subject_id_str AS INTEGER) AS subject_id,
     CAST(hadm_id_str AS INTEGER) AS hadm_id,
     CAST(arb_str AS VARCHAR(255)) AS arb,
-    CAST(starttime_ts AS TIMESTAMP_NTZ) AS starttime,
-    CAST(stoptime_ts AS TIMESTAMP_NTZ) AS stoptime
-FROM parsed_prescriptions
+    TRY_CAST(starttime_str AS TIMESTAMP_NTZ) AS starttime,
+    TRY_CAST(stoptime_str AS TIMESTAMP_NTZ) AS stoptime
+FROM prescription_rows
 ;

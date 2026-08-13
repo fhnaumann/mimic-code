@@ -187,7 +187,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 DERIVED_SCHEMA = "mimiciv_derived"
 
@@ -432,10 +432,16 @@ _DST_REPLAY_OPERATION = (
 )
 
 #: Known `mimic-fhir` statements that perform the cast. Not exhaustive, and not
-#: resolved per column -- the judge confirms which one applies here.
+#: resolved per column -- the judge confirms which one applies here. Keep the
+#: labevents/specimen sites here: attribution is used for lab concepts too, and
+#: omitting their writers leaves the judge with citations for unrelated FHIR
+#: elements even when the replay itself is correct.
 _DST_REPLAY_CITATIONS = (
+    "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+    "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
     "mimic-fhir/sql/fhir_encounter.sql:65",
     "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+    "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69",
 )
 
 #: A DST-gap wall time and an ordinary one. The replay must shift the first by
@@ -619,6 +625,182 @@ def _attribute_dst_conflicts(
     return result
 
 
+#: Literal marker column appended to each side of a diff join.
+#:
+#: "This side contributed no row" is the thing every unpaired count means, and
+#: the obvious way to test it -- ``c.<first key column> IS NULL`` -- is wrong
+#: whenever that column can itself be NULL on that side.  It is exactly wrong
+#: for a port that emits a typed NULL for an unrepresentable key column, which
+#: is the supported way to declare that gap: `epinephrine` did, and the anchor
+#: test then counted each of its 24,470 candidate-only rows a second time as
+#: oracle-only, reporting ``only_oracle: 48,940`` against 24,470 oracle rows.
+#: That impossible figure reached an equivalence judge and was quoted back in a
+#: terminal ruling.  A literal ``TRUE`` cannot be NULL, so it tests presence and
+#: nothing else, whatever the key columns hold.
+_PRESENT = "_cmp_row_present"
+
+
+def _present_refs(oracle_ref: str, scan: str) -> Tuple[str, str]:
+    """Both join sides, each carrying :data:`_PRESENT`."""
+    return (
+        f"(SELECT *, TRUE AS {_PRESENT} FROM {oracle_ref})",
+        f"(SELECT *, TRUE AS {_PRESENT} FROM {scan})",
+    )
+
+
+def _attribute_dst_unpaired(
+    con: Any,
+    *,
+    oracle_ref: str,
+    scan: str,
+    key: Sequence[str],
+    types_by_key: Dict[str, str],
+    join_on: str,
+    sample_limit: int,
+) -> Dict[str, Any]:
+    """The same replay, applied to the *key* instead of to a value column.
+
+    ``_attribute_dst_conflicts`` can only see a shift in a column it compares,
+    and it compares value columns. When the shifted datetime is part of the
+    natural key the row never reaches the comparison at all: the oracle row
+    fails to find its partner and lands in ``only_oracle``, the candidate row
+    lands in ``only_candidate``, and the pair reads as "a row is missing" plus
+    "a row was invented" -- the two classes that force the raised bar.
+
+    That is a defect in the comparator, not in the data, and it had a cost. Six
+    chartevents concepts key on ``charttime``; every one of them saw its DST
+    shift as unpaired rows, ``conflict_attribution`` recorded
+    ``{"attempted": false}``, and the documented ``attributed`` route was
+    structurally unavailable to them. What five of them did instead was
+    reconstruct the ETL's ``Observation.id`` UUIDv5 to detect and undo the shift
+    inside the port -- and it worked, which is the problem: the loop rewarded
+    inverting an ETL implementation detail because it had closed off the honest
+    answer.
+
+    So: re-key the unpaired oracle rows through the upstream cast and see
+    whether they pair with the unpaired candidate rows. Semi-joins throughout,
+    never an inner join -- a fan-out would inflate the attributed count above
+    the class it is meant to partition, and an over-count here lowers a bar.
+
+    Attribution requires the replay to be non-identity, which it is by
+    construction: a row whose key survives the round trip unchanged would have
+    paired in the primary join and never been unpaired in the first place. The
+    explicit predicate is kept anyway, because relying on that argument would
+    make the proof depend on the caller's join being exactly right.
+    """
+    datetime_keys = sorted(
+        name
+        for name in key
+        if classify_logical_type(types_by_key.get(name, "")) == "datetime"
+    )
+    if not datetime_keys:
+        return {
+            "attempted": False,
+            "complete": False,
+            "why": "no datetime column in the natural key; a key shift cannot apply",
+        }
+
+    unavailable = _dst_replay_available(con)
+    if unavailable:
+        return {"attempted": False, "complete": False, "why": unavailable}
+
+    def _key_match(left: str, right: str) -> str:
+        """Join *left* to *right*, replaying the cast on *left*'s datetime keys."""
+        terms = []
+        for name in key:
+            lhs = (
+                _tz_roundtrip_sql(f"{left}.{_q(name)}")
+                if name in datetime_keys
+                else f"{left}.{_q(name)}"
+            )
+            terms.append(f"{lhs} IS NOT DISTINCT FROM {right}.{_q(name)}")
+        return " AND ".join(terms)
+
+    # The replay moved at least one key column, i.e. the row really is in the
+    # gap rather than merely surviving a no-op round trip.
+    shifted = " OR ".join(
+        f"{_tz_roundtrip_sql('u.' + _q(name))} IS DISTINCT FROM u.{_q(name)}"
+        for name in datetime_keys
+    )
+
+    o_ref, c_ref = _present_refs(oracle_ref, scan)
+    cte = f"""
+WITH _unpaired_o AS (
+  SELECT o.* FROM {oracle_ref} o
+  LEFT JOIN {c_ref} c ON {join_on}
+  WHERE c.{_PRESENT} IS NULL
+), _unpaired_c AS (
+  SELECT c.* FROM {scan} c
+  LEFT JOIN {o_ref} o ON {join_on}
+  WHERE o.{_PRESENT} IS NULL
+)"""
+
+    row = con.execute(
+        f"""{cte}
+SELECT
+  (SELECT count(*) FROM _unpaired_o)                        AS only_oracle,
+  (SELECT count(*) FROM _unpaired_c)                        AS only_candidate,
+  (SELECT count(*) FROM _unpaired_o u
+     WHERE ({shifted})
+       AND EXISTS (SELECT 1 FROM _unpaired_c v
+                   WHERE {_key_match('u', 'v')}))           AS attributed_oracle,
+  (SELECT count(*) FROM _unpaired_c v
+     WHERE EXISTS (SELECT 1 FROM _unpaired_o u
+                   WHERE ({shifted}) AND {_key_match('u', 'v')})) AS attributed_candidate
+"""
+    ).fetchone()
+    counts = dict(zip([d[0] for d in con.description], row))
+
+    only_oracle = counts["only_oracle"] or 0
+    only_candidate = counts["only_candidate"] or 0
+    attributed_oracle = counts["attributed_oracle"] or 0
+    attributed_candidate = counts["attributed_candidate"] or 0
+
+    result: Dict[str, Any] = {
+        "attempted": True,
+        "cause": _DST_REPLAY_CAUSE,
+        "operation": (
+            "For every unpaired row, the oracle key round-tripped through a "
+            f"{UPSTREAM_TZ} TIMESTAMPTZ cast matches an unpaired candidate key, "
+            "and differs from the oracle key itself -- i.e. the oracle wall time "
+            "falls in the DST spring-forward gap and the shift moved the row out "
+            "of its key rather than out of a value. Checked by semi-join over "
+            "both unpaired sets in full, not sampled."
+        ),
+        "timezone": UPSTREAM_TZ,
+        "citations": list(_DST_REPLAY_CITATIONS),
+        "keys_considered": datetime_keys,
+        "only_oracle": only_oracle,
+        "only_candidate": only_candidate,
+        "attributed_only_oracle": attributed_oracle,
+        "attributed_only_candidate": attributed_candidate,
+        "residual_only_oracle": only_oracle - attributed_oracle,
+        "residual_only_candidate": only_candidate - attributed_candidate,
+        # All-or-nothing, and on *both* sides. An unpaired candidate row the
+        # replay does not reach is still a row the port invented, whatever the
+        # oracle side looks like.
+        "complete": bool(only_oracle or only_candidate)
+        and attributed_oracle == only_oracle
+        and attributed_candidate == only_candidate,
+    }
+    if attributed_oracle and sample_limit > 0:
+        replayed = "".join(
+            f", {_tz_roundtrip_sql('u.' + _q(name))} AS {_q(name + '__replayed')}"
+            for name in datetime_keys
+        )
+        cur = con.execute(
+            f"""{cte}
+SELECT {', '.join('u.' + _q(k) for k in key)}{replayed}
+FROM _unpaired_o u
+WHERE ({shifted})
+  AND EXISTS (SELECT 1 FROM _unpaired_c v WHERE {_key_match('u', 'v')})
+LIMIT {int(sample_limit)}"""
+        )
+        cols = [d[0] for d in cur.description]
+        result["samples"] = [dict(zip(cols, r)) for r in cur.fetchall()]
+    return result
+
+
 # ---------------------------------------------------------------------------
 # Manifest access
 # ---------------------------------------------------------------------------
@@ -788,10 +970,23 @@ def _verify_unrepresentable(
 
     * the column is not in the oracle schema (typo, or a stale declaration
       left behind after the manifest moved);
-    * the column is part of the natural key (the join would be impossible, so
-      the claim is incoherent rather than merely unsupported);
+    * the column is part of the natural key, so the keyed join cannot align a
+      single row and every count it produces is void;
     * the candidate emitted a value for it anyway, which contradicts the claim
       -- this is the 99%-heuristic case the contract exists to prevent.
+
+    Each violation carries a ``kind`` because the three are not the same
+    animal, and ``_classify_divergence`` routes them differently.  A stale
+    column name and an emitted value are the *port* contradicting itself, and
+    there is nothing for the judge to weigh.  A key column is not: the manifest
+    key is comparison metadata chosen by empirical uniqueness over relational
+    MIMIC (``oracle_manifest.py``), with no knowledge of what MIMIC-on-FHIR
+    carries.  When it lands on a column the served data does not have, the
+    instrument is wrong, not the port -- so that one goes to the judge with the
+    counts explicitly marked void, rather than terminating the concept by
+    machine.  Blocking it here would also punish exactly the honest ports: a
+    port that omits ``unrepresentable.json`` entirely reaches the judge, so
+    declaring the gap must not be the more expensive choice.
 
     Columns that are fully NULL but *not* declared are reported too. They are
     not a failure, but they are exactly what an undeclared representation gap
@@ -807,15 +1002,18 @@ def _verify_unrepresentable(
         if column not in manifest_columns:
             violations.append({
                 "column": column,
+                "kind": "not_a_column",
                 "reason": "not a column of this concept in the oracle manifest",
             })
             continue
         if column in key:
             violations.append({
                 "column": column,
+                "kind": "key_column",
                 "reason": (
-                    "is part of the natural key; a key column cannot be "
-                    "unrepresentable or the keyed diff could not align rows"
+                    f"is part of the natural key {sorted(key)}; the keyed diff "
+                    "could not align rows, so its counts measure the key rather "
+                    "than the port"
                 ),
             })
             continue
@@ -825,6 +1023,7 @@ def _verify_unrepresentable(
         if non_null:
             violations.append({
                 "column": column,
+                "kind": "emitted_values",
                 "reason": (
                     f"declared unrepresentable but the candidate emitted "
                     f"{non_null:,} non-NULL value(s). Emit a typed NULL "
@@ -989,6 +1188,7 @@ def _keyed_diff(
     atol: float,
     sample_limit: int,
     representable_only: frozenset = frozenset(),
+    key_types: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     """Full outer join on the natural key, then per-column value comparison.
 
@@ -1005,8 +1205,13 @@ def _keyed_diff(
     zero regardless of how good the port is.
     """
     join_on = " AND ".join(f"o.{_q(k)} = c.{_q(k)}" for k in key)
-    anchor = _q(key[0])
-    both = f"o.{anchor} IS NOT NULL AND c.{anchor} IS NOT NULL"
+    # Presence is tested with a literal marker, never with a key column -- see
+    # `_PRESENT`. A declared-unrepresentable key column is NULL on every
+    # candidate row, and an anchor test cannot tell that apart from "no row".
+    o_ref, c_ref = _present_refs(oracle_ref, scan)
+    o_present = f"o.{_PRESENT} IS NOT NULL"
+    c_present = f"c.{_PRESENT} IS NOT NULL"
+    both = f"{o_present} AND {c_present}"
 
     eq_by_column = {
         col["name"]: _column_equality_sql(col["name"], col["type"], rtol, atol)
@@ -1049,15 +1254,15 @@ def _keyed_diff(
 
     sql = f"""
 SELECT
-  count(*) FILTER (WHERE c.{anchor} IS NULL)                       AS only_oracle,
-  count(*) FILTER (WHERE o.{anchor} IS NULL)                       AS only_candidate,
+  count(*) FILTER (WHERE NOT ({c_present}))                        AS only_oracle,
+  count(*) FILTER (WHERE NOT ({o_present}))                        AS only_candidate,
   count(*) FILTER (WHERE {both} AND NOT ({all_equal}))             AS differing,
   count(*) FILTER (WHERE {row_conflict})                           AS differing_conflict,
   count(*) FILTER (WHERE {row_null_only})                          AS differing_null_only,
   count(*) FILTER (WHERE {both} AND ({all_equal}))                 AS identical,
   count(*) FILTER (WHERE {both} AND ({representable_equal}))       AS identical_representable{tally_clause}
-FROM {oracle_ref} o
-FULL OUTER JOIN {scan} c ON {join_on}
+FROM {o_ref} o
+FULL OUTER JOIN {c_ref} c ON {join_on}
 """
     row = con.execute(sql).fetchone()
     columns = [d[0] for d in con.description]
@@ -1112,8 +1317,9 @@ FULL OUTER JOIN {scan} c ON {join_on}
 
     if sample_limit > 0:
         diff["samples"] = _keyed_samples(
-            con, oracle_ref, scan, key, value_columns, all_equal, join_on,
-            anchor, both, sample_limit, row_conflict, row_null_only,
+            con, o_ref, c_ref, key, value_columns, all_equal, join_on,
+            o_present, c_present, both, sample_limit, row_conflict,
+            row_null_only,
         )
 
     # Attempted only when there is a conflict to explain: attribution can lower
@@ -1131,19 +1337,33 @@ FULL OUTER JOIN {scan} c ON {join_on}
         diff["conflict_attribution"] = _attribute_dst_conflicts(
             con,
             cte="",
-            from_sql=f"FROM {oracle_ref} o FULL OUTER JOIN {scan} c ON {join_on}",
+            from_sql=f"FROM {o_ref} o FULL OUTER JOIN {c_ref} c ON {join_on}",
             row_conflict=row_conflict,
             conflict_by_column=conflict_by_column,
             types_by_column={c["name"]: c["type"] for c in value_columns},
             sample_select=key_select + pairs,
             sample_limit=sample_limit,
         )
+
+    # Same reasoning, other class: attempted only when there are unpaired rows
+    # to explain, because attribution lowers a bar and must not appear on a
+    # result that has nothing unpaired about it.
+    if counts["only_oracle"] or counts["only_candidate"]:
+        diff["key_attribution"] = _attribute_dst_unpaired(
+            con,
+            oracle_ref=oracle_ref,
+            scan=scan,
+            key=key,
+            types_by_key=dict(key_types or {}),
+            join_on=join_on,
+            sample_limit=sample_limit,
+        )
     return diff
 
 
 def _keyed_samples(
-    con, oracle_ref, scan, key, value_columns, all_equal, join_on,
-    anchor, both, limit, row_conflict, row_null_only,
+    con, o_ref, c_ref, key, value_columns, all_equal, join_on,
+    o_present, c_present, both, limit, row_conflict, row_null_only,
 ) -> Dict[str, List[Any]]:
     """A bounded sample of each divergence class, for diagnosis.
 
@@ -1156,8 +1376,8 @@ def _keyed_samples(
     def _rows(where: str, extra_select: str = "") -> List[Dict[str, Any]]:
         sql = f"""
 SELECT {key_select}{extra_select}
-FROM {oracle_ref} o
-FULL OUTER JOIN {scan} c ON {join_on}
+FROM {o_ref} o
+FULL OUTER JOIN {c_ref} c ON {join_on}
 WHERE {where}
 LIMIT {int(limit)}
 """
@@ -1173,8 +1393,8 @@ LIMIT {int(limit)}
         for c in value_columns
     )
     return {
-        "only_oracle": _rows(f"c.{anchor} IS NULL"),
-        "only_candidate": _rows(f"o.{anchor} IS NULL"),
+        "only_oracle": _rows(f"NOT ({c_present})"),
+        "only_candidate": _rows(f"NOT ({o_present})"),
         "differing_conflict": _rows(row_conflict, pairs),
         "differing_null_only": _rows(row_null_only, pairs),
     }
@@ -1640,6 +1860,11 @@ def compare_full(
             result["diff"] = _keyed_diff(
                 con, oracle_ref, scan, key, value_columns, rtol, atol, sample_limit,
                 representable_only=confirmed_unrepresentable,
+                # The key's own declared types: `value_columns` drops them, and
+                # the key replay needs to know which key columns are datetimes.
+                key_types={
+                    c["name"]: c["type"] for c in columns if c["name"] in set(key)
+                },
             )
         else:
             result["comparison"] = "full_tuple_multiset"
@@ -1769,6 +1994,16 @@ _ATTRIBUTED_CONFIRM = (
     "is consistent with DST-gap rarity. Either failing makes this `bug`."
 )
 
+_KEY_ATTRIBUTED_CONFIRM = (
+    "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR "
+    "element the shifted *key* column is sourced from, (b) that the attributed "
+    "fraction is consistent with DST-gap rarity, and (c) that both unpaired "
+    "sets are fully accounted for -- a residual `only_candidate` row is still a "
+    "row the port invented. Any failing makes this `bug`. Do NOT accept a port "
+    "that recovers the pre-shift value by reconstructing a resource id: the "
+    "shift is intrinsic, and inverting the ETL's id-generation is not a mapping."
+)
+
 
 def _classify_divergence(
     diff: Dict[str, Any],
@@ -1847,6 +2082,45 @@ def _classify_divergence(
         )
     elif attribution.get("attempted") is False and attribution.get("why"):
         notes.append(f"upstream conflict attribution not attempted: {attribution['why']}")
+
+    # The same move for a shift that landed in the key rather than in a value.
+    # `only_oracle` is a gap class and `only_candidate` a contested one, so an
+    # unattributed key shift splits one transformation across both tiers and
+    # bills the port for a row it never invented.
+    key_attr = diff.get("key_attribution") or {}
+    if key_attr.get("complete"):
+        moved = {"only_oracle", "only_candidate"}
+        for bucket in (gap_shaped, contested):
+            for item in list(bucket):
+                if item["class"] not in moved:
+                    continue
+                bucket.remove(item)
+                item = dict(item)
+                item.update(
+                    attributed_to=key_attr["cause"],
+                    attributed_rows=key_attr[
+                        "attributed_only_oracle"
+                        if item["class"] == "only_oracle"
+                        else "attributed_only_candidate"
+                    ],
+                    proof=key_attr["operation"],
+                    citations=key_attr["citations"],
+                    keys=key_attr.get("keys_considered") or [],
+                    judge_must_confirm=_KEY_ATTRIBUTED_CONFIRM,
+                )
+                attributed.append(item)
+    elif key_attr.get("attempted") and key_attr.get("attributed_only_oracle"):
+        notes.append(
+            f"{key_attr['attributed_only_oracle']:,} of "
+            f"{key_attr['only_oracle']:,} `only_oracle` rows re-pair with an "
+            "unpaired candidate row once the oracle key is replayed through the "
+            f"upstream {key_attr['cause']}; "
+            f"{key_attr['residual_only_oracle']:,} do not. The tier stays on "
+            "those residual rows."
+        )
+    elif key_attr.get("attempted") is False and key_attr.get("why"):
+        notes.append(f"upstream key attribution not attempted: {key_attr['why']}")
+
     pairing = diff.get("residual_pairing") or {}
     if diff.get("classification") == "paired_residual":
         # The residual paired on an anchored column set, so the classes below
@@ -1901,6 +2175,25 @@ def _classify_divergence(
     if unrepresentable:
         explained = unrepresentable.get("confirmed") or {}
         for violation in unrepresentable.get("violations") or []:
+            # A key column is the one violation the port did not cause: the
+            # manifest key was chosen by empirical uniqueness over relational
+            # MIMIC, blind to what MIMIC-on-FHIR carries, so it can land on a
+            # column no port could ever supply. The diff is void either way,
+            # but voiding it is not the same as the port contradicting itself,
+            # and only the judge may end a concept on a semantic gap.
+            if violation.get("kind") == "key_column":
+                notes.append(
+                    f"VOID DIFF -- column {violation['column']!r} is declared "
+                    f"unrepresentable and is part of the manifest key "
+                    f"{diff.get('key')}. No row could join, so every count "
+                    "below measures the key selection, not the port; "
+                    "`only_oracle` and `only_candidate` in particular are "
+                    "artefacts and carry no fidelity information. Rule on the "
+                    "declaration and the prober's evidence that the element is "
+                    "absent from MIMIC-on-FHIR. The manifest key is comparison "
+                    "metadata, never a claim about the concept's grain."
+                )
+                continue
             unresolvable.append({
                 "class": "false_unrepresentable_declaration",
                 "count": violation.get("non_null_rows", 1),
@@ -1937,7 +2230,10 @@ def _classify_divergence(
     else:
         verdict, tier, bar = "match", "none", None
 
-    if attributed:
+    # One note per attribution route that actually fired. The two are
+    # independent -- a concept can have a shift in a value column, in a key
+    # column, or both -- so neither may assume the other ran.
+    if attribution.get("complete"):
         notes.append(
             f"{attribution['attributed_rows']:,} of "
             f"{attribution['conflict_rows']:,} conflicting rows -- all of them "
@@ -1947,6 +2243,19 @@ def _classify_divergence(
             "diagnosis of this class would only re-derive the replay, so the "
             "diagnostician can be skipped. The judge cannot: it still has to "
             "confirm provenance and fraction, and still has to rule."
+        )
+    if key_attr.get("complete"):
+        notes.append(
+            f"{key_attr['attributed_only_oracle']:,} `only_oracle` and "
+            f"{key_attr['attributed_only_candidate']:,} `only_candidate` rows "
+            "-- all of them -- are the same rows, re-paired once the oracle key "
+            f"is replayed through the upstream {key_attr['cause']} over key "
+            f"column(s) {', '.join(key_attr.get('keys_considered') or []) or 'n/a'}. "
+            "The port did not lose a row or invent one; the shift moved the row "
+            "out of its key. Both classes moved to `attributed`, so the "
+            "diagnostician can be skipped. The judge cannot -- and must not "
+            "accept a port that recovers the pre-shift key by reconstructing a "
+            "resource id, which is an inversion of the ETL, not a mapping."
         )
 
     reproduced = diff.get("identical")
@@ -1975,6 +2284,13 @@ def _classify_divergence(
         "conflict_attribution": (
             {k: v for k, v in attribution.items() if k != "samples"}
             if attribution else None
+        ),
+        # Same, for a shift that landed in the key. Kept as its own field rather
+        # than merged into the one above: they partition different classes and a
+        # reader that cannot tell them apart cannot check either.
+        "key_attribution": (
+            {k: v for k, v in key_attr.items() if k != "samples"}
+            if key_attr else None
         ),
         # Union of everything the judge rules on, in bar order (highest first).
         "reviewable": contested + gap_shaped + attributed,

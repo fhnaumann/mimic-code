@@ -149,6 +149,58 @@ Its limits are part of the contract, not implementation detail:
 - **If the zone rules available at comparison time do not reproduce the ETL's,
   nothing is attributed.** A canary establishes that before any row is judged.
 
+### The shift can land in the key, and that used to be invisible
+
+Revised 2026-08-12. Attribution above partitions the **conflict** set, and a
+conflict is something the comparator can only see in a column it *compares* —
+a value column. When the shifted datetime is part of the natural key, the row
+never reaches the comparison at all: the oracle row fails to find its partner
+and lands in `only_oracle`, the candidate row lands in `only_candidate`, and
+one upstream transformation is billed as a missing row **plus** an invented
+one — splitting it across both tiers and putting `only_candidate`, a contested
+class, on a port that invented nothing.
+
+This was not hypothetical. Six chartevents concepts key on `charttime`. Every
+one of them recorded `conflict_attribution: {"attempted": false}` and had the
+`attributed` route structurally closed to it. Five then reached `COMPLETED`
+by **reconstructing the ETL's `Observation.id` UUIDv5** to detect and undo the
+shift inside the port, and `code_status` did it with nine hardcoded UUID
+literals read off its own first divergence report. The loop rewarded inverting
+an ETL implementation detail because it had closed off the honest answer.
+
+So the comparator now replays the same cast against the **key**: it re-keys the
+unpaired oracle rows and checks whether they pair with the unpaired candidate
+rows, by semi-join over both sets in full. The result is `key_attribution`,
+carried in every comparison artifact beside `conflict_attribution`.
+
+Its limits are the conflict case's, plus one:
+
+- **All-or-nothing on _both_ sides.** A residual `only_candidate` row the
+  replay does not reach is still a row the port invented, however tidy the
+  oracle side looks. Either side short leaves the tier where it was.
+- **The replay must be non-identity.** A row whose key survives the round trip
+  unchanged would have paired in the first place; requiring the shift
+  explicitly stops attribution becoming a licence to relabel any one-hour error
+  as intrinsic.
+
+**The judge's bar carries an extra clause here, and it is the point of the
+change:** a port that recovers the pre-shift value by reconstructing a resource
+id is refused. The shift is intrinsic; inverting the ETL's id-generation is not
+a mapping, no consumer of the IG could reproduce it, and it turns "the served
+data does not carry this" into "the served data carries this, encoded in the
+primary key". `src/mimic_utils/sql_lint.py` refuses the construction
+mechanically (`hardcoded-resource-id`, `resource-id-inversion`) so the argument
+does not have to be won again per attempt.
+
+This is an **opaque-identity boundary**, not a ban on joins. A FHIR resource or
+reference id may be compared for equality to join resources, group or
+deduplicate one resource, and retain provenance. It may not be parsed,
+regenerated from guessed source inputs, brute-forced over candidate values,
+matched against hardcoded row ids, or otherwise used to infer a source value.
+Identity can establish which resource is which; it cannot become a semantic
+side channel. The prohibition applies even when the ETL source makes the id
+algorithm known and the recovery is exact on every measured row.
+
 **No floor.** A divergence of any size reaches the judge; there is no coverage
 threshold below which the loop auto-fails, and none above which it auto-accepts.
 The judge argues every case from the IG and the ETL source rather than from an
@@ -221,16 +273,100 @@ NULL column produces per-column counts the judge rules on and the thesis cites.
 ```
 
 The comparator **verifies** the declaration rather than trusting it. A declared
-column that is not part of the manifest, that is part of the natural key, or
-that holds any non-NULL value in the candidate is a blocking
-`false_unrepresentable_declaration`. Columns that are 100% NULL but undeclared
-are reported as a note — that is the shape of a gap nobody wrote down.
+column that is not part of the manifest, or that holds any non-NULL value in
+the candidate, is a blocking `false_unrepresentable_declaration` — in both
+cases the port's claim and the port's own data contradict each other, and
+there is nothing for the judge to weigh. Columns that are 100% NULL but
+undeclared are reported as a note — that is the shape of a gap nobody wrote
+down.
+
+A declared column that is part of the **manifest key** is different, and does
+not block. The keyed join cannot align a single row, so every count in that
+diff is void — but the port did not cause it. The manifest key is chosen by
+empirical uniqueness over relational MIMIC (`oracle_manifest.py`), blind to
+what MIMIC-on-FHIR carries, so it can land on a column no port could supply.
+The comparator marks the diff `VOID DIFF` in `notes`, and the result reaches
+the **judge**, which rules on the declaration and the prober's evidence rather
+than on counts that measure key selection. Blocking it here would also make
+honesty the expensive option: a port that omits `unrepresentable.json`
+entirely reaches the judge, so declaring the gap must not cost more than
+staying silent.
+
+`epinephrine` is the worked example. Its manifest key is
+`(linkorderid, starttime)` — not because `linkorderid` is the concept's grain,
+but because `(stay_id, starttime)` is not unique at full scale for this itemid
+(`key_probes: 6` vs `4` for `dopamine`, `dobutamine`, `vasopressin` and
+`milrinone`, which carry the identical gap and were judge-accepted). The
+manifest key is comparison metadata. It is never a claim about the concept's
+grain, and a port is never required to reproduce it.
 
 A verified declaration is **evidence, not a verdict**. It never turns `review`
 into `match`; it attaches the port's stated reason to the divergence so the
 judge rules on a claim instead of inferring intent. Without it, a concept like
 `age` reports "431,231 of 431,231 rows differing", which reads as catastrophic
 until someone opens `columns_differing` and finds two all-NULL columns.
+
+### Essential loss blocks the concept, not just a column
+
+Column-level declarations are appropriate only when the missing information is
+ancillary and the remaining result is still a faithful port of the concept.
+They are not a way to publish a plausible-looking table after an input needed
+by the core derivation has been lost.
+
+An absence is **essential** when it can change row inclusion, the concept's
+semantic grain, grouping, temporal carry-forward, or a clinically meaningful
+derived output. If one source field collapses several source states that take
+different branches in the canonical SQL, choosing the served value, the modal
+state, or a mostly-correct state is an estimate, not a mapping. The whole
+concept must be `BLOCKED_REPRESENTATION`; downstream concepts must not execute
+against a table whose ordinary values conceal that ambiguity.
+
+**"Semantic grain" is not the manifest key.** The manifest key is whichever
+column set `oracle_manifest.py` found empirically unique first, searching
+size-first through a fixed identity/time vocabulary over relational MIMIC, with
+no knowledge of what MIMIC-on-FHIR carries. It is a diagnostic device for
+aligning two tables, chosen for the quality of the diff it produces. A concept
+whose declared unrepresentable column happens to sit in that key has **not**
+thereby lost its grain, and the fact alone is not grounds for `blocked`.
+
+Test the grain directly instead: what identifies one row of *this concept* —
+usually whose it is plus when. If the representable columns still answer that,
+the port is faithful and the missing identifier is ancillary. Two traps to
+avoid, both observed:
+
+- **Size-first selection.** A one-column unmappable key wins before any
+  two-column mappable key is considered. `neuroblock` keyed on `orderid` at
+  `key_probes: 2`, so `(stay_id, starttime)` was **never probed** — its
+  uniqueness is unknown, not refuted. Never infer from the manifest key that no
+  representable key exists; check `key_probes` against the candidate order.
+- **Administrative identifiers are not grain.** `inputevents.orderid` and
+  `linkorderid` are the source system's order numbers. Losing them does not
+  make two clinical rows indistinguishable unless the representable columns
+  genuinely collide, which is a measurable question, not an inference.
+
+`epinephrine`, `norepinephrine` and `neuroblock` all reached this position,
+while `dopamine`, `dobutamine`, `vasopressin` and `milrinone` — same table,
+same ETL, same gap — were judge-accepted purely because their key search
+stopped on `(stay_id, starttime)`. Rule on the concept, never on which column
+the builder reached first.
+
+`gcs` is the worked example. The chartevents ETL writes both `No Response` and
+`No Response-ETT` as Quantity `1` and drops the source text. That distinction
+changes `gcs_unable`, `gcs_verbal`, total `gcs`, and the six-hour carry-forward
+logic, so it is essential. Emitting Quantity `1` for the ambiguous rows or NULL
+only for `gcs_unable` would still publish semantically unreliable GCS values to
+`first_day_gcs`, `sofa`, and `sapsii`. The faithful outcome is to block `gcs`
+until the upstream representation preserves the discriminator.
+
+There is deliberately **no early semantic auto-block**. The prober and
+diagnostician collect evidence and may recommend that the gap is essential,
+but they do not decide the terminal state. A full-data `match` and mechanical
+`mismatch` come from the deterministic comparator. Every non-exact semantic
+result reaches the independent judge, which alone returns `accept`, `bug`, or
+`blocked`. For now, an intrinsic New York one-hour DST normalization may be
+accepted when the comparator/judge proves it, and an ancillary missing field
+may be accepted when the remaining table is faithful; essential loss is
+`blocked`.
 
 **The 13 unkeyed concepts get less, and the residual is paired to get it back.**
 With no key to align rows, a NULL-for-value divergence lands in `only_oracle`
@@ -415,9 +551,10 @@ that is missing; for a `contested` one it also names the upstream ETL statement.
 
 ### Manual intervention
 
-`BLOCKED_REPRESENTATION` means "a human must look at this". The two things a
-human can conclude are *try again* and *this is intrinsic and I accept it*, so
-both edges exist:
+`BLOCKED_REPRESENTATION` means the equivalence judge already returned
+`blocked`, and a human must decide whether to revisit or override that ruling.
+The two things a human can conclude are *try again* and *this is intrinsic and I
+accept it*, so both edges exist:
 
 ```
 BLOCKED_REPRESENTATION → RUNNING                     (retry)
@@ -431,10 +568,11 @@ mimic_utils accept-divergence <concept> --by human --justification "..."
 ```
 
 `--by human` is the **only** way to clear a block, and it is refused on any other
-route into that state. The judge is by construction never called on a blocked
-concept, so recording a human's decision as the judge's would attribute an
-argument to an agent that never made it. `divergence_decided_by` is stored in
-`state.json` and `mimic_utils status` reports the two counts on separate lines:
+route into that state. The judge was called on the preceding `review` and put
+the concept into the blocked state; it is not called again to reconsider its
+own ruling. Recording a later human override as the judge's would misattribute
+that decision. `divergence_decided_by` is stored in `state.json` and
+`mimic_utils status` reports the two counts on separate lines:
 
 ```
   N/65 exact match

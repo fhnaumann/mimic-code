@@ -1,0 +1,285 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/medication/neuroblock/attempt_0001/candidate.full.parquet/*.parquet",
+  "comparison": "keyed_join",
+  "concept": "neuroblock",
+  "dataset": "full",
+  "diagnostics": [
+    "CONTESTED \u2014 a value conflict. Either a port bug or upstream ETL transformation loss; the data cannot tell you which:",
+    "  14,174 \u00d7 only_candidate (100.000% of oracle rows) \u2014 rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it",
+    "  bar for an accept: A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "GAP-SHAPED \u2014 consistent with a MIMIC-on-FHIR coverage gap:",
+    "  28,348 \u00d7 only_oracle \u2014 oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes",
+    "0 of 14,174 oracle rows reproduced identically (0.00%)",
+    "note: upstream key attribution not attempted: no datetime column in the natural key; a key shift cannot apply",
+    "note: VOID DIFF -- column 'orderid' is declared unrepresentable and is part of the manifest key ['orderid']. No row could join, so every count below measures the key selection, not the port; `only_oracle` and `only_candidate` in particular are artefacts and carry no fidelity information. Rule on the declaration and the prober's evidence that the element is absent from MIMIC-on-FHIR. The manifest key is comparison metadata, never a claim about the concept's grain."
+  ],
+  "diff": {
+    "classification": "keyed",
+    "columns_candidate_null": {},
+    "columns_conflicting": {},
+    "columns_differing": {},
+    "differing": 0,
+    "differing_conflict": 0,
+    "differing_null_only": 0,
+    "excluded_as_unrepresentable": [],
+    "identical": 0,
+    "identical_representable": 0,
+    "key": [
+      "orderid"
+    ],
+    "key_attribution": {
+      "attempted": false,
+      "complete": false,
+      "why": "no datetime column in the natural key; a key shift cannot apply"
+    },
+    "only_candidate": 14174,
+    "only_oracle": 28348,
+    "samples": {
+      "differing_conflict": [],
+      "differing_null_only": [],
+      "only_candidate": [
+        {
+          "orderid": null
+        },
+        {
+          "orderid": null
+        },
+        {
+          "orderid": null
+        },
+        {
+          "orderid": null
+        },
+        {
+          "orderid": null
+        },
+        {
+          "orderid": null
+        },
+        {
+          "orderid": null
+        },
+        {
+          "orderid": null
+        },
+        {
+          "orderid": null
+        },
+        {
+          "orderid": null
+        },
+        {
+          "orderid": null
+        },
+        {
+          "orderid": null
+        },
+        {
+          "orderid": null
+        },
+        {
+          "orderid": null
+        },
+        {
+          "orderid": null
+        },
+        {
+          "orderid": null
+        },
+        {
+          "orderid": null
+        },
+        {
+          "orderid": null
+        },
+        {
+          "orderid": null
+        },
+        {
+          "orderid": null
+        }
+      ],
+      "only_oracle": [
+        {
+          "orderid": 6150760
+        },
+        {
+          "orderid": 1440256
+        },
+        {
+          "orderid": 2646365
+        },
+        {
+          "orderid": 8050319
+        },
+        {
+          "orderid": 2910694
+        },
+        {
+          "orderid": 6041154
+        },
+        {
+          "orderid": 7192342
+        },
+        {
+          "orderid": 4924758
+        },
+        {
+          "orderid": 8088516
+        },
+        {
+          "orderid": 7271604
+        },
+        {
+          "orderid": 9081795
+        },
+        {
+          "orderid": 6339532
+        },
+        {
+          "orderid": 2145475
+        },
+        {
+          "orderid": 2946694
+        },
+        {
+          "orderid": 8307824
+        },
+        {
+          "orderid": 1803772
+        },
+        {
+          "orderid": 4961684
+        },
+        {
+          "orderid": 2660315
+        },
+        {
+          "orderid": 3278935
+        },
+        {
+          "orderid": 9738470
+        }
+      ]
+    }
+  },
+  "divergence": {
+    "attributed": [],
+    "blocking": [
+      {
+        "class": "only_candidate",
+        "count": 14174,
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      }
+    ],
+    "classification": "keyed",
+    "conflict_attribution": null,
+    "contested": [
+      {
+        "class": "only_candidate",
+        "count": 14174,
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      }
+    ],
+    "declared_unrepresentable": {},
+    "diagnostician_required": true,
+    "gap_shaped": [
+      {
+        "class": "only_oracle",
+        "count": 28348,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "identical_fraction": 0.0,
+    "identical_rows": 0,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "key_attribution": {
+      "attempted": false,
+      "complete": false,
+      "why": "no datetime column in the natural key; a key shift cannot apply"
+    },
+    "notes": [
+      "upstream key attribution not attempted: no datetime column in the natural key; a key shift cannot apply",
+      "VOID DIFF -- column 'orderid' is declared unrepresentable and is part of the manifest key ['orderid']. No row could join, so every count below measures the key selection, not the port; `only_oracle` and `only_candidate` in particular are artefacts and carry no fidelity information. Rule on the declaration and the prober's evidence that the element is absent from MIMIC-on-FHIR. The manifest key is comparison metadata, never a claim about the concept's grain."
+    ],
+    "oracle_rows": 14174,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [
+      {
+        "class": "only_candidate",
+        "count": 14174,
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      },
+      {
+        "class": "only_oracle",
+        "count": 28348,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "130935704742634906657241",
+    "manifest_row_count": 14174,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.neuroblock"
+  },
+  "row_count": {
+    "candidate": 14174,
+    "delta": 0,
+    "gated": false,
+    "match": true,
+    "oracle": 14174
+  },
+  "schema": {
+    "actual_columns": [
+      "stay_id",
+      "orderid",
+      "drug_rate",
+      "drug_amount",
+      "starttime",
+      "endtime"
+    ],
+    "expected_columns": [
+      "stay_id",
+      "orderid",
+      "drug_rate",
+      "drug_amount",
+      "starttime",
+      "endtime"
+    ],
+    "extra_columns": [],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "unrepresentable": {
+    "confirmed": {},
+    "declared": {
+      "orderid": "No FHIR element carries inputevents.orderid. The authoritative Delta probe found MedicationAdministration.identifier, request, and request.identifier.value populated on 0/20,404 ICU MedicationAdministration resources, and the ICU ETL uses orderid only inside the opaque resource UUID (mimic-fhir/sql/fhir_medication_administration_icu.sql:20,40-60). Resource ids are join-only and cannot be parsed or inverted, so the shape-preserving candidate emits CAST(NULL AS INTEGER). orderid is also the immutable oracle comparison key (14,174 rows) and can affect row identity and keyed alignment; this is potentially essential representation loss for the concept and must be decided by the equivalence judge."
+    },
+    "policy": "A declared column must be 100% NULL in the candidate. Declaring a column and then emitting an estimate for it is blocking: it converts a reviewable coverage gap into a value conflict.",
+    "undeclared_fully_null_columns": [],
+    "violations": [
+      {
+        "column": "orderid",
+        "kind": "key_column",
+        "reason": "is part of the natural key ['orderid']; the keyed diff could not align rows, so its counts measure the key rather than the port"
+      }
+    ]
+  },
+  "verdict": "review"
+}

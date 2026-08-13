@@ -30,6 +30,13 @@ OUT=/scratch3/nau025/oracle
 
 module load python/3.12.3
 
+# Pinned for the same reason as the concept run: the node's system zone is
+# Australia/Sydney, and no job that touches a wall-clock value may inherit it.
+# MIMIC source timestamps are naive, so DuckDB has no offset to apply here today
+# -- this is a guard against a future TIMESTAMPTZ creeping in, and it keeps the
+# oracle and the candidate on one zone. See .opencode/skills/csiro-hpc/SKILL.md.
+export TZ=UTC
+
 mkdir -p "$OUT"
 
 # DuckDB spills large joins to temp_directory; the default would be a small

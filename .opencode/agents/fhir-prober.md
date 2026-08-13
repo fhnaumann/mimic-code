@@ -129,6 +129,19 @@ across variants, a system URI that differs from what the IG advertises —
    accuracy against the oracle), and *not representable* (no derivation exists;
    say why). A de-identification artifact is usually the third kind.
 
+   The derivation must use actual FHIR semantics. Resource/reference ids are
+   opaque identity: they may support equality joins, grouping/deduplication, and
+   provenance, but never parsing, ETL UUID regeneration, candidate hashing,
+   hardcoded-id lookup, or inference of a source value from id equality. If an
+   id algorithm appears to preserve a discarded value, report the value as
+   **not representable** and name the attempted side channel as forbidden.
+
+   Also state whether the absent information is potentially **essential**: can
+   it change row inclusion, a natural key, grouping, temporal carry-forward, or
+   a clinically meaningful derived output? If yes, explain the propagation and
+   recommend whole-concept blocking. Do not block or accept it yourself. There
+   is no early semantic decision; a non-exact full result must reach the judge.
+
 5. **Check the mapping against the oracle where you can.** The DuckDB oracle
    (`MIMIC_DUCKDB_PATH`) holds the source table. When a mapping is cheap to
    test — a key join, a computed field — pull both sides into pandas and report

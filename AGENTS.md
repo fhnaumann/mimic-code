@@ -316,7 +316,27 @@ and its CLI (`mimic_utils init|start|validate-demo|...`). The canonical paths:
      Refuses without a justification.
   7. `mimic_utils fail <concept> --error "..."` — FAILED
   8. `mimic_utils block <concept> --error "..."` —
-     BLOCKED_REPRESENTATION pending human review
+     BLOCKED_REPRESENTATION after a judge `blocked`, pending human review
+
+Terminal semantic authority is exclusive: the deterministic comparator decides
+`match` and mechanical `mismatch`; every non-exact semantic result is decided by
+the independent equivalence judge as `accept`, `bug`, or `blocked`. The prober,
+implementer, diagnostician, and orchestrator may collect evidence or recommend
+an outcome, but never terminally accept or block a representation gap on their
+own. There is no early agent-decided semantic block.
+
+FHIR resource/reference ids are opaque identity only. They may support equality
+joins, grouping/deduplication of resources, and provenance, but may never be
+parsed, regenerated, brute-forced, hardcoded, or compared with guessed source
+inputs to recover a timestamp, label, identifier, or any other source value.
+An exact inversion of a known ETL UUID algorithm is still not a FHIR mapping.
+
+When a missing source field changes row inclusion, keys, grouping, temporal
+carry-forward, or a clinically meaningful derived output, the loss is essential
+to the concept. The judge must return `blocked`; do not publish a partial table
+whose ordinary values conceal the ambiguity. Ancillary missing columns may be
+accepted with explicit divergence, and the irrecoverable one-hour New York DST
+normalization may be accepted when proven.
 
 Execution commands, distinct from the state transitions above:
 
@@ -450,6 +470,7 @@ rather than merely counting it, and the verdict follows from the classes:
 | `only_candidate` | no — fan-out or a wrong filter | `contested` |
 | `differing_conflict` | no — the row exists on both sides | `contested`, or `attributed` when the comparator replays it to a known upstream ETL cast on **every** conflicting row |
 | `false_unrepresentable_declaration` | no — the port's claim and its own data contradict | `mismatch`, no judge |
+| declared column is in the **manifest key** | not the port's doing — the key was chosen blind to FHIR | `review` + `VOID DIFF` note; the judge rules, counts carry no fidelity information |
 
 - `match` — nothing diverged. The judge is **never** called.
 - `mismatch` — a machine-provable contradiction: the candidate did not

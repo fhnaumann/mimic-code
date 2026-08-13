@@ -1,0 +1,3 @@
+{
+  "orderid": "No FHIR element carries inputevents.orderid. The authoritative Delta probe found MedicationAdministration.identifier, request, and request.identifier.value populated on 0/20,404 ICU MedicationAdministration resources, and the ICU ETL uses orderid only inside the opaque resource UUID (mimic-fhir/sql/fhir_medication_administration_icu.sql:20,40-60). Resource ids are join-only and cannot be parsed or inverted, so the shape-preserving candidate emits CAST(NULL AS INTEGER). orderid is also the immutable oracle comparison key (14,174 rows) and can affect row identity and keyed alignment; this is potentially essential representation loss for the concept and must be decided by the equivalence judge."
+}

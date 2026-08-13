@@ -220,6 +220,13 @@ in the attempt's `unrepresentable.json` — the full comparator verifies every
 declared column really is 100% NULL, and a declared column holding values is a
 blocking failure.
 
+That column-level mechanism does not make essential source loss acceptable. If
+an absent source field can change row inclusion, keys, grouping, temporal
+carry-forward, or a clinically meaningful derived output, do not manufacture a
+best-effort table. Preserve the literal non-inverting mapping needed for the
+full comparison and flag the essential loss for the judge, which alone decides
+whether the entire concept is `BLOCKED_REPRESENTATION`.
+
 ## Warehouse configuration
 
 The Delta warehouse path comes from `MIMIC_FHIR_WAREHOUSE`, or `--warehouse`.

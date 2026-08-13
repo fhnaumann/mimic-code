@@ -1,14 +1,14 @@
 {
-  "attempt": 4,
+  "attempt": 5,
   "category": "measurement",
-  "completed_at": "2026-08-12T03:03:57.341470+00:00",
+  "completed_at": "2026-08-13T05:15:08.286977+00:00",
   "concept_name": "gcs",
   "dependencies": [],
   "divergence_decided_by": null,
   "divergence_justification": null,
-  "engineering_counter": 6,
-  "error_message": null,
-  "hpc_counter": 3,
+  "engineering_counter": 7,
+  "error_message": "Equivalence judge blocked gcs: essential upstream representation loss at mimic-fhir/sql/fhir_observation_chartevents.sql:69-80 discards the No Response-ETT discriminator, conflating it with No Response as Quantity 1. This changes gcs, gcs_verbal, gcs_unable, total GCS and six-hour carry-forward; 576086 differing_conflict rows plus 74 only_candidate and 98 only_oracle were observed (64.82% identical). Resource IDs are opaque and cannot recover the label. Key replay attributes 74 paired key shifts to mimic-fhir/sql/fhir_observation_chartevents.sql:9,67, with 24 collision residuals.",
+  "hpc_counter": 4,
   "reopen_history": [
     {
       "at": "2026-08-12T02:41:42.975885+00:00",
@@ -23,10 +23,24 @@
       "superseded_decided_by": null,
       "superseded_justification": null,
       "superseded_status": "COMPLETED"
+    },
+    {
+      "at": "2026-08-13T04:35:13.810681+00:00",
+      "baseline": {
+        "attempt": 4,
+        "engineering": 6,
+        "hpc": 3,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "concept.sql reconstructs the ETL's Observation.id UUIDv5 to undo a DST shift and brute-force a label vocabulary for source 'No Response-ETT'. Both uses violate the opaque-identity boundary. UTC-pinned reads plus key_attribution handle the residual New York shift; the discarded label changes core GCS outputs and carry-forward, so the reopened comparison must go to the judge for whole-concept BLOCKED_REPRESENTATION rather than a partial port.",
+      "superseded_decided_by": null,
+      "superseded_justification": null,
+      "superseded_status": "COMPLETED"
     }
   ],
-  "semantic_counter": 2,
-  "started_at": "2026-08-12T02:41:42.977353+00:00",
-  "status": "COMPLETED",
-  "updated_at": "2026-08-12T03:03:57.341714+00:00"
+  "semantic_counter": 3,
+  "started_at": "2026-08-13T04:35:13.812662+00:00",
+  "status": "BLOCKED_REPRESENTATION",
+  "updated_at": "2026-08-13T05:15:08.287284+00:00"
 }

@@ -189,6 +189,38 @@ above. Points 3 and 4 apply unchanged at every tier:
    dependencies (they will be listed for you), establish how much of the gap
    comes from them before attributing it to this concept.
 
+"Defensible mapping" excludes semantic recovery through resource identity.
+FHIR resource/reference ids are opaque: equality joins,
+grouping/deduplication, and provenance are allowed, but parsing, ETL UUID
+regeneration, candidate hashing, hardcoded row ids, and inference of source
+values from id equality are forbidden. A prior exact match obtained that way is
+evidence of a superseded invalid port, not evidence that the source value is
+representable.
+
+Before `accept`, test whether the absent information is **essential**. If it can
+change row inclusion, the concept's semantic grain, grouping, temporal
+carry-forward, or a clinically meaningful derived output, the partial result is
+not a faithful port and your verdict must be `blocked`. Do not accept it
+because most rows or columns match. An ancillary missing output can still be
+accepted when the remaining table faithfully implements the concept.
+
+**The manifest key is not the grain, and a `VOID DIFF` note is not evidence of
+magnitude.** When the comparator reports `VOID DIFF`, the declared column sits
+in a key that `oracle_manifest.py` picked by empirical uniqueness over
+relational MIMIC, blind to FHIR and searching size-first — so a one-column
+unmappable key wins before any mappable two-column key is even tried. Nothing
+joined, and `only_oracle` / `only_candidate` are then artefacts of that
+selection. **Do not cite either count, or their ratio, in your reasoning**;
+they carry no fidelity information and quoting them has already put a
+fabricated figure into a terminal ruling. Ask instead what identifies one row
+of this concept — usually whose it is plus when — and whether the representable
+columns still answer it. `inputevents.orderid` and `linkorderid` are the source
+system's order numbers, not clinical identity. Note that `dopamine`,
+`dobutamine`, `vasopressin` and `milrinone` carry this exact gap and were
+accepted; if you would block a sibling of theirs, say what distinguishes it. The proven one-hour New
+York DST normalization is also an acceptable intrinsic divergence; do not
+generalize that exception to unrelated transformation loss.
+
 There is **no size threshold** — a divergence of any magnitude reaches you, and
 none is auto-accepted or auto-rejected. Argue every case from the IG. A very
 large `only_oracle` is not automatically a bug, but it demands a
@@ -273,7 +305,9 @@ establish.
 - **`blocked`** — the gap is intrinsic **and** severe enough that the port
   cannot be called faithful. This reaches `BLOCKED_REPRESENTATION` for human
   review. Use it when you can name the absence but cannot in good conscience
-  call the result a port of the concept.
+  call the result a port of the concept. It is mandatory for essential loss as
+  defined above; `gcs` losing the `No Response-ETT` discriminator is the worked
+  example because it changes three outputs and temporal carry-forward.
 
 When you cannot decide between `accept` and `bug`, return `bug`. The cost of a
 wrong `bug` is another loop iteration; the cost of a wrong `accept` is a false

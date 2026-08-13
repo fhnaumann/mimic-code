@@ -1,0 +1,17 @@
+{
+  "attempt": 2,
+  "category": "medication",
+  "completed_at": null,
+  "concept_name": "neuroblock",
+  "dependencies": [],
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 1,
+  "started_at": "2026-08-13T06:53:51.514932+00:00",
+  "status": "RUNNING",
+  "updated_at": "2026-08-13T06:53:51.517152+00:00"
+}

@@ -1,0 +1,408 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/treatment/code_status/attempt_0004/candidate.full.parquet/*.parquet",
+  "comparison": "full_tuple_multiset",
+  "concept": "code_status",
+  "dataset": "full",
+  "diagnostics": [
+    "row count (not gated): oracle 269,072 vs candidate 71,141 (delta -197,931)",
+    "RESIDUAL DID NOT PAIR \u2014 197,935 oracle and 4 candidate residual rows do not correspond. Their counts being equal proves nothing: it follows from the row counts being equal.",
+    "CONTESTED \u2014 a value conflict. Either a port bug or upstream ETL transformation loss; the data cannot tell you which:",
+    "  4 \u00d7 only_candidate (0.001% of oracle rows) \u2014 rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise",
+    "  bar for an accept: A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "GAP-SHAPED \u2014 consistent with a MIMIC-on-FHIR coverage gap:",
+    "  197,935 \u00d7 only_oracle \u2014 oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes",
+    "note: No unique key for this concept, and the residual did not pair: divergence classes cannot be separated. The judge is reasoning with strictly less evidence than a keyed concept would provide.",
+    "note: residual pairing: every column differs between the residuals; there is nothing left to align rows on, so the residual cannot be shown to be substitutions rather than invented and missing rows"
+  ],
+  "diff": {
+    "classification": "unavailable_no_key",
+    "differing": null,
+    "differing_conflict": null,
+    "differing_null_only": null,
+    "identical": null,
+    "key": null,
+    "only_candidate": 4,
+    "only_oracle": 197935,
+    "residual_pairing": {
+      "anchored": false,
+      "attempted": true,
+      "column_drift": {
+        "charttime": 197939,
+        "cmo": 197931,
+        "dni": 197931,
+        "dnr": 197931,
+        "fullcode": 197931,
+        "hadm_id": 197931,
+        "stay_id": 197931,
+        "subject_id": 197931
+      },
+      "paired": 0,
+      "pairing_columns": [],
+      "residual_candidate": 4,
+      "residual_oracle": 197935,
+      "substituted_columns": [
+        "charttime",
+        "cmo",
+        "dni",
+        "dnr",
+        "fullcode",
+        "hadm_id",
+        "stay_id",
+        "subject_id"
+      ],
+      "unpaired_candidate": 4,
+      "unpaired_oracle": 197935,
+      "why": "every column differs between the residuals; there is nothing left to align rows on, so the residual cannot be shown to be substitutions rather than invented and missing rows"
+    },
+    "samples": {
+      "only_candidate": [
+        {
+          "charttime": "2114-03-11T03:54:00",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 23841829,
+          "stay_id": 36065690,
+          "subject_id": 14639134
+        },
+        {
+          "charttime": "2181-03-11T03:56:00",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 25238040,
+          "stay_id": 36521920,
+          "subject_id": 12945037
+        },
+        {
+          "charttime": "2187-03-11T03:44:00",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 1,
+          "fullcode": 0,
+          "hadm_id": 27383153,
+          "stay_id": 30388989,
+          "subject_id": 19109226
+        },
+        {
+          "charttime": "2120-03-10T03:57:00",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 28256778,
+          "stay_id": 35880048,
+          "subject_id": 18077786
+        }
+      ],
+      "only_oracle": [
+        {
+          "charttime": "2147-07-01T19:54:23",
+          "cmo": 0,
+          "dni": 1,
+          "dnr": 1,
+          "fullcode": 0,
+          "hadm_id": 24162970,
+          "stay_id": null,
+          "subject_id": 19738586
+        },
+        {
+          "charttime": "2110-12-15T22:51:19",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 22810590,
+          "stay_id": null,
+          "subject_id": 19738950
+        },
+        {
+          "charttime": "2141-01-19T21:21:22",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 26638931,
+          "stay_id": null,
+          "subject_id": 19739384
+        },
+        {
+          "charttime": "2120-03-16T05:27:54",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 21311574,
+          "stay_id": null,
+          "subject_id": 19740429
+        },
+        {
+          "charttime": "2186-11-09T00:44:43",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 23610050,
+          "stay_id": null,
+          "subject_id": 19740976
+        },
+        {
+          "charttime": "2193-01-25T18:34:17",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 27359576,
+          "stay_id": null,
+          "subject_id": 19743153
+        },
+        {
+          "charttime": "2170-01-14T10:15:53",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 23417913,
+          "stay_id": null,
+          "subject_id": 19744956
+        },
+        {
+          "charttime": "2122-07-08T14:19:06",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 26236937,
+          "stay_id": 33313510,
+          "subject_id": 19745571
+        },
+        {
+          "charttime": "2131-04-18T23:16:56",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 27083623,
+          "stay_id": null,
+          "subject_id": 19745796
+        },
+        {
+          "charttime": "2135-09-02T19:01:23",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 29476094,
+          "stay_id": null,
+          "subject_id": 19749517
+        },
+        {
+          "charttime": "2111-06-23T22:31:10",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 23544694,
+          "stay_id": null,
+          "subject_id": 19751455
+        },
+        {
+          "charttime": "2113-01-08T11:58:19",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 27056080,
+          "stay_id": null,
+          "subject_id": 19751955
+        },
+        {
+          "charttime": "2146-03-09T22:40:54",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 24748860,
+          "stay_id": 37522099,
+          "subject_id": 19753517
+        },
+        {
+          "charttime": "2158-05-06T16:38:34",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 1,
+          "fullcode": 0,
+          "hadm_id": 25879196,
+          "stay_id": null,
+          "subject_id": 19755487
+        },
+        {
+          "charttime": "2158-04-22T13:51:57",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 1,
+          "fullcode": 0,
+          "hadm_id": 25879196,
+          "stay_id": 30562709,
+          "subject_id": 19755487
+        },
+        {
+          "charttime": "2158-05-01T23:32:51",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 1,
+          "fullcode": 0,
+          "hadm_id": 25879196,
+          "stay_id": 39990055,
+          "subject_id": 19755487
+        },
+        {
+          "charttime": "2165-11-11T17:11:46",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 22335667,
+          "stay_id": null,
+          "subject_id": 19757659
+        },
+        {
+          "charttime": "2124-01-02T12:02:19",
+          "cmo": 0,
+          "dni": 1,
+          "dnr": 1,
+          "fullcode": 0,
+          "hadm_id": 27118109,
+          "stay_id": 32915087,
+          "subject_id": 19757679
+        },
+        {
+          "charttime": "2156-05-08T16:19:08",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 24570468,
+          "stay_id": null,
+          "subject_id": 19758044
+        },
+        {
+          "charttime": "2176-01-17T19:50:21",
+          "cmo": 0,
+          "dni": 0,
+          "dnr": 0,
+          "fullcode": 1,
+          "hadm_id": 20619957,
+          "stay_id": 39288661,
+          "subject_id": 19759233
+        }
+      ]
+    }
+  },
+  "divergence": {
+    "attributed": [],
+    "blocking": [
+      {
+        "class": "only_candidate",
+        "count": 4,
+        "why": "rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise"
+      }
+    ],
+    "classification": "unavailable_no_key",
+    "conflict_attribution": null,
+    "contested": [
+      {
+        "class": "only_candidate",
+        "count": 4,
+        "why": "rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise"
+      }
+    ],
+    "declared_unrepresentable": {},
+    "diagnostician_required": true,
+    "gap_shaped": [
+      {
+        "class": "only_oracle",
+        "count": 197935,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "identical_fraction": null,
+    "identical_rows": null,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "key_attribution": null,
+    "notes": [
+      "No unique key for this concept, and the residual did not pair: divergence classes cannot be separated. The judge is reasoning with strictly less evidence than a keyed concept would provide.",
+      "residual pairing: every column differs between the residuals; there is nothing left to align rows on, so the residual cannot be shown to be substitutions rather than invented and missing rows"
+    ],
+    "oracle_rows": 269072,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [
+      {
+        "class": "only_candidate",
+        "count": 4,
+        "why": "rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise"
+      },
+      {
+        "class": "only_oracle",
+        "count": 197935,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "2479683865358039166294707",
+    "manifest_row_count": 269072,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.code_status"
+  },
+  "row_count": {
+    "candidate": 71141,
+    "delta": -197931,
+    "gated": false,
+    "match": false,
+    "oracle": 269072
+  },
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "hadm_id",
+      "stay_id",
+      "charttime",
+      "fullcode",
+      "cmo",
+      "dni",
+      "dnr"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "hadm_id",
+      "stay_id",
+      "charttime",
+      "fullcode",
+      "cmo",
+      "dni",
+      "dnr"
+    ],
+    "extra_columns": [],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "verdict": "review"
+}

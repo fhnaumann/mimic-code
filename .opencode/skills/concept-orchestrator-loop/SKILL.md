@@ -488,6 +488,21 @@ serious.
   a human clearing this block needs to know how much of the table was
   reproduced, and `representable_fraction` is the number that says so.
 
+Only two authorities make terminal semantic decisions: the deterministic
+comparator (`match` or mechanical `mismatch`) and the equivalence judge
+(`accept`, `bug`, or `blocked` for every `review`). Never block early because a
+prober, implementer, diagnostician, or orchestrator calls a field essential;
+pass that evidence to the judge. Conversely, once the judge finds essential
+loss, do not publish a partial table. Essential means the missing information
+can change row inclusion, keys, grouping, temporal carry-forward, or a
+clinically meaningful derived output.
+
+Resource/reference ids are opaque identity only. Agents may use them for
+equality joins, resource grouping/deduplication, and provenance, but may not
+parse them, regenerate ETL UUIDs, hash candidate source values, hardcode ids, or
+infer source semantics from id equality. Historical attempts and carryover that
+call such an id a "witness" are superseded and must not guide a retry.
+
 **You never run `accept-divergence --by human` yourself.** A manual override is
 the user's decision about your loop's output; taking it on your own authority
 would make the `judge` / `human` distinction meaningless in the one direction

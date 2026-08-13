@@ -19,6 +19,9 @@ job, collect from the user:
 1. **O2D project code** (format: `OD-XXXXXX`). Use `--account=<code>`.
 2. **Input data location** - confirm it is on `$SCRATCH3DIR`; stage it there first if not.
 3. **Output data location** - all output must be written to `$SCRATCH3DIR`.
+4. **Timezone** - if the job touches a timestamp at all, `export TZ=UTC` (plus
+   `--conf spark.sql.session.timeZone=UTC` for Spark). Not negotiable and not a
+   user question; see "Pin the timezone" below.
 
 Before submitting a job, validate the execution environment on the login node. Run a minimal smoke test (e.g. a short Python import check, verify JAR dependencies resolve) to catch issues like missing packages, wrong Python version, or uncached artifacts. Each failed job wastes cluster allocation time. `mimic_utils hpc-launch` does this automatically and refuses to `sbatch` when the smoke test fails.
 
@@ -30,6 +33,57 @@ Always request all resources on the node(s) you allocate - there is no benefit t
 - **Virga:** 72 cores, 512 GB usable RAM, 4 GPUs per node.
 
 **Exception — the concept-port full run.** `mimic-iv/concepts_fhir/submit_concept_run.slurm` deliberately asks for **half a node** (`--ntasks=1 --cpus-per-task=32 --mem=256g`, no `--exclusive`). The rule above assumes one job at a time; that loop runs several concepts in parallel, so whole-node requests make siblings queue behind each other instead of co-scheduling, and measured peak usage is well inside half a node. Do **not** "repair" that template back to 64 cores / 503g / `--exclusive`. Its sizing and its rationale are in `.opencode/skills/hpc-transfer/SKILL.md`; `--mem` ↔ `spark.driver.memory` and `--cpus-per-task` ↔ `local[N]` are coupled pairs and move together. The oracle build (`concepts_fhir/oracle/submit_build_oracle.slurm`) is a single whole-node job and correctly follows the rule.
+
+### Pin the timezone — mandatory for every job that touches a timestamp
+
+**Both clusters run with system zone `Australia/Sydney`.** Any job that reads,
+writes, formats or compares a wall-clock value must pin the zone explicitly.
+Add these two lines to every such job script, before the workload starts:
+
+```bash
+export TZ=UTC                                   # before any JVM starts
+# ... and for Spark, additionally:
+--conf spark.sql.session.timeZone=UTC
+```
+
+Set **both**, not either. `TZ` fixes the zone the JVM samples at boot — which is
+where Spark *derives* its default `spark.sql.session.timeZone` — and it also
+governs DuckDB and Python `datetime` in the same process. The `--conf` is what
+survives someone exporting a different `TZ` further down the script.
+
+**Why this is not optional.** In Spark 4.0.2, `DATE_FORMAT` and `DATE_TRUNC`
+consult the session zone *even for a zone-less `TIMESTAMP_NTZ`*, and silently
+push a wall time that falls in that zone's DST spring-forward gap an hour
+forward. Measured on Petrichor:
+
+| expression on `TIMESTAMP_NTZ`, session zone `Australia/Sydney` | `2140-10-02 02:00` |
+|---|---|
+| `CAST(… AS STRING)` | `02:00:00` ✅ |
+| `DATE_FORMAT(…, 'yyyy-MM-dd HH:mm:ss')` | `03:00:00` ❌ |
+| `DATE_TRUNC('HOUR', …)` | `03:00:00` ❌ |
+
+02:00–03:00 on the first Sunday in October does not exist in Sydney. MIMIC
+timestamps are de-identified *wall clocks*, not instants, so this corrupts data
+that was never in a timezone to begin with. It cost the concept-port loop six
+concepts' worth of UUID-inversion workarounds against a defect that was never in
+the data — see `mimic-iv/concepts_fhir/TODO_warehouse_rebuild.md`.
+
+**`UTC`, not `America/New_York`.** UTC has no DST in any year, so no wall clock
+can be normalised by accident. Matching the source zone would still leave the
+March gap live.
+
+**Pin it in the environment, not in the SQL.** A generated query is reviewed
+once and the failure mode is invisible — the wrong answer is well-formed, off by
+exactly one hour, on a handful of rows a year. In this repo the Spark half is
+enforced at the single point where the JVM is created
+(`_pin_session_timezone` / `SESSION_TIMEZONE` in `src/mimic_utils/embedded_runner.py`),
+so it covers the local demo leg and the HPC leg identically. **Never rely on a
+`concept.sql` to set its own zone**, and treat a job script that starts a JVM
+without `export TZ` as incomplete.
+
+Both legs must use the *same* zone. Pinning only the Slurm side would make the
+local demo run (Sydney laptop) and the full run (UTC node) disagree, which
+converts a config bug into a phantom port bug.
 
 Choose wall time based on estimated job duration. Default to 2 hours unless the user indicates the job needs longer, or the workload clearly requires it (e.g. deep learning training, very large datasets).
 
@@ -60,6 +114,11 @@ Always include email notifications:
 # Load required modules.
 module load <software>
 
+# Pin the zone: the node's system zone is Australia/Sydney and no wall-clock
+# value may inherit it. Required whenever the job touches a timestamp.
+export TZ=UTC
+# For Spark, also: --conf spark.sql.session.timeZone=UTC
+
 # Run from scratch3.
 cd $SCRATCH3DIR/<project dir>
 
@@ -83,6 +142,10 @@ cd $SCRATCH3DIR/<project dir>
 
 # Load required modules.
 module load cuda
+
+# Pin the zone: the node's system zone is Australia/Sydney and no wall-clock
+# value may inherit it. Required whenever the job touches a timestamp.
+export TZ=UTC
 
 # Run from scratch3.
 cd $SCRATCH3DIR/<project dir>

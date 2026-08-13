@@ -1016,8 +1016,8 @@ class ConversionController:
         decided_by :
             ``"judge"`` or ``"human"``.  Only meaningful for
             ``COMPLETED_WITH_DIVERGENCE``.  ``"human"`` is required to clear a
-            ``BLOCKED_REPRESENTATION``, because the judge, by construction, is
-            not what put it there.
+            ``BLOCKED_REPRESENTATION``: the judge already returned ``blocked``
+            before that transition and does not reconsider its own ruling.
         counter :
             Which of the three counters to increment.
         """
@@ -1050,16 +1050,15 @@ class ConversionController:
                     f"--by must be one of {sorted(DIVERGENCE_DECIDERS)}; "
                     f"got {decided_by!r}"
                 )
-            # The judge never sees a BLOCKED_REPRESENTATION -- it is either what
-            # the judge itself returned or what the loop recorded without
-            # convening one. Letting `--by judge` clear it would let the loop
-            # launder its own blocker into a judge decision that never happened.
+            # The judge already returned `blocked` before this state transition.
+            # Letting `--by judge` clear it would misattribute a later override
+            # to a second judge ruling that never happened.
             if state.status == "BLOCKED_REPRESENTATION" and decided_by != "human":
                 raise StateError(
                     f"'{concept_name}' is BLOCKED_REPRESENTATION, which only a "
-                    f"human can clear: pass --by human. The judge is not called "
-                    f"on a blocked concept, so recording its acceptance as the "
-                    f"judge's would misattribute the decision."
+                    f"human can clear: pass --by human. The judge already "
+                    f"returned blocked and is not called again to reconsider "
+                    f"that ruling."
                 )
 
         state.status = target  # type: ignore[assignment]

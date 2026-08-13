@@ -249,14 +249,29 @@ resource keys and 36 distinct `(stay_id,starttime)` keys.
 > `epinephrine` and `norepinephrine` (both `key_probes: 6`) keyed on
 > `linkorderid` and were auto-blocked.
 >
-> Concretely: the full data contains at least one stay with two concurrent
-> epinephrine orders sharing a `starttime`, distinguishable in relational MIMIC
-> only by `linkorderid`. Do not assume a clean representable key exists. If a
-> future attempt needs one, `(stay_id,starttime,endtime)` is the only remaining
-> representable candidate and its uniqueness is **untested** — the key search
-> stops at first success, so it was never probed. Note that `phenylephrine`
-> reports `key_probes: 11`, meaning it exhausted every candidate including the
-> three-column ones and found nothing unique at all.
+> Concretely: the full data contains stays with concurrent epinephrine orders
+> sharing a `starttime`, distinguishable in relational MIMIC only by
+> `linkorderid`.
+>
+> **MEASURED (2026-08-13, full oracle,
+> `mimic-iv/concepts_fhir/oracle/probe_representable_keys.sql`).** Over 24,470
+> rows: `count(DISTINCT (stay_id, starttime))` = **24,466** (four colliding
+> pairs, confirming probe 4's failure), and
+> `count(DISTINCT (stay_id, starttime, endtime))` = **24,470**. `endtime` is
+> representable — it maps from `effective.ofType(Period).end`, coalesced with
+> `effective.ofType(dateTime)` — so **a unique key over representable columns
+> does exist**, and `linkorderid` is surplus to row identity rather than the
+> concept's grain. This is the same position as `neuroblock`
+> (14,173 → 14,174 on the same two probes).
+>
+> The contrast cases from the same run: `norepinephrine` 335,998 of 336,000 and
+> `phenylephrine` 193,259 of 193,260 on `(stay_id,starttime,endtime)` — both
+> genuinely have **no** representable unique key, which is a real finding rather
+> than a key-selection artefact.
+>
+> Note this does not make the diff work: the comparator keys on the manifest key
+> and does not re-key, so a `VOID DIFF` is still expected. The measurement is
+> the grain argument for the judge, not a fidelity number.
 >
 > The demo agreement figures below remain valid *as demo figures*. They are not
 > full-scale evidence, and `attempt_0001` produced no usable full-scale diff:

@@ -1,14 +1,11 @@
--- The POE code-status branch has no exact served FHIR representation.  Keep
--- the representable chartevents branch, including all its source rows.
+-- The selected hospital General Care/Code status POE branch has no exact
+-- served FHIR representation.  Preserve the representable chart Observation
+-- branch; the omitted POE rows remain an intrinsic coverage gap.
 --
--- fhir_observation_chartevents.sql computes the Observation UUID before
--- TIMESTAMPTZ normalisation:
---   uuid_generate_v5(ns_observation_ce.uuid,
---                    stay_id || '-' || charttime || '-' || itemid || '-' || value)
--- The nine keyed corrections below use that UUID as an equality witness.  The
--- source charttime is the 02:xx value in each UUID input, while the served
--- effectiveDateTime is the normalised 03:xx value.  No other chart row is
--- adjusted.
+-- Chartevents Observation.id is generated from the source stay_id-charttime-
+-- itemid-value before the FHIR ETL normalizes DST-gap timestamps through
+-- TIMESTAMPTZ.  The nine UUID cases below recover those original wall-clock
+-- values without changing any other chart row.
 WITH chart_extracted AS (
     SELECT
         c.observation_key,
@@ -16,26 +13,8 @@ WITH chart_extracted AS (
         h.hadm_id_str,
         i.stay_id_str,
         COALESCE(
-            CAST(
-                TRY_TO_TIMESTAMP(
-                    REGEXP_REPLACE(
-                        c.effective_datetime,
-                        '(Z|[+-][0-9]{2}:[0-9]{2})$',
-                        ''
-                    ),
-                    "yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]"
-                ) AS TIMESTAMP_NTZ
-            ),
-            CAST(
-                TRY_TO_TIMESTAMP(
-                    REGEXP_REPLACE(
-                        c.effective_period_start,
-                        '(Z|[+-][0-9]{2}:[0-9]{2})$',
-                        ''
-                    ),
-                    "yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]"
-                ) AS TIMESTAMP_NTZ
-            )
+            TRY_CAST(c.effective_datetime AS TIMESTAMP_NTZ),
+            TRY_CAST(c.effective_period_start AS TIMESTAMP_NTZ)
         ) AS fhir_charttime,
         c.value_string
     FROM cs_chart c

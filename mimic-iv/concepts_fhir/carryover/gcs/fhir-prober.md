@@ -1,241 +1,199 @@
-# FHIR prober mapping — `gcs`
+# FHIR prober mapping — `gcs` (fresh, 2026-08-13)
 
 **Concept:** `measurement/gcs`  
 **Source analysis:** `mimic-iv/concepts_fhir/carryover/gcs/source-analyst.md`  
-**Probe date:** 2026-08-11  
 **Authoritative warehouse:** `/Users/nau025/warehouses/mimic-iv-demo/delta`  
 **Engine:** embedded Pathling 9.6.0 on Spark 4.0.2  
 **Demo oracle:** `/Users/nau025/warehouses/mimic4-demo.db`, DuckDB read-only  
-**No stale NDJSON was read.**
+**No stale NDJSON or live Pathling server was used.**
+
+## Non-negotiable identity prohibition
+
+`Observation.getResourceKey()` / `Observation.id` is opaque resource identity.
+It may be retained for equality joins, deduplication, and provenance, but it
+**must not** be parsed, regenerated, enumerated, hardcoded, or compared with
+guessed source values to recover either `charttime` or the source label
+`No Response-ETT`. This explicitly forbids UUIDv5/ETL-UUID recovery of the
+discarded label and of pre-normalisation charttime. The only charttime mapping
+is the served `Observation.effectiveDateTime` value. The prior carryover's
+UUID-witness mapping is invalidated and is not part of this mapping.
 
 ## Resource and stream mapping
 
-`mimiciv_icu.chartevents` maps to the `Observation` resource, specifically the
-chartevents coding stream. The ETL statement
-`/Users/nau025/Documents/mimic-fhir/sql/fhir_observation_chartevents.sql:24-38`
-reads the source table, removes NULL `value` rows, and creates one Observation
-per remaining chartevents row (apart from its hard-coded duplicate exclusion).
-The resource is confirmed by the authoritative Delta `Observation` schema and
-by the target coding system below.
+`mimiciv_icu.chartevents` maps to FHIR `Observation`, specifically the
+chartevents coding stream. The ETL source is
+`/Users/nau025/Documents/mimic-fhir/sql/fhir_observation_chartevents.sql:24-38`.
+It removes source rows with NULL `value` and one hard-coded duplicate tuple
+before creating resources. The authoritative Delta Observation schema and the
+served coding counts confirm this resource mapping.
 
-The discriminator is **system plus exact string code**, never `meta.profile`:
+The discriminator is **`code.coding.system` plus exact string code**, never
+`meta.profile`:
 
 ```text
 system = http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items
 codes  = "223900", "223901", "220739"
 ```
 
-The three exact code/display/count results in Delta were:
+The authoritative Delta code results were:
 
-| Source `itemid` | FHIR `Coding.code` | FHIR display | System | coding rows | distinct resources |
-|---:|---|---|---|---:|---:|
-| 220739 | `"220739"` | `GCS - Eye Opening` | `mimic-chartevents-d-items` | 3,274 | 3,274 |
-| 223900 | `"223900"` | `GCS - Verbal Response` | `mimic-chartevents-d-items` | 3,266 | 3,266 |
-| 223901 | `"223901"` | `GCS - Motor Response` | `mimic-chartevents-d-items` | 3,251 | 3,251 |
+| Source `itemid` | FHIR `Coding.code` | FHIR `Coding.display` | coding rows | distinct resources |
+|---:|---|---|---:|---:|
+| 220739 | `"220739"` | `GCS - Eye Opening` | 3,274 | 3,274 |
+| 223900 | `"223900"` | `GCS - Verbal Response` | 3,266 | 3,266 |
+| 223901 | `"223901"` | `GCS - Motor Response` | 3,251 | 3,251 |
 
-The exact-code query found no other system for any of the three codes. The
-authoritative Delta has no `CodeSystem` resource (`src.read('CodeSystem')`
-raised `No data found`), so this confirmation comes from served Observation
-codings and the ETL, not terminology expansion. The DuckDB `d_items` rows are
-one-per-item (`3` rows, `3` distinct itemids), all `linksto='chartevents'`,
-with the labels shown above. This is enough to separate these GCS items: their
-system is the chartevents-specific system, unlike the shared `mimic-d-items`
-system used by outputevents and datetimeevents; exact code remains part of the
-rule because `d_items.itemid` is the global dimension key with one `linksto`
-value per item.
+No other system was observed for these exact codes. The demo warehouse has no
+served `CodeSystem` resource, so the system/code confirmation is from the
+served Observation codings, ETL SQL, and the DuckDB `d_items` dimension. The
+three `d_items` rows are unique and all have `linksto='chartevents'`. This
+system plus exact code rule remains safe against the shared `mimic-d-items`
+system used by outputevents/datetimeevents; the global `d_items.itemid` has one
+`linksto` per item.
 
-Coding cardinality was checked with a projection over `forEach: "code.coding"`:
+Use a constrained coding group:
 
-* all chartevents-system codings: **668,862 / 668,862 resources = 1.000**;
-* the three-code target: **9,791 / 9,791 resources = 1.000**;
-* each individual code also had a ratio of **1.000**.
-
-Use a constrained coding group and project these canonical columns:
-
-```text
-forEach: code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items')
-{ "path": "code",    "name": "item_code" }
-{ "path": "system",  "name": "code_system" }
-{ "path": "display", "name": "code_display" }
+```json
+{
+  "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items')",
+  "column": [
+    { "path": "code", "name": "item_code" },
+    { "path": "system", "name": "code_system" },
+    { "path": "display", "name": "code_display" }
+  ]
+}
 ```
 
-Apply the exact three string codes after this system-constrained projection (or
-include the exact-code disjunction inside the `where`). Do not cast arbitrary
-Observation codes before the system/code filter.
+The coding-per-resource ratio is **1.000** for all chartevents-system codings
+(668,862 / 668,862) and for the GCS target (9,791 / 9,791). Each target code
+also has ratio 1.000. Filter on the system and exact string code before any
+integer cast.
 
 ## Canonical source-column → FHIRPath mapping
 
-The UUID/reference columns below are join support, not the output MIMIC IDs.
-FHIR choice aliases are materialized by Pathling as strings even where the FHIR
-element is decimal or dateTime; the implementer must cast to the manifest type
-in the final SQL.
+The UUID/reference columns are join support, not output MIMIC IDs. Pathling
+materializes the Quantity and dateTime aliases as strings in this projection;
+the implementer must cast them to the manifest types in final SQL.
 
-| Source column / final output | Canonical `{path, name}` | FHIR type | Delta population / required final type |
+| Source column / output | Canonical `{path, name}` | FHIR type | Probe result / required output type |
 |---|---|---|---|
-| `subject_id` | `{ "path": "subject.getReferenceKey(Patient)", "name": "patient_key" }` plus Patient `{ "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/patient').value", "name": "subject_id_str" }` | `Reference(Patient)` key string, then `Identifier.value` string | Observation reference, Patient join, and identifier value were 9,791/9,791 non-null; final `CAST(subject_id_str AS INTEGER)` → manifest `INTEGER` |
-| `stay_id` | `{ "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_key" }` plus ICU Encounter `{ "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu').value", "name": "stay_id_str" }` | `Reference(Encounter)` key string, then `Identifier.value` string | Observation reference, Encounter join, and ICU identifier were 9,791/9,791 non-null; final `CAST(stay_id_str AS INTEGER)` → manifest `INTEGER` |
-| `charttime` | `{ "path": "(effective).ofType(dateTime)", "name": "effective_datetime" }` | `Observation.effective[x]` = `dateTime`; materialized `STRING` with ISO offset | 9,791/9,791 non-null; parse with `CAST(effective_datetime AS TIMESTAMP_NTZ)` → manifest `TIMESTAMP`; do not offset-convert |
-| `itemid` (filter/pivot discriminator) | In the constrained coding `forEach`: `{ "path": "code", "name": "item_code" }` and `{ "path": "system", "name": "code_system" }` | `Coding.code` / `Coding.system`, both strings | Exact target counts above; cast/filter only after system plus exact string code |
-| `d_items.label` (not a source output) | In the coding `forEach`: `{ "path": "display", "name": "code_display" }` | `Coding.display` string | 9,791/9,791 populated and agrees with the three DuckDB `d_items.label` values; no output column |
-| `valuenum` → component values | `{ "path": "(value).ofType(Quantity).value", "name": "quantity_value" }` | `Quantity.value` decimal; raw Delta `DecimalType(32,6)`, materialized alias `STRING` | 9,791/9,791 target rows; cast to `FLOAT` for `gcs_motor`, `gcs_verbal`, `gcs_eyes` |
-| `valueuom` (not selected by source SQL) | `{ "path": "(value).ofType(Quantity).unit", "name": "quantity_unit" }` | `Quantity.unit` string | 0/9,791 populated; source `valueuom` was NULL for all 9,791 rows; informational only |
-| exact source `value` text when it is a string | `{ "path": "(value).ofType(string)", "name": "value_string" }` | `value[x]` = `string` | 0/9,791 populated for these numeric GCS items; do not expect the ETT text here |
-| resource identity (support only) | `{ "path": "getResourceKey()", "name": "observation_key" }` | Observation resource key string (`Observation/<UUID>`) | 9,791/9,791 non-null and distinct; not an output `stay_id`, `subject_id`, or natural key |
+| `subject_id` | `{ "path": "subject.getReferenceKey(Patient)", "name": "patient_key" }` plus Patient `{ "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/patient').value", "name": "subject_id_str" }` | `Reference(Patient)` key string; `Identifier.value` string | 9,791/9,791 reference and identifier values populated; join then `CAST(subject_id_str AS INTEGER)` → `INTEGER` |
+| `stay_id` | `{ "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_key" }` plus ICU Encounter `{ "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu').value", "name": "stay_id_str" }` | `Reference(Encounter)` key string; `Identifier.value` string | 9,791/9,791 reference values populated; ICU Encounter identifier join 9,791/9,791; `CAST(stay_id_str AS INTEGER)` → `INTEGER` |
+| `charttime` | `{ "path": "(effective).ofType(dateTime)", "name": "effective_datetime" }` | `Observation.effective[x]` `dateTime`; materialized `STRING` with ISO offset | 9,791/9,791 populated; `CAST(effective_datetime AS TIMESTAMP_NTZ)` → manifest `TIMESTAMP`; do not offset-convert |
+| `itemid` | In constrained coding group: `{ "path": "code", "name": "item_code" }` | `Coding.code` string | Exact codes `223900`, `223901`, `220739`; cast only after system/code filter |
+| coding system | `{ "path": "system", "name": "code_system" }` | `Coding.system` string | Exact chartevents URI on 9,791/9,791 target rows |
+| `d_items.label` (not output) | `{ "path": "display", "name": "code_display" }` | `Coding.display` string | 9,791/9,791 populated; source/dimension display agreement 9,791/9,791 |
+| `valuenum` → component values | `{ "path": "(value).ofType(Quantity).value", "name": "quantity_value" }` | `Quantity.value` decimal; materialized alias `STRING` | 9,791/9,791 populated; cast to `FLOAT` for component pivots |
+| `valueuom` (not selected by source SQL) | `{ "path": "(value).ofType(Quantity).unit", "name": "quantity_unit" }` | `Quantity.unit` string | 0/9,791 populated, matching source `valueuom` NULL on 9,791/9,791 |
+| source text if FHIR string | `{ "path": "(value).ofType(string)", "name": "value_string" }` | `value[x]` `string` | 0/9,791 populated; it does not carry `No Response-ETT` |
+| resource identity (support only) | `{ "path": "getResourceKey()", "name": "observation_key" }` | opaque resource key string | 9,791/9,791 populated/distinct; never output or decode it |
 
-The raw Observation schema also exposes `effectiveInstant` and
-`effectivePeriod`; the target probe found `effectiveInstant` 0/9,791 and
-Period start/end 0/9,791. The GCS view therefore needs only the dateTime
-variant; there is no target-side effective-choice COALESCE.
+The Observation schema also exposes `effectiveInstant` and `effectivePeriod`.
+For the GCS target, `effectiveInstant` and Period start/end were each 0/9,791;
+only `effective.dateTime` exists, so no effective-choice COALESCE is required.
 
-The output natural key is the oracle key **`(stay_id, charttime)`**, not
-`Observation.getResourceKey()` and not `itemid`. The full oracle manifest says
-`keyed_join`, key `['stay_id', 'charttime']`, row count 1,637,763, and output
-types `INTEGER, INTEGER, TIMESTAMP, FLOAT, FLOAT, FLOAT, FLOAT, INTEGER`.
-The candidate must pivot the three code streams at `(stay_id, charttime)` and
-must not emit `itemid`, `rn`, or `observation_key`.
+The canonical output natural key is **`(stay_id, charttime)`**, from the oracle
+manifest (`keyed_join`, 1,637,763 rows), not the resource UUID and not `itemid`.
+The implementer must pivot at `(stay_id, charttime)` and must not output
+`itemid`, `rn`, or `observation_key`.
 
-## Exact sentinel and value-variant finding
+## Exact coded filter and source-value confirmation
 
-The source literal is exactly `value = 'No Response-ETT'` for `itemid=223900`.
-DuckDB found:
+The source SQL names exactly `223900`, `223901`, and `220739`; no terminology
+translation or expansion is used. DuckDB source counts:
 
-* 1,348 exact sentinel rows;
-* every one had `valuenum=1`, not zero;
-* the other 78 verbal rows with `value='No Response'` also had `valuenum=1`;
-* all 3,266 verbal rows had non-NULL `valuenum`.
+| `itemid` | total rows | `value` non-null | `value` NULL | `valuenum` non-null | `valueuom` non-null |
+|---:|---:|---:|---:|---:|---:|
+| 220739 | 3,274 | 3,274 | 0 | 3,274 | 0 |
+| 223900 | 3,266 | 3,266 | 0 | 3,266 | 0 |
+| 223901 | 3,251 | 3,251 | 0 | 3,251 | 0 |
 
-The served ETL at `fhir_observation_chartevents.sql:69-80` writes
-`valueQuantity` whenever `valuenum IS NOT NULL` and writes `valueString` only
-when `valuenum IS NULL`. Consequently, for code `223900` Delta has
-`quantity_value` on 3,266/3,266 rows, `value_string` on 0/3,266, and Quantity
-value `1` on 1,426 rows (the 1,348 sentinel rows plus the 78 `No Response`
-rows). The exact sentinel is therefore **not present at a direct FHIR value
-path**, and `quantity_value=1` is not a safe sentinel discriminator.
+The source has 9,791 rows and 3,279 distinct `(stay_id, charttime)` groups.
+It has zero repeated `(stay_id, charttime, itemid)` groups in the demo. The
+served FHIR-to-source join on `(stay_id, charttime, itemid)` matched **9,791 /
+9,791** rows, with numeric Quantity agreement within `1e-6` on **9,791/9,791**.
 
-There is an ETL-specific equality witness: lines 20-23 of the ETL create the
-Observation UUID from `stay_id-charttime-itemid-value` before datetime
-serialization. Recreating the UUIDv5 namespace chain from
-`mimic-fhir/sql/fhir_etl/uuid_namespace.sql:7-32` and the exact source string
-matched the served `Observation.getResourceKey()` for **9,791/9,791** GCS
-rows, including the 1,348 sentinel rows. Thus the sentinel is **absent from a
-normal FHIR value path but derivable only by finite candidate enumeration over
-the ETL UUID input** (and is not a general FHIRPath mapping). Do not infer it
-from Quantity 1. If the implementer does not use this ETL-key witness, the
-sentinel/`gcs_unable` distinction is an intrinsic representation gap and must
-not be replaced with a heuristic.
+The exact source sentinel is `itemid=223900 AND value='No Response-ETT'`:
 
-The final source-derived demo shape, checked with an equivalent DuckDB CTE,
-was 3,279 `(stay_id, charttime)` rows. Null/non-null counts were:
+* `No Response-ETT`: 1,348 rows, all with `valuenum=1`;
+* `No Response`: 78 rows, all with `valuenum=1`;
+* all 3,266 verbal rows have non-NULL `valuenum`;
+* served verbal Quantity value `1`: 1,426 rows; served `valueString`: 0/3,266.
 
-| Output | total | non-null |
-|---|---:|---:|
-| `subject_id`, `stay_id`, `charttime`, `gcs`, `gcs_unable` | 3,279 | 3,279 each |
-| `gcs_motor` | 3,279 | 3,265 |
-| `gcs_verbal` | 3,279 | 3,275 |
-| `gcs_eyes` | 3,279 | 3,278 |
+Thus Quantity `1` cannot discriminate the sentinel, and the exact label has no
+direct FHIR path. The ETL branch at
+`mimic-fhir/sql/fhir_observation_chartevents.sql:69-80` emits Quantity whenever
+`valuenum` is non-NULL and only emits `valueString` when `valuenum` is NULL.
 
-`gcs_unable=1` occurred on 1,348 current sentinel rows; the carried component
-`gcs_verbal=0` occurred on 1,352 output rows because the source calculation can
-carry a preceding sentinel component. `gcs` itself is derived, not a FHIR
-element: reproduce the analyst's six-hour previous-row logic, exact sentinel
-branch, defaults (motor 6, verbal 5, eyes 4), and scalar ETT result 15.
+## GCS derivation and representation loss
 
-## Cardinality, null, and oracle checks
+`gcs`, `gcs_motor`, `gcs_verbal`, `gcs_eyes`, and `gcs_unable` are not direct
+FHIR elements; they must be derived from the mapped rows using the source
+analyst's exact grouping, `MAX` pivots, immediate-previous-row six-hour join,
+defaults (6, 5, 4), and ETT branch (total 15 and verbal sentinel 0/flag 1).
 
-The embedded Pathling target and read-only DuckDB source checks were:
+The `No Response-ETT` discriminator is **absent and not representable through
+FHIR semantics**: both it and `No Response` are served as Quantity 1, and no
+other Observation element serializes the source text. A Quantity-1 heuristic
+has measured accuracy 1,348/1,426 = **94.53%** for sentinel identification and
+false-positive rate 78/1,426 = **5.47%**; it is not exact and must not be used.
+The source value is not reconstructable from resource/reference identity; the
+identity side channel is expressly forbidden above.
 
-| Check | Result |
-|---|---:|
-| Source selected rows (`itemid IN (...)`) | 9,791 |
-| Source selected rows with non-NULL `value` | 9,791 |
-| Source selected rows with NULL `value` | 0 |
-| FHIR target coding rows | 9,791 |
-| FHIR distinct Observation keys | 9,791 |
-| Source `(stay_id, charttime)` groups | 3,279 |
-| Source repeated `(stay_id, charttime, itemid)` groups | 0 in demo |
-| Source repeated `(stay_id, charttime)` groups | 3,268, containing 9,780 rows |
-| FHIR/source key-group count agreement | 9,791/9,791 |
-| FHIR/source exact `(subject_id, stay_id, charttime, itemid)` tuples | 9,791/9,791 |
-| Quantity/value-kind agreement | 9,791/9,791 |
-| Quantity numeric agreement within `1e-6` | 9,791/9,791 |
-| Effective wall-clock agreement after local `TIMESTAMP_NTZ` parsing | 9,791/9,791 |
-| Patient identifier and ICU Encounter identifier joins | 9,791/9,791 each |
+This loss is **essential**, not ancillary. It changes row-level `gcs_unable`,
+`gcs_verbal`, total `gcs`, and the six-hour carry-forward branch. A value of 1
+can represent two source states with different outputs. It can therefore alter
+clinically meaningful derived values and downstream `first_day_gcs`, `sofa`,
+and `sapsii`; recommend whole-concept blocking to the equivalence judge rather
+than emitting an estimate or only a NULL flag. The prober does not make the
+terminal decision.
 
-The hard-coded ETL duplicate exclusion was checked directly in DuckDB for
-`stay_id=34934165`, `charttime='2151-10-03 05:14:00'`: it returned 0 rows and
-0 GCS rows, so it does not affect this demo target. The shared chartevents
-NULL-value omission is also not exercised by these three demo itemids. On full
-data, the canonical query retains NULL-`value` rows but the ETL does not, so
-those rows are absent from FHIR rather than NULL-valued Observations.
+There is a second, non-label loss: the ETL drops selected source rows whose
+`value` is NULL (`fhir_observation_chartevents.sql:34-38`), while the canonical
+GCS WHERE clause filters only itemid. It is not exercised by the demo target
+(0/9,791 source `value` NULL), but may produce `only_oracle` rows on full data.
+This is a coverage gap; do not invent rows or values. The ETL's hard-coded
+duplicate exclusion was also absent from the demo GCS source target.
 
-The ETL casts source `charttime` through `TIMESTAMPTZ` at line 9 and writes it
-as `effectiveDateTime` at line 67. The demo GCS target had no resulting
-datetime disagreement, but the shared DST-gap note still applies: parse the
-served offset-bearing dateTime as a MIMIC wall clock with `TIMESTAMP_NTZ`, and
-do not use an offset-aware Spark cast. A DST-gap source time can be irreversibly
-normalised by the upstream ETL; the UUID equality witness is separate from the
-effective-time value.
+Served `effectiveDateTime` is the only charttime mapping. Parse it as a MIMIC
+wall clock with `TIMESTAMP_NTZ`; do not use an offset-aware cast and do not use
+Observation.id to undo upstream DST-gap normalisation. Such a normalisation is
+an upstream representational transform to be classified by the comparator and
+judge, not recoverable through this mapping.
 
-## Gaps
+## Notes read and findings
 
-* **Source `value` / exact `No Response-ETT`: absent at a direct FHIR value
-  path, but ETL-key-derivable for the known finite labels.** The served value
-  loses the text and conflates the sentinel with `No Response` at Quantity 1.
-  UUIDv5 re-generation matched all 9,791 demo resources and can identify the
-  sentinel when the original wall-clock/ETL input candidates are enumerated;
-  there is no standard FHIRPath that decodes this. A quantity-1 heuristic is
-  measured to be non-exact (1,348 sentinel + 78 non-sentinel rows) and must not
-  be used.
-* **Selected source rows with NULL `value`: not representable as an
-  Observation row in this ETL.** The ETL filters them before resource creation.
-  This is not exercised by the demo GCS itemids (0 source NULL rows), but the
-  canonical source SQL has no such filter; preserve the candidate's declared
-  shape and document any full-data missing-row gap rather than inventing a
-  value.
-* **`valueuom`: no gap for this concept.** It is not selected by the source SQL,
-  and both source and FHIR were NULL on all 9,791 target events.
-* **Raw event identity:** not an output requirement. The source query folds
-  events to `(stay_id, charttime)` and uses `MAX` per item. The FHIR resource
-  UUID is available only as support; never substitute it for the manifest key.
+Read `AGENTS.md`, `LOOP_CONTRACT.md`, `MIMIC_NOTES.md`, the canonical
+`v_observation.viewdefinition.json`, the source analysis, ETL SQL, and all
+fragments in `MIMIC_NOTES.d/` (including `gcs.md`, `crrt.md`, and
+`code_status.md`; also `README.md`, `cardiac_marker.md`, `chemistry.md`,
+`coagulation.md`, `complete_blood_count.md`, `blood_differential.md`,
+`dobutamine.md`, `dopamine.md`, `epinephrine.md`, `icustay_detail.md`,
+`invasive_line.md`, `arb.md`, `kdigo_creatinine.md`, `icp.md`, and the other
+present fragments). All fragment claims were treated as provisional leads and
+were independently checked where relevant; irrelevant medication/lab claims
+were not promoted.
 
-## Notes/fragments and evidence provenance
+Established `MIMIC_NOTES.md` entries that changed this mapping decision:
 
-Read before probing: `AGENTS.md`, `mimic-iv/concepts_fhir/LOOP_CONTRACT.md`,
-`mimic-iv/concepts_fhir/MIMIC_NOTES.md`, the canonical
-`../master_thesis_pipeline/orchestration-new/scripts/sofa_provisioning/v_observation.viewdefinition.json`,
-`README.md`, `blood_differential.md`, `cardiac_marker.md`,
-`chemistry.md`, `code_status.md`, `coagulation.md`,
-`complete_blood_count.md`, `crrt.md`, `dobutamine.md`, `dopamine.md`,
-`epinephrine.md`, and `gcs.md`.
+* Delta, not stale NDJSON/server, is authoritative.
+* System plus exact code, never `meta.profile`, discriminates Observation
+  streams; code is the verbatim itemid.
+* Identifier values are strings; subject/stay outputs require identifier joins
+  and final integer casts, while reference/resource UUIDs are opaque.
+* FHIR dateTimes require `TIMESTAMP_NTZ` wall-clock parsing.
+* Categorical chartevents use `valueString`; this GCS probe confirmed this
+  numeric target instead uses Quantity and has no string sentinel path.
+* Essential source loss blocks a whole derived concept; typed NULL is not a
+  remedy for a discriminator that changes core derivation.
 
-The following established notes changed this mapping decision:
+The provisional `gcs.md` NULL-omission and numeric-text-loss entries were
+verified against the ETL and the GCS counts. The `crrt.md` repeated-row/DST
+leads and `code_status.md` omission/DST leads were read but not adopted without
+GCS-specific checks. Their historical UUID-recovery recommendations were
+explicitly rejected as forbidden by the opaque-identity rule.
 
-* the Delta-over-NDJSON note required all code/count checks to use embedded
-  Pathling over Delta;
-* the coding-system/profile policy and Observation profile-version note required
-  system plus exact code, never `meta.profile`;
-* the identifier-spine and ICU Encounter-system notes required the two UUID
-  reference joins plus `identifier.value` string casts for `subject_id` and
-  `stay_id`;
-* the datetime note required `TIMESTAMP_NTZ` wall-clock parsing;
-* the categorical-chartevents note required probing both `valueString` and
-  Quantity rather than assuming a CodeableConcept; this probe sharpened that
-  GCS's numeric sentinel is not `valueString` at all.
-
-The provisional `gcs.md` NULL-value claim was checked against the same ETL
-statement and against DuckDB's 0/9,791 selected NULL rows; it is true as a
-dataset-wide ETL rule but unexercised for GCS in this demo. The `crrt.md`
-repeat/DST leads and `code_status.md` duplicate/DST leads were read but not
-re-used as GCS counts; the GCS-specific repeat and datetime checks above were
-run independently. `cardiac_marker.md`'s system-before-integer-cast safeguard
-was independently corroborated by the exact string coding probe. The other
-medication/lab fragment claims were read and were not relevant to this
-Observation-chartevents mapping; no unverified fragment was promoted as fact.
-
-Appended to the owned fragment `mimic-iv/concepts_fhir/MIMIC_NOTES.d/gcs.md`:
-**“Numeric chartevents discard source text even when `value` is non-NULL.”**
-This is dataset-wide because it is the unconditional ETL branch at lines
-69-80, although the measured sentinel collision is GCS-specific evidence.
-
-No ViewDefinition, SQL, or attempt artifact was created. This reusable mapping
-file and the owned notes fragment are the artifacts produced by this stage.
+No new dataset-wide quirk was found that is absent from `MIMIC_NOTES.md` or the
+owned `gcs.md` fragment, so **nothing was appended** to
+`mimic-iv/concepts_fhir/MIMIC_NOTES.d/gcs.md` in this rerun. No ViewDefinition,
+concept SQL, or attempt artifact was created.

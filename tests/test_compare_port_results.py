@@ -132,6 +132,20 @@ def oracle(tmp_path):
                (2, 'Captopril',  TIMESTAMP '2181-03-11 02:52:00'),
                (3, 'Ramipril',   TIMESTAMP '2154-05-02 15:55:21')"""
     )
+    # The same shift, but landing in the *key* instead of in a value. This is
+    # the shape six chartevents concepts have: they key on `charttime`, so a
+    # shifted row does not conflict -- it fails to join at all, and shows up as
+    # `only_oracle` plus `only_candidate`.
+    con.execute(
+        """CREATE TABLE mimiciv_derived.dst_keyed_time (
+               stay_id INTEGER, charttime TIMESTAMP, value DOUBLE)"""
+    )
+    con.execute(
+        """INSERT INTO mimiciv_derived.dst_keyed_time VALUES
+               (1, TIMESTAMP '2153-03-11 02:30:00', 3.0),
+               (2, TIMESTAMP '2154-05-02 15:55:21', 1.0),
+               (3, TIMESTAMP '2160-05-06 07:08:00', 4.0)"""
+    )
     con.close()
     return path
 
@@ -205,6 +219,16 @@ def manifest(tmp_path, oracle):
                         ],
                         "key": None,
                         "comparison": "full_tuple_multiset",
+                    },
+                    "dst_keyed_time": {
+                        "row_count": 3,
+                        "columns": [
+                            {"name": "stay_id", "type": "INTEGER"},
+                            {"name": "charttime", "type": "TIMESTAMP"},
+                            {"name": "value", "type": "DOUBLE"},
+                        ],
+                        "key": ["stay_id", "charttime"],
+                        "comparison": "keyed_join",
                     },
                 },
             }
@@ -1446,13 +1470,85 @@ class TestUnrepresentableVerification:
         assert result["verdict"] == "mismatch"
         assert "not a column" in result["unrepresentable"]["violations"][0]["reason"]
 
-    def test_declaring_a_key_column_is_blocking(self, manifest, oracle, candidate):
+    def test_declaring_a_key_column_voids_the_diff_and_reaches_the_judge(
+        self, manifest, oracle, candidate
+    ):
+        """A key column is the one violation the port did not cause.
+
+        The manifest key is chosen by empirical uniqueness over relational
+        MIMIC, blind to what MIMIC-on-FHIR carries, so it can land on a column
+        no port could supply -- `epinephrine` keyed on `linkorderid` because
+        `(stay_id, starttime)` was not unique at full scale. The keyed join
+        then aligns nothing and the counts are void, but that is the
+        instrument failing, not the port contradicting itself, and only the
+        judge may end a concept on a semantic gap. So: `review`, with the
+        diff explicitly marked void, rather than a mechanical `mismatch`.
+        """
         result = compare_full(
             "age", manifest, oracle, candidate(NULL_RATIO),
             unrepresentable={"hadm_id": _WHY},
         )
+        assert result["verdict"] == "review"
+        violation = result["unrepresentable"]["violations"][0]
+        assert violation["kind"] == "key_column"
+        assert "natural key" in violation["reason"]
+        # The violation is still recorded, but never as a blocking class.
+        blocking = result["divergence"]["blocking"]
+        assert not any(
+            item["class"] == "false_unrepresentable_declaration" for item in blocking
+        )
+        assert any("VOID DIFF" in note for note in result["divergence"]["notes"])
+
+    def test_unpaired_counts_survive_an_all_null_key_column(
+        self, manifest, oracle, candidate
+    ):
+        """`only_oracle` must never exceed the oracle row count.
+
+        Presence used to be tested as ``c.<first key column> IS NULL``, which
+        is true both of an oracle row that found no partner *and* of a
+        candidate row whose key column is a typed NULL. Every candidate-only
+        row was therefore counted a second time as oracle-only.
+
+        `epinephrine` hit this exactly: 24,470 rows a side, reported as
+        ``only_oracle: 48,940`` against 24,470 oracle rows -- an arithmetic
+        impossibility that reached an equivalence judge and was quoted in a
+        terminal ruling. Emitting the typed NULL is the contract's *prescribed*
+        way to declare an unrepresentable column, so the comparator has to
+        count correctly in precisely the case the contract asks for.
+        """
+        null_key = (
+            "SELECT subject_id, CAST(NULL AS INTEGER) AS hadm_id, admittime, "
+            "age, ratio FROM mimiciv_derived.age"
+        )
+        result = compare_full(
+            "age", manifest, oracle, candidate(null_key),
+            unrepresentable={"hadm_id": _WHY},
+        )
+        diff = result["diff"]
+        # Nothing can join, so each side is wholly unpaired -- once.
+        assert diff["only_oracle"] == len(ROWS)
+        assert diff["only_candidate"] == len(ROWS)
+        assert diff["identical"] == 0
+        assert diff["only_oracle"] <= result["divergence"]["oracle_rows"]
+        # Samples are drawn by the same predicate and must not cross over.
+        assert all(
+            row["hadm_id"] is not None for row in diff["samples"]["only_oracle"]
+        )
+        assert all(
+            row["hadm_id"] is None for row in diff["samples"]["only_candidate"]
+        )
+
+    def test_declaring_a_non_key_column_and_emitting_values_still_blocks(
+        self, manifest, oracle, candidate
+    ):
+        """The two violations the port *does* cause keep terminating by machine."""
+        result = compare_full(
+            "age", manifest, oracle, candidate(NULL_RATIO),
+            unrepresentable={"age": _WHY},
+        )
         assert result["verdict"] == "mismatch"
-        assert "natural key" in result["unrepresentable"]["violations"][0]["reason"]
+        violation = result["unrepresentable"]["violations"][0]
+        assert violation["kind"] == "emitted_values"
 
     def test_undeclared_all_null_column_is_noted_not_failed(
         self, manifest, oracle, candidate
@@ -1526,3 +1622,159 @@ class TestUnrepresentableCli:
                 "--unrepresentable", str(_declare(tmp_path, {"ratio": _WHY})),
                 "--output", str(tmp_path / "out.json"),
             ])
+
+
+# ---------------------------------------------------------------------------
+# DST shift that lands in the natural key
+# ---------------------------------------------------------------------------
+
+#: The upstream cast, as the candidate would have received it: gap wall times
+#: move forward an hour, everything else is untouched.
+_SHIFT = (
+    "timezone('America/New_York', "
+    "timezone('America/New_York', CAST(charttime AS TIMESTAMP)))"
+)
+
+
+class TestKeyAttribution:
+    """A shift in a key column reads as row-missing plus row-invented.
+
+    `conflict_attribution` cannot see it -- it partitions the *conflict* set,
+    and a row that never joined never conflicts. Six chartevents concepts key on
+    `charttime`, saw `{"attempted": false}`, and had the documented `attributed`
+    route closed to them. These tests pin it open.
+    """
+
+    def _compare(self, manifest, oracle, candidate, sql):
+        return compare_full("dst_keyed_time", manifest, oracle, candidate(sql))
+
+    def test_shifted_key_is_attributed_on_both_sides(
+        self, manifest, oracle, candidate
+    ):
+        sql = f"""SELECT stay_id, {_SHIFT} AS charttime, value
+                  FROM mimiciv_derived.dst_keyed_time"""
+        diff = self._compare(manifest, oracle, candidate, sql)["diff"]
+
+        # One gap row: it left its key, so it is missing *and* invented.
+        assert diff["only_oracle"] == 1
+        assert diff["only_candidate"] == 1
+
+        attr = diff["key_attribution"]
+        assert attr["attempted"] is True
+        assert attr["keys_considered"] == ["charttime"]
+        assert attr["attributed_only_oracle"] == 1
+        assert attr["attributed_only_candidate"] == 1
+        assert attr["residual_only_oracle"] == 0
+        assert attr["residual_only_candidate"] == 0
+        assert attr["complete"] is True
+
+    def test_sample_shows_the_replayed_key(self, manifest, oracle, candidate):
+        sql = f"""SELECT stay_id, {_SHIFT} AS charttime, value
+                  FROM mimiciv_derived.dst_keyed_time"""
+        attr = self._compare(manifest, oracle, candidate, sql)["diff"][
+            "key_attribution"
+        ]
+        sample = attr["samples"][0]
+        assert str(sample["charttime"]) == "2153-03-11 02:30:00"
+        assert str(sample["charttime__replayed"]) == "2153-03-11 03:30:00"
+
+    def test_complete_attribution_moves_both_classes_out_of_their_tiers(
+        self, manifest, oracle, candidate
+    ):
+        sql = f"""SELECT stay_id, {_SHIFT} AS charttime, value
+                  FROM mimiciv_derived.dst_keyed_time"""
+        div = self._compare(manifest, oracle, candidate, sql)["divergence"]
+
+        moved = {"only_oracle", "only_candidate"}
+        assert {item["class"] for item in div["attributed"]} == moved
+        # Neither class may remain where it started: `only_candidate` in
+        # `contested` would bill the port for a row it never invented, and
+        # `only_oracle` in `gap_shaped` would name an absent element that is
+        # not absent.
+        assert not [i for i in div["gap_shaped"] if i["class"] in moved]
+        assert not [i for i in div["contested"] if i["class"] in moved]
+        assert div["verdict"] == "review"
+
+    def test_attributed_rows_carry_the_citation_and_the_judge_instruction(
+        self, manifest, oracle, candidate
+    ):
+        sql = f"""SELECT stay_id, {_SHIFT} AS charttime, value
+                  FROM mimiciv_derived.dst_keyed_time"""
+        div = self._compare(manifest, oracle, candidate, sql)["divergence"]
+        item = next(i for i in div["attributed"] if i["class"] == "only_oracle")
+        assert item["citations"]
+        assert item["keys"] == ["charttime"]
+        # The instruction that stops the loop reaching for the id inversion again.
+        assert "reconstructing a resource id" in item["judge_must_confirm"]
+
+    def test_an_unexplained_missing_row_leaves_it_incomplete(
+        self, manifest, oracle, candidate
+    ):
+        # Shift the gap row *and* drop an ordinary one: two `only_oracle`, only
+        # one of which the replay reaches.
+        sql = f"""SELECT stay_id, {_SHIFT} AS charttime, value
+                  FROM mimiciv_derived.dst_keyed_time WHERE stay_id <> 3"""
+        diff = self._compare(manifest, oracle, candidate, sql)["diff"]
+        attr = diff["key_attribution"]
+        assert attr["only_oracle"] == 2
+        assert attr["attributed_only_oracle"] == 1
+        assert attr["residual_only_oracle"] == 1
+        assert attr["complete"] is False
+
+    def test_an_invented_row_leaves_it_incomplete(self, manifest, oracle, candidate):
+        # A candidate row the replay cannot reach is still a row the port
+        # invented, however tidy the oracle side looks.
+        sql = f"""SELECT stay_id, {_SHIFT} AS charttime, value
+                  FROM mimiciv_derived.dst_keyed_time
+                  UNION ALL
+                  SELECT 9, TIMESTAMP '2199-01-01 00:00:00', 9.0"""
+        attr = self._compare(manifest, oracle, candidate, sql)["diff"][
+            "key_attribution"
+        ]
+        assert attr["attributed_only_oracle"] == 1
+        assert attr["residual_only_candidate"] == 1
+        assert attr["complete"] is False
+
+    def test_incomplete_attribution_does_not_move_the_tier(
+        self, manifest, oracle, candidate
+    ):
+        sql = f"""SELECT stay_id, {_SHIFT} AS charttime, value
+                  FROM mimiciv_derived.dst_keyed_time WHERE stay_id <> 3"""
+        div = self._compare(manifest, oracle, candidate, sql)["divergence"]
+        assert any(i["class"] == "only_oracle" for i in div["gap_shaped"])
+        assert not div["attributed"]
+
+    def test_an_ordinary_wall_time_is_never_attributed(
+        self, manifest, oracle, candidate
+    ):
+        # Move a non-gap row by an hour by hand. The replay is the identity on
+        # it, so it must stay unexplained -- otherwise attribution would be a
+        # licence to relabel any one-hour error.
+        sql = """SELECT stay_id,
+                        CASE WHEN stay_id = 3
+                             THEN charttime + INTERVAL 1 HOUR ELSE charttime END
+                        AS charttime,
+                        value
+                 FROM mimiciv_derived.dst_keyed_time"""
+        attr = self._compare(manifest, oracle, candidate, sql)["diff"][
+            "key_attribution"
+        ]
+        assert attr["attributed_only_oracle"] == 0
+        assert attr["complete"] is False
+
+    def test_not_attempted_when_no_key_column_is_a_datetime(
+        self, manifest, oracle, candidate
+    ):
+        # `age` keys on `hadm_id`; a key shift cannot apply, and saying so is
+        # more useful to the diagnostician than an empty attribution block.
+        sql = "SELECT * FROM mimiciv_derived.age WHERE hadm_id <> 400"
+        diff = compare_full("age", manifest, oracle, candidate(sql))["diff"]
+        attr = diff["key_attribution"]
+        assert attr["attempted"] is False
+        assert "no datetime column in the natural key" in attr["why"]
+
+    def test_absent_when_nothing_is_unpaired(self, manifest, oracle, candidate):
+        # Attribution lowers a bar, so it must not appear on a clean result.
+        sql = "SELECT * FROM mimiciv_derived.dst_keyed_time"
+        diff = self._compare(manifest, oracle, candidate, sql)["diff"]
+        assert "key_attribution" not in diff

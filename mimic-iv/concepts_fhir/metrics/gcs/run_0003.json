@@ -1,0 +1,560 @@
+{
+  "concept": "gcs",
+  "convergence": {
+    "attempts_total": 1,
+    "divergence_decided_by": null,
+    "engineering_counter": 1,
+    "full_validation_rounds": 1,
+    "hpc_counter": 1,
+    "human_manual_override": false,
+    "judge_invocations": 1,
+    "semantic_counter": 1,
+    "semantic_rework_cycles": 0,
+    "semantic_rework_method": "max(0, semantic_counter - terminal semantic transition)",
+    "semantic_rework_source": "ConversionState.semantic_counter plus terminal status; semantic fixes use fail --counter semantic",
+    "semantic_terminal_transition_subtracted": 1,
+    "submitted_jobs": 1,
+    "terminal_outcome": "BLOCKED_REPRESENTATION"
+  },
+  "final_comparator": {
+    "artifact_present": true,
+    "class_counts": {
+      "differing": 576086,
+      "differing_conflict": 576086,
+      "differing_null_only": 0,
+      "identical": 1061579,
+      "identical_representable": 1061579,
+      "only_candidate": 74,
+      "only_oracle": 98
+    },
+    "classification": "keyed",
+    "fidelity": {
+      "identical_fraction": 0.648188,
+      "identical_rows": 1061579,
+      "oracle_rows": 1637763,
+      "representable_identical_rows": 1061579,
+      "row_count": {
+        "candidate": 1637739,
+        "delta": -24,
+        "gated": false,
+        "match": false,
+        "oracle": 1637763
+      },
+      "schema_match": true
+    },
+    "match": false,
+    "tier": "contested",
+    "verdict": "review"
+  },
+  "format_version": "2.0",
+  "hpc_jobs": [
+    {
+      "accounting_present": true,
+      "actual_poll_interval_seconds": 0.057,
+      "attempt": 5,
+      "full_result_present": true,
+      "job_id_present": true,
+      "poll_interval_count": 1,
+      "poll_interval_discoverable": true,
+      "runtime_seconds": 265.0,
+      "runtime_source": "slurm_sacct_elapsed"
+    }
+  ],
+  "human_interventions": null,
+  "human_interventions_reason": "Stored OpenCode data cannot reliably distinguish human messages from plugin/orchestrator continuation messages.",
+  "per_attempt": {
+    "attempts": [
+      {
+        "artifacts": [
+          "ViewDefinition.gcs_encounter.json",
+          "ViewDefinition.gcs_observation.json",
+          "ViewDefinition.gcs_patient.json",
+          "candidate.demo.parquet",
+          "comparison.full.json",
+          "concept.sql",
+          "evidence",
+          "hpc_accounting.json",
+          "hpc_job.json",
+          "run_meta.full.json",
+          "shape.demo.json",
+          "submit.slurm"
+        ],
+        "attempt": 5,
+        "convergence": {
+          "demo": {
+            "candidate_row_count": 3279,
+            "executed": true,
+            "verdict": "shape_ok"
+          },
+          "full": {
+            "artifact_present": true,
+            "class_counts": {
+              "differing": 576086,
+              "differing_conflict": 576086,
+              "differing_null_only": 0,
+              "identical": 1061579,
+              "identical_representable": 1061579,
+              "only_candidate": 74,
+              "only_oracle": 98
+            },
+            "classification": "keyed",
+            "fidelity": {
+              "identical_fraction": 0.648188,
+              "identical_rows": 1061579,
+              "oracle_rows": 1637763,
+              "representable_identical_rows": 1061579,
+              "row_count": {
+                "candidate": 1637739,
+                "delta": -24,
+                "gated": false,
+                "match": false,
+                "oracle": 1637763
+              },
+              "schema_match": true
+            },
+            "match": false,
+            "tier": "contested",
+            "verdict": "review"
+          },
+          "hpc_job_submitted": true,
+          "judge_invoked": true
+        },
+        "usage_attribution": "unavailable"
+      }
+    ],
+    "attempts_total": 1,
+    "usage_attribution": "unavailable"
+  },
+  "per_stage": {
+    "concept-implementer": {
+      "completed_assistant_messages": 11,
+      "duration_seconds": 332.379,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 780288,
+        "cache_write": 0,
+        "input": 116569,
+        "output": 4933,
+        "reasoning": 11630,
+        "total": 913420
+      }
+    },
+    "concept-port-orchestrator": {
+      "completed_assistant_messages": 23,
+      "duration_seconds": 2368.904,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 1321984,
+        "cache_write": 0,
+        "input": 243536,
+        "output": 5730,
+        "reasoning": 1004,
+        "total": 1572254
+      }
+    },
+    "demo-runner": {
+      "completed_assistant_messages": 5,
+      "duration_seconds": 105.971,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 55040,
+        "cache_write": 0,
+        "input": 35819,
+        "output": 969,
+        "reasoning": 183,
+        "total": 92011
+      }
+    },
+    "equivalence-judge": {
+      "completed_assistant_messages": 6,
+      "duration_seconds": 145.908,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 286720,
+        "cache_write": 0,
+        "input": 86731,
+        "output": 3440,
+        "reasoning": 3456,
+        "total": 380347
+      }
+    },
+    "fhir-prober": {
+      "completed_assistant_messages": 19,
+      "duration_seconds": 874.914,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 1214976,
+        "cache_write": 0,
+        "input": 430412,
+        "output": 20760,
+        "reasoning": 14160,
+        "total": 1680308
+      }
+    },
+    "hpc-launcher": {
+      "completed_assistant_messages": 6,
+      "duration_seconds": 59.09,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 92672,
+        "cache_write": 0,
+        "input": 40538,
+        "output": 1136,
+        "reasoning": 261,
+        "total": 134607
+      }
+    },
+    "hpc-poller": {
+      "completed_assistant_messages": 5,
+      "duration_seconds": 337.703,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 66816,
+        "cache_write": 0,
+        "input": 31597,
+        "output": 1629,
+        "reasoning": 145,
+        "total": 100187
+      }
+    },
+    "mismatch-diagnostician": {
+      "completed_assistant_messages": 8,
+      "duration_seconds": 308.647,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 464384,
+        "cache_write": 0,
+        "input": 93163,
+        "output": 4274,
+        "reasoning": 9509,
+        "total": 571330
+      }
+    }
+  },
+  "provenance": {
+    "agent_model_list": [
+      {
+        "agent": "concept-implementer",
+        "model": "gpt-5.6-luna",
+        "provider": "openai",
+        "variant": "xhigh"
+      },
+      {
+        "agent": "concept-port-orchestrator",
+        "model": "gpt-5.6-luna",
+        "provider": "openai",
+        "variant": "high"
+      },
+      {
+        "agent": "demo-runner",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider": "openrouter",
+        "variant": "default"
+      },
+      {
+        "agent": "equivalence-judge",
+        "model": "gpt-5.6-sol",
+        "provider": "openai",
+        "variant": "xhigh"
+      },
+      {
+        "agent": "fhir-prober",
+        "model": "gpt-5.6-luna",
+        "provider": "openai",
+        "variant": "xhigh"
+      },
+      {
+        "agent": "hpc-launcher",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider": "openrouter",
+        "variant": "default"
+      },
+      {
+        "agent": "hpc-poller",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider": "openrouter",
+        "variant": "default"
+      },
+      {
+        "agent": "mismatch-diagnostician",
+        "model": "gpt-5.6-sol",
+        "provider": "openai",
+        "variant": "xhigh"
+      }
+    ],
+    "agents": [
+      "concept-implementer",
+      "concept-port-orchestrator",
+      "demo-runner",
+      "equivalence-judge",
+      "fhir-prober",
+      "hpc-launcher",
+      "hpc-poller",
+      "mismatch-diagnostician"
+    ],
+    "config_hashes": {
+      ".opencode/agents/concept-port-orchestrator.md": "a911d70eefe7154c055cb97cecd1f566a7a0efe93abecc0040b725d813eac83e",
+      ".opencode/skills/concept-orchestrator-loop/SKILL.md": "26c5155931583fa904c8076544770371dd77b2b28164955ff07c48472ec4ef81",
+      "mimic-iv/concepts_fhir/LOOP_CONTRACT.md": "039b4c64b2078ad2ce154446640826458c7ffdbcb16cbacd849d618afe394fe9",
+      "opencode.json": "80b57f9c6fb06940b6acf88b26a255a362a5cbd3728a85f1cd09966941873641"
+    },
+    "dag_sha256": "77d14660a8322928069c049cd1aa28eb8f356b7751f73eba2625358266f3039e",
+    "finalized_before_terminal_response": true,
+    "opencode_source": {
+      "filename": "opencode.db",
+      "kind": "sqlite",
+      "tables": [
+        "message",
+        "part",
+        "project",
+        "session"
+      ]
+    },
+    "opencode_versions": [
+      "1.18.9"
+    ],
+    "root_session_count": 1,
+    "semantic_rework_method": "max(0, semantic_counter - terminal semantic transition)",
+    "semantic_rework_source": "ConversionState.semantic_counter plus terminal status; semantic fixes use fail --counter semantic",
+    "source_sql_path": "mimic-iv/concepts/measurement/gcs.sql",
+    "tracker_schema_version": "1"
+  },
+  "run": 3,
+  "run_scope": {
+    "attempt_dirs_excluded": 4,
+    "attempt_window": {
+      "after": 4,
+      "through": 5
+    },
+    "attempts_all_runs": 5,
+    "attempts_this_run": 1,
+    "cumulative_counters": {
+      "engineering": 7,
+      "hpc": 4,
+      "semantic": 3
+    },
+    "reopen_count": 2,
+    "reopen_history": [
+      {
+        "at": "2026-08-12T02:41:42.975885+00:00",
+        "baseline": {
+          "attempt": 3,
+          "engineering": 4,
+          "hpc": 2,
+          "semantic": 2
+        },
+        "by": "human",
+        "reason": "attempt_0003/concept.sql:35 maps Observation.effective_datetime through CAST(TRY_TO_TIMESTAMP(REPLACE(REGEXP_REPLACE(...)), pinned-format) AS TIMESTAMP_NTZ). The offset-aware parser re-renders the instant in spark.sql.session.timeZone and the pinned format silently NULLs any shape it misses, so the recorded exact match holds only at session zone America/New_York and is not reproducible elsewhere. attempt_0002 had ALREADY removed this construction; attempt_0003 reintroduced it. Replace with a bare TRY_CAST(o.effective_datetime AS TIMESTAMP_NTZ), nothing wrapped around it. charttime is load-bearing beyond its own column here: it is stringified into the UUIDv5 that witnesses 'No Response-ETT', so verify that discriminator still fires. mimic_utils validate-demo now refuses this construction (sql_lint datetime-parser).",
+        "superseded_decided_by": null,
+        "superseded_justification": null,
+        "superseded_status": "COMPLETED"
+      },
+      {
+        "at": "2026-08-13T04:35:13.810681+00:00",
+        "baseline": {
+          "attempt": 4,
+          "engineering": 6,
+          "hpc": 3,
+          "semantic": 2
+        },
+        "by": "human",
+        "reason": "concept.sql reconstructs the ETL's Observation.id UUIDv5 to undo a DST shift and brute-force a label vocabulary for source 'No Response-ETT'. Both uses violate the opaque-identity boundary. UTC-pinned reads plus key_attribution handle the residual New York shift; the discarded label changes core GCS outputs and carry-forward, so the reopened comparison must go to the judge for whole-concept BLOCKED_REPRESENTATION rather than a partial port.",
+        "superseded_decided_by": null,
+        "superseded_justification": null,
+        "superseded_status": "COMPLETED"
+      }
+    ],
+    "run": 3
+  },
+  "runtime": {
+    "actual_elapsed_secondary": true,
+    "actual_elapsed_seconds": 2368.889977,
+    "actual_elapsed_timestamp_source": "state.completed_at",
+    "assistant_messages": {
+      "assistant_messages": 84,
+      "completed_assistant_messages": 83,
+      "incomplete_assistant_messages": 1,
+      "invalid_assistant_intervals": 0
+    },
+    "busy_union_seconds": 2368.904,
+    "hpc_accounted_seconds": 265.0,
+    "hpc_jobs_submitted": 1,
+    "hpc_jobs_with_run_meta_fallback": 0,
+    "hpc_jobs_with_slurm_accounting": 1,
+    "hpc_jobs_without_discoverable_poll_interval": 0,
+    "hpc_jobs_without_runtime": 0,
+    "hpc_poll_intervals_discovered": 1,
+    "hpc_poll_intervals_unmatched": 0,
+    "hpc_poll_overlap_seconds": 0.057,
+    "incomplete_messages_excluded": 1,
+    "invalid_message_intervals_excluded": 0,
+    "method": "union completed assistant-message intervals across all included sessions; subtract overlap from discovered hpc-poll tool intervals; add measured HPC runtime from Slurm accounting, falling back to run_meta execute+compare timings when accounting is unavailable",
+    "seconds": 2633.847,
+    "time_updated_fallback_used": false
+  },
+  "schema_version": "conversion-metrics.v2",
+  "session_resumptions": 0,
+  "session_scope": {
+    "included_session_count": 8,
+    "root_session_count": 1,
+    "session_resumptions": 0
+  },
+  "terminal_outcome": "BLOCKED_REPRESENTATION",
+  "terminal_status": "BLOCKED_REPRESENTATION",
+  "tokens": {
+    "by_agent": {
+      "concept-implementer": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 780288,
+          "cache_write": 0,
+          "input": 116569,
+          "output": 4933,
+          "reasoning": 11630,
+          "total": 913420
+        }
+      },
+      "concept-port-orchestrator": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 1321984,
+          "cache_write": 0,
+          "input": 243536,
+          "output": 5730,
+          "reasoning": 1004,
+          "total": 1572254
+        }
+      },
+      "demo-runner": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 55040,
+          "cache_write": 0,
+          "input": 35819,
+          "output": 969,
+          "reasoning": 183,
+          "total": 92011
+        }
+      },
+      "equivalence-judge": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 286720,
+          "cache_write": 0,
+          "input": 86731,
+          "output": 3440,
+          "reasoning": 3456,
+          "total": 380347
+        }
+      },
+      "fhir-prober": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 1214976,
+          "cache_write": 0,
+          "input": 430412,
+          "output": 20760,
+          "reasoning": 14160,
+          "total": 1680308
+        }
+      },
+      "hpc-launcher": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 92672,
+          "cache_write": 0,
+          "input": 40538,
+          "output": 1136,
+          "reasoning": 261,
+          "total": 134607
+        }
+      },
+      "hpc-poller": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 66816,
+          "cache_write": 0,
+          "input": 31597,
+          "output": 1629,
+          "reasoning": 145,
+          "total": 100187
+        }
+      },
+      "mismatch-diagnostician": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 464384,
+          "cache_write": 0,
+          "input": 93163,
+          "output": 4274,
+          "reasoning": 9509,
+          "total": 571330
+        }
+      }
+    },
+    "by_model": {
+      "openai/gpt-5.6-luna/high": {
+        "model": "gpt-5.6-luna",
+        "provider": "openai",
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 1321984,
+          "cache_write": 0,
+          "input": 243536,
+          "output": 5730,
+          "reasoning": 1004,
+          "total": 1572254
+        },
+        "variant": "high"
+      },
+      "openai/gpt-5.6-luna/xhigh": {
+        "model": "gpt-5.6-luna",
+        "provider": "openai",
+        "session_count": 2,
+        "tokens": {
+          "cache_read": 1995264,
+          "cache_write": 0,
+          "input": 546981,
+          "output": 25693,
+          "reasoning": 25790,
+          "total": 2593728
+        },
+        "variant": "xhigh"
+      },
+      "openai/gpt-5.6-sol/xhigh": {
+        "model": "gpt-5.6-sol",
+        "provider": "openai",
+        "session_count": 2,
+        "tokens": {
+          "cache_read": 751104,
+          "cache_write": 0,
+          "input": 179894,
+          "output": 7714,
+          "reasoning": 12965,
+          "total": 951677
+        },
+        "variant": "xhigh"
+      },
+      "openrouter/deepseek/deepseek-v4-flash-0731/default": {
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider": "openrouter",
+        "session_count": 3,
+        "tokens": {
+          "cache_read": 214528,
+          "cache_write": 0,
+          "input": 107954,
+          "output": 3734,
+          "reasoning": 589,
+          "total": 326805
+        },
+        "variant": "default"
+      }
+    },
+    "cache_read": 4282880,
+    "cache_write": 0,
+    "input": 1078365,
+    "output": 42871,
+    "reasoning": 40348,
+    "total": 5444464
+  }
+}

@@ -67,11 +67,25 @@ module load {{MODULES}}
 # The two partition counts stay at 256. They were presumably tuned as 4x64; at
 # 32 cores that is 8x, and 8x partitions on a 30-second job costs little.
 # Lowering them without measuring would be a guess.
+#
+# TZ is pinned before the JVM starts, and the Spark session zone is pinned again
+# explicitly. Both, not either: TZ sets the JVM default that Spark *derives*
+# spark.sql.session.timeZone from and also governs DuckDB and Python datetime in
+# this same process, while the --conf survives anyone exporting a different TZ
+# later. Petrichor's system zone is Australia/Sydney, and under it Spark 4.0.2
+# DATE_FORMAT and DATE_TRUNC consult the session zone even for a zone-*less*
+# TIMESTAMP_NTZ -- a MIMIC wall time of 02:xx on the first Sunday in October
+# falls in the Sydney spring-forward gap and comes back as 03:xx. UTC has no DST
+# at all, so no wall clock can be normalised by accident. See
+# concepts_fhir/TODO_warehouse_rebuild.md for the measurement that pinned this
+# down, and .opencode/skills/csiro-hpc/SKILL.md for the rule.
+export TZ=UTC
 export PYSPARK_SUBMIT_ARGS="--master local[32] \
   --conf spark.driver.memory=200g \
   --conf spark.driver.maxResultSize=16g \
   --conf spark.sql.shuffle.partitions=256 \
   --conf spark.default.parallelism=256 \
+  --conf spark.sql.session.timeZone=UTC \
   pyspark-shell"
 
 export MIMIC_FHIR_WAREHOUSE={{WAREHOUSE}}

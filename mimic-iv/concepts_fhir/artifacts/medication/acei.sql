@@ -55,30 +55,20 @@ WITH acei_medication AS (
     WHERE mr.pharmacy_id_str IS NOT NULL
         AND mr.medication_key IS NOT NULL
         AND e.hadm_id_str IS NOT NULL
+), parsed_rows AS (
+    SELECT
+        subject_id_str,
+        hadm_id_str,
+        acei_str,
+        TRY_CAST(starttime_str AS TIMESTAMP_NTZ) AS starttime_ts,
+        TRY_CAST(stoptime_str AS TIMESTAMP_NTZ) AS stoptime_ts
+    FROM prescription_rows
 )
 SELECT
     CAST(subject_id_str AS INTEGER) AS subject_id,
     CAST(hadm_id_str AS INTEGER) AS hadm_id,
     CAST(acei_str AS VARCHAR(255)) AS acei,
-    CAST(
-        TRY_TO_TIMESTAMP(
-            REGEXP_REPLACE(
-                starttime_str,
-                '(Z|[+-][0-9]{2}:[0-9]{2})$',
-                ''
-            ),
-            "yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]"
-        ) AS TIMESTAMP_NTZ
-    ) AS starttime,
-    CAST(
-        TRY_TO_TIMESTAMP(
-            REGEXP_REPLACE(
-                stoptime_str,
-                '(Z|[+-][0-9]{2}:[0-9]{2})$',
-                ''
-            ),
-            "yyyy-MM-dd'T'HH:mm:ss[.SSSSSS]"
-        ) AS TIMESTAMP_NTZ
-    ) AS stoptime
-FROM prescription_rows
+    CAST(starttime_ts AS TIMESTAMP_NTZ) AS starttime,
+    CAST(stoptime_ts AS TIMESTAMP_NTZ) AS stoptime
+FROM parsed_rows
 ;

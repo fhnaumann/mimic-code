@@ -13,3 +13,7 @@
 ## Chartevents Observation UUID makes DST-gap charttime recoverable before a FHIR-side pivot
 - Affected: `Observation.effectiveDateTime` and `Observation.id` for chartevents-derived Observations
 - Verified: `gcs` attempt 0002 full-data comparison had 98 `only_oracle` keys at source 02:xx and 74 `only_candidate` keys at FHIR 03:xx, with no value conflicts. A read-only full-data join paired all 98 missing keys to a candidate key exactly one hour later with every non-key output equal; 24 of those shifted keys collided with a genuine source 03:xx key, explaining the 98-versus-74 counts. `mimic-fhir/sql/fhir_observation_chartevents.sql:9,67` normalizes the effective time, while lines 21, 41, and 45 write an Observation UUID generated from the original pre-normalization charttime and source value, so UUID candidate matching can restore the original time before grouping.
+
+## Superseded: Observation.id cannot recover the discarded GCS label or time
+- Affected: `Observation.id`, `Observation.effectiveDateTime`, and `Observation.value[x]` for GCS chartevents.
+- Verified: policy review on 2026-08-13 preserved the earlier measurements but rejected their use as a mapping. Resource ids are opaque identity and cannot be regenerated or brute-forced. Because the ETL drops the `No Response-ETT` discriminator and that loss changes `gcs_unable`, `gcs_verbal`, total `gcs`, and six-hour carry-forward, the reopened concept must go to the equivalence judge for whole-concept `BLOCKED_REPRESENTATION`.

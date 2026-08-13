@@ -13,6 +13,22 @@ So the check is mechanical and it gates the transition that freezes the
 artifacts. An agent cannot reason its way past it, which is the point: every
 one of those 29 files was authored by something that had the rule in context.
 
+The second class of rule is newer and has a different cause. Where the datetime
+rules catch an implementer that ignored a documented instruction, the resource-id
+rules catch one that *succeeded* -- five concepts reached `COMPLETED` (exact
+match) by recomputing the ETL's `Observation.id` UUIDv5 to detect and undo a
+one-hour timestamp shift, and `code_status` did it with nine hardcoded UUID
+literals read straight off its own first divergence report. Those verdicts are
+real, and the technique that earned them is not a port: it inverts an
+undocumented implementation detail of one ETL version, and it converts "the
+served data does not carry this" into "the served data carries this, encoded in
+the primary key".
+
+That is the failure mode worth naming, because it is invisible in the metric it
+optimises. An agent that cannot reach agreement has two honest moves -- fix the
+mapping, or declare the gap and let the row diverge -- and a third dishonest one
+that scores better than either. The gate exists to remove the third.
+
 Scope is deliberately narrow. These rules encode *known* defect classes only --
 the ones a full-data divergence already taught us. Discovering a new class is
 still the mismatch-diagnostician's job; when it finds one, add a rule here so
@@ -41,11 +57,49 @@ _RE_TO_TIMESTAMP = re.compile(r"\b(?:try_)?to_timestamp\s*\(", re.IGNORECASE)
 #: match ``TIMESTAMP_NTZ`` because ``\b`` will not split ``TIMESTAMP_NTZ``.
 _RE_BARE_TIMESTAMP = re.compile(r"\bAS\s+TIMESTAMP\b\s*\)", re.IGNORECASE)
 
+#: A literal resource UUID in the SQL. `code_status` attempt_0002 shipped nine
+#: of them -- `WHEN 'Observation/1e2075cb-...' THEN TIMESTAMP '2151-10-03 02:16'`
+#: -- each mapping one resource id to the oracle value that resource should have
+#: had, read straight off attempt_0001's divergence report. That is a query
+#: fitted to its own evaluation: inert on the demo leg (those ids do not exist
+#: there), pinned to one materialization, and not a mapping of anything.
+#:
+#: Matched as a bare UUID anywhere in a string literal rather than keyed on the
+#: `Observation/` prefix, because the prefix is the incidental part -- the
+#: defect is pinning a row by identity at all.
+_RE_HARDCODED_UUID = re.compile(
+    r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", re.IGNORECASE
+)
+
+#: Reconstructing a resource id rather than reading one. Five concepts recompute
+#: the ETL's UUIDv5 -- `SHA1(CONCAT(UNHEX('<namespace>'), ENCODE(name,'UTF-8')))`
+#: reassembled into 8-4-4-4-12 -- to detect whether an id was derived from a
+#: timestamp one hour earlier, and subtract the hour when it was.
+#:
+#: This inverts the ETL's id-generation function. It is not a FHIR mapping: no
+#: consumer of MIMIC-on-FHIR could rely on it, it depends on an undocumented
+#: implementation detail of one ETL version, and it converts "this information
+#: is absent" into "this information is encoded in the primary key". `gcs` shows
+#: where it leads -- it brute-forces a 16-entry label vocabulary through SHA1 to
+#: recover a categorical value the ETL discarded.
+#:
+#: Two independent signals, either of which is enough: a hex namespace constant
+#: fed to UNHEX (the UUIDv5 namespace), and a hash function applied to anything.
+#: A concept port has no legitimate use for either.
+_RE_UUID_NAMESPACE = re.compile(r"\bUNHEX\s*\(\s*'[0-9a-f]{32}'", re.IGNORECASE)
+_RE_HASH_CALL = re.compile(r"\b(?:sha1|sha2|md5|hash|xxhash64|crc32)\s*\(", re.IGNORECASE)
+
 _REMEDY = (
-    "Remedy for every finding above: TRY_CAST(col AS TIMESTAMP_NTZ), with nothing\n"
-    "  wrapped around it -- no parser, no fallback, no pinned format. See\n"
-    "  MIMIC_NOTES.md 'FHIR datetimes carry an offset' and\n"
-    "  .opencode/skills/pathling-sql/SKILL.md 'Datetimes'."
+    "Remedy for datetime-parser / bare-timestamp-cast: TRY_CAST(col AS TIMESTAMP_NTZ),\n"
+    "  with nothing wrapped around it -- no parser, no fallback, no pinned format.\n"
+    "  See MIMIC_NOTES.md 'FHIR datetimes carry an offset' and\n"
+    "  .opencode/skills/pathling-sql/SKILL.md 'Datetimes'.\n"
+    "  Remedy for hardcoded-resource-id / resource-id-inversion: there is none that\n"
+    "  keeps the construction. A value the served data does not carry is a\n"
+    "  divergence, not a puzzle -- emit the typed NULL for an ancillary column,\n"
+    "  or let the row diverge for the judge. If the lost input changes the core\n"
+    "  derivation, the whole concept is a representation block, not a partial\n"
+    "  port. See LOOP_CONTRACT.md 'Essential loss blocks the concept'."
 )
 
 
@@ -110,6 +164,32 @@ def lint_sql_text(text: str) -> list[Finding]:
                     line=number,
                     text=raw,
                     message="CAST(... AS TIMESTAMP) drops to the session zone",
+                )
+            )
+        if _RE_HARDCODED_UUID.search(line):
+            findings.append(
+                Finding(
+                    rule="hardcoded-resource-id",
+                    line=number,
+                    text=raw,
+                    message=(
+                        "a literal resource UUID pins one row by identity: it is fitted "
+                        "to one comparison run, inert on the demo leg, and pinned to one "
+                        "materialization"
+                    ),
+                )
+            )
+        if _RE_UUID_NAMESPACE.search(line) or _RE_HASH_CALL.search(line):
+            findings.append(
+                Finding(
+                    rule="resource-id-inversion",
+                    line=number,
+                    text=raw,
+                    message=(
+                        "recomputing a resource id inverts the ETL's id-generation "
+                        "function; that is an undocumented implementation detail, not a "
+                        "FHIR mapping, and no consumer of the IG could reproduce it"
+                    ),
                 )
             )
     return findings
