@@ -9,3 +9,7 @@
 ## UUID-v5 charttime recovery is conditional and does not shift genuine 03:xx rows
 - Affected: `Observation.getResourceKey()` and `Observation.effectiveDateTime` for chartevents-derived Observations
 - Verified: the 2026-08-11 embedded Pathling/Spark re-probe over the authoritative demo Delta and read-only DuckDB oracle found 142/142 height source rows and FHIR resources. With `uuid_ns_oid()` = `6ba7b812-9dad-11d1-80b4-00c04fd430c8`, the ETL namespaces were reproduced as `24ba6d92-ae8e-56f9-8898-873d8cba02da` (`MIMIC-IV`) and `36e18860-b4aa-5577-bc80-a5b07922cd3d` (`ObservationChartevents`); the direct effective-wall-time UUID matched 142/142 and the one-hour-earlier candidate matched 0/142. The demo included one genuine 03:xx source row for each height code, and both direct candidates matched, so correction must choose the earlier time only when its UUID equals the resource key, never blanket-shift 03:xx observations.
+
+## Superseded: UUID-v5 recovery is not a defensible FHIR mapping
+- Affected: `Observation.id` / `getResourceKey()` and `Observation.effectiveDateTime`.
+- Verified: policy review on 2026-08-13 retained the prior probe as historical evidence but rejected its mapping recommendation. Resource ids are opaque identity and may not be regenerated or compared with guessed source times. Reopened height must use the served effective time and present any proven New York DST residual to the judge.

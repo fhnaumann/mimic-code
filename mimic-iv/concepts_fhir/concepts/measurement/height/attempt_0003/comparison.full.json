@@ -1,0 +1,231 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/height/attempt_0003/candidate.full.parquet/*.parquet",
+  "comparison": "keyed_join",
+  "concept": "height",
+  "dataset": "full",
+  "diagnostics": [
+    "ATTRIBUTED \u2014 a value conflict the comparator replayed to an upstream mimic-fhir transformation over every conflicting row. No port can invert it, so there is nothing to diagnose; the judge still rules:",
+    "  2 \u00d7 differing_conflict (0.006% of oracle rows) \u2014 all 2 replay upstream_timestamptz_dst_shift",
+    "    column 'charttime': 2 row(s) attributed",
+    "    citations: mimic-fhir/sql/fhir_observation_labevents.sql:15,121, mimic-fhir/sql/fhir_specimen_lab.sql:18,58, mimic-fhir/sql/fhir_encounter.sql:65, mimic-fhir/sql/fhir_medication_request.sql:43-44",
+    "    example row: {'stay_id': 33327596, 'subject_id__oracle': 17326358, 'subject_id__candidate': 17326358, 'charttime__oracle': datetime.datetime(2176, 3, 10, 2, 16), 'charttime__candidate': datetime.datetime(2176, 3, 10, 3, 16), 'height__oracle': Decimal('185.00'), 'height__candidate': Decimal('185.00'), 'charttime__replayed': datetime.datetime(2176, 3, 10, 3, 16)}",
+    "  the judge must still confirm: Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element this column is sourced from, and (b) that the attributed fraction is consistent with DST-gap rarity. Either failing makes this `bug`.",
+    "33,472 of 33,474 oracle rows reproduced identically (99.99%)",
+    "note: 2 of 2 conflicting rows -- all of them -- replay the upstream upstream_timestamptz_dst_shift exactly, over column(s) charttime. `differing_conflict` moved from `contested` to `attributed`; a diagnosis of this class would only re-derive the replay, so the diagnostician can be skipped. The judge cannot: it still has to confirm provenance and fraction, and still has to rule."
+  ],
+  "diff": {
+    "classification": "keyed",
+    "columns_candidate_null": {},
+    "columns_conflicting": {
+      "charttime": 2
+    },
+    "columns_differing": {
+      "charttime": 2
+    },
+    "conflict_attribution": {
+      "attempted": true,
+      "attributed_rows": 2,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44"
+      ],
+      "columns": {
+        "charttime": 2
+      },
+      "columns_considered": [
+        "charttime"
+      ],
+      "complete": true,
+      "conflict_rows": 2,
+      "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+      "residual_rows": 0,
+      "samples": [
+        {
+          "charttime__candidate": "2176-03-10T03:16:00",
+          "charttime__oracle": "2176-03-10T02:16:00",
+          "charttime__replayed": "2176-03-10T03:16:00",
+          "height__candidate": "185.00",
+          "height__oracle": "185.00",
+          "stay_id": 33327596,
+          "subject_id__candidate": 17326358,
+          "subject_id__oracle": 17326358
+        },
+        {
+          "charttime__candidate": "2177-03-09T03:21:00",
+          "charttime__oracle": "2177-03-09T02:21:00",
+          "charttime__replayed": "2177-03-09T03:21:00",
+          "height__candidate": "157.00",
+          "height__oracle": "157.00",
+          "stay_id": 34048237,
+          "subject_id__candidate": 10806752,
+          "subject_id__oracle": 10806752
+        }
+      ],
+      "timezone": "America/New_York"
+    },
+    "differing": 2,
+    "differing_conflict": 2,
+    "differing_null_only": 0,
+    "excluded_as_unrepresentable": [],
+    "identical": 33472,
+    "identical_representable": 33472,
+    "key": [
+      "stay_id"
+    ],
+    "only_candidate": 0,
+    "only_oracle": 0,
+    "samples": {
+      "differing_conflict": [
+        {
+          "charttime__candidate": "2176-03-10T03:16:00",
+          "charttime__oracle": "2176-03-10T02:16:00",
+          "height__candidate": "185.00",
+          "height__oracle": "185.00",
+          "stay_id": 33327596,
+          "subject_id__candidate": 17326358,
+          "subject_id__oracle": 17326358
+        },
+        {
+          "charttime__candidate": "2177-03-09T03:21:00",
+          "charttime__oracle": "2177-03-09T02:21:00",
+          "height__candidate": "157.00",
+          "height__oracle": "157.00",
+          "stay_id": 34048237,
+          "subject_id__candidate": 10806752,
+          "subject_id__oracle": 10806752
+        }
+      ],
+      "differing_null_only": [],
+      "only_candidate": [],
+      "only_oracle": []
+    }
+  },
+  "divergence": {
+    "attributed": [
+      {
+        "attributed_rows": 2,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44"
+        ],
+        "class": "differing_conflict",
+        "columns": {
+          "charttime": 2
+        },
+        "count": 2,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element this column is sourced from, and (b) that the attributed fraction is consistent with DST-gap rarity. Either failing makes this `bug`.",
+        "proof": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "blocking": [],
+    "classification": "keyed",
+    "conflict_attribution": {
+      "attempted": true,
+      "attributed_rows": 2,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44"
+      ],
+      "columns": {
+        "charttime": 2
+      },
+      "columns_considered": [
+        "charttime"
+      ],
+      "complete": true,
+      "conflict_rows": 2,
+      "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+      "residual_rows": 0,
+      "timezone": "America/New_York"
+    },
+    "contested": [],
+    "declared_unrepresentable": {},
+    "diagnostician_required": false,
+    "gap_shaped": [],
+    "identical_fraction": 0.99994,
+    "identical_rows": 33472,
+    "judge_bar": "The only value conflict present has been machine-attributed to an upstream mimic-fhir transformation: the comparator replayed the ETL's TIMESTAMPTZ cast over EVERY conflicting row -- not a sample -- and the candidate value is what that cast produces from the oracle value. So the arithmetic half of the `contested` bar is already discharged: the oracle value was overwritten before the FHIR resource was written and no query can recover it. Do NOT ask the port to fix it, and do NOT ask for the diagnostician's citation -- see `divergence.attributed[].citations`.\nTwo things the replay does NOT establish, and they are yours:\n(1) PROVENANCE. The citations are the known sites of that cast, not a per-column proof. Confirm one of them writes the FHIR element this column is actually sourced from; if none does, the replay is a coincidence and the answer is `bug`.\n(2) SHAPE. DST-gap wall times are rare by construction -- one hour per year. A large attributed fraction is evidence AGAINST the attribution, not for it: state the fraction, and answer `bug` if it is not consistent with that rarity.\nEverything else the two bars require of you is unchanged: an accept is still an explicit ruling, and the gap must still be the best the data allows.",
+    "judge_required": true,
+    "key_attribution": null,
+    "notes": [
+      "2 of 2 conflicting rows -- all of them -- replay the upstream upstream_timestamptz_dst_shift exactly, over column(s) charttime. `differing_conflict` moved from `contested` to `attributed`; a diagnosis of this class would only re-derive the replay, so the diagnostician can be skipped. The judge cannot: it still has to confirm provenance and fraction, and still has to rule."
+    ],
+    "oracle_rows": 33474,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [
+      {
+        "attributed_rows": 2,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44"
+        ],
+        "class": "differing_conflict",
+        "columns": {
+          "charttime": 2
+        },
+        "count": 2,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element this column is sourced from, and (b) that the attributed fraction is consistent with DST-gap rarity. Either failing makes this `bug`.",
+        "proof": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "tier": "attributed",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "308076288200394089208675",
+    "manifest_row_count": 33474,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.height"
+  },
+  "row_count": {
+    "candidate": 33474,
+    "delta": 0,
+    "gated": false,
+    "match": true,
+    "oracle": 33474
+  },
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "stay_id",
+      "charttime",
+      "height"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "stay_id",
+      "charttime",
+      "height"
+    ],
+    "extra_columns": [],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "verdict": "review"
+}

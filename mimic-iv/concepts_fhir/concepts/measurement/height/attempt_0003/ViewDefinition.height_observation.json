@@ -1,0 +1,24 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/height-0003-height_observation",
+  "name": "height_observation",
+  "resource": "Observation",
+  "select": [
+    {
+      "column": [
+        { "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_key" },
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
+        { "path": "(effective).ofType(dateTime)", "name": "effective_datetime" },
+        { "path": "(value).ofType(Quantity).value", "name": "quantity_value" }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items' and (code='226707' or code='226730'))",
+      "column": [
+        { "path": "code", "name": "item_code" },
+        { "path": "system", "name": "item_system" }
+      ]
+    }
+  ]
+}

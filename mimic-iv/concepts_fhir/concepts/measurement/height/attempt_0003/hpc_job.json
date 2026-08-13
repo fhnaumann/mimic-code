@@ -1,0 +1,8 @@
+{
+  "concept": "height",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "29856327",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/height/attempt_0003",
+  "submitted_at": "2026-08-13T03:50:21.978448+00:00",
+  "walltime": "2:00:00"
+}
