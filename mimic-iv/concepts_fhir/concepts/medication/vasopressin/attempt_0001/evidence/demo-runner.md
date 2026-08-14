@@ -1,0 +1,9 @@
+- Concept: `vasopressin`
+- Attempt: attempt_0001
+- Verdict: `shape_ok` — may proceed to full data.
+- Executed: `uv run mimic_utils run-demo vasopressin` completed with exit code 0. Embedded Pathling on Spark registered `encounter_icu` and `medication_administration`; `shape.demo.json` reports `executed: true`.
+- Target shape: `stay_id` INTEGER, `linkorderid` INTEGER, `vaso_rate` FLOAT, `vaso_amount` FLOAT, `starttime` TIMESTAMP, `endtime` TIMESTAMP; key `[stay_id, starttime]`.
+- Column names matched exactly; no extra or missing columns. Types were compatible; independent Parquet inspection confirmed INTEGER / INTEGER / FLOAT / FLOAT / TIMESTAMP / TIMESTAMP.
+- Row count was 55, reported only and not gated against the full oracle's 25,892 rows.
+- Artifacts: `candidate.demo.parquet`, `shape.demo.json`, `concept.sql`, `ViewDefinition.encounter_icu.json`, `ViewDefinition.medication_administration.json`, and `unrepresentable.json` under `mimic-iv/concepts_fhir/concepts/medication/vasopressin/attempt_0001/`.
+- No errors, implementation changes, or commit. Demo shape success only permits an HPC run and is not correctness evidence.

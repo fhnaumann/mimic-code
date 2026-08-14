@@ -1,0 +1,5 @@
+Concept `vasopressin`, attempt_0001, Slurm job `29949763`. Poll outcome `complete`; fresh comparison fetched, with comparator verdict `review` (exit code 2). Slurm elapsed time was 25 seconds in `hpc_accounting.json`.
+
+Full row counts were oracle 25,892 and candidate 25,892 (delta 0; reported, not gated). Schema identity matched exactly: six columns, no missing/extra/incompatible types. Keyed diff: 25,891 `differing_null_only` rows for declared and confirmed unrepresentable `linkorderid` (candidate typed NULL), and one `differing_conflict` on `endtime`, machine-attributed over every conflicting row to `upstream_timestamptz_dst_shift`. Representable identical rows were 25,891/25,892 (100.00%); all-column identical rows were 0 due to the declared all-NULL column. `divergence.tier` is `gap_shaped`, `judge_required` true, and `diagnostician_required` false. No diagnostician is required; route to the equivalence judge.
+
+Artifacts fetched: `comparison.full.json`, `run_meta.full.json`, and `hpc_accounting.json` under `mimic-iv/concepts_fhir/concepts/medication/vasopressin/attempt_0001/`. No job was relaunched, no artifacts were edited, and no commit was made.

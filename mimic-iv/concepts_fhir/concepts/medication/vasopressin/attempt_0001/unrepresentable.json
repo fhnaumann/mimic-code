@@ -1,0 +1,3 @@
+{
+  "linkorderid": "No FHIR element. ICU MedicationAdministration does not serialize inputevent linkorderid, orderid, or an inputevent identifier; the authoritative Delta probe found no populated MedicationAdministration.identifier or supportingInformation value, and the opaque resource key cannot be inverted to recover linkorderid. The manifest column is therefore emitted as typed NULL INTEGER."
+}

@@ -1,0 +1,17 @@
+{
+  "attempt": 1,
+  "category": "medication",
+  "completed_at": "2026-08-14T02:44:04.958911+00:00",
+  "concept_name": "vasopressin",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accept: inputevents.linkorderid has no representable FHIR mapping at MedicationAdministration.identifier.value or supportingInformation.reference; the ICU ETL does not select or write it (mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,38-103), so typed NULL is faithful and the gap is ancillary to the clinical grain (stay_id,starttime), inclusion, grouping, carry-forward, and vaso outputs. All defensible effective[x] and TIMESTAMP_NTZ mappings were tried. The sole endtime conflict is fully replayed to the upstream America/New_York TIMESTAMPTZ DST-gap cast at mimic-fhir/sql/fhir_medication_administration_icu.sql:9,61-69, with zero residual and 1/25,892 affected, consistent with DST-gap rarity.",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 1,
+  "started_at": "2026-08-14T01:51:41.706385+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-14T02:44:04.959165+00:00"
+}

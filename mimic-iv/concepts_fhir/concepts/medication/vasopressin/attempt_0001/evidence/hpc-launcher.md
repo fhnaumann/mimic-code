@@ -1,0 +1,5 @@
+- Concept: `vasopressin`; attempt_0001.
+- Full-data run staged at `/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/medication/vasopressin/attempt_0001`.
+- Login-node smoke test passed: warehouse, oracle, staged manifest, and duckdb/pathling/pyspark/mimic_utils.full_runner imports all resolved.
+- Slurm job submitted successfully with job id `29949763`; `hpc_job.json` was recorded write-once at the attempt directory (`submitted_at 2026-08-14T02:24:15Z`, walltime `2:00:00`, host `nau025@petrichor.hpc.csiro.au`). `submit.slurm` was rendered.
+- No errors, interpretation, implementation edits, or commit. Next mechanical step is `uv run mimic_utils hpc-poll vasopressin`.
