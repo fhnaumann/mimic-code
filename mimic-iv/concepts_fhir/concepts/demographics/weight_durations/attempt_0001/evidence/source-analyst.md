@@ -1,0 +1,5 @@
+# Source-analyst evidence
+
+The source analyst read `mimic-iv/concepts/demographics/weight_durations.sql`, DAG metadata, source DDL types, and relevant curated MIMIC notes. The concept has no derived dependencies and uses ICU `chartevents` itemids 226512 (admit) and 224639 (daily), numeric filters, `icustays` inner joins, stay/type and stay-wide window ordering, two-hour datetime arithmetic, and `UNION ALL`. Its five outputs are `stay_id`, `starttime`, `endtime`, `weight`, and `weight_type`; the logical grain is one qualifying measurement interval plus at most one synthetic pre-first-measurement interval per stay, with possible duplicates.
+
+Reusable analysis was written to `mimic-iv/concepts_fhir/carryover/weight_durations/source-analyst.md` and recorded in the carryover ledger. The analyst identified upstream ICU chartevent timestamp normalization as a dataset-wide consideration because this concept uses chart times in ranking, interval boundaries, and backfill logic; no new dataset-wide quirk was established at this stage.

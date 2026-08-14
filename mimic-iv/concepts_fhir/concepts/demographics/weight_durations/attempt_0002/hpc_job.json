@@ -1,0 +1,8 @@
+{
+  "concept": "weight_durations",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "29956802",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/demographics/weight_durations/attempt_0002",
+  "submitted_at": "2026-08-14T04:23:05.272014+00:00",
+  "walltime": "2:00:00"
+}

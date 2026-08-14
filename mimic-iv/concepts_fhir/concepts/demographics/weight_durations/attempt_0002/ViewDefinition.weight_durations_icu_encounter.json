@@ -1,0 +1,23 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/weight_durations-0002-weight_durations_icu_encounter",
+  "name": "weight_durations_icu_encounter",
+  "resource": "Encounter",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "encounter_key" },
+        { "path": "period.start", "name": "intime_datetime" },
+        { "path": "period.end", "name": "outtime_datetime" }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu')",
+      "column": [
+        { "path": "system", "name": "stay_system" },
+        { "path": "value", "name": "stay_id_str" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+# HPC-poller evidence
+
+The sanctioned `uv run mimic_utils hpc-poll weight_durations` completed for job `29954821` and fetched a valid comparator artifact; this was not a crash or timeout. Full-data schema identity passed and row count was equal (272,445 candidate and oracle; count was reported, not gated). The comparator verdict was `review`, tier `contested`, with `judge_required: true` and, on inspection of `comparison.full.json`, `diagnostician_required: true` because 19 of 58 `differing_conflict` rows remain unexplained after 39 conflicts were attributed to the upstream DST replay. The key replay fully paired 38 `only_oracle` with 32 `only_candidate` rows through `endtime`, including six collisions, but the residual value conflicts still require diagnosis.
+
+Diff summary: 272,355 rows identical (99.967%); 58 differing conflicts (56 `starttime`, 2 `weight_type`, 1 `weight`, with the overlap represented in per-column counts), 38 attributed `only_oracle`, and 32 attributed `only_candidate`. The attributed citations include `mimic-fhir/sql/fhir_observation_chartevents.sql:9,67`; the comparator also lists other upstream datetime ETL sites. The judge must confirm the source of the shifted key, rarity, complete pairing, and that no resource-id inversion is used.
+
+Artifacts: `comparison.full.json`, `run_meta.full.json`, and `hpc_accounting.json` under this attempt; Slurm elapsed time was 81 seconds.

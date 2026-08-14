@@ -1,0 +1,17 @@
+{
+  "attempt": 2,
+  "category": "demographics",
+  "completed_at": "2026-08-14T04:44:28.191319+00:00",
+  "concept_name": "weight_durations",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Attempt 0002's complete divergence is caused by upstream America/New_York TIMESTAMPTZ normalization. fhir_observation_chartevents.sql:9,67 writes shifted charttime to Observation.effectiveDateTime, and fhir_encounter_icu.sql:31-32,97-100 writes shifted ICU times to Encounter.period. All 38 only-oracle and 32 only-candidate rows are key-attributed with no residual, including six collisions propagated through LEAD and UNION ALL. Of 56 conflicts, 39 replay directly and the remaining 17 close under full transformed-source replay as 9 ICU arithmetic and 8 chartevents window effects. Original wall times are absent from served FHIR and opaque resource IDs are not inverted. The rare 0.0206% conflict fraction is DST-consistent, and the contract's upstream-DST exemption applies.",
+  "engineering_counter": 2,
+  "error_message": null,
+  "hpc_counter": 2,
+  "reopen_history": [],
+  "semantic_counter": 2,
+  "started_at": "2026-08-14T04:16:15.317219+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-14T04:44:28.191612+00:00"
+}

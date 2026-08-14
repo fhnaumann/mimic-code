@@ -1,0 +1,16 @@
+{
+  "stages": {
+    "fhir-prober": {
+      "invalidated_at": "2026-08-14T04:40:02+00:00",
+      "invalidated_reason": "Attempt 0002 diagnosis found the mapping's exact-derivability note omitted the upstream ICU Encounter TIMESTAMPTZ cast: fhir_encounter_icu.sql:31-32,97-100. ICU intime-derived outputs can shift outside the DST gap and evade direct final-column replay; mapping must be rechecked on any future retry.",
+      "written_at": "2026-08-14T03:53:29+00:00",
+      "written_at_attempt": 1
+    },
+    "source-analyst": {
+      "invalidated_at": null,
+      "invalidated_reason": null,
+      "written_at": "2026-08-14T03:40:21+00:00",
+      "written_at_attempt": 1
+    }
+  }
+}
