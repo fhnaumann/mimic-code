@@ -1,0 +1,17 @@
+{
+  "attempt": 2,
+  "category": "measurement",
+  "completed_at": "2026-08-14T02:44:09.268169+00:00",
+  "concept_name": "urine_output",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accepted the attributed review: mimic-fhir/sql/fhir_observation_outputevents.sql:9 casts outputevents.charttime through TIMESTAMPTZ, line 60 writes it to Observation.effectiveDateTime, and lines 62-65 write value to Observation.valueQuantity.value. The candidate reads those paths and applies the canonical item filters, 227488 negation, and SUM grouped by (stay_id, charttime). The comparator exhaustively attributes 393 only_oracle, 157 only_candidate, and 232 differing_conflict rows, including 236 key collisions, to the America/New_York DST-gap shift with zero residual; 393 shifted keys are 0.0118%, consistent with DST rarity. The original wall time is unrecoverable, no resource-id reconstruction is used, and identical fidelity is 3,321,123/3,321,748 (99.9812%) with no excluded columns.",
+  "engineering_counter": 3,
+  "error_message": null,
+  "hpc_counter": 2,
+  "reopen_history": [],
+  "semantic_counter": 1,
+  "started_at": "2026-08-14T02:30:05.853621+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-14T02:44:09.268481+00:00"
+}
