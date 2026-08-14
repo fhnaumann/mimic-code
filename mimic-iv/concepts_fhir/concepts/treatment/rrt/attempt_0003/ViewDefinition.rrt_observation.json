@@ -1,0 +1,29 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/rrt-0003-rrt_observation",
+  "name": "rrt_observation",
+  "resource": "Observation",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "observation_key" },
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
+        { "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_key" },
+        { "path": "(effective).ofType(dateTime)", "name": "effective_datetime" },
+        { "path": "(effective).ofType(Period).start", "name": "effective_period_start" },
+        { "path": "(effective).ofType(Period).end", "name": "effective_period_end" },
+        { "path": "(value).ofType(Quantity).value", "name": "quantity_value" },
+        { "path": "(value).ofType(string)", "name": "string_value" }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items' and (code='226118' or code='227357' or code='225725' or code='226499' or code='224154' or code='225810' or code='227639' or code='225183' or code='227438' or code='224191' or code='225806' or code='225807' or code='228004' or code='228005' or code='228006' or code='224144' or code='224145' or code='224149' or code='224150' or code='224151' or code='224152' or code='224153' or code='224404' or code='224406' or code='226457' or code='225959' or code='224135' or code='224139' or code='224146' or code='225323' or code='225740' or code='225776' or code='225951' or code='225952' or code='225953' or code='225954' or code='225956' or code='225958' or code='225961' or code='225963' or code='225965' or code='225976' or code='225977' or code='227124' or code='227290' or code='227638' or code='227640' or code='227753'))",
+      "column": [
+        { "path": "code", "name": "item_code" },
+        { "path": "system", "name": "code_system" },
+        { "path": "display", "name": "item_display" }
+      ]
+    }
+  ]
+}

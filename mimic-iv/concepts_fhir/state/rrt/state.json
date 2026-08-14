@@ -1,0 +1,33 @@
+{
+  "attempt": 3,
+  "category": "treatment",
+  "completed_at": "2026-08-14T03:21:59.949875+00:00",
+  "concept_name": "rrt",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accepted: full-oracle replay with raw timestamps exactly reproduces 2,827,715 oracle rows, while replaying upstream TIMESTAMPTZ casts exactly reproduces the attempt-0003 candidate (2,827,507 rows; 449 only_oracle and 241 only_candidate; zero residual). The casts are cited at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 (608 shifted chartevent times) and mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69 (27 shifted input interval endpoints); the analogous procedure cast is mimic-fhir/sql/fhir_procedure_icu.sql:10-11,73-75. Through mimic-iv/concepts/treatment/rrt.sql:296-326, UNION DISTINCT and the inclusive interval overlay propagate the annual DST-gap shift. Original 02:xx wall times are absent from semantic FHIR paths and cannot be recovered by any query; opaque resource IDs were not used. The no-key unpaired residual is honestly characterized, the source-side replay closes it exactly, and the revised contract accepts this upstream defect and its second-order effects rather than blocking.",
+  "engineering_counter": 3,
+  "error_message": null,
+  "hpc_counter": 3,
+  "reopen_history": [
+    {
+      "at": "2026-08-14T02:23:02.480827+00:00",
+      "baseline": {
+        "attempt": 1,
+        "engineering": 1,
+        "hpc": 1,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "The 2026-08-14 block applied the essential-loss test to the upstream DST TIMESTAMPTZ shift, which is a known mimic-fhir defect awaiting repair rather than information the IG cannot carry; the contract now exempts it and its second-order effects. Two further defects in the ruling: rrt is unkeyed with residual multisets of unequal size (821 vs 241), so residual pairing was structurally impossible and 'attributed: []' meant the comparator never looked, not that no shift was found; and the DST-explained and unexplained parts were not decomposed, so 372 unattributed only_oracle rows forced the whole concept to blocked. Those 372 must be diagnosed on their own merits -- the sampled ones are non-DST times (Oct, Jan, mid-afternoon March) and every one is dialysis_type='Peritoneal', which is a coverage-gap lead, not DST fallout.",
+      "superseded_decided_by": null,
+      "superseded_error": "Judge blocked: intrinsic essential loss. Full replay attributes 241 candidate-only and 449 oracle-only rows to irreversible TIMESTAMPTZ normalization at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67, fhir_medication_administration_icu.sql:8-9,61-69, and fhir_procedure_icu.sql:10-11,73-75; 372 oracle-only rows have no served FHIR resource. Timestamp shifts alter the RRT interval overlay and multiplicity at mimic-iv/concepts/treatment/rrt.sql:323-326, changing row inclusion and clinically meaningful timing/status outputs. Unkeyed residual cannot provide a representable fraction.",
+      "superseded_justification": null,
+      "superseded_status": "BLOCKED_REPRESENTATION"
+    }
+  ],
+  "semantic_counter": 3,
+  "started_at": "2026-08-14T02:59:12.781423+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-14T03:21:59.950247+00:00"
+}

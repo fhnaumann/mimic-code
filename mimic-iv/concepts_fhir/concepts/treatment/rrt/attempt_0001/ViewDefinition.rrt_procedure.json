@@ -1,0 +1,27 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/rrt-0001-rrt_procedure",
+  "name": "rrt_procedure",
+  "resource": "Procedure",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "procedure_key" },
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
+        { "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_key" },
+        { "path": "(performed).ofType(dateTime)", "name": "performed_datetime" },
+        { "path": "(performed).ofType(Period).start", "name": "performed_period_start" },
+        { "path": "(performed).ofType(Period).end", "name": "performed_period_end" }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-d-items' and (code='225441' or code='225802' or code='225803' or code='225805' or code='224270' or code='225809' or code='225955' or code='225436'))",
+      "column": [
+        { "path": "code", "name": "item_code" },
+        { "path": "system", "name": "code_system" },
+        { "path": "display", "name": "item_display" }
+      ]
+    }
+  ]
+}

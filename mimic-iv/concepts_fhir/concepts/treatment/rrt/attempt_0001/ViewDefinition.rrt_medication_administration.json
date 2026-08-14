@@ -1,0 +1,31 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/rrt-0001-rrt_medication_administration",
+  "name": "rrt_medication_administration",
+  "resource": "MedicationAdministration",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "medadmin_key" },
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
+        { "path": "context.getReferenceKey(Encounter)", "name": "encounter_key" },
+        { "path": "(effective).ofType(dateTime)", "name": "effective_datetime" },
+        { "path": "(effective).ofType(Period).start", "name": "effective_period_start" },
+        { "path": "(effective).ofType(Period).end", "name": "effective_period_end" },
+        { "path": "(dosage.dose).ofType(Quantity).value", "name": "dose_value" },
+        { "path": "(dosage.dose).ofType(Quantity).unit", "name": "dose_unit" },
+        { "path": "(dosage.rate).ofType(Quantity).value", "name": "rate_value" },
+        { "path": "(dosage.rate).ofType(Quantity).unit", "name": "rate_unit" }
+      ]
+    },
+    {
+      "forEach": "medication.ofType(CodeableConcept).coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-medication-icu' and (code='227536' or code='227525'))",
+      "column": [
+        { "path": "code", "name": "item_code" },
+        { "path": "system", "name": "code_system" },
+        { "path": "display", "name": "item_display" }
+      ]
+    }
+  ]
+}

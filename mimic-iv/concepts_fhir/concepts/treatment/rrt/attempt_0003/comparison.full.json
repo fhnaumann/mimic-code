@@ -1,0 +1,436 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/treatment/rrt/attempt_0003/candidate.full.parquet/*.parquet",
+  "comparison": "full_tuple_multiset",
+  "concept": "rrt",
+  "dataset": "full",
+  "diagnostics": [
+    "row count (not gated): oracle 2,827,715 vs candidate 2,827,507 (delta -208)",
+    "RESIDUAL DID NOT PAIR \u2014 449 oracle and 241 candidate residual rows do not correspond. Their counts being equal proves nothing: it follows from the row counts being equal.",
+    "CONTESTED \u2014 a value conflict. Either a port bug or upstream ETL transformation loss; the data cannot tell you which:",
+    "  241 \u00d7 only_candidate (0.009% of oracle rows) \u2014 rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise",
+    "  bar for an accept: A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "GAP-SHAPED \u2014 consistent with a MIMIC-on-FHIR coverage gap:",
+    "  449 \u00d7 only_oracle \u2014 oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes",
+    "note: No unique key for this concept, and the residual did not pair: divergence classes cannot be separated. The judge is reasoning with strictly less evidence than a keyed concept would provide.",
+    "note: residual pairing: every column differs between the residuals; there is nothing left to align rows on, so the residual cannot be shown to be substitutions rather than invented and missing rows"
+  ],
+  "diff": {
+    "classification": "unavailable_no_key",
+    "differing": null,
+    "differing_conflict": null,
+    "differing_null_only": null,
+    "identical": null,
+    "key": null,
+    "only_candidate": 241,
+    "only_oracle": 449,
+    "residual_pairing": {
+      "anchored": false,
+      "attempted": true,
+      "column_drift": {
+        "charttime": 690,
+        "dialysis_active": 208,
+        "dialysis_present": 208,
+        "dialysis_type": 208,
+        "stay_id": 214
+      },
+      "paired": 0,
+      "pairing_columns": [],
+      "residual_candidate": 241,
+      "residual_oracle": 449,
+      "substituted_columns": [
+        "charttime",
+        "dialysis_active",
+        "dialysis_present",
+        "dialysis_type",
+        "stay_id"
+      ],
+      "unpaired_candidate": 241,
+      "unpaired_oracle": 449,
+      "why": "every column differs between the residuals; there is nothing left to align rows on, so the residual cannot be shown to be substitutions rather than invented and missing rows"
+    },
+    "samples": {
+      "only_candidate": [
+        {
+          "charttime": "2184-03-14T03:06:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 36465592
+        },
+        {
+          "charttime": "2184-03-14T03:06:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 36465592
+        },
+        {
+          "charttime": "2184-03-14T03:06:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 36465592
+        },
+        {
+          "charttime": "2184-03-14T03:06:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 36465592
+        },
+        {
+          "charttime": "2184-03-14T03:06:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 36465592
+        },
+        {
+          "charttime": "2184-03-14T03:06:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 36465592
+        },
+        {
+          "charttime": "2184-03-14T03:06:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 36465592
+        },
+        {
+          "charttime": "2184-03-14T03:06:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 36465592
+        },
+        {
+          "charttime": "2184-03-14T03:06:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 36465592
+        },
+        {
+          "charttime": "2134-03-14T03:00:00",
+          "dialysis_active": 0,
+          "dialysis_present": 1,
+          "dialysis_type": "CVVHDF",
+          "stay_id": 36683831
+        },
+        {
+          "charttime": "2158-03-12T03:11:00",
+          "dialysis_active": 0,
+          "dialysis_present": 1,
+          "dialysis_type": null,
+          "stay_id": 39012490
+        },
+        {
+          "charttime": "2132-03-09T03:00:00",
+          "dialysis_active": 0,
+          "dialysis_present": 1,
+          "dialysis_type": "CVVHDF",
+          "stay_id": 34689947
+        },
+        {
+          "charttime": "2184-03-14T03:00:00",
+          "dialysis_active": 0,
+          "dialysis_present": 1,
+          "dialysis_type": "CVVHDF",
+          "stay_id": 38979670
+        },
+        {
+          "charttime": "2121-03-09T03:00:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 39323481
+        },
+        {
+          "charttime": "2121-03-09T03:00:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 39323481
+        },
+        {
+          "charttime": "2121-03-09T03:00:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 39323481
+        },
+        {
+          "charttime": "2121-03-09T03:00:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 39323481
+        },
+        {
+          "charttime": "2121-03-09T03:00:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 39323481
+        },
+        {
+          "charttime": "2121-03-09T03:00:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 39323481
+        },
+        {
+          "charttime": "2144-03-08T03:21:00",
+          "dialysis_active": 0,
+          "dialysis_present": 1,
+          "dialysis_type": null,
+          "stay_id": 30207942
+        }
+      ],
+      "only_oracle": [
+        {
+          "charttime": "2160-03-09T02:11:00",
+          "dialysis_active": 0,
+          "dialysis_present": 1,
+          "dialysis_type": null,
+          "stay_id": 37568338
+        },
+        {
+          "charttime": "2160-03-09T02:11:00",
+          "dialysis_active": 0,
+          "dialysis_present": 1,
+          "dialysis_type": null,
+          "stay_id": 37568338
+        },
+        {
+          "charttime": "2160-03-09T02:59:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 37568338
+        },
+        {
+          "charttime": "2160-03-09T02:59:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 37568338
+        },
+        {
+          "charttime": "2160-03-09T02:59:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 37568338
+        },
+        {
+          "charttime": "2160-03-09T02:59:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 37568338
+        },
+        {
+          "charttime": "2160-03-09T02:59:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 37568338
+        },
+        {
+          "charttime": "2160-03-09T02:59:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 37568338
+        },
+        {
+          "charttime": "2160-03-09T02:59:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 37568338
+        },
+        {
+          "charttime": "2160-03-09T02:59:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 37568338
+        },
+        {
+          "charttime": "2160-03-09T02:59:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 37568338
+        },
+        {
+          "charttime": "2113-03-12T02:00:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 33190124
+        },
+        {
+          "charttime": "2113-03-12T02:00:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 33190124
+        },
+        {
+          "charttime": "2137-03-10T02:00:00",
+          "dialysis_active": 0,
+          "dialysis_present": 1,
+          "dialysis_type": null,
+          "stay_id": 33518404
+        },
+        {
+          "charttime": "2137-03-10T02:00:00",
+          "dialysis_active": 0,
+          "dialysis_present": 1,
+          "dialysis_type": null,
+          "stay_id": 33518404
+        },
+        {
+          "charttime": "2114-03-11T02:00:00",
+          "dialysis_active": 0,
+          "dialysis_present": 1,
+          "dialysis_type": null,
+          "stay_id": 31345521
+        },
+        {
+          "charttime": "2114-03-11T02:00:00",
+          "dialysis_active": 0,
+          "dialysis_present": 1,
+          "dialysis_type": null,
+          "stay_id": 31345521
+        },
+        {
+          "charttime": "2112-03-13T02:00:00",
+          "dialysis_active": 0,
+          "dialysis_present": 1,
+          "dialysis_type": null,
+          "stay_id": 32303877
+        },
+        {
+          "charttime": "2112-03-13T02:00:00",
+          "dialysis_active": 0,
+          "dialysis_present": 1,
+          "dialysis_type": null,
+          "stay_id": 32303877
+        },
+        {
+          "charttime": "2146-03-13T02:16:00",
+          "dialysis_active": 1,
+          "dialysis_present": 1,
+          "dialysis_type": "CRRT",
+          "stay_id": 31234262
+        }
+      ]
+    }
+  },
+  "divergence": {
+    "attributed": [],
+    "blocking": [
+      {
+        "class": "only_candidate",
+        "count": 241,
+        "why": "rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise"
+      }
+    ],
+    "classification": "unavailable_no_key",
+    "conflict_attribution": null,
+    "contested": [
+      {
+        "class": "only_candidate",
+        "count": 241,
+        "why": "rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise"
+      }
+    ],
+    "declared_unrepresentable": {},
+    "diagnostician_required": true,
+    "gap_shaped": [
+      {
+        "class": "only_oracle",
+        "count": 449,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "identical_fraction": null,
+    "identical_rows": null,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "key_attribution": null,
+    "notes": [
+      "No unique key for this concept, and the residual did not pair: divergence classes cannot be separated. The judge is reasoning with strictly less evidence than a keyed concept would provide.",
+      "residual pairing: every column differs between the residuals; there is nothing left to align rows on, so the residual cannot be shown to be substitutions rather than invented and missing rows"
+    ],
+    "oracle_rows": 2827715,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [
+      {
+        "class": "only_candidate",
+        "count": 241,
+        "why": "rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise"
+      },
+      {
+        "class": "only_oracle",
+        "count": 449,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "26065468018985185044055763",
+    "manifest_row_count": 2827715,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.rrt"
+  },
+  "row_count": {
+    "candidate": 2827507,
+    "delta": -208,
+    "gated": false,
+    "match": false,
+    "oracle": 2827715
+  },
+  "schema": {
+    "actual_columns": [
+      "stay_id",
+      "charttime",
+      "dialysis_present",
+      "dialysis_active",
+      "dialysis_type"
+    ],
+    "expected_columns": [
+      "stay_id",
+      "charttime",
+      "dialysis_present",
+      "dialysis_active",
+      "dialysis_type"
+    ],
+    "extra_columns": [],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "verdict": "review"
+}

@@ -1,0 +1,8 @@
+{
+  "concept": "rrt",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "29950922",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/treatment/rrt/attempt_0003",
+  "submitted_at": "2026-08-14T03:05:08.590997+00:00",
+  "walltime": "2:00:00"
+}
