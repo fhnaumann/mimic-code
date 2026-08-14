@@ -146,6 +146,35 @@ def oracle(tmp_path):
                (2, TIMESTAMP '2154-05-02 15:55:21', 1.0),
                (3, TIMESTAMP '2160-05-06 07:08:00', 4.0)"""
     )
+    # `oxygen_delivery`'s shape: the shift lands on a key the candidate ALREADY
+    # holds, so the row is absorbed instead of re-appearing beside its partner.
+    # Subject 1 owns both 02:00 (in the gap) and 03:00 on the same March Sunday.
+    con.execute(
+        """CREATE TABLE mimiciv_derived.dst_collision (
+               subject_id INTEGER, charttime TIMESTAMP, o2_flow DOUBLE,
+               device VARCHAR)"""
+    )
+    con.execute(
+        """INSERT INTO mimiciv_derived.dst_collision VALUES
+               (1, TIMESTAMP '2190-03-14 02:00:00', 15.0, 'Aerosol-cool'),
+               (1, TIMESTAMP '2190-03-14 03:00:00',  6.0, 'Nasal cannula'),
+               (2, TIMESTAMP '2153-03-11 02:30:00',  4.0, 'Face tent'),
+               (3, TIMESTAMP '2160-05-06 07:08:00',  2.0, 'Nasal cannula')"""
+    )
+    # `phenylephrine`'s shape: unkeyed, a float the FHIR warehouse serves at
+    # decimal(32,6), and an identifier column with no FHIR representation.
+    con.execute(
+        """CREATE TABLE mimiciv_derived.infusion (
+               stay_id INTEGER, linkorderid INTEGER, vaso_rate FLOAT,
+               starttime TIMESTAMP)"""
+    )
+    con.execute(
+        """INSERT INTO mimiciv_derived.infusion VALUES
+               (1, 111, 0.5002709627151489, TIMESTAMP '2150-06-01 08:00:00'),
+               (1, 112, 1.7431196212768555, TIMESTAMP '2150-06-01 09:00:00'),
+               (2, 221, 3.2984561920166016, TIMESTAMP '2150-06-02 08:00:00'),
+               (2, 222, 8.1179904937744141, TIMESTAMP '2153-03-11 02:30:00')"""
+    )
     con.close()
     return path
 
@@ -229,6 +258,28 @@ def manifest(tmp_path, oracle):
                         ],
                         "key": ["stay_id", "charttime"],
                         "comparison": "keyed_join",
+                    },
+                    "dst_collision": {
+                        "row_count": 4,
+                        "columns": [
+                            {"name": "subject_id", "type": "INTEGER"},
+                            {"name": "charttime", "type": "TIMESTAMP"},
+                            {"name": "o2_flow", "type": "DOUBLE"},
+                            {"name": "device", "type": "VARCHAR"},
+                        ],
+                        "key": ["subject_id", "charttime"],
+                        "comparison": "keyed_join",
+                    },
+                    "infusion": {
+                        "row_count": 4,
+                        "columns": [
+                            {"name": "stay_id", "type": "INTEGER"},
+                            {"name": "linkorderid", "type": "INTEGER"},
+                            {"name": "vaso_rate", "type": "FLOAT"},
+                            {"name": "starttime", "type": "TIMESTAMP"},
+                        ],
+                        "key": None,
+                        "comparison": "full_tuple_multiset",
                     },
                 },
             }
@@ -1778,3 +1829,223 @@ class TestKeyAttribution:
         sql = "SELECT * FROM mimiciv_derived.dst_keyed_time"
         diff = self._compare(manifest, oracle, candidate, sql)["diff"]
         assert "key_attribution" not in diff
+
+
+# ---------------------------------------------------------------------------
+# key collision -- the shift lands on a key the candidate already holds
+# ---------------------------------------------------------------------------
+
+
+_COLLIDE = (
+    "SELECT subject_id, charttime, max(o2_flow) AS o2_flow, "
+    "max(device) AS device FROM ("
+    "  SELECT subject_id, timezone('America/New_York', "
+    "         timezone('America/New_York', CAST(charttime AS TIMESTAMP))) AS charttime,"
+    "         o2_flow, device FROM mimiciv_derived.dst_collision"
+    ") GROUP BY subject_id, charttime"
+)
+
+
+class TestKeyCollisionAttribution:
+    """One transformation was being billed as two unexplained findings.
+
+    ``_attribute_dst_unpaired`` semi-joins the unpaired oracle rows against the
+    unpaired *candidate* rows. When the replayed key is one the candidate
+    already holds, the candidate row is not unpaired -- it paired with a
+    different oracle row and conflicts with it -- so the semi-join missed it and
+    the event was reported as an unexplained ``only_oracle`` plus an unexplained
+    ``differing_conflict``. All-or-nothing then let those rows set the tier for
+    the whole concept: `oxygen_delivery` reproduced 601,509 of 601,546 rows,
+    had every one of its 37 divergent rows inside a March 02:00-03:00 hour, and
+    was blocked on the 3 that collided.
+    """
+
+    def _compare(self, manifest, oracle, candidate, sql=_COLLIDE):
+        return compare_full("dst_collision", manifest, oracle, candidate(sql))
+
+    def test_absorbed_row_is_attributed(self, manifest, oracle, candidate):
+        attr = self._compare(manifest, oracle, candidate)["diff"]["key_attribution"]
+        # Subject 2 moved into an empty key; subject 1 was absorbed into 03:00.
+        assert attr["attributed_only_oracle_repaired"] == 1
+        assert attr["attributed_only_oracle_collided"] == 1
+        assert attr["residual_only_oracle"] == 0
+        assert attr["residual_only_candidate"] == 0
+        assert attr["complete"] is True
+
+    def test_the_conflict_it_caused_is_attributed_with_it(
+        self, manifest, oracle, candidate
+    ):
+        diff = self._compare(manifest, oracle, candidate)["diff"]
+        # The merged row disagrees on o2_flow: the candidate aggregated two
+        # source rows where the oracle aggregated one.
+        assert diff["differing_conflict"] == 1
+        attr = diff["conflict_attribution"]
+        assert attr["attributed_by_key_collision"] == 1
+        assert attr["attributed_rows"] == 1
+        assert attr["complete"] is True
+
+    def test_tier_moves_to_attributed(self, manifest, oracle, candidate):
+        div = self._compare(manifest, oracle, candidate)["divergence"]
+        assert div["tier"] == "attributed"
+        assert div["verdict"] == "review"
+        assert not div["contested"]
+        # The whole point: a diagnosis here would only re-derive the replay.
+        assert div["diagnostician_required"] is False
+
+    def test_sample_labels_which_route_each_row_took(
+        self, manifest, oracle, candidate
+    ):
+        attr = self._compare(manifest, oracle, candidate)["diff"]["key_attribution"]
+        routes = {s["_route"] for s in attr["samples"]}
+        assert routes == {"repaired", "key_collision"}
+
+    def test_a_conflict_the_collision_does_not_reach_stays_contested(
+        self, manifest, oracle, candidate
+    ):
+        # Same collision, plus an unrelated wrong value on subject 3. The
+        # collision must not launder a conflict it has nothing to do with.
+        sql = (
+            f"SELECT subject_id, charttime, "
+            f"CASE WHEN subject_id = 3 THEN 99.0 ELSE o2_flow END AS o2_flow, "
+            f"device FROM ({_COLLIDE})"
+        )
+        r = self._compare(manifest, oracle, candidate, sql)
+        attr = r["diff"]["conflict_attribution"]
+        assert attr["conflict_rows"] == 2
+        assert attr["attributed_by_key_collision"] == 1
+        assert attr["residual_rows"] == 1
+        assert attr["complete"] is False
+        assert r["divergence"]["tier"] == "contested"
+
+    def test_an_ordinary_missing_row_is_not_a_collision(
+        self, manifest, oracle, candidate
+    ):
+        # Drop subject 3 outright. Its key is not in the candidate at all, so
+        # there is nothing for it to have collided with.
+        sql = f"SELECT * FROM ({_COLLIDE}) WHERE subject_id <> 3"
+        attr = self._compare(manifest, oracle, candidate, sql)["diff"][
+            "key_attribution"
+        ]
+        assert attr["attributed_only_oracle_collided"] == 1
+        assert attr["residual_only_oracle"] == 1
+        assert attr["complete"] is False
+
+    def test_collision_table_does_not_leak_between_comparisons(
+        self, manifest, oracle, candidate
+    ):
+        # A concept with no collision must not read the previous one's keys.
+        self._compare(manifest, oracle, candidate)
+        sql = f"""SELECT stay_id, {_SHIFT} AS charttime, value
+                  FROM mimiciv_derived.dst_keyed_time"""
+        attr = compare_full("dst_keyed_time", manifest, oracle, candidate(sql))[
+            "diff"
+        ]["key_attribution"]
+        assert attr["attributed_only_oracle_collided"] == 0
+        assert attr["complete"] is True
+
+
+# ---------------------------------------------------------------------------
+# the unkeyed path applies the comparator's own tolerances
+# ---------------------------------------------------------------------------
+
+
+class TestUnkeyedTolerances:
+    """A concept must not be judged on whether it was given a manifest key.
+
+    The residual is built with ``EXCEPT ALL``, which is exact and cannot be
+    otherwise. Classifying that residual exactly too reported a seventh-decimal
+    float difference as a ``differing_conflict`` -- the contested class, needing
+    an upstream ETL citation. `phenylephrine` reported 0.00% identical and
+    190,872 conflicts that way; `dobutamine`, same table and same ETL but keyed,
+    reported 99.98%.
+    """
+
+    ALL = "SELECT * FROM mimiciv_derived.infusion"
+    #: What Pathling serves: the FHIR warehouse stores Quantity at scale 6.
+    TRUNCATED = (
+        "CAST(round(CAST(vaso_rate AS DECIMAL(32,10)), 6) AS FLOAT) AS vaso_rate"
+    )
+    DECLARATION = {
+        "linkorderid": "No FHIR element: the ICU ETL writes no inputevent identifier."
+    }
+
+    def _candidate_sql(self, rate=None, linkorderid="CAST(NULL AS INTEGER)"):
+        return (
+            f"SELECT stay_id, {linkorderid} AS linkorderid, "
+            f"{rate or self.TRUNCATED}, starttime FROM ({self.ALL})"
+        )
+
+    def test_float_within_tolerance_is_identical_not_a_conflict(
+        self, manifest, oracle, candidate
+    ):
+        sql = f"SELECT stay_id, linkorderid, {self.TRUNCATED}, starttime FROM ({self.ALL})"
+        r = compare_full("infusion", manifest, oracle, candidate(sql))
+        diff = r["diff"]
+        # Every row lands in the exact residual, and every one of them agrees
+        # within the comparator's own 0.1% relative tolerance.
+        assert diff["residual_pairing"]["paired"] == 4
+        assert diff["residual_pairing"]["paired_equal"] == 4
+        assert diff["differing_conflict"] == 0
+        assert diff["identical"] == 4
+        assert r["divergence"]["verdict"] == "match"
+
+    def test_float_outside_tolerance_still_conflicts(
+        self, manifest, oracle, candidate
+    ):
+        sql = self._candidate_sql(
+            rate="CAST(vaso_rate * 2 AS FLOAT) AS vaso_rate",
+            linkorderid="linkorderid",
+        )
+        diff = compare_full("infusion", manifest, oracle, candidate(sql))["diff"]
+        assert diff["differing_conflict"] == 4
+        assert diff["columns_conflicting"]["vaso_rate"] == 4
+
+    def test_declared_column_is_kept_out_of_the_alignment(
+        self, manifest, oracle, candidate
+    ):
+        r = compare_full(
+            "infusion", manifest, oracle, candidate(self._candidate_sql()),
+            unrepresentable=self.DECLARATION,
+        )
+        pairing = r["diff"]["residual_pairing"]
+        # A 100%-NULL column in the pairing set aligns nothing and puts every
+        # row in the residual; it is tallied analytically instead.
+        assert "linkorderid" not in pairing["pairing_columns"]
+        assert "linkorderid" not in pairing["substituted_columns"]
+        assert r["diff"]["excluded_as_alignment"] == ["linkorderid"]
+        assert r["diff"]["columns_candidate_null"]["linkorderid"] == 4
+
+    def test_declared_column_reports_both_fidelity_numbers(
+        self, manifest, oracle, candidate
+    ):
+        r = compare_full(
+            "infusion", manifest, oracle, candidate(self._candidate_sql()),
+            unrepresentable=self.DECLARATION,
+        )
+        div = r["diff"], r["divergence"]
+        diff, divergence = div
+        # The honest total: no row is reproduced in full, because one column is
+        # NULL by design on every one of them.
+        assert diff["identical"] == 0
+        # The number that is about the port.
+        assert diff["identical_representable"] == 4
+        assert divergence["representable_fraction"] == 1.0
+        assert divergence["representable_excludes"] == ["linkorderid"]
+
+    def test_the_three_classes_still_sum(self, manifest, oracle, candidate):
+        sql = self._candidate_sql(
+            rate=(
+                "CAST(CASE WHEN stay_id = 1 THEN vaso_rate * 2 ELSE vaso_rate END "
+                "AS FLOAT) AS vaso_rate"
+            )
+        )
+        r = compare_full(
+            "infusion", manifest, oracle, candidate(sql),
+            unrepresentable=self.DECLARATION,
+        )
+        diff = r["diff"]
+        assert diff["differing_conflict"] == 2
+        assert (
+            diff["identical"] + diff["differing_conflict"] + diff["differing_null_only"]
+            == r["divergence"]["oracle_rows"]
+        )

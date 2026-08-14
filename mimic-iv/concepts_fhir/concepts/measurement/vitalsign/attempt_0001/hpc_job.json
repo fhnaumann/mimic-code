@@ -1,0 +1,8 @@
+{
+  "concept": "vitalsign",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "29952933",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/vitalsign/attempt_0001",
+  "submitted_at": "2026-08-14T03:45:18.790643+00:00",
+  "walltime": "2:00:00"
+}

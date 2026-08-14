@@ -8,10 +8,11 @@ prose is how ssh invocations drift between runs; this module is the code the
 Four steps, in order:
 
 ``stage``
-    rsync this repo's ``src/mimic_utils/`` and the oracle manifest **into the
-    attempt's own remote directory**, along with the attempt itself.  The
-    rendered ``submit.slurm`` travels with it, so what ran is recoverable from
-    the artifacts afterwards.
+    rsync this repo's ``src/mimic_utils/``, the oracle manifest, and the
+    completed dependency attempts **into the attempt's own remote directory**,
+    along with the attempt itself.  The rendered ``submit.slurm`` and the
+    dependency manifest travel with it, so what ran is recoverable from the
+    staged attempt afterwards.
 ``smoke``
     A cheap login-node check: warehouse present, oracle present, the staged
     manifest present, and the imports the job needs actually resolve *on the
@@ -66,6 +67,7 @@ import os
 import re
 import shlex
 import subprocess
+import tempfile
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -73,6 +75,12 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 from mimic_utils.demo_runner import DemoRunError, resolve_attempt_dir
+from mimic_utils.derived_dependencies import (
+    DEPENDENCY_MANIFEST_NAME,
+    STAGED_DEPENDENCY_DIR,
+    dependency_manifest,
+    resolve_dependency_plan,
+)
 
 # --- Cluster facts ---------------------------------------------------------
 # Overridable by env so a different account or scratch layout needs no edit.
@@ -241,7 +249,7 @@ def stage_attempt(
     root: Optional[Path] = None,
     walltime: str = WALLTIME,
 ) -> str:
-    """Render ``submit.slurm``, then rsync code, manifest and attempt.
+    """Render ``submit.slurm``, then rsync code, dependencies and attempt.
 
     Everything lands **inside the attempt's own remote directory** -- see the
     module docstring for why a shared destination was two separate bugs under
@@ -256,6 +264,12 @@ def stage_attempt(
     """
     local_root = (root or repo_root()).resolve()
     remote_attempt = remote_attempt_dir(attempt, root=local_root)
+    try:
+        dependency_specs = resolve_dependency_plan(
+            concept, attempt, artifact_root=local_root
+        )
+    except Exception as exc:
+        raise HPCError(f"could not resolve derived dependencies: {exc}") from exc
 
     submit_path = attempt / SUBMIT_NAME
     if not submit_path.exists():
@@ -268,48 +282,87 @@ def stage_attempt(
         [
             "ssh",
             HOST,
-            f"mkdir -p {shlex.quote(remote_attempt + '/src/mimic_utils')}",
+            "mkdir -p "
+            f"{shlex.quote(remote_attempt + '/src/mimic_utils')} "
+            f"{shlex.quote(remote_attempt + '/' + STAGED_DEPENDENCY_DIR)}",
         ]
     )
     if not mkdir.ok:
         raise HPCError(f"remote mkdir failed: {mkdir.stderr.strip() or mkdir.stdout}")
 
-    transfers: List[Tuple[List[str], str]] = [
-        (
-            [
-                "rsync", "-a", "--delete", "--exclude", "__pycache__",
-                f"{local_root / 'src' / 'mimic_utils'}/",
-                f"{HOST}:{remote_attempt}/src/mimic_utils/",
-            ],
-            "mimic_utils source",
-        ),
-        (
-            [
-                "rsync", "-a",
-                str(local_root / MANIFEST_RELPATH),
-                f"{HOST}:{remote_attempt}/{MANIFEST_NAME}",
-            ],
-            "oracle manifest",
-        ),
-        (
-            [
-                "rsync", "-a",
-                "--exclude", COMPARISON_NAME,
-                "--exclude", RUN_META_NAME,
-                "--exclude", "candidate.full.parquet",
-                "--exclude", "slurm-*.out",
-                f"{attempt}/",
-                f"{HOST}:{remote_attempt}/",
-            ],
-            "attempt directory",
-        ),
-    ]
-    for cmd, what in transfers:
-        result = runner(cmd)
-        if not result.ok:
-            raise HPCError(
-                f"rsync of {what} failed: {result.stderr.strip() or result.stdout}"
+    with tempfile.TemporaryDirectory(prefix="mimic-deps-") as temp_dir:
+        manifest_path = Path(temp_dir) / DEPENDENCY_MANIFEST_NAME
+        manifest_path.write_text(
+            json.dumps(dependency_manifest(concept, dependency_specs), indent=2),
+            encoding="utf-8",
+        )
+        transfers: List[Tuple[List[str], str]] = [
+            (
+                [
+                    "rsync", "-a", "--delete", "--exclude", "__pycache__",
+                    f"{local_root / 'src' / 'mimic_utils'}/",
+                    f"{HOST}:{remote_attempt}/src/mimic_utils/",
+                ],
+                "mimic_utils source",
+            ),
+            (
+                [
+                    "rsync", "-a",
+                    str(local_root / MANIFEST_RELPATH),
+                    f"{HOST}:{remote_attempt}/{MANIFEST_NAME}",
+                ],
+                "oracle manifest",
+            ),
+            (
+                [
+                    "rsync", "-a",
+                    "--exclude", COMPARISON_NAME,
+                    "--exclude", RUN_META_NAME,
+                    "--exclude", "candidate.full.parquet",
+                    "--exclude", DEPENDENCY_MANIFEST_NAME,
+                    "--exclude", STAGED_DEPENDENCY_DIR,
+                    "--exclude", "slurm-*.out",
+                    f"{attempt}/",
+                    f"{HOST}:{remote_attempt}/",
+                ],
+                "attempt directory",
+            ),
+            (
+                [
+                    "rsync", "-a",
+                    str(manifest_path),
+                    f"{HOST}:{remote_attempt}/{DEPENDENCY_MANIFEST_NAME}",
+                ],
+                "dependency manifest",
+            ),
+        ]
+        for spec in dependency_specs:
+            transfers.append(
+                (
+                    [
+                        "rsync", "-a",
+                        "--exclude", "__pycache__",
+                        "--exclude", "candidate.demo.parquet",
+                        "--exclude", "candidate.full.parquet",
+                        "--exclude", COMPARISON_NAME,
+                        "--exclude", RUN_META_NAME,
+                        "--exclude", "hpc_job.json",
+                        "--exclude", "hpc_accounting.json",
+                        "--exclude", "submit.slurm",
+                        "--exclude", "shape.demo.json",
+                        "--exclude", "slurm-*.out",
+                        f"{spec.path}/",
+                        f"{HOST}:{remote_attempt}/{STAGED_DEPENDENCY_DIR}/{spec.concept}/",
+                    ],
+                    f"derived dependency {spec.concept}",
+                )
             )
+        for cmd, what in transfers:
+            result = runner(cmd)
+            if not result.ok:
+                raise HPCError(
+                    f"rsync of {what} failed: {result.stderr.strip() or result.stdout}"
+                )
     return remote_attempt
 
 

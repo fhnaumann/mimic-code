@@ -1,0 +1,547 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/oxygen_delivery/attempt_0001/candidate.full.parquet/*.parquet",
+  "comparison": "keyed_join",
+  "concept": "oxygen_delivery",
+  "dataset": "full",
+  "diagnostics": [
+    "row count (not gated): oracle 601,546 vs candidate 601,543 (delta -3)",
+    "CONTESTED \u2014 a value conflict. Either a port bug or upstream ETL transformation loss; the data cannot tell you which:",
+    "  31 \u00d7 only_candidate (0.005% of oracle rows) \u2014 rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it",
+    "  3 \u00d7 differing_conflict (0.000% of oracle rows) \u2014 matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone",
+    "    column 'o2_delivery_device_2' conflicts on 3 row(s) (0.000% of oracle rows)",
+    "    column 'o2_flow' conflicts on 3 row(s) (0.000% of oracle rows)",
+    "    column 'o2_delivery_device_1' conflicts on 1 row(s) (0.000% of oracle rows)",
+    "  bar for an accept: A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "GAP-SHAPED \u2014 consistent with a MIMIC-on-FHIR coverage gap:",
+    "  34 \u00d7 only_oracle \u2014 oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes",
+    "601,509 of 601,546 oracle rows reproduced identically (99.99%)",
+    "note: upstream conflict attribution not attempted: no datetime column in this concept; the DST cast cannot apply",
+    "note: 31 of 34 `only_oracle` rows re-pair with an unpaired candidate row once the oracle key is replayed through the upstream upstream_timestamptz_dst_shift; 3 do not. The tier stays on those residual rows."
+  ],
+  "diff": {
+    "classification": "keyed",
+    "columns_candidate_null": {},
+    "columns_conflicting": {
+      "o2_delivery_device_1": 1,
+      "o2_delivery_device_2": 3,
+      "o2_flow": 3
+    },
+    "columns_differing": {
+      "o2_delivery_device_1": 1,
+      "o2_delivery_device_2": 3,
+      "o2_flow": 3
+    },
+    "conflict_attribution": {
+      "attempted": false,
+      "complete": false,
+      "why": "no datetime column in this concept; the DST cast cannot apply"
+    },
+    "differing": 3,
+    "differing_conflict": 3,
+    "differing_null_only": 0,
+    "excluded_as_unrepresentable": [],
+    "identical": 601509,
+    "identical_representable": 601509,
+    "key": [
+      "subject_id",
+      "charttime"
+    ],
+    "key_attribution": {
+      "attempted": true,
+      "attributed_only_candidate": 31,
+      "attributed_only_oracle": 31,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "complete": false,
+      "keys_considered": [
+        "charttime"
+      ],
+      "only_candidate": 31,
+      "only_oracle": 34,
+      "operation": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+      "residual_only_candidate": 0,
+      "residual_only_oracle": 3,
+      "samples": [
+        {
+          "charttime": "2143-03-10T02:00:00",
+          "charttime__replayed": "2143-03-10T03:00:00",
+          "subject_id": 17372979
+        },
+        {
+          "charttime": "2123-03-14T02:00:00",
+          "charttime__replayed": "2123-03-14T03:00:00",
+          "subject_id": 19041108
+        },
+        {
+          "charttime": "2194-03-09T02:53:00",
+          "charttime__replayed": "2194-03-09T03:53:00",
+          "subject_id": 13404891
+        },
+        {
+          "charttime": "2153-03-11T02:58:00",
+          "charttime__replayed": "2153-03-11T03:58:00",
+          "subject_id": 18351044
+        },
+        {
+          "charttime": "2177-03-09T02:32:00",
+          "charttime__replayed": "2177-03-09T03:32:00",
+          "subject_id": 10806752
+        },
+        {
+          "charttime": "2154-03-10T02:00:00",
+          "charttime__replayed": "2154-03-10T03:00:00",
+          "subject_id": 18338184
+        },
+        {
+          "charttime": "2151-03-14T02:00:00",
+          "charttime__replayed": "2151-03-14T03:00:00",
+          "subject_id": 19931382
+        },
+        {
+          "charttime": "2153-03-11T02:02:00",
+          "charttime__replayed": "2153-03-11T03:02:00",
+          "subject_id": 10139461
+        },
+        {
+          "charttime": "2177-03-09T02:00:00",
+          "charttime__replayed": "2177-03-09T03:00:00",
+          "subject_id": 10806752
+        },
+        {
+          "charttime": "2131-03-11T02:00:00",
+          "charttime__replayed": "2131-03-11T03:00:00",
+          "subject_id": 12926306
+        },
+        {
+          "charttime": "2113-03-12T02:00:00",
+          "charttime__replayed": "2113-03-12T03:00:00",
+          "subject_id": 10361825
+        },
+        {
+          "charttime": "2183-03-09T02:00:00",
+          "charttime__replayed": "2183-03-09T03:00:00",
+          "subject_id": 11328158
+        },
+        {
+          "charttime": "2137-03-10T02:00:00",
+          "charttime__replayed": "2137-03-10T03:00:00",
+          "subject_id": 16686168
+        },
+        {
+          "charttime": "2193-03-10T02:00:00",
+          "charttime__replayed": "2193-03-10T03:00:00",
+          "subject_id": 14422845
+        },
+        {
+          "charttime": "2171-03-10T02:15:00",
+          "charttime__replayed": "2171-03-10T03:15:00",
+          "subject_id": 18316256
+        },
+        {
+          "charttime": "2129-03-13T02:00:00",
+          "charttime__replayed": "2129-03-13T03:00:00",
+          "subject_id": 13851039
+        },
+        {
+          "charttime": "2172-03-08T02:00:00",
+          "charttime__replayed": "2172-03-08T03:00:00",
+          "subject_id": 16326503
+        },
+        {
+          "charttime": "2161-03-08T02:07:00",
+          "charttime__replayed": "2161-03-08T03:07:00",
+          "subject_id": 14116630
+        },
+        {
+          "charttime": "2173-03-14T02:00:00",
+          "charttime__replayed": "2173-03-14T03:00:00",
+          "subject_id": 12823962
+        },
+        {
+          "charttime": "2180-03-12T02:00:00",
+          "charttime__replayed": "2180-03-12T03:00:00",
+          "subject_id": 11872366
+        }
+      ],
+      "timezone": "America/New_York"
+    },
+    "only_candidate": 31,
+    "only_oracle": 34,
+    "samples": {
+      "differing_conflict": [
+        {
+          "charttime": "2190-03-14T03:00:00",
+          "o2_delivery_device_1__candidate": "Aerosol-cool",
+          "o2_delivery_device_1__oracle": "Nasal cannula",
+          "o2_delivery_device_2__candidate": "Nasal cannula",
+          "o2_delivery_device_2__oracle": null,
+          "o2_delivery_device_3__candidate": null,
+          "o2_delivery_device_3__oracle": null,
+          "o2_delivery_device_4__candidate": null,
+          "o2_delivery_device_4__oracle": null,
+          "o2_flow__candidate": 15.0,
+          "o2_flow__oracle": 6.0,
+          "o2_flow_additional__candidate": null,
+          "o2_flow_additional__oracle": null,
+          "stay_id__candidate": 32058489,
+          "stay_id__oracle": 32058489,
+          "subject_id": 16723797
+        },
+        {
+          "charttime": "2186-03-12T03:00:00",
+          "o2_delivery_device_1__candidate": "Nasal cannula",
+          "o2_delivery_device_1__oracle": "Nasal cannula",
+          "o2_delivery_device_2__candidate": "Face tent",
+          "o2_delivery_device_2__oracle": null,
+          "o2_delivery_device_3__candidate": null,
+          "o2_delivery_device_3__oracle": null,
+          "o2_delivery_device_4__candidate": null,
+          "o2_delivery_device_4__oracle": null,
+          "o2_flow__candidate": 12.0,
+          "o2_flow__oracle": 4.0,
+          "o2_flow_additional__candidate": null,
+          "o2_flow_additional__oracle": null,
+          "stay_id__candidate": 38150916,
+          "stay_id__oracle": 38150916,
+          "subject_id": 19243783
+        },
+        {
+          "charttime": "2176-03-10T03:00:00",
+          "o2_delivery_device_1__candidate": "Nasal cannula",
+          "o2_delivery_device_1__oracle": "Nasal cannula",
+          "o2_delivery_device_2__candidate": "Nasal cannula",
+          "o2_delivery_device_2__oracle": null,
+          "o2_delivery_device_3__candidate": null,
+          "o2_delivery_device_3__oracle": null,
+          "o2_delivery_device_4__candidate": null,
+          "o2_delivery_device_4__oracle": null,
+          "o2_flow__candidate": 3.0,
+          "o2_flow__oracle": 2.0,
+          "o2_flow_additional__candidate": null,
+          "o2_flow_additional__oracle": null,
+          "stay_id__candidate": 36448248,
+          "stay_id__oracle": 36448248,
+          "subject_id": 17086932
+        }
+      ],
+      "differing_null_only": [],
+      "only_candidate": [
+        {
+          "charttime": "2158-03-12T03:00:00",
+          "subject_id": 10650537
+        },
+        {
+          "charttime": "2177-03-09T03:00:00",
+          "subject_id": 10806752
+        },
+        {
+          "charttime": "2171-03-10T03:15:00",
+          "subject_id": 18316256
+        },
+        {
+          "charttime": "2159-03-11T03:00:00",
+          "subject_id": 10200966
+        },
+        {
+          "charttime": "2180-03-12T03:00:00",
+          "subject_id": 11872366
+        },
+        {
+          "charttime": "2181-03-11T03:00:00",
+          "subject_id": 18748374
+        },
+        {
+          "charttime": "2173-03-14T03:00:00",
+          "subject_id": 12823962
+        },
+        {
+          "charttime": "2183-03-09T03:00:00",
+          "subject_id": 11328158
+        },
+        {
+          "charttime": "2153-03-11T03:58:00",
+          "subject_id": 18351044
+        },
+        {
+          "charttime": "2121-03-09T03:00:00",
+          "subject_id": 17276165
+        },
+        {
+          "charttime": "2137-03-10T03:00:00",
+          "subject_id": 16686168
+        },
+        {
+          "charttime": "2153-03-11T03:02:00",
+          "subject_id": 10139461
+        },
+        {
+          "charttime": "2182-03-10T03:00:00",
+          "subject_id": 16509298
+        },
+        {
+          "charttime": "2129-03-13T03:00:00",
+          "subject_id": 13851039
+        },
+        {
+          "charttime": "2161-03-08T03:07:00",
+          "subject_id": 14116630
+        },
+        {
+          "charttime": "2172-03-08T03:00:00",
+          "subject_id": 16326503
+        },
+        {
+          "charttime": "2177-03-09T03:32:00",
+          "subject_id": 10806752
+        },
+        {
+          "charttime": "2154-03-10T03:00:00",
+          "subject_id": 18338184
+        },
+        {
+          "charttime": "2193-03-10T03:00:00",
+          "subject_id": 14422845
+        },
+        {
+          "charttime": "2194-03-09T03:53:00",
+          "subject_id": 13404891
+        }
+      ],
+      "only_oracle": [
+        {
+          "charttime": "2194-03-09T02:53:00",
+          "subject_id": 13404891
+        },
+        {
+          "charttime": "2153-03-11T02:58:00",
+          "subject_id": 18351044
+        },
+        {
+          "charttime": "2159-03-11T02:00:00",
+          "subject_id": 10200966
+        },
+        {
+          "charttime": "2140-03-13T02:00:00",
+          "subject_id": 16622773
+        },
+        {
+          "charttime": "2125-03-11T02:22:00",
+          "subject_id": 14971764
+        },
+        {
+          "charttime": "2183-03-09T02:00:00",
+          "subject_id": 11328158
+        },
+        {
+          "charttime": "2181-03-11T02:00:00",
+          "subject_id": 13229853
+        },
+        {
+          "charttime": "2153-03-11T02:02:00",
+          "subject_id": 10139461
+        },
+        {
+          "charttime": "2131-03-11T02:00:00",
+          "subject_id": 12926306
+        },
+        {
+          "charttime": "2186-03-12T02:00:00",
+          "subject_id": 19243783
+        },
+        {
+          "charttime": "2161-03-08T02:07:00",
+          "subject_id": 14116630
+        },
+        {
+          "charttime": "2178-03-08T02:00:00",
+          "subject_id": 11733904
+        },
+        {
+          "charttime": "2121-03-09T02:00:00",
+          "subject_id": 17276165
+        },
+        {
+          "charttime": "2123-03-14T02:00:00",
+          "subject_id": 19041108
+        },
+        {
+          "charttime": "2158-03-12T02:00:00",
+          "subject_id": 10650537
+        },
+        {
+          "charttime": "2155-03-09T02:00:00",
+          "subject_id": 10755791
+        },
+        {
+          "charttime": "2113-03-12T02:00:00",
+          "subject_id": 10361825
+        },
+        {
+          "charttime": "2182-03-10T02:00:00",
+          "subject_id": 16509298
+        },
+        {
+          "charttime": "2193-03-10T02:00:00",
+          "subject_id": 14422845
+        },
+        {
+          "charttime": "2176-03-10T02:00:00",
+          "subject_id": 17086932
+        }
+      ]
+    }
+  },
+  "divergence": {
+    "attributed": [],
+    "blocking": [
+      {
+        "class": "only_candidate",
+        "count": 31,
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      },
+      {
+        "class": "differing_conflict",
+        "count": 3,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "classification": "keyed",
+    "conflict_attribution": {
+      "attempted": false,
+      "complete": false,
+      "why": "no datetime column in this concept; the DST cast cannot apply"
+    },
+    "contested": [
+      {
+        "class": "only_candidate",
+        "count": 31,
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      },
+      {
+        "class": "differing_conflict",
+        "count": 3,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "declared_unrepresentable": {},
+    "diagnostician_required": true,
+    "gap_shaped": [
+      {
+        "class": "only_oracle",
+        "count": 34,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "identical_fraction": 0.999938,
+    "identical_rows": 601509,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "key_attribution": {
+      "attempted": true,
+      "attributed_only_candidate": 31,
+      "attributed_only_oracle": 31,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "complete": false,
+      "keys_considered": [
+        "charttime"
+      ],
+      "only_candidate": 31,
+      "only_oracle": 34,
+      "operation": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+      "residual_only_candidate": 0,
+      "residual_only_oracle": 3,
+      "timezone": "America/New_York"
+    },
+    "notes": [
+      "upstream conflict attribution not attempted: no datetime column in this concept; the DST cast cannot apply",
+      "31 of 34 `only_oracle` rows re-pair with an unpaired candidate row once the oracle key is replayed through the upstream upstream_timestamptz_dst_shift; 3 do not. The tier stays on those residual rows."
+    ],
+    "oracle_rows": 601546,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [
+      {
+        "class": "only_candidate",
+        "count": 31,
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      },
+      {
+        "class": "differing_conflict",
+        "count": 3,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      },
+      {
+        "class": "only_oracle",
+        "count": 34,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "5539730940850415022396488",
+    "manifest_row_count": 601546,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.oxygen_delivery"
+  },
+  "row_count": {
+    "candidate": 601543,
+    "delta": -3,
+    "gated": false,
+    "match": false,
+    "oracle": 601546
+  },
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "stay_id",
+      "charttime",
+      "o2_flow",
+      "o2_flow_additional",
+      "o2_delivery_device_1",
+      "o2_delivery_device_2",
+      "o2_delivery_device_3",
+      "o2_delivery_device_4"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "stay_id",
+      "charttime",
+      "o2_flow",
+      "o2_flow_additional",
+      "o2_delivery_device_1",
+      "o2_delivery_device_2",
+      "o2_delivery_device_3",
+      "o2_delivery_device_4"
+    ],
+    "extra_columns": [],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "verdict": "review"
+}

@@ -53,6 +53,13 @@ alternative — compute nodes have no FHIR server — so the demo leg matches it
 deliberately, and a demo failure therefore predicts a full-run failure. There is
 no HTTP Pathling server anywhere in the loop, and no second execution path.
 
+Before a target concept's SQL runs, the executor preprocesses each completed
+`mimiciv_derived` dependency in DAG order and registers its candidate output as a
+Spark temp view named by the dependency stem. A dependent SQL query therefore
+uses `FROM age` just as the canonical query uses `FROM mimiciv_derived.age`;
+agents must not inline or rederive a dependency. The HPC launcher stages the
+same dependency attempts for the full-data leg.
+
 Both legs write **Parquet**, so the comparator reads the Spark schema rather
 than re-inferring types from serialised text. That distinction is not cosmetic:
 an all-null column (legitimate whenever a concept's shape needs a column

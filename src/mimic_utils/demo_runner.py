@@ -24,11 +24,14 @@ wait is logged; nothing else about the run changes.
 
 The run:
 
-1. Bind each ViewDefinition label to a temp view via ``createOrReplaceTempView``.
-2. Execute ``concept.sql`` and take the authoritative column order and types
+1. Preprocess completed derived dependencies in DAG order and bind their
+   candidate outputs as temp views named by concept stem.
+2. Bind each target ViewDefinition label to a temp view via
+   ``createOrReplaceTempView``.
+3. Execute ``concept.sql`` and take the authoritative column order and types
    from the resulting DataFrame.
-3. Write ``candidate.demo.parquet`` straight from that DataFrame.
-4. Run the **shape gate** against the oracle manifest and write
+4. Write ``candidate.demo.parquet`` straight from that DataFrame.
+5. Run the **shape gate** against the oracle manifest and write
    ``shape.demo.json``.
 
 Parquet, not a text format, and that is load-bearing.  Parquet carries the Spark
@@ -302,7 +305,10 @@ def run_demo(
     executor: Optional[EmbeddedExecutor] = None
     try:
         frame, executor, labels = execute_attempt(
-            resolved_attempt, warehouse_path=resolved_warehouse
+            resolved_attempt,
+            warehouse_path=resolved_warehouse,
+            concept=concept,
+            artifact_root=artifact_root,
         )
         result.view_labels = labels
         result.columns = list(frame.columns)

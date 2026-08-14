@@ -37,6 +37,7 @@ src/mimic_utils/                   # Python: conversion state machine, DAG gener
   conversion_state.py              # ConversionController — init/start/transition/depcheck
   conversion_cli.py                # CLI: init, start, validate-demo, validate-full, done, fail, skip
   concept_dag.py                   # DAG generator/validator
+  derived_dependencies.py          # preprocess completed dependency attempts
   db_preflight.py                  # Demo DB connectivity preflight
   __main__.py                      # mimic_utils CLI entrypoint
 tests/                             # pytest suite
@@ -102,6 +103,14 @@ kept as a fallback: it served different data from the Delta warehouse, so an
 embedded-vs-server disagreement could never distinguish "Spark bug" from
 "different dataset" — the one job a fallback was supposed to do. If you find
 yourself wanting one, the answer is a smaller Delta warehouse, not a server.
+
+Derived dependencies are still available to candidate SQL. Before a target
+concept runs, the embedded executor preprocesses every completed dependency
+attempt in DAG order and registers its candidate output as a Spark temp view
+named by the dependency stem (`age`, `chemistry`, and so on). The HPC launcher
+stages those immutable dependency attempts beside the target so both legs
+expose the same tables. A dependent agent must reference `FROM age` (or the
+relevant stem), never inline or rederive the dependency.
 
 Both legs write **Parquet** (`candidate.demo.parquet`, `candidate.full.parquet`),
 and that is load-bearing rather than incidental. Parquet carries the Spark

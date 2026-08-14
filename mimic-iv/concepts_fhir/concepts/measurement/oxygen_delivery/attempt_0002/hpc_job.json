@@ -1,0 +1,8 @@
+{
+  "concept": "oxygen_delivery",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "29938370",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/oxygen_delivery/attempt_0002",
+  "submitted_at": "2026-08-13T23:11:11.523874+00:00",
+  "walltime": "2:00:00"
+}

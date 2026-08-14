@@ -1,0 +1,12 @@
+- Concept: `charlson`, attempt `0002`.
+- Produced:
+  - `ViewDefinition.patient.json`
+  - `ViewDefinition.encounter.json`
+  - `ViewDefinition.condition.json`
+  - `concept.sql`
+- The SQL consumes `FROM age`, retains all hospital admissions, performs MAX-per-admission diagnosis flags, preserves ICD literals/arithmetic, and explicitly casts all manifest columns to `INTEGER`.
+- No `unrepresentable.json` was required.
+- `uv run mimic_utils lint-sql charlson` passed cleanly.
+- Applied identifier-spine, opaque-key, hospital Encounter filtering, Condition diagnosis joining, proprietary coding, age-divergence, and Spark casting notes.
+- Read all `MIMIC_NOTES.d` fragments; treated them as provisional and cited none as evidence. No fragment was verified or appended.
+- No existing attempt, state, carryover, or notes fragment was modified.

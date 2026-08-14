@@ -109,6 +109,21 @@ strictly stronger evidence than a model inferring the same thing from a bounded
 sample -- and much cheaper, since the diagnosis it replaces was 72% of the
 loop's token spend.
 
+The same shift can land in the **key**, and then in one of two ways.  It can
+move the row into a key nothing else occupies, where re-keying the unpaired
+oracle rows finds their partners among the unpaired candidate rows; or it can
+move the row on top of a key the candidate already holds, where the partner is
+not unpaired at all -- it paired with a different oracle row and *conflicts*
+with it, because the concept aggregated one more source row into it than the
+oracle did.  Only the first case was recognised until 2026-08-13, so the second
+was reported as an unexplained missing row **plus** an unexplained conflict, two
+findings for one event, and the all-or-nothing rule let them set the tier for
+the whole concept.  `oxygen_delivery` reproduced 601,509 of 601,546 rows with
+every divergent row inside a March 02:00--03:00 hour, and was blocked on the 3
+that collided.  Both cases are now attributed, and the second carries its own
+stated limit: it proves the row was absorbed, not that the merged value is what
+the concept's aggregation would produce from both source rows.
+
 Deliberate limits, all of them stated in ``divergence.judge_bar``:
 
 * Attribution never yields ``match`` and never skips the judge.  The values do
@@ -177,6 +192,31 @@ none exists, the rows genuinely do not correspond, the result keeps
 ``classification: unavailable_no_key``, and the judge is told both that it is
 reasoning with less evidence and that the count equality is not the missing
 evidence.
+
+Two things about that path are easy to get wrong, and both were:
+
+* **The residual is an alignment device, not a verdict.**  ``EXCEPT ALL`` is
+  exact and cannot be otherwise, so a value the FHIR warehouse serves as
+  ``decimal(32,6)`` against an oracle ``FLOAT`` lands in the residual on nearly
+  every row.  Classifying the residual exactly *too* then called each of those
+  rows a ``differing_conflict`` -- the contested class, an upstream ETL citation
+  demanded for a seventh decimal place.  The residual stays exact, because a
+  superset of the true differences is the safe error; the **classification**
+  applies the same ``rtol``/``atol``/one-second tolerances a keyed column gets,
+  and rows it calls equal go back to ``identical``.  A concept must not be
+  judged on whether ``oracle_manifest.py`` happened to find it a key:
+  `phenylephrine` reported 0.00% identical and 190,872 conflicts this way while
+  its keyed sibling `dobutamine` -- same table, same ETL, same gap -- reported
+  99.98%.
+* **A confirmed-unrepresentable column is excluded from the alignment.**  It is
+  100% NULL in the candidate by declaration, so it puts every row in the
+  residual and then sits in the pairing order discriminating nothing.
+  `phenylephrine` paired 193,260 rows on ``stay_id`` alone that way and reported
+  152,422 conflicting ``starttime`` values on a column whose two multisets
+  differ by 30 rows.  The column needs no alignment: what it contributes is
+  known analytically -- one ``differing_null_only`` row per oracle row holding a
+  value -- so it is tallied directly, and both fidelity numbers are then
+  reported as they are for a keyed concept.
 """
 
 from __future__ import annotations
@@ -437,11 +477,34 @@ _DST_REPLAY_OPERATION = (
 #: omitting their writers leaves the judge with citations for unrelated FHIR
 #: elements even when the replay itself is correct.
 _DST_REPLAY_CITATIONS = (
+    "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
     "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+    "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
     "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
     "mimic-fhir/sql/fhir_encounter.sql:65",
     "mimic-fhir/sql/fhir_medication_request.sql:43-44",
     "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69",
+)
+
+#: Keys where a shifted oracle row landed on a key the candidate already had.
+#: Written by :func:`_attribute_dst_unpaired`, read by
+#: :func:`_attribute_dst_conflicts` -- the two halves of one event.
+_DST_COLLISION_TABLE = "_dst_collision_keys"
+
+_DST_COLLISION_OPERATION = (
+    "The oracle row is unpaired and its key, replayed through the upstream "
+    f"{UPSTREAM_TZ} TIMESTAMPTZ cast, is a key the candidate already holds and "
+    "already paired with a different oracle row. The shift did not move this "
+    "row out of its key into an empty one -- it moved it on top of an existing "
+    "one, so the candidate has one row where the oracle has two and whatever "
+    "the concept does at that key (a GROUP BY aggregate, a ROW_NUMBER pick) saw "
+    "one extra source row. The unpaired oracle row and the conflict at the "
+    "collided key are therefore the same event counted twice, and both are "
+    "attributed. Checked by semi-join over the unpaired set in full, not "
+    "sampled. What this does NOT establish is that the candidate's merged value "
+    "is what the concept would have produced from the two source rows: that "
+    "depends on the concept's own aggregation, which the comparator does not "
+    "model. The judge confirms it."
 )
 
 #: A DST-gap wall time and an ordinary one. The replay must shift the first by
@@ -535,6 +598,7 @@ def _attribute_dst_conflicts(
     types_by_column: Dict[str, str],
     sample_select: str,
     sample_limit: int,
+    collision_keys: Optional[Sequence[str]] = None,
 ) -> Dict[str, Any]:
     """How much of the conflict set is the upstream DST shift, and which columns.
 
@@ -543,13 +607,21 @@ def _attribute_dst_conflicts(
     own alignment. *conflict_by_column* must be the very expressions the caller
     tallied ``differing_conflict`` from -- attribution partitions that set, it
     does not recompute it.
+
+    *collision_keys* names the key columns of :data:`_DST_COLLISION_TABLE`, the
+    keys where :func:`_attribute_dst_unpaired` proved a shifted oracle row
+    landed on top of a key the candidate already had. The conflict at such a key
+    is the *consequence* of that shift -- the candidate's row was built from one
+    more source row than the oracle's was -- so it is attributed by collision
+    rather than by replaying its own value, which would not replay: an
+    aggregate of two source rows is not the upstream cast of either.
     """
     datetime_columns = sorted(
         name
         for name in conflict_by_column
         if classify_logical_type(types_by_column.get(name, "")) == "datetime"
     )
-    if not datetime_columns:
+    if not datetime_columns and not collision_keys:
         return {
             "attempted": False,
             "complete": False,
@@ -572,18 +644,34 @@ def _attribute_dst_conflicts(
         else f"(NOT {conflict})"
         for name, conflict in sorted(conflict_by_column.items())
     ]
-    attributed = f"({row_conflict}) AND ({' AND '.join(per_column)})"
+    replayed = f"({row_conflict}) AND ({' AND '.join(per_column)})"
+
+    collided = None
+    if collision_keys:
+        terms = " AND ".join(
+            f"k.{_q(name)} IS NOT DISTINCT FROM "
+            f"coalesce(o.{_q(name)}, c.{_q(name)})"
+            for name in collision_keys
+        )
+        collided = (
+            f"(({row_conflict}) AND EXISTS (SELECT 1 FROM {_DST_COLLISION_TABLE} k "
+            f"WHERE {terms}))"
+        )
+    attributed = f"({replayed} OR {collided})" if collided else replayed
 
     tallies = ",\n  ".join(
         f'count(*) FILTER (WHERE {attributed} AND {conflict_by_column[name]}) '
         f'AS {_q("a__" + name)}'
         for name in datetime_columns
+    ) or "0 AS _no_datetime_columns"
+    collision_tally = (
+        f",\n  count(*) FILTER (WHERE {collided}) AS collided_rows" if collided else ""
     )
     row = con.execute(
         f"{cte} SELECT\n"
         f"  count(*) FILTER (WHERE {row_conflict}) AS conflict_rows,\n"
         f"  count(*) FILTER (WHERE {attributed}) AS attributed_rows,\n"
-        f"  {tallies}\n{from_sql}"
+        f"  {tallies}{collision_tally}\n{from_sql}"
     ).fetchone()
     counts = dict(zip([d[0] for d in con.description], row))
 
@@ -611,6 +699,9 @@ def _attribute_dst_conflicts(
             )
         ),
     }
+    if collided:
+        result["attributed_by_key_collision"] = counts.get("collided_rows") or 0
+        result["collision_operation"] = _DST_COLLISION_OPERATION
     if attributed_rows and sample_limit > 0:
         replay_select = "".join(
             f", {_tz_roundtrip_sql('o.' + _q(name))} AS {_q(name + '__replayed')}"
@@ -735,6 +826,20 @@ WITH _unpaired_o AS (
   WHERE o.{_PRESENT} IS NULL
 )"""
 
+    # The shift can also land on a key the candidate ALREADY holds, and then the
+    # candidate row it would have paired with is not unpaired at all -- it is
+    # paired with a different oracle row, and conflicts with it. The semi-join
+    # above cannot see that row, so one transformation was being reported as an
+    # unexplained missing row plus an unexplained conflict, and the all-or-
+    # nothing rule let those few rows set the tier for the whole concept.
+    # `oxygen_delivery` is the worked example: 601,546 rows, 37 divergent, every
+    # one of them on the second Sunday in March between 02:00 and 03:00, and the
+    # 3 that collided kept it at `contested` and got it blocked.
+    collided_row = (
+        f"({shifted})"
+        f" AND NOT EXISTS (SELECT 1 FROM _unpaired_c v WHERE {_key_match('u', 'v')})"
+        f" AND EXISTS (SELECT 1 FROM {scan} v WHERE {_key_match('u', 'v')})"
+    )
     row = con.execute(
         f"""{cte}
 SELECT
@@ -743,7 +848,8 @@ SELECT
   (SELECT count(*) FROM _unpaired_o u
      WHERE ({shifted})
        AND EXISTS (SELECT 1 FROM _unpaired_c v
-                   WHERE {_key_match('u', 'v')}))           AS attributed_oracle,
+                   WHERE {_key_match('u', 'v')}))           AS repaired_oracle,
+  (SELECT count(*) FROM _unpaired_o u WHERE {collided_row}) AS collided_oracle,
   (SELECT count(*) FROM _unpaired_c v
      WHERE EXISTS (SELECT 1 FROM _unpaired_o u
                    WHERE ({shifted}) AND {_key_match('u', 'v')})) AS attributed_candidate
@@ -753,8 +859,27 @@ SELECT
 
     only_oracle = counts["only_oracle"] or 0
     only_candidate = counts["only_candidate"] or 0
-    attributed_oracle = counts["attributed_oracle"] or 0
+    repaired_oracle = counts["repaired_oracle"] or 0
+    collided_oracle = counts["collided_oracle"] or 0
+    attributed_oracle = repaired_oracle + collided_oracle
     attributed_candidate = counts["attributed_candidate"] or 0
+
+    # Hand the collided keys to the conflict attribution, which is the only
+    # place the other half of the event is visible. Dropped first so a concept
+    # with no collisions cannot read a previous concept's table.
+    con.execute(f"DROP TABLE IF EXISTS {_DST_COLLISION_TABLE}")
+    if collided_oracle:
+        replayed_keys = ", ".join(
+            f"{_tz_roundtrip_sql('u.' + _q(name))} AS {_q(name)}"
+            if name in datetime_keys
+            else f"u.{_q(name)} AS {_q(name)}"
+            for name in key
+        )
+        con.execute(
+            f"CREATE TEMP TABLE {_DST_COLLISION_TABLE} AS {cte} "
+            f"SELECT DISTINCT {replayed_keys} FROM _unpaired_o u "
+            f"WHERE {collided_row}"
+        )
 
     result: Dict[str, Any] = {
         "attempted": True,
@@ -774,6 +899,12 @@ SELECT
         "only_candidate": only_candidate,
         "attributed_only_oracle": attributed_oracle,
         "attributed_only_candidate": attributed_candidate,
+        # The two routes, kept apart: one re-pairs the row with a candidate row
+        # nothing else claimed, the other proves it was absorbed into a row that
+        # was already claimed. They are different evidence and a reader who
+        # cannot tell them apart cannot check either.
+        "attributed_only_oracle_repaired": repaired_oracle,
+        "attributed_only_oracle_collided": collided_oracle,
         "residual_only_oracle": only_oracle - attributed_oracle,
         "residual_only_candidate": only_candidate - attributed_candidate,
         # All-or-nothing, and on *both* sides. An unpaired candidate row the
@@ -783,17 +914,24 @@ SELECT
         and attributed_oracle == only_oracle
         and attributed_candidate == only_candidate,
     }
+    if collided_oracle:
+        result["collision_operation"] = _DST_COLLISION_OPERATION
     if attributed_oracle and sample_limit > 0:
         replayed = "".join(
             f", {_tz_roundtrip_sql('u.' + _q(name))} AS {_q(name + '__replayed')}"
             for name in datetime_keys
         )
+        # Both routes, each labelled: a reader checking the attribution needs to
+        # know which rows re-paired and which were absorbed.
         cur = con.execute(
             f"""{cte}
-SELECT {', '.join('u.' + _q(k) for k in key)}{replayed}
+SELECT {', '.join('u.' + _q(k) for k in key)}{replayed},
+  CASE WHEN EXISTS (SELECT 1 FROM _unpaired_c v WHERE {_key_match('u', 'v')})
+       THEN 'repaired' ELSE 'key_collision' END AS _route
 FROM _unpaired_o u
 WHERE ({shifted})
-  AND EXISTS (SELECT 1 FROM _unpaired_c v WHERE {_key_match('u', 'v')})
+  AND (EXISTS (SELECT 1 FROM _unpaired_c v WHERE {_key_match('u', 'v')})
+       OR ({collided_row}))
 LIMIT {int(sample_limit)}"""
         )
         cols = [d[0] for d in cur.description]
@@ -1322,9 +1460,26 @@ FULL OUTER JOIN {c_ref} c ON {join_on}
             row_null_only,
         )
 
-    # Attempted only when there is a conflict to explain: attribution can lower
-    # the judge's bar, so it must never run -- and never appear in the artifact
-    # -- for a result that has nothing contested about it.
+    # Attempted only when there are unpaired rows to explain, because
+    # attribution lowers a bar and must not appear on a result that has nothing
+    # unpaired about it. Runs BEFORE the conflict attribution: a shift that
+    # collided with an existing key produces one unpaired row and one conflict,
+    # and only this pass can prove they are the same event.
+    collision_keys: Optional[Sequence[str]] = None
+    if counts["only_oracle"] or counts["only_candidate"]:
+        diff["key_attribution"] = _attribute_dst_unpaired(
+            con,
+            oracle_ref=oracle_ref,
+            scan=scan,
+            key=key,
+            types_by_key=dict(key_types or {}),
+            join_on=join_on,
+            sample_limit=sample_limit,
+        )
+        if diff["key_attribution"].get("attributed_only_oracle_collided"):
+            collision_keys = list(key)
+
+    # Same reasoning, other class.
     if counts["differing_conflict"]:
         key_select = ", ".join(
             f"coalesce(o.{_q(k)}, c.{_q(k)}) AS {_q(k)}" for k in key
@@ -1343,20 +1498,7 @@ FULL OUTER JOIN {c_ref} c ON {join_on}
             types_by_column={c["name"]: c["type"] for c in value_columns},
             sample_select=key_select + pairs,
             sample_limit=sample_limit,
-        )
-
-    # Same reasoning, other class: attempted only when there are unpaired rows
-    # to explain, because attribution lowers a bar and must not appear on a
-    # result that has nothing unpaired about it.
-    if counts["only_oracle"] or counts["only_candidate"]:
-        diff["key_attribution"] = _attribute_dst_unpaired(
-            con,
-            oracle_ref=oracle_ref,
-            scan=scan,
-            key=key,
-            types_by_key=dict(key_types or {}),
-            join_on=join_on,
-            sample_limit=sample_limit,
+            collision_keys=collision_keys,
         )
     return diff
 
@@ -1424,6 +1566,8 @@ def _residual_pairing(
     names: Sequence[str],
     sample_limit: int,
     types_by_column: Optional[Dict[str, str]] = None,
+    rtol: float = DEFAULT_RTOL,
+    atol: float = DEFAULT_ATOL,
 ) -> Dict[str, Any]:
     """Decide whether the two residuals are *substitutions* or unmatched rows.
 
@@ -1544,7 +1688,8 @@ def _residual_pairing(
 
     result.update(
         _paired_columns(
-            con, stable, substituted, sample_limit, types_by_column or {}
+            con, stable, substituted, sample_limit, types_by_column or {},
+            rtol=rtol, atol=atol,
         )
     )
     return result
@@ -1556,6 +1701,8 @@ def _paired_columns(
     substituted: Sequence[str],
     sample_limit: int,
     types_by_column: Optional[Dict[str, str]] = None,
+    rtol: float = DEFAULT_RTOL,
+    atol: float = DEFAULT_ATOL,
 ) -> Dict[str, Any]:
     """Classify the paired residual per column, as the keyed diff would.
 
@@ -1564,6 +1711,25 @@ def _paired_columns(
     each substituted column reads exactly like a keyed column: candidate NULL
     where the oracle holds a value is a **gap**, anything else is a **conflict**.
     That is the classification ``unavailable_no_key`` was withholding.
+
+    **The comparator's tolerances apply here exactly as they do to a keyed
+    column.**  They did not until 2026-08-13, and the omission was invisible
+    because it only bites a concept that is unkeyed *and* carries a float: the
+    residual is built by ``EXCEPT ALL``, which has no tolerance and cannot have
+    one, so a value Pathling serves as ``decimal(32,6)`` against an oracle
+    ``FLOAT`` lands in the residual on nearly every row.  Classifying that
+    residual exactly then reported each of those rows as a ``differing_conflict``
+    -- the contested class, the raised bar, an ETL citation demanded for a
+    seventh decimal place.  `phenylephrine` reported 190,872 conflicts and
+    0.00% identical this way while reproducing every value within tolerance on
+    625/625 rows of the demo; its keyed siblings `dobutamine` and `milrinone`,
+    same table and same ETL, reported 99.98%.  A concept must not be judged on
+    whether ``oracle_manifest.py`` happened to find it a key.
+
+    So the residual stays exact -- it is only an alignment device, and a
+    superset of the true differences is the safe error -- and the *verdict*
+    comes from this classification.  Rows that pair and then agree within
+    tolerance are counted in ``paired_equal`` and handed back to ``identical``.
     """
     join_on = " AND ".join(f"o.{_q(n)} IS NOT DISTINCT FROM c.{_q(n)}" for n in stable)
     order = ", ".join(_q(n) for n in substituted)
@@ -1575,13 +1741,17 @@ def _paired_columns(
         f"ORDER BY {order}) AS _rn FROM _resid_c)"
     )
 
+    types = types_by_column or {}
     null_sql = {n: _column_candidate_null_sql(n) for n in substituted}
     conflict_sql = {
-        n: f"(NOT (o.{_q(n)} IS NOT DISTINCT FROM c.{_q(n)}) AND NOT {null_sql[n]})"
-        for n in substituted
+        n: _column_conflict_sql(n, types.get(n, ""), rtol, atol) for n in substituted
+    }
+    equal_sql = {
+        n: _column_equality_sql(n, types.get(n, ""), rtol, atol) for n in substituted
     }
     any_conflict = " OR ".join(conflict_sql.values())
     any_null = " OR ".join(null_sql.values())
+    all_equal = " AND ".join(equal_sql.values())
     tallies = ",\n  ".join(
         [f'count(*) FILTER (WHERE {e}) AS {_q("k__" + n)}' for n, e in conflict_sql.items()]
         + [f'count(*) FILTER (WHERE {e}) AS {_q("n__" + n)}' for n, e in null_sql.items()]
@@ -1590,6 +1760,7 @@ def _paired_columns(
         f"{ranked} SELECT count(*) AS paired, "
         f"count(*) FILTER (WHERE {any_conflict}) AS conflict, "
         f"count(*) FILTER (WHERE NOT ({any_conflict}) AND ({any_null})) AS null_only, "
+        f"count(*) FILTER (WHERE {all_equal}) AS equal_within_tolerance, "
         f"{tallies} FROM o JOIN c ON {join_on} AND o._rn = c._rn"
     ).fetchone()
     counts = dict(zip([d[0] for d in con.description], row))
@@ -1605,6 +1776,10 @@ def _paired_columns(
     out: Dict[str, Any] = {
         "paired_conflict": counts["conflict"],
         "paired_null_only": counts["null_only"],
+        # Rows the exact `EXCEPT ALL` put in the residual that the comparator's
+        # own tolerances call equal. They are not a divergence of any class, and
+        # `_multiset_diff` returns them to `identical`.
+        "paired_equal": counts["equal_within_tolerance"],
         "columns_conflicting": _by_column("k__"),
         "columns_candidate_null": _by_column("n__"),
     }
@@ -1644,6 +1819,9 @@ def _multiset_diff(
     scan: str,
     columns: Sequence[Dict[str, str]],
     sample_limit: int,
+    rtol: float = DEFAULT_RTOL,
+    atol: float = DEFAULT_ATOL,
+    representable_only: frozenset = frozenset(),
 ) -> Dict[str, Any]:
     """Full-tuple multiset comparison, for concepts with no unique key.
 
@@ -1662,26 +1840,68 @@ def _multiset_diff(
     set the classification is recovered and this concept is diagnosed like a
     keyed one; when it does not, the result keeps ``unavailable_no_key`` and the
     judge is told it is reasoning without that evidence.
+
+    A **confirmed-unrepresentable column is excluded from the alignment**, and
+    that exclusion is what makes the pairing usable at all on a concept that has
+    one.  Such a column is 100% NULL in the candidate by declaration, so every
+    oracle row differs on it, so ``EXCEPT ALL`` puts *every* row in the residual
+    and the pairing is left aligning the whole table -- with the column itself,
+    NULL on one side, sitting in the ordering as a tie-breaker that discriminates
+    nothing.  `phenylephrine` paired 193,260 rows on ``stay_id`` alone that way,
+    ~19 rows per group matched by position, and reported 152,422 conflicting
+    ``starttime`` values on a column whose two multisets differ by 30 rows.
+    The column needs no alignment: what it contributes is known analytically --
+    every oracle row holding a value there is one ``differing_null_only`` row --
+    so it is tallied directly and kept out of the residual.
     """
     names = [c["name"] for c in columns]
-    o_proj = ", ".join(_q(n) for n in names)
-    # Cast the candidate to the oracle's declared types so EXCEPT ALL does not
-    # fail on a merely-cosmetic type difference (Spark long vs DuckDB BIGINT).
-    c_proj = ", ".join(f"CAST({_q(c['name'])} AS {c['type']}) AS {_q(c['name'])}" for c in columns)
+    types_by_column = {c["name"]: c["type"] for c in columns}
+    excluded = [n for n in names if n in representable_only]
+    # Never exclude everything: a concept whose every column is declared has no
+    # alignment left, and an empty projection is not a comparison.
+    align = [n for n in names if n not in representable_only] or names
+    cast = {c["name"]: c["type"] for c in columns}
+
+    def _proj(cols: Sequence[str], candidate: bool) -> str:
+        if candidate:
+            # Cast the candidate to the oracle's declared types so EXCEPT ALL
+            # does not fail on a merely-cosmetic type difference (Spark long vs
+            # DuckDB BIGINT).
+            return ", ".join(f"CAST({_q(n)} AS {cast[n]}) AS {_q(n)}" for n in cols)
+        return ", ".join(_q(n) for n in cols)
+
+    def _residual_count(cols: Sequence[str]) -> Tuple[int, int]:
+        o_proj, c_proj = _proj(cols, False), _proj(cols, True)
+        return (
+            con.execute(
+                f"SELECT count(*) FROM (SELECT {o_proj} FROM {oracle_ref} "
+                f"EXCEPT ALL SELECT {c_proj} FROM {scan})"
+            ).fetchone()[0],
+            con.execute(
+                f"SELECT count(*) FROM (SELECT {c_proj} FROM {scan} "
+                f"EXCEPT ALL SELECT {o_proj} FROM {oracle_ref})"
+            ).fetchone()[0],
+        )
 
     con.execute(
-        f"CREATE OR REPLACE TEMP TABLE _resid_o AS SELECT {o_proj} FROM {oracle_ref} "
-        f"EXCEPT ALL SELECT {c_proj} FROM {scan}"
+        f"CREATE OR REPLACE TEMP TABLE _resid_o AS SELECT {_proj(align, False)} "
+        f"FROM {oracle_ref} EXCEPT ALL SELECT {_proj(align, True)} FROM {scan}"
     )
     con.execute(
-        f"CREATE OR REPLACE TEMP TABLE _resid_c AS SELECT {c_proj} FROM {scan} "
-        f"EXCEPT ALL SELECT {o_proj} FROM {oracle_ref}"
+        f"CREATE OR REPLACE TEMP TABLE _resid_c AS SELECT {_proj(align, True)} "
+        f"FROM {scan} EXCEPT ALL SELECT {_proj(align, False)} FROM {oracle_ref}"
     )
     only_oracle = con.execute("SELECT count(*) FROM _resid_o").fetchone()[0]
     only_candidate = con.execute("SELECT count(*) FROM _resid_c").fetchone()[0]
+    # The headline multiset counts stay over *every* column: they are what the
+    # port produced against what the oracle holds, and a declaration must not
+    # quietly shrink them.
+    full_only_oracle, full_only_candidate = (
+        _residual_count(names) if excluded else (only_oracle, only_candidate)
+    )
 
     pairing = _residual_pairing(
-        con, names, sample_limit, {c["name"]: c["type"] for c in columns}
+        con, align, sample_limit, types_by_column, rtol=rtol, atol=atol
     )
     paired = (
         pairing.get("attempted")
@@ -1693,8 +1913,8 @@ def _multiset_diff(
     diff: Dict[str, Any] = {
         "key": None,
         "classification": "paired_residual" if paired else "unavailable_no_key",
-        "only_oracle": only_oracle,
-        "only_candidate": only_candidate,
+        "only_oracle": full_only_oracle,
+        "only_candidate": full_only_candidate,
         "residual_pairing": pairing,
         # Undefined unless the residual paired, which supplies the alignment a
         # key would have.
@@ -1703,25 +1923,64 @@ def _multiset_diff(
         "differing_null_only": None,
         "identical": None,
     }
+    if excluded:
+        diff["excluded_as_alignment"] = excluded
     if paired:
         # The pairing set aligned every residual row, so `only_oracle` and
         # `only_candidate` are not missing and invented rows at all -- they are
         # the two halves of one substitution, now classified by column.
         oracle_rows = con.execute(f"SELECT count(*) FROM {oracle_ref}").fetchone()[0]
+        equal = pairing.get("paired_equal", 0)
+        conflict = pairing.get("paired_conflict", 0)
+        # Identity over the columns the port could ever produce: every row
+        # outside the residual, plus the residual rows the tolerances call equal.
+        representable_identical = oracle_rows - pairing["paired"] + equal
+
+        columns_null = dict(pairing.get("columns_candidate_null", {}))
+        # A declared column needs no alignment to classify: it is 100% NULL in
+        # the candidate, so every oracle row holding a value there is one
+        # `differing_null_only` row. Counted straight off the oracle.
+        for name in excluded:
+            n = con.execute(
+                f"SELECT count(*) FROM {oracle_ref} WHERE {_q(name)} IS NOT NULL"
+            ).fetchone()[0]
+            if n:
+                columns_null[name] = n
+
+        if not excluded:
+            identical = representable_identical
+        else:
+            # A row is identical only if it is representable-identical AND holds
+            # NULL in every declared column. The two universal cases are exact;
+            # the mixed one falls back to the exact all-column residual, which
+            # is a floor (it applies no tolerance) and is stated as such.
+            e_nonnull = con.execute(
+                f"SELECT count(*) FROM {oracle_ref} WHERE "
+                + " OR ".join(f"{_q(n)} IS NOT NULL" for n in excluded)
+            ).fetchone()[0]
+            if e_nonnull == 0:
+                identical = representable_identical
+            elif e_nonnull == oracle_rows:
+                identical = 0
+            else:
+                identical = oracle_rows - full_only_oracle
+
         diff.update(
-            differing=pairing["paired"],
-            differing_conflict=pairing.get("paired_conflict", 0),
-            differing_null_only=pairing.get("paired_null_only", 0),
+            differing=oracle_rows - identical,
+            differing_conflict=conflict,
+            # Every row that is not identical and not a conflict differs only by
+            # a candidate-side NULL -- in a substituted column or in a declared
+            # one. Derived rather than tallied so the three always sum.
+            differing_null_only=oracle_rows - identical - conflict,
             columns_conflicting=pairing.get("columns_conflicting", {}),
-            columns_candidate_null=pairing.get("columns_candidate_null", {}),
-            # Every residual oracle row paired, so the rest reproduced exactly.
-            # An unkeyed concept could not state this before, which is why its
-            # judges were quoting overlap fractions computed by hand.
-            identical=oracle_rows - pairing["paired"],
+            columns_candidate_null=columns_null,
+            identical=identical,
+            identical_representable=representable_identical,
+            excluded_as_unrepresentable=sorted(excluded),
             only_oracle=0,
             only_candidate=0,
-            multiset_only_oracle=only_oracle,
-            multiset_only_candidate=only_candidate,
+            multiset_only_oracle=full_only_oracle,
+            multiset_only_candidate=full_only_candidate,
         )
         # Lifted out of the pairing so the classifier reads it from one place
         # regardless of whether the concept has a key.
@@ -1868,7 +2127,11 @@ def compare_full(
             )
         else:
             result["comparison"] = "full_tuple_multiset"
-            result["diff"] = _multiset_diff(con, oracle_ref, scan, columns, sample_limit)
+            result["diff"] = _multiset_diff(
+                con, oracle_ref, scan, columns, sample_limit,
+                rtol=rtol, atol=atol,
+                representable_only=confirmed_unrepresentable,
+            )
 
         result["divergence"] = _classify_divergence(
             result["diff"], oracle_rows, result.get("unrepresentable")
@@ -2112,9 +2375,12 @@ def _classify_divergence(
     elif key_attr.get("attempted") and key_attr.get("attributed_only_oracle"):
         notes.append(
             f"{key_attr['attributed_only_oracle']:,} of "
-            f"{key_attr['only_oracle']:,} `only_oracle` rows re-pair with an "
-            "unpaired candidate row once the oracle key is replayed through the "
-            f"upstream {key_attr['cause']}; "
+            f"{key_attr['only_oracle']:,} `only_oracle` rows are explained by "
+            f"the upstream {key_attr['cause']} once the oracle key is replayed "
+            f"({key_attr.get('attributed_only_oracle_repaired', 0):,} re-pair "
+            "with an unpaired candidate row, "
+            f"{key_attr.get('attributed_only_oracle_collided', 0):,} collided "
+            f"with a key the candidate already held); "
             f"{key_attr['residual_only_oracle']:,} do not. The tier stays on "
             "those residual rows."
         )
@@ -2257,6 +2523,18 @@ def _classify_divergence(
             "accept a port that recovers the pre-shift key by reconstructing a "
             "resource id, which is an inversion of the ETL, not a mapping."
         )
+        if key_attr.get("attributed_only_oracle_collided"):
+            notes.append(
+                f"{key_attr['attributed_only_oracle_collided']:,} of those rows "
+                "did not move into an empty key: the replayed key was one the "
+                "candidate already held, so the row was absorbed into an "
+                "existing one rather than re-appearing beside it. The conflict "
+                "at each of those keys is the other half of the same event and "
+                "is attributed with it -- do not count them as two findings. "
+                "What the comparator has NOT shown is that the merged value is "
+                "what this concept's own aggregation would produce from the two "
+                "source rows; confirm that from the concept SQL."
+            )
 
     reproduced = diff.get("identical")
     representable = diff.get("identical_representable")

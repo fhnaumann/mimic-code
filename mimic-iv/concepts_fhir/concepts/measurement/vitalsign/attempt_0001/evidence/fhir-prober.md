@@ -1,0 +1,7 @@
+## Evidence
+
+The FHIR prober read the source carryover, curated `MIMIC_NOTES.md`, all current fragments, the canonical Observation ViewDefinition, and the authoritative demo Delta using embedded Pathling 9.6.0/Spark 4.0.2. It mapped `mimiciv_icu.chartevents` to Observation using the exact chartevents code system plus item code, joined subject and ICU encounter references by equality to Patient/Encounter resource keys, and projected identifier values for numeric `subject_id`/`stay_id`. It mapped `effective.ofType(dateTime)`, Quantity value, and string value with the required `TIMESTAMP_NTZ` and numeric casts; unused Period/instant choices were confirmed null.
+
+All 19 target itemids matched source/FHIR resource counts: 96,145 rows/resources, with 92,351 Quantity values and 3,794 string values. Subject and ICU Encounter joins resolved 96,145/96,145. The source had 21,086 groups versus 21,084 FHIR groups; 3 source-only and 1 FHIR-only group arose from 14 chartevents rows at DST spring-forward times. Global NULL-value and hard-coded duplicate omissions affected zero demo target rows. Resource IDs were not parsed or reconstructed.
+
+Reusable mapping was written to `mimic-iv/concepts_fhir/carryover/vitalsign/fhir-prober.md` and recorded. A dataset-wide finding about session-timezone rendering of `Observation.issued` was appended to `mimic-iv/concepts_fhir/MIMIC_NOTES.d/vitalsign.md`; it is ancillary because `storetime` is unused by this concept.

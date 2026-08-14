@@ -1,0 +1,8 @@
+{
+  "concept": "creatinine_baseline",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "29959342",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/creatinine_baseline/attempt_0001",
+  "submitted_at": "2026-08-14T04:45:18.894943+00:00",
+  "walltime": "2:00:00"
+}

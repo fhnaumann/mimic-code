@@ -35,6 +35,24 @@ must equal the ViewDefinition's own `name` — the runner rejects the attempt
 otherwise. Get it wrong and `concept.sql` selects from a table that was never
 registered.
 
+### Derived dependencies
+
+The runner preprocesses every completed `mimiciv_derived` dependency in the
+concept DAG before it registers the target concept's resource views. It runs
+the dependency's own FHIR attempt and registers its output as a Spark temp view
+named by the dependency stem. Therefore a dependent port must write, for
+example:
+
+```sql
+FROM age
+```
+
+Do not inline `age` from `Encounter` and `Patient`, and do not create a second
+FHIR mapping for the dependency. The dependency's candidate output is the
+boundary being compared. Transitive dependencies are prepared in dependency
+order as well. The runner stages the same immutable dependency attempts for the
+HPC leg, so demo and full execution expose the same SQL tables.
+
 ## Attempt artifacts
 
 An attempt directory holds exactly two hand-authored things:
@@ -205,12 +223,12 @@ WHERE
 
 ## Output requirements
 
-`concept.sql` must be self-contained: it selects only from the registered
-ViewDefinition labels, and must produce the column **names and types** the
-oracle manifest declares for the concept. Row count is deliberately not part of
-this — MIMIC-on-FHIR does not carry everything relational MIMIC-IV carries, so a
-faithful port can legitimately return fewer rows, and neither gate treats a
-count difference as a failure on its own.
+`concept.sql` must select only from the registered ViewDefinition labels and the
+preprocessed derived dependency views, and must produce the column **names and
+types** the oracle manifest declares for the concept. Row count is deliberately
+not part of this — MIMIC-on-FHIR does not carry everything relational MIMIC-IV
+carries, so a faithful port can legitimately return fewer rows, and neither gate
+treats a count difference as a failure on its own.
 
 Where the manifest declares a column MIMIC-on-FHIR cannot populate, emit it
 explicitly as `CAST(NULL AS <type>)` rather than omitting it. The shape is part

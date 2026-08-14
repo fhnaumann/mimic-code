@@ -1,0 +1,26 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/ventilator_setting-0001-ventilator_setting_observation",
+  "name": "ventilator_setting_observation",
+  "resource": "Observation",
+  "select": [
+    {
+      "column": [
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
+        { "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_key" },
+        { "path": "(effective).ofType(dateTime)", "name": "effective_datetime" },
+        { "path": "(effective).ofType(Period).start", "name": "effective_period_start" },
+        { "path": "(value).ofType(Quantity).value", "name": "quantity_value" },
+        { "path": "(value).ofType(string)", "name": "value_string" }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items' and (code='224688' or code='224689' or code='224690' or code='224687' or code='224685' or code='224684' or code='224686' or code='224696' or code='220339' or code='224700' or code='223835' or code='223849' or code='229314' or code='223848' or code='224691'))",
+      "column": [
+        { "path": "code", "name": "item_code" },
+        { "path": "system", "name": "item_system" }
+      ]
+    }
+  ]
+}

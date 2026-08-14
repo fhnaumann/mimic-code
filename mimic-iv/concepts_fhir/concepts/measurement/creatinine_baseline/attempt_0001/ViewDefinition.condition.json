@@ -1,0 +1,22 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/creatinine_baseline-0001-condition",
+  "name": "condition",
+  "resource": "Condition",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "condition_key" },
+        { "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_key" }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd9' or system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd10')",
+      "column": [
+        { "path": "code", "name": "diagnosis_code" },
+        { "path": "system", "name": "diagnosis_system" }
+      ]
+    }
+  ]
+}

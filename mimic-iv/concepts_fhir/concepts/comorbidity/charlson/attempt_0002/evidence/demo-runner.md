@@ -1,0 +1,8 @@
+- Concept: `charlson`, attempt `0002`.
+- The embedded Pathling-on-Spark demo execution completed successfully; it was not stuck.
+- Demo shape verdict: `shape_ok` (`executed: true`).
+- Candidate row count: 275; this is reported evidence only and was not gated.
+- All 21 expected columns are present with compatible types; no missing or extra columns.
+- Artifact checked: `mimic-iv/concepts_fhir/concepts/comorbidity/charlson/attempt_0002/shape.demo.json`.
+- Candidate output: `mimic-iv/concepts_fhir/concepts/comorbidity/charlson/attempt_0002/candidate.demo.parquet/`.
+- The shape gate permits the HPC full-data run; it does not establish correctness.

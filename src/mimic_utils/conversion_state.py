@@ -89,6 +89,15 @@ DIVERGENCE_DECIDERS = frozenset({"judge", "human"})
 #: re-entering one is a decision about evidence rather than a scheduling step,
 #: and it is made by a human with a reason or not at all.
 REOPEN_ONLY_STATUSES = frozenset({"COMPLETED", "COMPLETED_WITH_DIVERGENCE"})
+#: Statuses `reopen` accepts.  A superset of the above: a
+#: BLOCKED_REPRESENTATION is also a recorded verdict, and setting one aside is
+#: the same kind of decision -- a human disagreeing with a ruling on the
+#: evidence, not scheduling another go.  It stays out of REOPEN_ONLY_STATUSES
+#: because `retry` must keep working for the ordinary "you are right, try
+#: again" route the transition table already allows; what `reopen` adds is the
+#: run watermark, so a second run's metrics do not land in the first run's
+#: already-written artifact.
+REOPENABLE_STATUSES = REOPEN_ONLY_STATUSES | frozenset({"BLOCKED_REPRESENTATION"})
 ATTEMPT_DIR_PATTERN = re.compile(r"^attempt_(\d{4})$")
 CACHE_FILENAME = "state.json"
 
@@ -895,10 +904,11 @@ class ConversionController:
         reason: str,
         decided_by: str = "human",
     ) -> ConceptState:
-        """Set aside a finished verdict and start a fresh attempt.
+        """Set aside a recorded verdict and start a fresh attempt.
 
-        For the case the loop cannot otherwise express: the port is finished and
-        recorded, and a human has found a defect in the SQL it shipped. The
+        Two cases. The first is the one the loop cannot otherwise express: the
+        port is finished and recorded, and a human has found a defect in the SQL
+        it shipped. The
         alternative -- editing ``concept.sql`` inside the finished attempt -- is
         worse than it looks. ``export_mappings`` reads the *current* attempt, so
         the edit silently becomes the exported mapping, while
@@ -907,6 +917,14 @@ class ConversionController:
         Nothing hashes ``concept.sql``, so no artifact would ever contradict the
         pair. Re-entry costs a full run and makes the new SQL earn its own
         verdict.
+
+        The second is a ``BLOCKED_REPRESENTATION`` a human disagrees with. The
+        transition table already allows ``RUNNING`` out of a block, so ``retry``
+        would move it -- but ``retry`` takes no reason and sets no watermark, so
+        the ruling being overturned goes unrecorded and the second run's metrics
+        land inside the first run's already-written artifact. Route it here
+        instead: same decision, same evidence, and the block's own
+        ``error_message`` is preserved as ``superseded_error``.
 
         The superseded verdict is copied into ``reopen_history`` and then
         cleared from the live fields, so a reopened concept cannot carry an
@@ -935,10 +953,10 @@ class ConversionController:
         state = self._read_state(concept_name)
         if state is None:
             raise StateError(f"Concept '{concept_name}' has not been initialised")
-        if state.status not in REOPEN_ONLY_STATUSES:
+        if state.status not in REOPENABLE_STATUSES:
             raise TransitionError(
                 f"Cannot reopen '{concept_name}': it is {state.status}, not a "
-                f"finished result. reopen applies to {sorted(REOPEN_ONLY_STATUSES)}; "
+                f"recorded verdict. reopen applies to {sorted(REOPENABLE_STATUSES)}; "
                 f"use `retry` or `resume` for anything else."
             )
 
@@ -973,6 +991,11 @@ class ConversionController:
             "superseded_status": state.status,
             "superseded_justification": state.divergence_justification,
             "superseded_decided_by": state.divergence_decided_by,
+            # `start` clears `error_message`, so a reopened
+            # BLOCKED_REPRESENTATION would otherwise lose the ruling being set
+            # aside -- the one thing a reader of the history most wants to see
+            # next to the reason for setting it aside.
+            "superseded_error": state.error_message,
             # Watermarks. Everything at or below these belongs to a previous run
             # whose metrics artifact is already written.
             "baseline": {

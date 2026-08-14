@@ -6,9 +6,10 @@ This is the gate that decides whether a port is correct.  Everything before it
 The whole run happens inside a single Slurm job, on one node, because both
 sides of the comparison already live there:
 
-1. Embedded Pathling (:mod:`mimic_utils.embedded_runner`) evaluates the
-   attempt's ViewDefinitions and ``concept.sql`` over the 156 GB Delta
-   warehouse and writes ``candidate.full.parquet``.
+1. Embedded Pathling (:mod:`mimic_utils.embedded_runner`) preprocesses completed
+   derived dependencies, evaluates the attempt's ViewDefinitions and
+   ``concept.sql`` over the 156 GB Delta warehouse, and writes
+   ``candidate.full.parquet``.
 2. :func:`mimic_utils.compare_port_results.compare_full` opens the immutable
    14.5 GB DuckDB oracle **read-only** and runs the keyed row-level diff
    against that Parquet, entirely as DuckDB SQL.
@@ -191,6 +192,8 @@ def run_full(
             resolved_attempt,
             warehouse_path=resolved_warehouse,
             executor=executor,
+            concept=concept,
+            artifact_root=artifact_root,
         )
         result.view_labels = labels
         result.columns = list(frame.columns)

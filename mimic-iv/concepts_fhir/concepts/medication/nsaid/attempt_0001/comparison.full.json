@@ -1,0 +1,1044 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/medication/nsaid/attempt_0001/candidate.full.parquet/*.parquet",
+  "comparison": "full_tuple_multiset",
+  "concept": "nsaid",
+  "dataset": "full",
+  "diagnostics": [
+    "RESIDUAL PAIRED \u2014 10,294 rows matched 1:1 on (hadm_id, nsaid, subject_id), differing only in (starttime, stoptime). The multiset `only_oracle`/`only_candidate` counts of 10,294 are the two halves of these substitutions; they are classified per column below.",
+    "ATTRIBUTED \u2014 a value conflict the comparator replayed to an upstream mimic-fhir transformation over every conflicting row. No port can invert it, so there is nothing to diagnose; the judge still rules:",
+    "  18 \u00d7 differing_conflict (0.008% of oracle rows) \u2014 all 18 replay upstream_timestamptz_dst_shift",
+    "    column 'starttime': 12 row(s) attributed",
+    "    column 'stoptime': 6 row(s) attributed",
+    "    citations: mimic-fhir/sql/fhir_observation_labevents.sql:15,121, mimic-fhir/sql/fhir_specimen_lab.sql:18,58, mimic-fhir/sql/fhir_encounter.sql:65, mimic-fhir/sql/fhir_medication_request.sql:43-44, mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69",
+    "    example row: {'subject_id': 16305807, 'hadm_id': 28906015, 'nsaid': 'Ibuprofen', 'starttime__oracle': datetime.datetime(2125, 3, 11, 2, 0), 'starttime__candidate': datetime.datetime(2125, 3, 11, 3, 0), 'stoptime__oracle': datetime.datetime(2125, 3, 13, 16, 0), 'stoptime__candidate': datetime.datetime(2125, 3, 13, 16, 0), 'starttime__replayed': datetime.datetime(2125, 3, 11, 3, 0), 'stoptime__replayed': datetime.datetime(2125, 3, 13, 16, 0)}",
+    "  the judge must still confirm: Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element this column is sourced from, and (b) that the attributed fraction is consistent with DST-gap rarity. Either failing makes this `bug`.",
+    "GAP-SHAPED \u2014 consistent with a MIMIC-on-FHIR coverage gap:",
+    "  10,276 \u00d7 differing_null_only \u2014 matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing",
+    "    column 'starttime' is NULL in the candidate on 10,276 row(s)",
+    "    column 'stoptime' is NULL in the candidate on 10,249 row(s)",
+    "225,384 of 235,678 oracle rows reproduced identically (95.63%)",
+    "note: No unique key, but the residual paired 1:1 on hadm_id, nsaid, subject_id (anchored by subject_id, hadm_id), differing only in starttime, stoptime. The 10,294 multiset `only_candidate` rows are therefore the candidate half of those substitutions, not invented rows, and the classes below are classified per column as for a keyed concept.",
+    "note: 18 of 18 conflicting rows -- all of them -- replay the upstream upstream_timestamptz_dst_shift exactly, over column(s) starttime, stoptime. `differing_conflict` moved from `contested` to `attributed`; a diagnosis of this class would only re-derive the replay, so the diagnostician can be skipped. The judge cannot: it still has to confirm provenance and fraction, and still has to rule."
+  ],
+  "diff": {
+    "classification": "paired_residual",
+    "columns_candidate_null": {
+      "starttime": 10276,
+      "stoptime": 10249
+    },
+    "columns_conflicting": {
+      "starttime": 12,
+      "stoptime": 6
+    },
+    "conflict_attribution": {
+      "attempted": true,
+      "attributed_rows": 18,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "columns": {
+        "starttime": 12,
+        "stoptime": 6
+      },
+      "columns_considered": [
+        "starttime",
+        "stoptime"
+      ],
+      "complete": true,
+      "conflict_rows": 18,
+      "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+      "residual_rows": 0,
+      "samples": [
+        {
+          "hadm_id": 28906015,
+          "nsaid": "Ibuprofen",
+          "starttime__candidate": "2125-03-11T03:00:00",
+          "starttime__oracle": "2125-03-11T02:00:00",
+          "starttime__replayed": "2125-03-11T03:00:00",
+          "stoptime__candidate": "2125-03-13T16:00:00",
+          "stoptime__oracle": "2125-03-13T16:00:00",
+          "stoptime__replayed": "2125-03-13T16:00:00",
+          "subject_id": 16305807
+        },
+        {
+          "hadm_id": 29447699,
+          "nsaid": "Aspirin EC",
+          "starttime__candidate": "2120-03-10T03:00:00",
+          "starttime__oracle": "2120-03-10T02:00:00",
+          "starttime__replayed": "2120-03-10T03:00:00",
+          "stoptime__candidate": "2120-03-14T15:00:00",
+          "stoptime__oracle": "2120-03-14T15:00:00",
+          "stoptime__replayed": "2120-03-14T15:00:00",
+          "subject_id": 11199268
+        },
+        {
+          "hadm_id": 21223240,
+          "nsaid": "Aspirin",
+          "starttime__candidate": "2140-03-13T03:00:00",
+          "starttime__oracle": "2140-03-13T02:00:00",
+          "starttime__replayed": "2140-03-13T03:00:00",
+          "stoptime__candidate": "2140-03-18T23:00:00",
+          "stoptime__oracle": "2140-03-18T23:00:00",
+          "stoptime__replayed": "2140-03-18T23:00:00",
+          "subject_id": 15612272
+        },
+        {
+          "hadm_id": 20118921,
+          "nsaid": "Ibuprofen",
+          "starttime__candidate": "2125-03-11T03:00:00",
+          "starttime__oracle": "2125-03-11T02:00:00",
+          "starttime__replayed": "2125-03-11T03:00:00",
+          "stoptime__candidate": "2125-03-13T17:00:00",
+          "stoptime__oracle": "2125-03-13T17:00:00",
+          "stoptime__replayed": "2125-03-13T17:00:00",
+          "subject_id": 15989438
+        },
+        {
+          "hadm_id": 29387239,
+          "nsaid": "Aspirin",
+          "starttime__candidate": "2120-03-08T21:00:00",
+          "starttime__oracle": "2120-03-08T21:00:00",
+          "starttime__replayed": "2120-03-08T21:00:00",
+          "stoptime__candidate": "2120-03-10T03:00:00",
+          "stoptime__oracle": "2120-03-10T02:00:00",
+          "stoptime__replayed": "2120-03-10T03:00:00",
+          "subject_id": 17940091
+        },
+        {
+          "hadm_id": 26297492,
+          "nsaid": "Aspirin",
+          "starttime__candidate": "2204-03-11T03:00:00",
+          "starttime__oracle": "2204-03-11T02:00:00",
+          "starttime__replayed": "2204-03-11T03:00:00",
+          "stoptime__candidate": "2204-03-18T19:00:00",
+          "stoptime__oracle": "2204-03-18T19:00:00",
+          "stoptime__replayed": "2204-03-18T19:00:00",
+          "subject_id": 12287689
+        },
+        {
+          "hadm_id": 24491663,
+          "nsaid": "Ibuprofen",
+          "starttime__candidate": "2169-03-12T03:00:00",
+          "starttime__oracle": "2169-03-12T02:00:00",
+          "starttime__replayed": "2169-03-12T03:00:00",
+          "stoptime__candidate": "2169-03-16T20:00:00",
+          "stoptime__oracle": "2169-03-16T20:00:00",
+          "stoptime__replayed": "2169-03-16T20:00:00",
+          "subject_id": 10082132
+        },
+        {
+          "hadm_id": 23365835,
+          "nsaid": "Aspirin",
+          "starttime__candidate": "2171-03-09T08:00:00",
+          "starttime__oracle": "2171-03-09T08:00:00",
+          "starttime__replayed": "2171-03-09T08:00:00",
+          "stoptime__candidate": "2171-03-10T03:00:00",
+          "stoptime__oracle": "2171-03-10T02:00:00",
+          "stoptime__replayed": "2171-03-10T03:00:00",
+          "subject_id": 14787905
+        },
+        {
+          "hadm_id": 20964961,
+          "nsaid": "Aspirin EC",
+          "starttime__candidate": "2152-03-07T10:00:00",
+          "starttime__oracle": "2152-03-07T10:00:00",
+          "starttime__replayed": "2152-03-07T10:00:00",
+          "stoptime__candidate": "2152-03-12T03:00:00",
+          "stoptime__oracle": "2152-03-12T02:00:00",
+          "stoptime__replayed": "2152-03-12T03:00:00",
+          "subject_id": 17797080
+        },
+        {
+          "hadm_id": 20794292,
+          "nsaid": "Aspirin",
+          "starttime__candidate": "2190-03-14T03:00:00",
+          "starttime__oracle": "2190-03-14T02:00:00",
+          "starttime__replayed": "2190-03-14T03:00:00",
+          "stoptime__candidate": "2190-03-14T19:00:00",
+          "stoptime__oracle": "2190-03-14T19:00:00",
+          "stoptime__replayed": "2190-03-14T19:00:00",
+          "subject_id": 18415840
+        },
+        {
+          "hadm_id": 21731311,
+          "nsaid": "Aspirin",
+          "starttime__candidate": "2139-03-08T00:00:00",
+          "starttime__oracle": "2139-03-08T00:00:00",
+          "starttime__replayed": "2139-03-08T00:00:00",
+          "stoptime__candidate": "2139-03-08T03:00:00",
+          "stoptime__oracle": "2139-03-08T02:00:00",
+          "stoptime__replayed": "2139-03-08T03:00:00",
+          "subject_id": 10602633
+        },
+        {
+          "hadm_id": 22386994,
+          "nsaid": "Aspirin",
+          "starttime__candidate": "2157-03-13T03:00:00",
+          "starttime__oracle": "2157-03-13T02:00:00",
+          "starttime__replayed": "2157-03-13T03:00:00",
+          "stoptime__candidate": "2157-03-17T20:00:00",
+          "stoptime__oracle": "2157-03-17T20:00:00",
+          "stoptime__replayed": "2157-03-17T20:00:00",
+          "subject_id": 15975772
+        },
+        {
+          "hadm_id": 27674477,
+          "nsaid": "Aspirin",
+          "starttime__candidate": "2163-03-13T03:00:00",
+          "starttime__oracle": "2163-03-13T02:00:00",
+          "starttime__replayed": "2163-03-13T03:00:00",
+          "stoptime__candidate": "2163-03-13T23:00:00",
+          "stoptime__oracle": "2163-03-13T23:00:00",
+          "stoptime__replayed": "2163-03-13T23:00:00",
+          "subject_id": 16184214
+        },
+        {
+          "hadm_id": 23080165,
+          "nsaid": "Aspirin",
+          "starttime__candidate": "2139-03-08T03:00:00",
+          "starttime__oracle": "2139-03-08T02:00:00",
+          "starttime__replayed": "2139-03-08T03:00:00",
+          "stoptime__candidate": "2139-03-08T23:00:00",
+          "stoptime__oracle": "2139-03-08T23:00:00",
+          "stoptime__replayed": "2139-03-08T23:00:00",
+          "subject_id": 18624734
+        },
+        {
+          "hadm_id": 20860736,
+          "nsaid": "Aspirin",
+          "starttime__candidate": "2132-03-08T10:00:00",
+          "starttime__oracle": "2132-03-08T10:00:00",
+          "starttime__replayed": "2132-03-08T10:00:00",
+          "stoptime__candidate": "2132-03-09T03:00:00",
+          "stoptime__oracle": "2132-03-09T02:00:00",
+          "stoptime__replayed": "2132-03-09T03:00:00",
+          "subject_id": 10482890
+        },
+        {
+          "hadm_id": 21731311,
+          "nsaid": "Ibuprofen",
+          "starttime__candidate": "2139-03-08T00:00:00",
+          "starttime__oracle": "2139-03-08T00:00:00",
+          "starttime__replayed": "2139-03-08T00:00:00",
+          "stoptime__candidate": "2139-03-08T03:00:00",
+          "stoptime__oracle": "2139-03-08T02:00:00",
+          "stoptime__replayed": "2139-03-08T03:00:00",
+          "subject_id": 10602633
+        },
+        {
+          "hadm_id": 22051470,
+          "nsaid": "Aspirin",
+          "starttime__candidate": "2135-03-13T03:00:00",
+          "starttime__oracle": "2135-03-13T02:00:00",
+          "starttime__replayed": "2135-03-13T03:00:00",
+          "stoptime__candidate": "2135-03-13T12:00:00",
+          "stoptime__oracle": "2135-03-13T12:00:00",
+          "stoptime__replayed": "2135-03-13T12:00:00",
+          "subject_id": 16074384
+        },
+        {
+          "hadm_id": 25889797,
+          "nsaid": "Ibuprofen",
+          "starttime__candidate": "2188-03-09T03:00:00",
+          "starttime__oracle": "2188-03-09T02:00:00",
+          "starttime__replayed": "2188-03-09T03:00:00",
+          "stoptime__candidate": "2188-03-09T16:00:00",
+          "stoptime__oracle": "2188-03-09T16:00:00",
+          "stoptime__replayed": "2188-03-09T16:00:00",
+          "subject_id": 16965768
+        }
+      ],
+      "timezone": "America/New_York"
+    },
+    "differing": 10294,
+    "differing_conflict": 18,
+    "differing_null_only": 10276,
+    "identical": 225384,
+    "key": null,
+    "multiset_only_candidate": 10294,
+    "multiset_only_oracle": 10294,
+    "only_candidate": 0,
+    "only_oracle": 0,
+    "residual_pairing": {
+      "anchor_columns": [
+        "subject_id",
+        "hadm_id"
+      ],
+      "anchored": true,
+      "attempted": true,
+      "column_drift": {
+        "hadm_id": 0,
+        "nsaid": 0,
+        "starttime": 20576,
+        "stoptime": 20510,
+        "subject_id": 0
+      },
+      "columns_candidate_null": {
+        "starttime": 10276,
+        "stoptime": 10249
+      },
+      "columns_conflicting": {
+        "starttime": 12,
+        "stoptime": 6
+      },
+      "conflict_attribution": {
+        "attempted": true,
+        "attributed_rows": 18,
+        "cause": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "columns": {
+          "starttime": 12,
+          "stoptime": 6
+        },
+        "columns_considered": [
+          "starttime",
+          "stoptime"
+        ],
+        "complete": true,
+        "conflict_rows": 18,
+        "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+        "residual_rows": 0,
+        "samples": [
+          {
+            "hadm_id": 28906015,
+            "nsaid": "Ibuprofen",
+            "starttime__candidate": "2125-03-11T03:00:00",
+            "starttime__oracle": "2125-03-11T02:00:00",
+            "starttime__replayed": "2125-03-11T03:00:00",
+            "stoptime__candidate": "2125-03-13T16:00:00",
+            "stoptime__oracle": "2125-03-13T16:00:00",
+            "stoptime__replayed": "2125-03-13T16:00:00",
+            "subject_id": 16305807
+          },
+          {
+            "hadm_id": 29447699,
+            "nsaid": "Aspirin EC",
+            "starttime__candidate": "2120-03-10T03:00:00",
+            "starttime__oracle": "2120-03-10T02:00:00",
+            "starttime__replayed": "2120-03-10T03:00:00",
+            "stoptime__candidate": "2120-03-14T15:00:00",
+            "stoptime__oracle": "2120-03-14T15:00:00",
+            "stoptime__replayed": "2120-03-14T15:00:00",
+            "subject_id": 11199268
+          },
+          {
+            "hadm_id": 21223240,
+            "nsaid": "Aspirin",
+            "starttime__candidate": "2140-03-13T03:00:00",
+            "starttime__oracle": "2140-03-13T02:00:00",
+            "starttime__replayed": "2140-03-13T03:00:00",
+            "stoptime__candidate": "2140-03-18T23:00:00",
+            "stoptime__oracle": "2140-03-18T23:00:00",
+            "stoptime__replayed": "2140-03-18T23:00:00",
+            "subject_id": 15612272
+          },
+          {
+            "hadm_id": 20118921,
+            "nsaid": "Ibuprofen",
+            "starttime__candidate": "2125-03-11T03:00:00",
+            "starttime__oracle": "2125-03-11T02:00:00",
+            "starttime__replayed": "2125-03-11T03:00:00",
+            "stoptime__candidate": "2125-03-13T17:00:00",
+            "stoptime__oracle": "2125-03-13T17:00:00",
+            "stoptime__replayed": "2125-03-13T17:00:00",
+            "subject_id": 15989438
+          },
+          {
+            "hadm_id": 29387239,
+            "nsaid": "Aspirin",
+            "starttime__candidate": "2120-03-08T21:00:00",
+            "starttime__oracle": "2120-03-08T21:00:00",
+            "starttime__replayed": "2120-03-08T21:00:00",
+            "stoptime__candidate": "2120-03-10T03:00:00",
+            "stoptime__oracle": "2120-03-10T02:00:00",
+            "stoptime__replayed": "2120-03-10T03:00:00",
+            "subject_id": 17940091
+          },
+          {
+            "hadm_id": 26297492,
+            "nsaid": "Aspirin",
+            "starttime__candidate": "2204-03-11T03:00:00",
+            "starttime__oracle": "2204-03-11T02:00:00",
+            "starttime__replayed": "2204-03-11T03:00:00",
+            "stoptime__candidate": "2204-03-18T19:00:00",
+            "stoptime__oracle": "2204-03-18T19:00:00",
+            "stoptime__replayed": "2204-03-18T19:00:00",
+            "subject_id": 12287689
+          },
+          {
+            "hadm_id": 24491663,
+            "nsaid": "Ibuprofen",
+            "starttime__candidate": "2169-03-12T03:00:00",
+            "starttime__oracle": "2169-03-12T02:00:00",
+            "starttime__replayed": "2169-03-12T03:00:00",
+            "stoptime__candidate": "2169-03-16T20:00:00",
+            "stoptime__oracle": "2169-03-16T20:00:00",
+            "stoptime__replayed": "2169-03-16T20:00:00",
+            "subject_id": 10082132
+          },
+          {
+            "hadm_id": 23365835,
+            "nsaid": "Aspirin",
+            "starttime__candidate": "2171-03-09T08:00:00",
+            "starttime__oracle": "2171-03-09T08:00:00",
+            "starttime__replayed": "2171-03-09T08:00:00",
+            "stoptime__candidate": "2171-03-10T03:00:00",
+            "stoptime__oracle": "2171-03-10T02:00:00",
+            "stoptime__replayed": "2171-03-10T03:00:00",
+            "subject_id": 14787905
+          },
+          {
+            "hadm_id": 20964961,
+            "nsaid": "Aspirin EC",
+            "starttime__candidate": "2152-03-07T10:00:00",
+            "starttime__oracle": "2152-03-07T10:00:00",
+            "starttime__replayed": "2152-03-07T10:00:00",
+            "stoptime__candidate": "2152-03-12T03:00:00",
+            "stoptime__oracle": "2152-03-12T02:00:00",
+            "stoptime__replayed": "2152-03-12T03:00:00",
+            "subject_id": 17797080
+          },
+          {
+            "hadm_id": 20794292,
+            "nsaid": "Aspirin",
+            "starttime__candidate": "2190-03-14T03:00:00",
+            "starttime__oracle": "2190-03-14T02:00:00",
+            "starttime__replayed": "2190-03-14T03:00:00",
+            "stoptime__candidate": "2190-03-14T19:00:00",
+            "stoptime__oracle": "2190-03-14T19:00:00",
+            "stoptime__replayed": "2190-03-14T19:00:00",
+            "subject_id": 18415840
+          },
+          {
+            "hadm_id": 21731311,
+            "nsaid": "Aspirin",
+            "starttime__candidate": "2139-03-08T00:00:00",
+            "starttime__oracle": "2139-03-08T00:00:00",
+            "starttime__replayed": "2139-03-08T00:00:00",
+            "stoptime__candidate": "2139-03-08T03:00:00",
+            "stoptime__oracle": "2139-03-08T02:00:00",
+            "stoptime__replayed": "2139-03-08T03:00:00",
+            "subject_id": 10602633
+          },
+          {
+            "hadm_id": 22386994,
+            "nsaid": "Aspirin",
+            "starttime__candidate": "2157-03-13T03:00:00",
+            "starttime__oracle": "2157-03-13T02:00:00",
+            "starttime__replayed": "2157-03-13T03:00:00",
+            "stoptime__candidate": "2157-03-17T20:00:00",
+            "stoptime__oracle": "2157-03-17T20:00:00",
+            "stoptime__replayed": "2157-03-17T20:00:00",
+            "subject_id": 15975772
+          },
+          {
+            "hadm_id": 27674477,
+            "nsaid": "Aspirin",
+            "starttime__candidate": "2163-03-13T03:00:00",
+            "starttime__oracle": "2163-03-13T02:00:00",
+            "starttime__replayed": "2163-03-13T03:00:00",
+            "stoptime__candidate": "2163-03-13T23:00:00",
+            "stoptime__oracle": "2163-03-13T23:00:00",
+            "stoptime__replayed": "2163-03-13T23:00:00",
+            "subject_id": 16184214
+          },
+          {
+            "hadm_id": 23080165,
+            "nsaid": "Aspirin",
+            "starttime__candidate": "2139-03-08T03:00:00",
+            "starttime__oracle": "2139-03-08T02:00:00",
+            "starttime__replayed": "2139-03-08T03:00:00",
+            "stoptime__candidate": "2139-03-08T23:00:00",
+            "stoptime__oracle": "2139-03-08T23:00:00",
+            "stoptime__replayed": "2139-03-08T23:00:00",
+            "subject_id": 18624734
+          },
+          {
+            "hadm_id": 20860736,
+            "nsaid": "Aspirin",
+            "starttime__candidate": "2132-03-08T10:00:00",
+            "starttime__oracle": "2132-03-08T10:00:00",
+            "starttime__replayed": "2132-03-08T10:00:00",
+            "stoptime__candidate": "2132-03-09T03:00:00",
+            "stoptime__oracle": "2132-03-09T02:00:00",
+            "stoptime__replayed": "2132-03-09T03:00:00",
+            "subject_id": 10482890
+          },
+          {
+            "hadm_id": 21731311,
+            "nsaid": "Ibuprofen",
+            "starttime__candidate": "2139-03-08T00:00:00",
+            "starttime__oracle": "2139-03-08T00:00:00",
+            "starttime__replayed": "2139-03-08T00:00:00",
+            "stoptime__candidate": "2139-03-08T03:00:00",
+            "stoptime__oracle": "2139-03-08T02:00:00",
+            "stoptime__replayed": "2139-03-08T03:00:00",
+            "subject_id": 10602633
+          },
+          {
+            "hadm_id": 22051470,
+            "nsaid": "Aspirin",
+            "starttime__candidate": "2135-03-13T03:00:00",
+            "starttime__oracle": "2135-03-13T02:00:00",
+            "starttime__replayed": "2135-03-13T03:00:00",
+            "stoptime__candidate": "2135-03-13T12:00:00",
+            "stoptime__oracle": "2135-03-13T12:00:00",
+            "stoptime__replayed": "2135-03-13T12:00:00",
+            "subject_id": 16074384
+          },
+          {
+            "hadm_id": 25889797,
+            "nsaid": "Ibuprofen",
+            "starttime__candidate": "2188-03-09T03:00:00",
+            "starttime__oracle": "2188-03-09T02:00:00",
+            "starttime__replayed": "2188-03-09T03:00:00",
+            "stoptime__candidate": "2188-03-09T16:00:00",
+            "stoptime__oracle": "2188-03-09T16:00:00",
+            "stoptime__replayed": "2188-03-09T16:00:00",
+            "subject_id": 16965768
+          }
+        ],
+        "timezone": "America/New_York"
+      },
+      "paired": 10294,
+      "paired_conflict": 18,
+      "paired_null_only": 10276,
+      "pairing_columns": [
+        "hadm_id",
+        "nsaid",
+        "subject_id"
+      ],
+      "residual_candidate": 10294,
+      "residual_oracle": 10294,
+      "samples": [
+        {
+          "hadm_id": 21342513,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2188-01-05T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2188-01-04T20:00:00",
+          "subject_id": 10045960
+        },
+        {
+          "hadm_id": 27940505,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2180-07-01T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2180-06-30T18:00:00",
+          "subject_id": 10051074
+        },
+        {
+          "hadm_id": 27940505,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2180-07-05T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2180-07-05T03:00:00",
+          "subject_id": 10051074
+        },
+        {
+          "hadm_id": 20623061,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2161-04-21T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2161-04-21T04:00:00",
+          "subject_id": 10060531
+        },
+        {
+          "hadm_id": 20108164,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2150-07-14T05:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2150-07-14T04:00:00",
+          "subject_id": 10065584
+        },
+        {
+          "hadm_id": 29438318,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2116-11-04T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2116-11-04T08:00:00",
+          "subject_id": 10104674
+        },
+        {
+          "hadm_id": 20391542,
+          "nsaid": "Aspirin EC",
+          "starttime__candidate": null,
+          "starttime__oracle": "2163-12-04T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2163-12-04T08:00:00",
+          "subject_id": 10108868
+        },
+        {
+          "hadm_id": 21177187,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2182-05-11T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2182-05-10T17:00:00",
+          "subject_id": 10114932
+        },
+        {
+          "hadm_id": 21386135,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2151-03-16T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2151-03-16T02:00:00",
+          "subject_id": 10121003
+        },
+        {
+          "hadm_id": 29893098,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2131-09-08T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2131-09-07T22:00:00",
+          "subject_id": 10135345
+        },
+        {
+          "hadm_id": 24697159,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2186-05-18T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2186-05-17T17:00:00",
+          "subject_id": 10137856
+        },
+        {
+          "hadm_id": 28770188,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2110-11-17T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2110-11-17T01:00:00",
+          "subject_id": 10167090
+        },
+        {
+          "hadm_id": 27790924,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2122-04-11T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2122-04-11T00:00:00",
+          "subject_id": 10196360
+        },
+        {
+          "hadm_id": 23291869,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2137-11-20T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2137-11-19T20:00:00",
+          "subject_id": 10206125
+        },
+        {
+          "hadm_id": 29852410,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2184-02-21T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2184-02-20T20:00:00",
+          "subject_id": 10207354
+        },
+        {
+          "hadm_id": 25238576,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2111-09-26T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2111-09-25T21:00:00",
+          "subject_id": 10228127
+        },
+        {
+          "hadm_id": 22012583,
+          "nsaid": "diclofenac sodium",
+          "starttime__candidate": null,
+          "starttime__oracle": "2117-06-28T20:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2117-06-28T16:00:00",
+          "subject_id": 10246275
+        },
+        {
+          "hadm_id": 26685114,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2183-05-13T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2183-05-12T14:00:00",
+          "subject_id": 10253146
+        },
+        {
+          "hadm_id": 23614192,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2180-05-30T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2180-05-30T03:00:00",
+          "subject_id": 10255052
+        },
+        {
+          "hadm_id": 21218919,
+          "nsaid": "Ibuprofen",
+          "starttime__candidate": null,
+          "starttime__oracle": "2182-02-24T18:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2182-02-22T08:00:00",
+          "subject_id": 10301933
+        }
+      ],
+      "substituted_columns": [
+        "starttime",
+        "stoptime"
+      ],
+      "unpaired_candidate": 0,
+      "unpaired_oracle": 0
+    },
+    "samples": {
+      "substitutions": [
+        {
+          "hadm_id": 21342513,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2188-01-05T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2188-01-04T20:00:00",
+          "subject_id": 10045960
+        },
+        {
+          "hadm_id": 27940505,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2180-07-01T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2180-06-30T18:00:00",
+          "subject_id": 10051074
+        },
+        {
+          "hadm_id": 27940505,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2180-07-05T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2180-07-05T03:00:00",
+          "subject_id": 10051074
+        },
+        {
+          "hadm_id": 20623061,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2161-04-21T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2161-04-21T04:00:00",
+          "subject_id": 10060531
+        },
+        {
+          "hadm_id": 20108164,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2150-07-14T05:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2150-07-14T04:00:00",
+          "subject_id": 10065584
+        },
+        {
+          "hadm_id": 29438318,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2116-11-04T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2116-11-04T08:00:00",
+          "subject_id": 10104674
+        },
+        {
+          "hadm_id": 20391542,
+          "nsaid": "Aspirin EC",
+          "starttime__candidate": null,
+          "starttime__oracle": "2163-12-04T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2163-12-04T08:00:00",
+          "subject_id": 10108868
+        },
+        {
+          "hadm_id": 21177187,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2182-05-11T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2182-05-10T17:00:00",
+          "subject_id": 10114932
+        },
+        {
+          "hadm_id": 21386135,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2151-03-16T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2151-03-16T02:00:00",
+          "subject_id": 10121003
+        },
+        {
+          "hadm_id": 29893098,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2131-09-08T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2131-09-07T22:00:00",
+          "subject_id": 10135345
+        },
+        {
+          "hadm_id": 24697159,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2186-05-18T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2186-05-17T17:00:00",
+          "subject_id": 10137856
+        },
+        {
+          "hadm_id": 28770188,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2110-11-17T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2110-11-17T01:00:00",
+          "subject_id": 10167090
+        },
+        {
+          "hadm_id": 27790924,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2122-04-11T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2122-04-11T00:00:00",
+          "subject_id": 10196360
+        },
+        {
+          "hadm_id": 23291869,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2137-11-20T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2137-11-19T20:00:00",
+          "subject_id": 10206125
+        },
+        {
+          "hadm_id": 29852410,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2184-02-21T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2184-02-20T20:00:00",
+          "subject_id": 10207354
+        },
+        {
+          "hadm_id": 25238576,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2111-09-26T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2111-09-25T21:00:00",
+          "subject_id": 10228127
+        },
+        {
+          "hadm_id": 22012583,
+          "nsaid": "diclofenac sodium",
+          "starttime__candidate": null,
+          "starttime__oracle": "2117-06-28T20:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2117-06-28T16:00:00",
+          "subject_id": 10246275
+        },
+        {
+          "hadm_id": 26685114,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2183-05-13T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2183-05-12T14:00:00",
+          "subject_id": 10253146
+        },
+        {
+          "hadm_id": 23614192,
+          "nsaid": "Aspirin",
+          "starttime__candidate": null,
+          "starttime__oracle": "2180-05-30T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2180-05-30T03:00:00",
+          "subject_id": 10255052
+        },
+        {
+          "hadm_id": 21218919,
+          "nsaid": "Ibuprofen",
+          "starttime__candidate": null,
+          "starttime__oracle": "2182-02-24T18:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2182-02-22T08:00:00",
+          "subject_id": 10301933
+        }
+      ]
+    }
+  },
+  "divergence": {
+    "attributed": [
+      {
+        "attributed_rows": 18,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "class": "differing_conflict",
+        "columns": {
+          "starttime": 12,
+          "stoptime": 6
+        },
+        "count": 18,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element this column is sourced from, and (b) that the attributed fraction is consistent with DST-gap rarity. Either failing makes this `bug`.",
+        "proof": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "blocking": [],
+    "classification": "paired_residual",
+    "conflict_attribution": {
+      "attempted": true,
+      "attributed_rows": 18,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "columns": {
+        "starttime": 12,
+        "stoptime": 6
+      },
+      "columns_considered": [
+        "starttime",
+        "stoptime"
+      ],
+      "complete": true,
+      "conflict_rows": 18,
+      "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+      "residual_rows": 0,
+      "timezone": "America/New_York"
+    },
+    "contested": [],
+    "declared_unrepresentable": {},
+    "diagnostician_required": false,
+    "gap_shaped": [
+      {
+        "class": "differing_null_only",
+        "count": 10276,
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      }
+    ],
+    "identical_fraction": 0.956322,
+    "identical_rows": 225384,
+    "judge_bar": "Cite the FHIR element or path that does not exist in the MIMIC-on-FHIR IG, show it explains the magnitude and shape of the divergence, and confirm every defensible mapping was tried.\nA value conflict is also present but has been machine-attributed to an upstream transformation (see `divergence.attributed`), which is why this result is gap-shaped rather than contested. Rule on the gap on its own merits, and check the attribution's provenance and fraction as `divergence.attributed[].judge_must_confirm` states.",
+    "judge_required": true,
+    "key_attribution": null,
+    "notes": [
+      "No unique key, but the residual paired 1:1 on hadm_id, nsaid, subject_id (anchored by subject_id, hadm_id), differing only in starttime, stoptime. The 10,294 multiset `only_candidate` rows are therefore the candidate half of those substitutions, not invented rows, and the classes below are classified per column as for a keyed concept.",
+      "18 of 18 conflicting rows -- all of them -- replay the upstream upstream_timestamptz_dst_shift exactly, over column(s) starttime, stoptime. `differing_conflict` moved from `contested` to `attributed`; a diagnosis of this class would only re-derive the replay, so the diagnostician can be skipped. The judge cannot: it still has to confirm provenance and fraction, and still has to rule."
+    ],
+    "oracle_rows": 235678,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [
+      {
+        "class": "differing_null_only",
+        "count": 10276,
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      },
+      {
+        "attributed_rows": 18,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "class": "differing_conflict",
+        "columns": {
+          "starttime": 12,
+          "stoptime": 6
+        },
+        "count": 18,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element this column is sourced from, and (b) that the attributed fraction is consistent with DST-gap rarity. Either failing makes this `bug`.",
+        "proof": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "tier": "gap_shaped",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "2176136563370166550299276",
+    "manifest_row_count": 235678,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.nsaid"
+  },
+  "row_count": {
+    "candidate": 235678,
+    "delta": 0,
+    "gated": false,
+    "match": true,
+    "oracle": 235678
+  },
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "hadm_id",
+      "nsaid",
+      "starttime",
+      "stoptime"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "hadm_id",
+      "nsaid",
+      "starttime",
+      "stoptime"
+    ],
+    "extra_columns": [],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "verdict": "review"
+}

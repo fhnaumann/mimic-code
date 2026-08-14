@@ -1,0 +1,17 @@
+{
+  "attempt": 1,
+  "category": "measurement",
+  "completed_at": "2026-08-14T03:43:15.311161+00:00",
+  "concept_name": "ventilator_setting",
+  "dependencies": [],
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 1,
+  "error_message": "Equivalence judge blocked attempt 0001: 652,532 differing_null_only rows in ventilator_mode, ventilator_mode_hamilton, and ventilator_type arise because mimic-fhir/sql/fhir_observation_chartevents.sql:69-80 discards source chartevents.value on Quantity-backed rows; the missing ventilator mode/type text is essential to clinically meaningful ventilation classification and temporal carry-forward in mimic-iv/concepts/measurement/ventilation.sql:36,55-127,171-180. Fidelity was 353,556/1,006,127 identical (35.14%), with no unrepresentable exclusion. Separately, 2 conflicts, 37 only_oracle, and 29 only_candidate findings were completely attributed to the upstream DST cast at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67, with 8 key collisions and zero residuals; this accepted DST portion is not the blocking reason.",
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 1,
+  "started_at": "2026-08-14T03:04:32.574436+00:00",
+  "status": "BLOCKED_REPRESENTATION",
+  "updated_at": "2026-08-14T03:43:15.311597+00:00"
+}

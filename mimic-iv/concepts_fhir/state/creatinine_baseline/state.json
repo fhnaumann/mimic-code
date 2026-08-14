@@ -1,0 +1,20 @@
+{
+  "attempt": 1,
+  "category": "measurement",
+  "completed_at": "2026-08-14T06:51:40.971894+00:00",
+  "concept_name": "creatinine_baseline",
+  "dependencies": [
+    "age",
+    "chemistry"
+  ],
+  "divergence_decided_by": "human",
+  "divergence_justification": "Inherited divergence with no creatinine_baseline-originated loss. All divergence   rows (460 age, 460 mdrd_est, 85 scr_baseline) trace to the age dependency, already   accepted as COMPLETED_WITH_DIVERGENCE by human decision. Root cause is upstream:   mimic-fhir/sql/fhir_patient.sql:15 synthesises Patient.birthDate as   MIN(transfers.intime)-anchor_age instead of anchoring to anchor_year, so FHIR-side   age diverges from canonical age.sql:30 exactly where year(MIN(transfers.intime)) !=   anchor_year. Independently verified on full MIMIC-IV v2.2 (HPC job 29971523): 460/431,231   admissions across 87 patients, error range -3..+13 years; anchor_year is recoverable   from no published timestamp (six candidate identities swept, best 99.9710%, none exact).   The age>=18 cohort filter flips 0 rows in practice. Upstream defect with a one-line fix,   reported as mimic-fhir/debug-patient-birthdate-anchor; the identical port becomes exact   once it lands. 430,771/431,231 (99.8933%) identical, no row gaps.",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 2,
+  "started_at": "2026-08-14T04:14:51.626537+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-14T06:51:40.972368+00:00"
+}

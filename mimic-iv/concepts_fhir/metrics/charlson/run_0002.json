@@ -1,0 +1,502 @@
+{
+  "concept": "charlson",
+  "convergence": {
+    "attempts_total": 1,
+    "divergence_decided_by": null,
+    "engineering_counter": 1,
+    "full_validation_rounds": 1,
+    "hpc_counter": 1,
+    "human_manual_override": false,
+    "judge_invocations": 1,
+    "semantic_counter": 1,
+    "semantic_rework_cycles": 0,
+    "semantic_rework_method": "max(0, semantic_counter - terminal semantic transition)",
+    "semantic_rework_source": "ConversionState.semantic_counter plus terminal status; semantic fixes use fail --counter semantic",
+    "semantic_terminal_transition_subtracted": 1,
+    "submitted_jobs": 1,
+    "terminal_outcome": "BLOCKED_REPRESENTATION"
+  },
+  "final_comparator": {
+    "artifact_present": true,
+    "class_counts": {
+      "differing": 61,
+      "differing_conflict": 61,
+      "differing_null_only": 0,
+      "identical": 431170,
+      "identical_representable": 431170,
+      "only_candidate": 0,
+      "only_oracle": 0
+    },
+    "classification": "keyed",
+    "fidelity": {
+      "identical_fraction": 0.999859,
+      "identical_rows": 431170,
+      "oracle_rows": 431231,
+      "representable_identical_rows": 431170,
+      "row_count": {
+        "candidate": 431231,
+        "delta": 0,
+        "gated": false,
+        "match": true,
+        "oracle": 431231
+      },
+      "schema_match": true
+    },
+    "match": false,
+    "tier": "contested",
+    "verdict": "review"
+  },
+  "format_version": "2.0",
+  "hpc_jobs": [
+    {
+      "accounting_present": true,
+      "actual_poll_interval_seconds": 0.044,
+      "attempt": 2,
+      "full_result_present": true,
+      "job_id_present": true,
+      "poll_interval_count": 1,
+      "poll_interval_discoverable": true,
+      "runtime_seconds": 30.0,
+      "runtime_source": "slurm_sacct_elapsed"
+    }
+  ],
+  "human_interventions": null,
+  "human_interventions_reason": "Stored OpenCode data cannot reliably distinguish human messages from plugin/orchestrator continuation messages.",
+  "per_attempt": {
+    "attempts": [
+      {
+        "artifacts": [
+          "ViewDefinition.condition.json",
+          "ViewDefinition.encounter.json",
+          "ViewDefinition.patient.json",
+          "candidate.demo.parquet",
+          "comparison.full.json",
+          "concept.sql",
+          "evidence",
+          "hpc_accounting.json",
+          "hpc_job.json",
+          "run_meta.full.json",
+          "shape.demo.json",
+          "submit.slurm"
+        ],
+        "attempt": 2,
+        "convergence": {
+          "demo": {
+            "candidate_row_count": 275,
+            "executed": true,
+            "verdict": "shape_ok"
+          },
+          "full": {
+            "artifact_present": true,
+            "class_counts": {
+              "differing": 61,
+              "differing_conflict": 61,
+              "differing_null_only": 0,
+              "identical": 431170,
+              "identical_representable": 431170,
+              "only_candidate": 0,
+              "only_oracle": 0
+            },
+            "classification": "keyed",
+            "fidelity": {
+              "identical_fraction": 0.999859,
+              "identical_rows": 431170,
+              "oracle_rows": 431231,
+              "representable_identical_rows": 431170,
+              "row_count": {
+                "candidate": 431231,
+                "delta": 0,
+                "gated": false,
+                "match": true,
+                "oracle": 431231
+              },
+              "schema_match": true
+            },
+            "match": false,
+            "tier": "contested",
+            "verdict": "review"
+          },
+          "hpc_job_submitted": true,
+          "judge_invoked": true
+        },
+        "usage_attribution": "unavailable"
+      }
+    ],
+    "attempts_total": 1,
+    "usage_attribution": "unavailable"
+  },
+  "per_stage": {
+    "concept-implementer": {
+      "completed_assistant_messages": 13,
+      "duration_seconds": 313.177,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 1096192,
+        "cache_write": 0,
+        "input": 275651,
+        "output": 8482,
+        "reasoning": 6736,
+        "total": 1387061
+      }
+    },
+    "concept-port-orchestrator": {
+      "completed_assistant_messages": 33,
+      "duration_seconds": 2966.492,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 2788352,
+        "cache_write": 0,
+        "input": 790983,
+        "output": 9380,
+        "reasoning": 2778,
+        "total": 3591493
+      }
+    },
+    "demo-runner": {
+      "completed_assistant_messages": 2,
+      "duration_seconds": 1799.935,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 0,
+        "cache_write": 0,
+        "input": 16435,
+        "output": 108,
+        "reasoning": 18,
+        "total": 16561
+      }
+    },
+    "equivalence-judge": {
+      "completed_assistant_messages": 7,
+      "duration_seconds": 181.956,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 456704,
+        "cache_write": 0,
+        "input": 140616,
+        "output": 2719,
+        "reasoning": 6053,
+        "total": 606092
+      }
+    },
+    "hpc-launcher": {
+      "completed_assistant_messages": 3,
+      "duration_seconds": 175.286,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 768,
+        "cache_write": 0,
+        "input": 53472,
+        "output": 778,
+        "reasoning": 184,
+        "total": 55202
+      }
+    },
+    "hpc-poller": {
+      "completed_assistant_messages": 3,
+      "duration_seconds": 46.266,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 16896,
+        "cache_write": 0,
+        "input": 35346,
+        "output": 1141,
+        "reasoning": 201,
+        "total": 53584
+      }
+    },
+    "mismatch-diagnostician": {
+      "completed_assistant_messages": 7,
+      "duration_seconds": 139.409,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 392704,
+        "cache_write": 0,
+        "input": 114731,
+        "output": 2887,
+        "reasoning": 3856,
+        "total": 514178
+      }
+    }
+  },
+  "provenance": {
+    "agent_model_list": [
+      {
+        "agent": "concept-implementer",
+        "model": "gpt-5.6-luna",
+        "provider": "openai",
+        "variant": "xhigh"
+      },
+      {
+        "agent": "concept-port-orchestrator",
+        "model": "gpt-5.6-luna",
+        "provider": "openai",
+        "variant": "xhigh"
+      },
+      {
+        "agent": "demo-runner",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider": "openrouter",
+        "variant": "default"
+      },
+      {
+        "agent": "equivalence-judge",
+        "model": "gpt-5.6-sol",
+        "provider": "openai",
+        "variant": "xhigh"
+      },
+      {
+        "agent": "hpc-launcher",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider": "openrouter",
+        "variant": "default"
+      },
+      {
+        "agent": "hpc-poller",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider": "openrouter",
+        "variant": "default"
+      },
+      {
+        "agent": "mismatch-diagnostician",
+        "model": "gpt-5.6-sol",
+        "provider": "openai",
+        "variant": "xhigh"
+      }
+    ],
+    "agents": [
+      "concept-implementer",
+      "concept-port-orchestrator",
+      "demo-runner",
+      "equivalence-judge",
+      "hpc-launcher",
+      "hpc-poller",
+      "mismatch-diagnostician"
+    ],
+    "config_hashes": {
+      ".opencode/agents/concept-port-orchestrator.md": "a911d70eefe7154c055cb97cecd1f566a7a0efe93abecc0040b725d813eac83e",
+      ".opencode/skills/concept-orchestrator-loop/SKILL.md": "c5de9117c726ef409b19796287ad2cd03bfa13b38efcc5d7e93815b8b0ad14bf",
+      "mimic-iv/concepts_fhir/LOOP_CONTRACT.md": "9f4b8b8ac05bf697e545687806f0e2f5f4b89a417ba2462ae9715e12283bf12b",
+      "opencode.json": "80b57f9c6fb06940b6acf88b26a255a362a5cbd3728a85f1cd09966941873641"
+    },
+    "dag_sha256": "5b797b673ace4dcbc6f686848d24371382f49ac61fcc39101f09c3b42969d801",
+    "finalized_before_terminal_response": true,
+    "opencode_source": {
+      "filename": "opencode.db",
+      "kind": "sqlite",
+      "tables": [
+        "message",
+        "part",
+        "project",
+        "session"
+      ]
+    },
+    "opencode_versions": [
+      "1.18.9"
+    ],
+    "root_session_count": 1,
+    "semantic_rework_method": "max(0, semantic_counter - terminal semantic transition)",
+    "semantic_rework_source": "ConversionState.semantic_counter plus terminal status; semantic fixes use fail --counter semantic",
+    "source_sql_path": "mimic-iv/concepts/comorbidity/charlson.sql",
+    "tracker_schema_version": "1"
+  },
+  "run": 2,
+  "run_scope": {
+    "attempt_dirs_excluded": 1,
+    "attempt_window": {
+      "after": 1,
+      "through": 2
+    },
+    "attempts_all_runs": 2,
+    "attempts_this_run": 1,
+    "cumulative_counters": {
+      "engineering": 2,
+      "hpc": 2,
+      "semantic": 2
+    },
+    "reopen_count": 1,
+    "reopen_history": [
+      {
+        "at": "2026-08-14T05:09:59.576242+00:00",
+        "baseline": {
+          "attempt": 1,
+          "engineering": 1,
+          "hpc": 1,
+          "semantic": 1
+        },
+        "by": "human",
+        "reason": "Reopen because attempt_0001 rederives the age dependency instead of consuming the completed age candidate table. The replacement must reference FROM age; preserve the prior accepted divergence in reopen_history.",
+        "superseded_decided_by": "judge",
+        "superseded_error": null,
+        "superseded_justification": "Accepted by the equivalence judge: 61/431,231 conflicts (0.014%) are inherited threshold crossings from divergent age. mimic-fhir/sql/fhir_patient.sql:15 synthesizes Patient.birthDate from MIN(transfers.intime)-anchor_age (written at line 108), while canonical mimic-iv/concepts/demographics/age.sql:30 requires anchor_age and anchor_year; no FHIR element carries the anchor pair, so the oracle age is unrecoverable by any defensible FHIR query. All 17 diagnosis flags, identifiers, admission rows, thresholds and index arithmetic match; 431,170/431,231 rows are identical, with zero only-oracle, only-candidate or null-only rows. The score differences are propagation of the already accepted upstream age transformation.",
+        "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+      }
+    ],
+    "run": 2
+  },
+  "runtime": {
+    "actual_elapsed_secondary": true,
+    "actual_elapsed_seconds": 2964.421481,
+    "actual_elapsed_timestamp_source": "state.completed_at",
+    "assistant_messages": {
+      "assistant_messages": 69,
+      "completed_assistant_messages": 68,
+      "incomplete_assistant_messages": 1,
+      "invalid_assistant_intervals": 0
+    },
+    "busy_union_seconds": 2966.492,
+    "hpc_accounted_seconds": 30.0,
+    "hpc_jobs_submitted": 1,
+    "hpc_jobs_with_run_meta_fallback": 0,
+    "hpc_jobs_with_slurm_accounting": 1,
+    "hpc_jobs_without_discoverable_poll_interval": 0,
+    "hpc_jobs_without_runtime": 0,
+    "hpc_poll_intervals_discovered": 1,
+    "hpc_poll_intervals_unmatched": 0,
+    "hpc_poll_overlap_seconds": 0.044,
+    "incomplete_messages_excluded": 1,
+    "invalid_message_intervals_excluded": 0,
+    "method": "union completed assistant-message intervals across all included sessions; subtract overlap from discovered hpc-poll tool intervals; add measured HPC runtime from Slurm accounting, falling back to run_meta execute+compare timings when accounting is unavailable",
+    "seconds": 2996.448,
+    "time_updated_fallback_used": false
+  },
+  "schema_version": "conversion-metrics.v2",
+  "session_resumptions": 0,
+  "session_scope": {
+    "included_session_count": 7,
+    "root_session_count": 1,
+    "session_resumptions": 0
+  },
+  "terminal_outcome": "BLOCKED_REPRESENTATION",
+  "terminal_status": "BLOCKED_REPRESENTATION",
+  "tokens": {
+    "by_agent": {
+      "concept-implementer": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 1096192,
+          "cache_write": 0,
+          "input": 275651,
+          "output": 8482,
+          "reasoning": 6736,
+          "total": 1387061
+        }
+      },
+      "concept-port-orchestrator": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 2788352,
+          "cache_write": 0,
+          "input": 790983,
+          "output": 9380,
+          "reasoning": 2778,
+          "total": 3591493
+        }
+      },
+      "demo-runner": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 16435,
+          "output": 108,
+          "reasoning": 18,
+          "total": 16561
+        }
+      },
+      "equivalence-judge": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 456704,
+          "cache_write": 0,
+          "input": 140616,
+          "output": 2719,
+          "reasoning": 6053,
+          "total": 606092
+        }
+      },
+      "hpc-launcher": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 768,
+          "cache_write": 0,
+          "input": 53472,
+          "output": 778,
+          "reasoning": 184,
+          "total": 55202
+        }
+      },
+      "hpc-poller": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 16896,
+          "cache_write": 0,
+          "input": 35346,
+          "output": 1141,
+          "reasoning": 201,
+          "total": 53584
+        }
+      },
+      "mismatch-diagnostician": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 392704,
+          "cache_write": 0,
+          "input": 114731,
+          "output": 2887,
+          "reasoning": 3856,
+          "total": 514178
+        }
+      }
+    },
+    "by_model": {
+      "openai/gpt-5.6-luna/xhigh": {
+        "model": "gpt-5.6-luna",
+        "provider": "openai",
+        "session_count": 2,
+        "tokens": {
+          "cache_read": 3884544,
+          "cache_write": 0,
+          "input": 1066634,
+          "output": 17862,
+          "reasoning": 9514,
+          "total": 4978554
+        },
+        "variant": "xhigh"
+      },
+      "openai/gpt-5.6-sol/xhigh": {
+        "model": "gpt-5.6-sol",
+        "provider": "openai",
+        "session_count": 2,
+        "tokens": {
+          "cache_read": 849408,
+          "cache_write": 0,
+          "input": 255347,
+          "output": 5606,
+          "reasoning": 9909,
+          "total": 1120270
+        },
+        "variant": "xhigh"
+      },
+      "openrouter/deepseek/deepseek-v4-flash-0731/default": {
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider": "openrouter",
+        "session_count": 3,
+        "tokens": {
+          "cache_read": 17664,
+          "cache_write": 0,
+          "input": 105253,
+          "output": 2027,
+          "reasoning": 403,
+          "total": 125347
+        },
+        "variant": "default"
+      }
+    },
+    "cache_read": 4751616,
+    "cache_write": 0,
+    "input": 1427234,
+    "output": 25495,
+    "reasoning": 19826,
+    "total": 6224171
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "concept": "charlson",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "29965199",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/comorbidity/charlson/attempt_0002",
+  "submitted_at": "2026-08-14T05:48:55.746299+00:00",
+  "walltime": "2:00:00"
+}

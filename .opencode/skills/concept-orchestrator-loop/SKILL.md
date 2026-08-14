@@ -200,8 +200,12 @@ Spawn the stages you did not skip, one at a time, each feeding off the previous:
    `attempt_NNNN/` directory, using the proven ViewDefinition format
    (select.column `path`/`name`, `forEach`/`forEachOrNull`) from
    `../master_thesis_pipeline/orchestration-new/scripts/sofa_provisioning/`.
-   The SQL selects from each ViewDefinition's label, which the runner binds as a
-   Spark temp view — there is no registration step.
+    The SQL selects from each ViewDefinition's label, which the runner binds as a
+    Spark temp view. If the source SQL has `mimiciv_derived` dependencies, the
+    runner first preprocesses their completed attempts and exposes each output
+    under its unqualified concept stem, such as `age`; the implementer must
+    consume that view rather than inline the dependency. There is no manual
+    server registration step.
 
    **On a reopened concept, paste the `REOPENED` block from the Phase 1 resume
    plan into this agent's task text verbatim**, and say plainly that the named

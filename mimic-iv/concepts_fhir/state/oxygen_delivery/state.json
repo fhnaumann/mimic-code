@@ -1,0 +1,17 @@
+{
+  "attempt": 2,
+  "category": "measurement",
+  "completed_at": "2026-08-13T23:22:00.126294+00:00",
+  "concept_name": "oxygen_delivery",
+  "dependencies": [],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Accepted intrinsic DST normalization: mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 transforms source charttime through TIMESTAMPTZ before writing Observation.effectiveDateTime. Full replay accounts for all 34 affected events\u201431 re-keyed rows and three occupied-key collisions causing the three aggregate conflicts\u2014with zero residual. The collision values follow oxygen_delivery's own ROW_NUMBER, GROUP BY, and MAX semantics. The pre-shift wall time is unrecoverable without prohibited resource-id inversion.",
+  "engineering_counter": 2,
+  "error_message": null,
+  "hpc_counter": 2,
+  "reopen_history": [],
+  "semantic_counter": 2,
+  "started_at": "2026-08-13T12:26:27.150463+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-13T23:22:00.126621+00:00"
+}

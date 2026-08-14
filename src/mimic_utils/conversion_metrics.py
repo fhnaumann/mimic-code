@@ -407,7 +407,10 @@ def _poll_intervals(parts: Sequence[Mapping[str, Any]], session_ids: set[str], c
         data = json.loads(part["data"])
         if data.get("type") != "tool" or data.get("tool") != "bash":
             continue
-        state, command = data["state"], data["state"]["input"]["command"]
+        state = data.get("state", {})
+        command = state.get("input", {}).get("command")
+        if not command:
+            continue
         match = POLL_RE.search(command)
         if match is None or match.group(1) != concept:
             continue

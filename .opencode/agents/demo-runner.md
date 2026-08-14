@@ -49,10 +49,11 @@ The task text gives you: the concept name, the attempt number, and the paths to
    uv run mimic_utils run-demo <concept>
    ```
 
-   That runs **embedded Pathling on Spark** over the local demo Delta
-   warehouse. It materialises each `ViewDefinition.<label>.json` as a Spark temp
-   view named `<label>`, runs `concept.sql`, writes `candidate.demo.parquet`,
-   and runs the shape gate into `shape.demo.json`.
+    That runs **embedded Pathling on Spark** over the local demo Delta
+    warehouse. It preprocesses completed derived dependencies in DAG order,
+    materialises each `ViewDefinition.<label>.json` as a Spark temp view named
+    `<label>`, runs `concept.sql`, writes `candidate.demo.parquet`, and runs the
+    shape gate into `shape.demo.json`.
 
    There is one engine and one artifact format, matching the HPC leg exactly.
    The full-data run has no choice — compute nodes have no FHIR server — so a

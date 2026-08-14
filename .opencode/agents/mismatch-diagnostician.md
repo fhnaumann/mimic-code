@@ -259,6 +259,52 @@ infer it from a sample.
   rules needed to replay the cast were not available at comparison time. In the
   second case the transformation is still live and you diagnose it by hand as
   below.
+- If the artifact carries `conflict_attribution: null` / `attributed: []` on an
+  **unkeyed** concept (`diff.classification: "unavailable_no_key"`), the
+  comparator did not look. Both attribution routes need a key, and the only one
+  that reaches an unkeyed concept runs through the residual pairing, which is
+  structurally impossible whenever the two residual multisets are different
+  sizes — the normal outcome once a shift starts adding or deleting rows. Here
+  **you are the replay**, and it is the highest-value thing you can do: run the
+  cast over the concept's selected source rows in the full oracle, count what
+  moves, and account for the divergence rows those moved rows explain. Report it
+  as counts, not as a characterisation. See "Attributing a shift by hand" below.
+
+### Attributing a shift by hand
+
+When you do the replay yourself, the judge needs three numbers and one
+mechanism, and an `accept` on an unkeyed concept rests on them:
+
+1. **How many selected source rows the cast moved** in the full oracle.
+2. **Which divergence rows they explain**, per class, *through the concept's own
+   SQL*. A shift is not confined to its own row: it collapses under
+   `UNION DISTINCT`/`GROUP BY`, gains or loses partners in a range-overlay join,
+   changes an aggregate, or falls outside a window. So one moved source row
+   routinely surfaces as one `only_candidate` row, several `only_oracle` rows
+   and some conflicts at once, and the two sides will **not** balance. Name the
+   construct that propagates it — for `rrt`, the `LEFT JOIN ... BETWEEN` overlay
+   and the `UNION DISTINCT` at `mimic-iv/concepts/treatment/rrt.sql:316-326`.
+3. **What is left over**, per class, with its own diagnosis. This is the number
+   that decides the concept, so do not leave it as "the remainder". Say what
+   those rows are, whether a FHIR element or resource is absent for them, and
+   whether they cluster — a residual concentrated in one `dialysis_type`, one
+   itemid, or one source table is a coverage-gap lead, not DST fallout, and
+   calling it DST because it sits next to DST is the error this section exists
+   to prevent.
+
+State the split even when it is lopsided. "608 source rows moved; they account
+for all 241 `only_candidate` and 449 of 821 `only_oracle`; the remaining 372
+`only_oracle` are X" is a diagnosis the judge can decompose. "The divergence is
+caused by DST normalization" is not, and it costs a block.
+
+Do **not** recommend whole-concept `blocked` for a shift you have attributed,
+however much of the divergence it accounts for and however much it changes row
+inclusion or timing. The cast is an acknowledged upstream defect scheduled for
+repair, not information the IG cannot carry, and it is exempt from the
+essential-loss test — see "The DST cast is an upstream defect, and its
+consequences travel with it" in `LOOP_CONTRACT.md`. If you think a block is
+warranted, it must be warranted by the **residual alone**, and you must say so
+in those terms.
 
 MIMIC-on-FHIR is a **transform** of MIMIC-IV, not a subset. It does not only
 omit things; it rewrites values, and a rewritten value is a `differing_conflict`
@@ -313,6 +359,11 @@ tells no one anything. When you genuinely cannot find the ETL cause, say
    recommendation for whole-concept `blocked`, not a recommendation for a
    best-effort value or a partially declared table. You still do not decide the
    terminal state; the judge does.
+
+   The test is whether the served data **cannot carry** what the concept needs.
+   A value the ETL writes *wrongly* and will later write correctly — the DST
+   `TIMESTAMPTZ` shift is the standing case — fails that test and is never an
+   essential-loss recommendation, no matter what it changes downstream.
 
 3. **Produce a diagnosis:**
    - Root cause: one sentence describing what went wrong

@@ -25,7 +25,10 @@ Read `mimic-iv/concepts/<path>.sql`.
 4. **Joins:** The join condition and type (INNER, LEFT) for each table.
 5. **`mimiciv_derived` dependencies:** Any reference to a table in the
    `mimiciv_derived` schema — this is another concept that must be ported
-   first.
+   first and will be available to candidate SQL under its unqualified concept
+   stem after preprocessing (for example, `age`). Record the exact dependency
+   columns the consumer reads; do not invite the implementer to rederive them
+   from FHIR resources.
 6. **Aggregations:** Any `GROUP BY`, window functions, or value
    aggregations (`MIN`, `MAX`, `AVG`, `ARRAY_AGG`, etc.).
 7. **The literal code set — verbatim.** For every coded filter, record the

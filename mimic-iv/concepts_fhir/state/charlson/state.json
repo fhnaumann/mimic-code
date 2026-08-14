@@ -1,19 +1,50 @@
 {
-  "attempt": 1,
+  "attempt": 3,
   "category": "comorbidity",
-  "completed_at": "2026-08-14T04:37:45.751101+00:00",
+  "completed_at": "2026-08-14T06:38:36.527602+00:00",
   "concept_name": "charlson",
   "dependencies": [
     "age"
   ],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "Accepted by the equivalence judge: 61/431,231 conflicts (0.014%) are inherited threshold crossings from divergent age. mimic-fhir/sql/fhir_patient.sql:15 synthesizes Patient.birthDate from MIN(transfers.intime)-anchor_age (written at line 108), while canonical mimic-iv/concepts/demographics/age.sql:30 requires anchor_age and anchor_year; no FHIR element carries the anchor pair, so the oracle age is unrecoverable by any defensible FHIR query. All 17 diagnosis flags, identifiers, admission rows, thresholds and index arithmetic match; 431,170/431,231 rows are identical, with zero only-oracle, only-candidate or null-only rows. The score differences are propagation of the already accepted upstream age transformation.",
-  "engineering_counter": 1,
+  "divergence_decided_by": "human",
+  "divergence_justification": "Inherited divergence with no charlson-originated loss. All 61/431,231 (0.0141%)   differing_conflict rows fall on age_score and charlson_comorbidity_index and are a   strict subset of the 460 age rows already accepted as COMPLETED_WITH_DIVERGENCE by   human decision. Root cause is upstream: mimic-fhir/sql/fhir_patient.sql:15 synthesises   Patient.birthDate as MIN(transfers.intime)-anchor_age, so FHIR-side age reduces to   anchor_age + year(admittime) - year(MIN(transfers.intime)), diverging from canonical   age.sql:30 exactly where year(MIN(transfers.intime)) != anchor_year. anchor_year is   carried by no FHIR element or extension and is not a function of any published   timestamp: six candidate identities swept, none exact; subject 12047822 has an   admission in 2163 with anchor_year 2165, ruling out first-event-year. 0 only_oracle,   0 only_candidate, 0 differing_null_only; keys, grain, schema and all diagnosis flags   exact at 431,170/431,231 (99.9859%). Reported upstream as mimic-fhir   debug-patient-birthdate-anchor.",
+  "engineering_counter": 2,
   "error_message": null,
-  "hpc_counter": 1,
-  "reopen_history": [],
-  "semantic_counter": 1,
-  "started_at": "2026-08-14T03:51:32.249574+00:00",
+  "hpc_counter": 2,
+  "reopen_history": [
+    {
+      "at": "2026-08-14T05:09:59.576242+00:00",
+      "baseline": {
+        "attempt": 1,
+        "engineering": 1,
+        "hpc": 1,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "Reopen because attempt_0001 rederives the age dependency instead of consuming the completed age candidate table. The replacement must reference FROM age; preserve the prior accepted divergence in reopen_history.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Accepted by the equivalence judge: 61/431,231 conflicts (0.014%) are inherited threshold crossings from divergent age. mimic-fhir/sql/fhir_patient.sql:15 synthesizes Patient.birthDate from MIN(transfers.intime)-anchor_age (written at line 108), while canonical mimic-iv/concepts/demographics/age.sql:30 requires anchor_age and anchor_year; no FHIR element carries the anchor pair, so the oracle age is unrecoverable by any defensible FHIR query. All 17 diagnosis flags, identifiers, admission rows, thresholds and index arithmetic match; 431,170/431,231 rows are identical, with zero only-oracle, only-candidate or null-only rows. The score differences are propagation of the already accepted upstream age transformation.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-14T06:03:22.534892+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 2,
+        "hpc": 2,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "Reopen because attempt_0001 rederives the age dependency instead of consuming the completed age candidate table. The replacement must reference FROM age; preserve the prior accepted divergence in reopen_history.",
+      "superseded_decided_by": null,
+      "superseded_error": "Equivalence judge blocked intrinsic essential loss: 61/431,231 (0.0141%) differing_conflict rows on age_score and charlson_comorbidity_index are inherited from divergent age. mimic-fhir/sql/fhir_patient.sql:15 synthesizes Patient.birthDate from MIN(transfers.intime)-anchor_age (written at line 108), while canonical mimic-iv/concepts/demographics/age.sql:30 requires the unrecoverable anchor_age/anchor_year pair; no defensible FHIR query can recover it. Identical/representable fidelity: 431,170/431,231 (99.9859%); all diagnosis flags, keys, rows and schema match, but the core clinical score is ambiguous. Judge verdict: blocked.",
+      "superseded_justification": null,
+      "superseded_status": "BLOCKED_REPRESENTATION"
+    }
+  ],
+  "semantic_counter": 4,
+  "started_at": "2026-08-14T06:03:22.536748+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-14T04:37:45.751514+00:00"
+  "updated_at": "2026-08-14T06:38:36.528087+00:00"
 }

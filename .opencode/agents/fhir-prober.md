@@ -142,6 +142,23 @@ across variants, a system URI that differs from what the IG advertises —
    recommend whole-concept blocking. Do not block or accept it yourself. There
    is no early semantic decision; a non-exact full result must reach the judge.
 
+   **Bound the loss before you call it essential, and say how many rows it
+   reaches.** An input that feeds one branch of a `CASE` is missing only on the
+   rows that take that branch — and if the branch's *discriminator* survives in
+   FHIR, the port knows exactly which rows those are and can emit a typed NULL
+   on them alone. That is a row-level coverage gap, not an essential loss:
+   report it as "not representable on the N rows where <condition>", name the
+   surviving discriminator and its FHIRPath, and recommend the typed NULL.
+   Reserve the blocking recommendation for a loss that reaches rows the port
+   cannot identify, or that contaminates values which *are* representable.
+
+   `phenylephrine` is the counter-example to avoid repeating. `patientweight`
+   is genuinely absent and feeds `rate / patientweight` — but only under
+   `rateuom = 'mcg/min'`, which the ETL *does* write to
+   `dosage.rateQuantity.unit`, and which the canonical SQL's own comment says
+   one row in 193,260 takes. The block was recommended and taken, discarding an
+   otherwise exact port of the other 99.9995%.
+
 5. **Check the mapping against the oracle where you can.** The DuckDB oracle
    (`MIMIC_DUCKDB_PATH`) holds the source table. When a mapping is cheap to
    test — a key join, a computed field — pull both sides into pandas and report

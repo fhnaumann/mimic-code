@@ -222,7 +222,12 @@ The prober and diagnostician collect this evidence but do not make the terminal
 decision. Exact/mechanical outcomes belong to the deterministic comparator;
 every non-exact semantic outcome belongs to the independent equivalence judge.
 Ancillary gaps may still be accepted explicitly, and the irrecoverable one-hour
-New York DST normalization may be accepted when proven.
+New York DST normalization is accepted when proven — including its second-order
+effects through the concept's own SQL, and including where those change row
+inclusion or timing. Unlike the `gcs` discriminator, the shift is an
+acknowledged upstream defect awaiting repair rather than information the IG
+cannot carry, so it is outside the essential-loss test and is never grounds for
+a block on its own.
 
 - Affected: every resource id; every concept whose core derivation consumes a
   source field omitted or many-to-one transformed by MIMIC-on-FHIR.
@@ -440,6 +445,38 @@ hosp admissions). This is a data-IG transformation loss, not a port bug.
   attempt_0001 confirmed 123 more prescription tuples from those same lines:
   73 had start only, 46 end only, and 4 both endpoints shifted exactly +1 hour;
   ICU `stay_id` agreed on all 123 paired tuples.
+
+**The shift also reaches `chartevents`, and its damage compounds through the
+concept's own SQL.** Merged from `MIMIC_NOTES.d/rrt.md` on 2026-08-14. The same
+cast at `mimic-fhir/sql/fhir_observation_chartevents.sql:9,67` normalises
+spring-forward chart times before `Observation.effectiveDateTime` is written,
+and the sibling ICU statements do the same for
+`fhir_medication_administration_icu.sql:8-9,61-69` and
+`fhir_procedure_icu.sql:10-11,73-75`. Downstream of that, a concept that
+deduplicates, groups, or overlays intervals on the shifted time turns **one**
+moved source row into several divergence rows at once — the row can collapse
+onto a key the candidate already holds, gain or lose partners in a range join,
+or change an aggregate. So the `only_oracle` and `only_candidate` counts do
+**not** balance, and their inequality is not evidence of an invented or missing
+row.
+
+- Affected: `Observation.effectiveDateTime` from `mimiciv_icu.chartevents`,
+  ICU `MedicationAdministration` effective `Period` endpoints, ICU `Procedure`
+  performed `Period` endpoints; and any concept keying, deduplicating or
+  interval-joining on those times.
+- Verified: `rrt` attempt_0001 full comparison — 821 `only_oracle` against 241
+  `only_candidate` (row delta -580) on an unkeyed concept, every sampled
+  `only_candidate` time a March 03:xx and the sampled `only_oracle` partners
+  March 02:xx. Full-oracle replay found 608 selected chartevents source rows
+  changed by `CAST(charttime AS TIMESTAMPTZ)`, accounting for all 241
+  `only_candidate` and 449 of the 821 `only_oracle`; the propagation path is the
+  `UNION DISTINCT` and the `LEFT JOIN ... BETWEEN` overlay at
+  `mimic-iv/concepts/treatment/rrt.sql:316-326`. The original wall time is in no
+  FHIR element and resource identity is opaque, so it is not recoverable by any
+  query. A separate `oxygen_delivery` finding confirms the collision half:
+  34 `only_oracle`, 31 `only_candidate` and 3 `differing_conflict` rows, all
+  inside one 02:00–03:00 hour on the second Sunday in March, of which 31
+  re-paired and 3 landed on keys the candidate already held.
 
 ## Encounter has three identifier systems — class discriminates none of them
 

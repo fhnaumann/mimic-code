@@ -1,5 +1,5 @@
 ---
-description: Authors the FHIR ViewDefinitions and derived SQL for one concept port attempt. Receives the structured outputs of the source analyst, FHIR prober, and terminology resolver, and produces write-once ViewDefinition.<label>.json files and concept.sql in the controller-created attempt directory. Uses the proven select.column path/name format with forEach/forEachOrNull; the SQL runs on embedded Pathling on Spark, selecting from each ViewDefinition's label as a temp-view table name.
+description: Authors the FHIR ViewDefinitions and derived SQL for one concept port attempt. Receives the structured outputs of the source analyst, FHIR prober, and terminology resolver, and produces write-once ViewDefinition.<label>.json files and concept.sql in the controller-created attempt directory. Uses the proven select.column path/name format with forEach/forEachOrNull; the SQL runs on embedded Pathling on Spark, selecting from each ViewDefinition's label and any preprocessed derived dependency view.
 mode: subagent
 model: openai/gpt-5.6-luna
 variant: xhigh
@@ -127,11 +127,20 @@ Create one ViewDefinition per required FHIR resource projection. Key rules:
 
 A Spark SQL query that:
 - Selects from the ViewDefinition labels, which are the temp-view table names.
+- Selects from each `mimiciv_derived` dependency by its unqualified concept stem
+  (for example, `FROM age`) rather than re-deriving or replacing it. The demo
+  and full runners preprocess completed dependency attempts into Spark temp
+  views before executing this query.
 - Produces exactly the same output schema as the original concept.
 - COALESCEs polymorphic field variants (`COALESCE(effective_datetime, effective_period_start)`).
 - Uses `TRY_TO_TIMESTAMP()` for nullable FHIR datetime parsing.
 - Uses `CAST(value AS DOUBLE)` for FHIR Quantity values.
 - Handles the same JOIN, GROUP BY, and WHERE semantics as the source SQL.
+
+Do not create ViewDefinitions for a derived dependency merely to reproduce its
+output. The dependency's own FHIR port is the source of that table in this
+loop; your SQL consumes its published candidate columns just as the canonical
+SQL consumes `mimiciv_derived.<dependency>`.
 
 ### 3. `unrepresentable.json` — only when a column has no FHIR equivalent
 
@@ -163,6 +172,23 @@ The comparator verifies the declaration: a declared column that holds any value
 is a blocking `false_unrepresentable_declaration`. Declare only what you have
 confirmed is absent, and say in the justification how you confirmed it. Most
 concepts need no such file — its absence is normal.
+
+**The "never substitute an estimate" rule is per value, not per column.** When
+a `CASE` branch needs an input MIMIC-on-FHIR does not carry, but the branch's
+discriminator *does* survive, emit the typed NULL on exactly those rows:
+
+```sql
+-- phenylephrine.sql: CASE WHEN rateuom = 'mcg/min' THEN rate / patientweight ...
+-- patientweight is absent; rateuom is served as dosage.rateQuantity.unit.
+CASE WHEN rate_unit = 'mcg/min' THEN CAST(NULL AS FLOAT) ELSE rate_value END
+```
+
+Emitting the un-normalised `rate` there is the same failure one row at a time:
+a `differing_conflict` you manufactured, a `contested` result, and no citation
+to defend it with. Do **not** declare such a column in `unrepresentable.json` —
+the declaration is verified as 100% NULL and this column is not. Say it in your
+handback instead, with the row count and the condition, so the judge reads the
+`differing_null_only` rows against a stated claim.
 
 Do not use `unrepresentable.json` to make an essentially different table look
 partially usable. If a missing source field can change row inclusion, keys,

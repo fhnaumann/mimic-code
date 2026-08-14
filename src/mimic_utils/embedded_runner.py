@@ -19,9 +19,10 @@ directory.  The HPC path never sets the env var that enables the lease, so the
 compute node is lock-free by construction and never touches a Lustre ``flock``.
 
 The attempt layout encodes the binding this relies on: **the ViewDefinition's
-label is the SQL table name**, bound through ``createOrReplaceTempView``.  Get
-the label wrong and ``concept.sql`` selects from a table that was never
-registered.
+label is the SQL table name**, bound through ``createOrReplaceTempView``. Before
+the target's views are registered, completed derived dependencies are executed
+in DAG order and exposed under their concept stems. Get a label or dependency
+stem wrong and ``concept.sql`` selects from a table that was never registered.
 
 Pathling owns Spark session creation (``PathlingContext.create()``): the FHIR
 encoders and the Delta jars must be on the classpath before the JVM starts,
@@ -55,6 +56,13 @@ from mimic_utils.demo_runner import (
     DemoRunError,
     discover_view_definitions,
     read_concept_sql,
+)
+from mimic_utils.derived_dependencies import (
+    DEPENDENCY_MANIFEST_NAME,
+    DependencyPlanError,
+    DependencySpec,
+    load_staged_dependency_plan,
+    resolve_dependency_plan,
 )
 
 # Env keys, so a job script can point the executor at a warehouse without
@@ -340,6 +348,31 @@ class EmbeddedExecutor:
         except Exception as exc:  # noqa: BLE001 - surface Spark verbatim
             raise EmbeddedRunError(f"concept SQL failed: {exc}") from exc
 
+    def preprocess_dependencies(self, specs: Sequence[DependencySpec]) -> List[str]:
+        """Materialise completed derived dependencies as Spark temp views.
+
+        Dependency resource views use the same labels as the dependent concept,
+        so each result is cached before the next dependency or the target
+        concept replaces those labels.  The resulting view is named after the
+        canonical derived concept stem (for example, ``age``).
+        """
+        registered: List[str] = []
+        for spec in specs:
+            definitions = discover_view_definitions(spec.path)
+            sql = read_concept_sql(spec.path)
+            self.register_views(definitions)
+            try:
+                frame = self.run_sql(sql)
+                frame.cache()
+                frame.count()
+                frame.createOrReplaceTempView(spec.concept)
+            except Exception as exc:  # noqa: BLE001 - preserve dependency context
+                raise EmbeddedRunError(
+                    f"derived dependency {spec.concept!r} failed during preprocessing: {exc}"
+                ) from exc
+            registered.append(spec.concept)
+        return registered
+
 
 def execute_attempt(
     attempt_dir: str | Path,
@@ -347,6 +380,8 @@ def execute_attempt(
     warehouse_path: str | Path,
     executor: Optional[EmbeddedExecutor] = None,
     driver_memory: Optional[str] = None,
+    concept: Optional[str] = None,
+    artifact_root: Optional[str | Path] = None,
 ) -> Tuple[Any, EmbeddedExecutor, List[str]]:
     """Run one attempt's artifacts embedded, returning ``(df, executor, labels)``.
 
@@ -369,5 +404,24 @@ def execute_attempt(
     owned = executor or EmbeddedExecutor(
         warehouse_path, driver_memory=driver_memory, holder=str(attempt)
     )
-    labels = owned.register_views(definitions)
+    target_labels = [definition["label"] for definition in definitions]
+    dependency_labels: List[str] = []
+    if concept is not None:
+        try:
+            if (attempt / DEPENDENCY_MANIFEST_NAME).is_file():
+                specs = load_staged_dependency_plan(attempt)
+            else:
+                specs = resolve_dependency_plan(
+                    concept, attempt, artifact_root=artifact_root
+                )
+            collisions = sorted(set(target_labels).intersection(spec.concept for spec in specs))
+            if collisions:
+                raise DependencyPlanError(
+                    "derived dependency names collide with target ViewDefinition labels: "
+                    + ", ".join(collisions)
+                )
+            dependency_labels = owned.preprocess_dependencies(specs)
+        except DependencyPlanError as exc:
+            raise EmbeddedRunError(str(exc)) from exc
+    labels = dependency_labels + owned.register_views(definitions)
     return owned.run_sql(sql), owned, labels

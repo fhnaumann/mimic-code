@@ -41,11 +41,14 @@ nothing moves during the comparison.
 
 Inside one job:
 
-1. Each `ViewDefinition.<label>.json` is materialised as a Spark temp view named
-   `<label>` — the same label -> table binding the server backend gets from a
-   `depends-on` relatedArtifact, so `concept.sql` is byte-identical either way.
-2. `concept.sql` runs and is written to `candidate.full.parquet`.
-3. `compare_full` opens the oracle **read-only** and runs the keyed row-level
+1. Completed derived dependencies are executed in DAG order and their outputs
+   are materialised as Spark temp views named by their concept stems (for
+   example, `age`).
+2. Each `ViewDefinition.<label>.json` is then materialised as a Spark temp view
+   named `<label>` and the target `concept.sql` runs against both resource views
+   and preprocessed derived views.
+3. `concept.sql` runs and is written to `candidate.full.parquet`.
+4. `compare_full` opens the oracle **read-only** and runs the keyed row-level
    diff entirely as DuckDB SQL. Rows are never materialised into Python —
    `vitalsign` is 9.7M rows.
 

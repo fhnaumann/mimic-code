@@ -758,19 +758,21 @@ def register_commands(subparsers: _SubParsersAction) -> None:
     # difference is exactly the flag that would get used by accident.
     p = subparsers.add_parser(
         "reopen",
-        help="Set aside a COMPLETED / COMPLETED_WITH_DIVERGENCE verdict and "
-             "start a new attempt (human only, reason required).",
+        help="Set aside a COMPLETED / COMPLETED_WITH_DIVERGENCE / "
+             "BLOCKED_REPRESENTATION verdict and start a new attempt "
+             "(human only, reason required).",
     )
     p.add_argument("concept")
     p.add_argument(
         "--reason", required=True,
         help="What is wrong with the shipped SQL -- the construction being "
-             "replaced and why it changes what the query means. Recorded in "
-             "reopen_history beside the verdict being superseded.",
+             "replaced and why it changes what the query means; or, on a "
+             "BLOCKED_REPRESENTATION, what is wrong with the ruling. Recorded "
+             "in reopen_history beside the verdict being superseded.",
     )
     p.add_argument(
         "--by", default="human", choices=["human"],
-        help="Only a human reopens a finished port. The choice is fixed and "
+        help="Only a human reopens a recorded verdict. The choice is fixed and "
              "explicit so the record says who decided rather than leaving it "
              "to be inferred from a default.",
     )

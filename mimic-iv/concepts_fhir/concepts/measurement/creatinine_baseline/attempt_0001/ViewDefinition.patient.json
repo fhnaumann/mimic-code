@@ -1,0 +1,16 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/creatinine_baseline-0001-patient",
+  "name": "patient",
+  "resource": "Patient",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "patient_key" },
+        { "path": "gender", "name": "gender_fhir" },
+        { "path": "birthDate", "name": "birth_date" }
+      ]
+    }
+  ]
+}

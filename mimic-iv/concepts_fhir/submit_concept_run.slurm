@@ -18,10 +18,11 @@
 # is what `render_submit_script` asserts before anything reaches the queue.
 #
 # Everything this job reads is inside $ATTEMPT_DIR, including the mimic_utils
-# code and the oracle manifest. Nothing is read from a path shared with another
-# job, because several concepts are ported in parallel: a shared code tree gets
-# rewritten under a running job (see `stage_attempt`), and a verdict produced
-# half by 14:00's code and half by 14:10's is recorded nowhere.
+# code, the oracle manifest, the dependency manifest, and staged dependency
+# attempts. Nothing is read from a path shared with another job, because several
+# concepts are ported in parallel: a shared code tree gets rewritten under a
+# running job (see `stage_attempt`), and a verdict produced half by 14:00's code
+# and half by 14:10's is recorded nowhere.
 #
 # Everything happens on this one node because both sides of the comparison are
 # already here: the 156 GB Delta warehouse and the 14.5 GB DuckDB oracle both

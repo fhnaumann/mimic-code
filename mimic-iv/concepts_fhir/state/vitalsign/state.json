@@ -1,0 +1,17 @@
+{
+  "attempt": 1,
+  "category": "measurement",
+  "completed_at": "2026-08-14T04:13:02.756303+00:00",
+  "concept_name": "vitalsign",
+  "dependencies": [],
+  "divergence_decided_by": "human",
+  "divergence_justification": "Accept COMPLETED_WITH_DIVERGENCE as a human override. The upstream hard-coded exclusion at mimic-fhir/sql/fhir_observation_chartevents.sql:34-37 removes one valid glucose=96 vital-sign group, so exact event consumers and downstream first_day_vitalsign/APSIII may differ; this is an isolated upstream omission, not an unrepresentable FHIR field. Also accept the fully attributed chartevents DST shift at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67, with the known risk that rare time-windowed consumers such as SOFA may differ.",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 2,
+  "started_at": "2026-08-14T03:05:17.555347+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-14T04:13:02.756932+00:00"
+}

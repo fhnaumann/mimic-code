@@ -21,6 +21,23 @@ The port is not "the same query on two datasets". There is no `admissions` table
 FHIR. It is two unrelated queries whose output tables must agree, which is why the
 comparison *is* the experimental claim rather than a smoke test attached to one.
 
+### Derived dependencies in the candidate
+
+The canonical query may read another table from `mimiciv_derived`. The candidate
+must preserve that dependency boundary rather than rederive the dependency's
+values from FHIR resources. Before executing a target attempt, both runners
+preprocess every completed dependency in DAG order by running that dependency's
+own immutable FHIR attempt and registering its output as a Spark temp view named
+by the dependency stem. Thus a Charlson candidate uses `FROM age`, while the
+oracle uses `FROM mimiciv_derived.age`.
+
+The HPC launcher stages the completed dependency attempts and a dependency
+manifest beside the target attempt. A dependency accepted with divergence is
+still executable and its divergence is inherited by the dependent, as described
+in the dependency section below. An active, failed, blocked, missing, or
+artifact-incomplete dependency is a preprocessing error, not a reason to inline
+the dependency.
+
 ## The oracle is computed once
 
 | | |
@@ -183,6 +200,110 @@ Its limits are the conflict case's, plus one:
   explicitly stops attribution becoming a licence to relabel any one-hour error
   as intrinsic.
 
+### The shift can also land on a key that is already occupied
+
+Revised 2026-08-13. Re-keying searches the *unpaired* candidate rows for the
+shifted row's partner, which assumes the shift moved the row into an empty key.
+It does not always. When the row's replayed key is one the candidate already
+holds, the partner is not unpaired at all — it paired with a different oracle
+row, and it **conflicts** with it, because the concept aggregated one more
+source row into it than the oracle did. The semi-join cannot see that row.
+
+So one transformation was billed as two unexplained findings: an `only_oracle`
+row nothing re-paired, and a `differing_conflict` nothing replayed — and
+all-or-nothing let them set the tier for the whole concept.
+
+`oxygen_delivery` is the worked example, and the cost was a block. It reproduced
+601,509 of 601,546 rows. Its 34 `only_oracle`, 31 `only_candidate` and 3
+`differing_conflict` rows are **every one of them** inside an 02:00–03:00 hour
+on the second Sunday in March: 31 re-paired, and the other 3 landed on a key the
+candidate already had, where `GROUP BY subject_id, charttime` merged two source
+times into one row and `MAX()` returned the wrong `o2_flow`. Three events, six
+findings, `contested`, blocked — on a port that did nothing wrong.
+
+The comparator now attributes the collision case too, and hands the collided
+keys to the conflict attribution so both halves move together. One limit is
+specific to it and is carried in the artifact: **it proves the row was absorbed,
+not that the merged value is what the concept's own aggregation would produce
+from both source rows.** The comparator does not model the concept's `GROUP BY`.
+The judge confirms that from the concept SQL, and the conflict is not attributed
+merely for sharing a key with a collision — `attributed_by_key_collision` is
+reported separately from the replayed count so the two can be checked apart.
+
+**A DST divergence the comparator has attributed completely is accepted.** That
+was already the rule (see "There is deliberately no early semantic auto-block"),
+and `oxygen_delivery` was not blocked by the policy — it was blocked because the
+mechanical proof had a hole. Which is the general point: when a concept is
+blocked on rows the comparator could not attribute, check whether attribution
+*could* have reached them before concluding the divergence is unexplainable. The
+bar for *attributing* a row is "the replay accounts for it", not "an upstream fix
+would repair it" — the second would excuse any port bug that happens to look like
+a one-hour offset, and the whole value of this tier is that a machine checks every
+row instead of an agent inferring it from a sample. That bar governs **which rows
+are attributed**. It does not govern **how severe an attributed divergence is**;
+see the next section, which was written because the two were being conflated.
+
+### The DST cast is an upstream defect, and its consequences travel with it
+
+Revised 2026-08-14, after `rrt`.
+
+The `TIMESTAMPTZ` cast is not a property of the IG that consumers must live with
+forever. It is a **defect in `mimic-fhir`**, acknowledged as one, and it will be
+repaired upstream; when it is, the same port produces the same rows as the oracle
+with no change to the port. A port that reproduces everything the served data
+allows and diverges only where that cast moved a wall time is not a partial port
+of the concept. It is a correct port of a concept whose input was corrupted an
+hour at a time.
+
+Two consequences, both load-bearing:
+
+1. **A proven DST divergence is never "essential loss".** The essential-loss test
+   asks whether the served representation *cannot carry* what the concept needs —
+   `gcs` losing the `No Response-ETT` discriminator, where no query over FHIR can
+   ever recover it and the concept's outputs are permanently unreliable. DST is
+   not that: the served data carries the timestamp, one hour wrong, on a
+   vanishingly small set of rows, and a dated upstream fix restores it. So a
+   proven shift is `accept` — `COMPLETED_WITH_DIVERGENCE` — and **never**
+   `blocked`, even where it changes row inclusion, row multiplicity, the
+   concept's grain, or a clinically meaningful timing output. Those are exactly
+   what a moved timestamp changes; blocking on them makes the exemption
+   unreachable for every time-keyed concept, which is most of them.
+
+2. **Second-order damage is the same event.** A shifted timestamp does not only
+   move its own row. Passed through the concept's own SQL it can collapse under
+   `UNION DISTINCT` or `GROUP BY`, gain or lose partners in a range-overlay join,
+   change an aggregate, or fall outside a window — so one moved source row shows
+   up as an `only_candidate` row, several `only_oracle` rows, and a handful of
+   value conflicts at once. `rrt` is the worked example:
+   `mimic-iv/concepts/treatment/rrt.sql:316-326` overlays chart times on
+   `mv_ranges` intervals with a `LEFT JOIN ... BETWEEN`, and `stg0` unions its
+   branches with `UNION DISTINCT`, so a single moved chart time adds rows,
+   deletes rows and rewrites `dialysis_present`/`dialysis_active`/`dialysis_type`
+   together. Attribute the **event**, then count the rows it explains *through*
+   the concept's SQL. Do not require each derived row to replay independently —
+   that is a test only a first-order shift can pass, and it fails every concept
+   whose SQL does anything with time.
+
+**What this does not license.** The replay still has to reach the rows it claims,
+and the claim is now "these divergence rows follow from these shifted source
+rows, through this SQL", which is checkable and must be checked. Three limits:
+
+- **The count must close, or its residual must be named.** State how many source
+  rows the cast moved, which divergence rows they explain, and how many are left
+  over. An unstated residual is an unattributed residual.
+- **Rarity still argues.** DST-gap wall times are one hour a year. A source-row
+  count inconsistent with that rarity is evidence against the attribution, and
+  the answer is `bug` — this is unchanged, and it is what stops any one-hour-
+  shaped port bug walking through.
+- **The residual is decomposed, not laundered.** Rows the replay does not reach
+  are ruled on their own merits at their own tier. An unexplained `only_oracle`
+  beside a proven DST set is a coverage gap that must be argued as a coverage
+  gap; the DST acceptance neither excuses it nor is held hostage by it. One
+  unexplained class must not force the whole concept to `blocked` when the
+  explained majority is acceptable, and an acceptable DST majority must not carry
+  an unexplained minority into `accept`. Rule on each, then combine: `blocked`
+  only if the *residual on its own* is essential loss.
+
 **The judge's bar carries an extra clause here, and it is the point of the
 change:** a port that recovers the pre-shift value by reconstructing a resource
 id is refused. The shift is intrinsic; inverting the ETL's id-generation is not
@@ -256,6 +377,40 @@ approximation is only admissible if it is exact; otherwise it is a conflict.
 The relaxation of conflict gating does **not** soften this rule. It widens what
 the judge may forgive in the *data*; it does not forgive a port that manufactured
 the conflict itself.
+
+### The rule is per *value*, not per column
+
+Added 2026-08-13. Everything above is written about columns, and a port that
+reads it as being only about columns gets the narrow case wrong in the
+expensive direction. A branch in the canonical SQL can depend on an input that
+MIMIC-on-FHIR does not carry while the *discriminator* for that branch survives
+— so the port knows exactly which rows it cannot compute, and only those.
+
+`phenylephrine` is the worked example. `phenylephrine.sql:5-7` is
+`CASE WHEN rateuom = 'mcg/min' THEN rate / patientweight ELSE rate END`.
+`fhir_medication_administration_icu.sql:7-23` never selects `patientweight`, so
+the `mcg/min` branch is not computable — but the same ETL writes `rateuom` to
+`dosage.rateQuantity.unit` at :95-97, so the port can *see* which rows take it.
+The canonical SQL's own comment says one row does, out of 193,260.
+
+The answer is a typed NULL **on those rows**, exactly as it would be for a whole
+column: `CASE WHEN rate_unit = 'mcg/min' THEN CAST(NULL AS FLOAT) ELSE ... END`.
+Emitting the raw `rate` there is the estimate-instead-of-an-absence failure one
+row at a time — it manufactures a `differing_conflict`, pushes the concept to
+`contested`, and then the port has to argue that its own approximation is
+intrinsic, which it cannot, because the NULL was available.
+
+Nor is it grounds to block the concept. A row-level absence is essential only
+if it does what the section above requires: change row inclusion, the grain,
+grouping, carry-forward, or contaminate values that *are* representable. One
+NULL `vaso_rate` in 193,260 does none of those; every other row is exact, and
+the alternative on offer was to discard a faithful port of the other 99.9995%.
+Test what the absence *reaches*, not whether it sounds clinically important.
+
+A declaration is still not appropriate here — `unrepresentable.json` is verified
+to be 100% NULL and this column is not — so state the row-level gap in the
+attempt's justification instead, and the comparator will report it as the
+`differing_null_only` it is.
 
 Never drop the column. Shape is total — the demo gate fails on any missing
 column, dependent concepts would break with a `column not found` crash instead
@@ -363,10 +518,12 @@ diagnostician collect evidence and may recommend that the gap is essential,
 but they do not decide the terminal state. A full-data `match` and mechanical
 `mismatch` come from the deterministic comparator. Every non-exact semantic
 result reaches the independent judge, which alone returns `accept`, `bug`, or
-`blocked`. For now, an intrinsic New York one-hour DST normalization may be
-accepted when the comparator/judge proves it, and an ancillary missing field
-may be accepted when the remaining table is faithful; essential loss is
-`blocked`.
+`blocked`. An intrinsic New York one-hour DST normalization is accepted when the
+comparator or the diagnostician proves it — including its second-order effects
+through the concept's own SQL, and including where those effects change row
+inclusion, per "The DST cast is an upstream defect" above. An ancillary missing
+field may be accepted when the remaining table is faithful. Essential loss is
+`blocked`, and the DST shift is not essential loss.
 
 **The 13 unkeyed concepts get less, and the residual is paired to get it back.**
 With no key to align rows, a NULL-for-value divergence lands in `only_oracle`
@@ -402,12 +559,68 @@ with less evidence, that the count equality is *not* the missing evidence, and
 should treat `only_candidate` there as a bug unless the evidence positively
 shows otherwise.
 
+**An unkeyed concept has no mechanical DST route at all, and that is a hole in
+the proof, not a fact about the port.** Revised 2026-08-14, after `rrt`.
+`key_attribution` and `conflict_attribution` both need a key; the only way they
+reach an unkeyed concept is through `_paired_columns`, i.e. only if the residual
+paired first. And the residual cannot pair when the two residual multisets are
+different sizes — which is precisely what a DST shift produces the moment its
+second-order effects add or delete rows. `rrt` reached 821 `only_oracle` against
+241 `only_candidate`, so `residual_pairing` was structurally doomed, the artifact
+recorded `attributed: []`, and the concept was tiered `contested` with no
+mechanical route to the attribution that plainly applied. Read `attributed: []`
+on an unkeyed concept as "not attempted", never as "replay found nothing".
+
+So for these the **diagnostician's source-side replay stands in for the
+comparator's**: replay the cast over the concept's selected source rows in the
+full oracle, count how many it moves, and account for the divergence rows they
+explain through the concept's SQL. That is the same proof at the same rigour,
+run by an agent against the full oracle instead of by the comparator against the
+diff — and it is admissible for an unkeyed `accept` in its own right. It is
+weaker in one respect the ruling must state: the comparator's replay is
+exhaustive by construction, the diagnostician's closes only as well as its
+stated counts do.
+
 This matters for tiering, not just for rigour. `only_candidate` is a `contested`
 class, so before pairing **every** unkeyed concept with any divergence was
 forced to the raised bar and had to produce an ETL citation — including
 `acei`, `arb` and `antibiotic`, whose divergence is candidate-NULL-where-the-
 oracle-has-a-value and therefore textbook `gap_shaped`. They cleared a bar that
 should never have been set for them.
+
+**The residual is an alignment device; the tolerances still decide.** Revised
+2026-08-13. `EXCEPT ALL` is exact and cannot be otherwise, so a value Pathling
+serves as `decimal(32,6)` against an oracle `FLOAT` lands in the residual on
+nearly every row. Classifying that residual exactly *too* then reported each of
+those rows as a `differing_conflict` — the contested class, an upstream ETL
+citation demanded for a seventh decimal place. The residual stays exact, because
+a superset of the true differences is the safe error; the classification applies
+the same `rtol`/`atol`/one-second tolerances a keyed column gets, and rows it
+calls equal are returned to `identical`.
+
+`phenylephrine` is the worked example, and it too cost a block. It reported
+**0.00% identical and 190,872 conflicts (98.8%)** on a port that reproduces
+`(stay_id, starttime, endtime)` exactly on 625/625 demo rows and every value
+within tolerance on all of them. Its keyed siblings `dobutamine` and
+`milrinone` — same table, same ETL, same gap — reported 99.98%. A concept must
+not be judged on whether `oracle_manifest.py` happened to find it a key.
+
+**A confirmed-unrepresentable column is excluded from the alignment**, for the
+same reason and with worse symptoms. It is 100% NULL in the candidate by
+declaration, so it puts *every* row in the residual and then sits in the pairing
+order discriminating nothing. `phenylephrine` paired 193,260 rows on `stay_id`
+alone that way — ~19 rows per group matched by position — and reported 152,422
+conflicting `starttime` values on a column whose two multisets differ by 30
+rows. That column needs no alignment: what it contributes is known
+analytically, one `differing_null_only` row per oracle row holding a value, so
+it is tallied directly and both fidelity numbers are then reported as they are
+for a keyed concept.
+
+The general rule behind both: **before treating a divergence as a finding about
+the port, check it is not a finding about the comparison.** A conflict count
+near 100%, a `paired_residual` whose pairing set is a single identity column, or
+`identical: 0` on a concept with a confirmed declaration are all shapes that
+mean "the alignment failed", not "the port is wrong".
 
 Keys are discovered **empirically against full data**, never parsed from SQL and
 never derived from demo. Two rules, both learned the hard way:
@@ -660,6 +873,17 @@ figures live under `run_scope` in the same artifact; the two are reported
 separately and never summed, because a reader who cannot tell one run's cost
 from a concept's total cost has a number that means neither.
 
+**A metrics artifact is write-once, so `state.json` outranks it on status.**
+Added 2026-08-13. The artifact is finalized before the loop's terminal response
+and records the status that *run* ended on. Two things happen afterwards that it
+cannot carry: a human override out of `BLOCKED_REPRESENTATION`, and a `retry` or
+`reopen` putting the concept back in flight. `metrics-report` was reading the
+artifact's status as the concept's, which would have gone on calling `nsaid`
+blocked after it was accepted, and would show a superseded verdict for a concept
+that is currently running. It now takes the status from `state.json`, keeps the
+artifact's under `metrics_status`, and notes the disagreement — the artifact
+stays authoritative for what its run cost and measured, and is never rewritten.
+
 ### Divergent dependencies
 
 A `COMPLETED_WITH_DIVERGENCE` concept **satisfies** the dependency check — refusing
@@ -691,6 +915,74 @@ divergence in the one column they do take. `age` is
 Their judges must be told. The inherited divergence is small and intrinsic, and
 it is **not** the dependent's own doing — a dependent that reports those same
 460 patients as its own conflict has misattributed them.
+
+### Wholly inherited divergence is `accept`, not `blocked`
+
+Added 2026-08-14, after `creatinine_baseline` and `charlson`.
+
+Telling the judge which rows are inherited was not enough. Both concepts were
+blocked on rows they did not produce: the judge agreed the divergence was
+entirely upstream, then applied the essential-loss test to it anyway and
+returned `blocked` because a Charlson index and a baseline creatinine are
+clinically meaningful outputs. That reasoning blocks *every* consumer of a
+divergent dependency, forever, on one upstream fact — and it re-litigates a
+decision a human already made when accepting the dependency.
+
+**The rule.** Where a dependent's divergence is wholly inherited — every
+divergence row traces to an accepted dependency, and the concept introduces
+none of its own — the verdict is `accept`, `COMPLETED_WITH_DIVERGENCE`, citing
+the dependency's acceptance. Not `blocked`.
+
+The essential-loss test asks whether **this concept's own mapping** lost
+something essential. It is not re-run against loss the loop has already
+accepted upstream. Accepting a dependency is a decision about that dependency
+*and everything that reads it*; if the loss is too severe to propagate, the
+dependency should not have been accepted.
+
+Three limits, in the same spirit as the DST ones:
+
+- **"Wholly inherited" must be shown, not asserted.** Name the divergent
+  dependencies, and account for every divergence row against them. Rows the
+  dependency does not explain are this concept's own and are ruled on their own
+  merits — an unstated residual is an unattributed residual.
+- **A dependent may amplify, and that is still inherited.** `age` conflicts on
+  460 rows; `charlson` shows 61, because only ages crossing 50/60/70/80 change
+  `age_score`. Fewer rows, same event. A dependent may equally show *more* rows
+  than its dependency where its SQL fans out. Judge the event, then count the
+  rows it explains through this concept's SQL.
+- **Inherited plus own is decomposed.** A concept that inherits a divergence
+  *and* has a defect of its own is `bug` on the defect; fix that and re-run.
+  The inheritance excuses only the inherited rows.
+
+### The anchor `birthDate` is an upstream defect, like the DST cast
+
+Added 2026-08-14.
+
+`age`'s 460-row divergence has the same standing as the `TIMESTAMPTZ` cast, and
+for the same reasons. `mimic-fhir/sql/fhir_patient.sql:15` synthesises
+`Patient.birthDate` as `MIN(transfers.intime) - anchor_age` instead of
+anchoring it to `anchor_year`, so a FHIR-side age reduces to
+`anchor_age + year(admittime) - year(MIN(transfers.intime))` and diverges from
+canonical `age.sql:30` exactly where `year(MIN(transfers.intime)) != anchor_year`.
+
+It is a **defect in `mimic-fhir`**, not a property of the IG: the fix is one
+line, `anchor_year` is already in scope in the same query, and the identical
+port becomes exact once it lands. Reported upstream as
+`mimic-fhir/debug-patient-birthdate-anchor/`.
+
+So, exactly as with DST: a divergence proven to be this defect is `accept` and
+**never** `blocked`, in `age` itself and in everything that reads it —
+`creatinine_baseline`, `charlson`, `oasis`, `sapsii`. This holds even though it
+changes clinically meaningful outputs (`age_score`, the Charlson index,
+`mdrd_est`, `scr_baseline`) and even though it can change row inclusion
+(`creatinine_baseline` filters `age >= 18`).
+
+One asymmetry with DST worth stating, because it cuts the other way and still
+does not change the verdict: `anchor_year` is genuinely unrecoverable from the
+served data — six candidate identities over published timestamps were swept and
+none is exact — so unlike a shifted timestamp, a consumer cannot even mark the
+affected rows. That makes the upstream fix *more* necessary, not the port less
+faithful. The port reproduces everything the served data allows.
 
 ## Data locations
 

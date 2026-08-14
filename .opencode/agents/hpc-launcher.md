@@ -15,10 +15,11 @@ The task text gives you: the concept name, and optionally the attempt number.
 uv run mimic_utils hpc-launch <concept>
 ```
 
-That single command renders `submit.slurm`, rsyncs the attempt plus this repo's
-`mimic_utils` source and the oracle manifest **into the attempt's own remote
-directory**, runs the login-node smoke test against that staged copy, and
-submits — recording the job id in `hpc_job.json`. Add `--attempt N` only if the
+That single command renders `submit.slurm`, rsyncs the attempt, its completed
+derived dependency attempts, this repo's `mimic_utils` source, and the oracle
+manifest **into the attempt's own remote directory**, runs the login-node smoke
+test against that staged copy, and submits — recording the job id in
+`hpc_job.json`. Add `--attempt N` only if the
 task text names a specific attempt.
 
 Staging is per attempt because several concepts are ported at once: a shared

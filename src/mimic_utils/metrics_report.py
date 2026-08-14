@@ -492,6 +492,39 @@ def build_report_data(
         for item in concepts:
             item["in_dag"] = item["concept"] in dag
             item["state_status"] = _state_status(controller, item["concept"], notes) if item["in_dag"] else None
+            # A metrics artifact is write-once and finalized before the loop's
+            # terminal response, so it records the status the *run* ended on.
+            # Two things happen to a concept afterwards that the artifact
+            # therefore cannot carry: a human override
+            # (`BLOCKED_REPRESENTATION -> COMPLETED_WITH_DIVERGENCE`), and a
+            # `retry` or `reopen` that puts it back in flight. Reporting the
+            # artifact's status as the concept's would keep calling an
+            # overridden concept blocked forever, and would show a superseded
+            # verdict for one that is currently running.
+            #
+            # state.json is authoritative for what a concept *is*; the artifact
+            # stays authoritative for what its run cost and measured, and is
+            # kept under `metrics_status` so neither claim is lost.
+            state_status = item["state_status"]
+            if item["has_metrics"] and state_status and state_status != item["status"]:
+                item["metrics_status"] = item["status"]
+                if state_status in TERMINAL_STATUSES:
+                    item["status"] = state_status
+                    notes.append(
+                        f"{item['concept']}: state.json is {state_status} but its "
+                        f"last metrics artifact finalized on "
+                        f"{item['metrics_status']}. Reporting the state; the "
+                        "artifact is write-once and still describes that run "
+                        "correctly."
+                    )
+                else:
+                    item["status"] = "IN_PROGRESS"
+                    notes.append(
+                        f"{item['concept']}: back in flight ({state_status}); "
+                        f"its last metrics artifact finalized on "
+                        f"{item['metrics_status']}, which that run is still "
+                        "reported under. The concept has no current verdict."
+                    )
         unfinalized = []
         for concept in sorted(dag - known):
             status = _state_status(controller, concept, notes)
