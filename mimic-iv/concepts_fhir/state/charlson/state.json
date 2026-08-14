@@ -1,0 +1,19 @@
+{
+  "attempt": 1,
+  "category": "comorbidity",
+  "completed_at": "2026-08-14T04:37:45.751101+00:00",
+  "concept_name": "charlson",
+  "dependencies": [
+    "age"
+  ],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Accepted by the equivalence judge: 61/431,231 conflicts (0.014%) are inherited threshold crossings from divergent age. mimic-fhir/sql/fhir_patient.sql:15 synthesizes Patient.birthDate from MIN(transfers.intime)-anchor_age (written at line 108), while canonical mimic-iv/concepts/demographics/age.sql:30 requires anchor_age and anchor_year; no FHIR element carries the anchor pair, so the oracle age is unrecoverable by any defensible FHIR query. All 17 diagnosis flags, identifiers, admission rows, thresholds and index arithmetic match; 431,170/431,231 rows are identical, with zero only-oracle, only-candidate or null-only rows. The score differences are propagation of the already accepted upstream age transformation.",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 1,
+  "started_at": "2026-08-14T03:51:32.249574+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-14T04:37:45.751514+00:00"
+}

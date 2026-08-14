@@ -1,0 +1,542 @@
+# Source Analysis: `charlson`
+
+**Concept:** `charlson` (`comorbidity/charlson.sql`)
+**Canonical SQL:** `mimic-iv/concepts/comorbidity/charlson.sql`
+**DAG SHA256:** `5b797b673ace4dcbc6f686848d24371382f49ac61fcc39101f09c3b42969d801`
+**DAG level:** 1
+**Analyst:** source-analyst
+**Analysis date:** 2026-08-14
+
+This is a source-side description only. It does not author a ViewDefinition or
+derived SQL and makes no clinical or terminal representability decision.
+
+## 1. DAG and dependencies
+
+The DAG node for `charlson` has exactly one `mimiciv_derived` dependency:
+`age` (`demographics/age.sql`). No other concept dependency is declared and no
+`mimiciv_icu` table is used.
+
+The dependency SQL was also read. `age` is computed from:
+
+- `mimiciv_hosp.admissions.subject_id`, `hadm_id`, and `admittime`;
+- `mimiciv_hosp.patients.subject_id`, `anchor_age`, and `anchor_year`;
+- an `INNER JOIN` on `ad.subject_id = pa.subject_id`;
+- `age = pa.anchor_age + DATETIME_DIFF(ad.admittime, DATETIME(pa.anchor_year, 1, 1, 0, 0, 0), YEAR)`.
+
+Charlson consumes only `age.hadm_id` and the derived `age.age` value from that
+dependency. The dependency's other output columns are not selected by
+Charlson.
+
+## 2. Table and CTE references
+
+### Physical tables
+
+| Schema | Table | SQL location | Alias | Role |
+|---|---|---|---|---|
+| `mimiciv_hosp` | `diagnoses_icd` | `diag` CTE `FROM` | none | ICD diagnosis rows |
+| `mimiciv_hosp` | `admissions` | `com` CTE `FROM` and final `FROM` | `ad` | Admission universe, subject/admission identifiers, and CCI grouping |
+| `mimiciv_hosp` | `patients` | transitive `age.sql` `INNER JOIN` | `pa` | Anchor age/year inputs for the dependency |
+| `mimiciv_derived` | `age` | `ag` CTE `FROM` | none | Dependency providing admission age |
+
+The canonical file spells the physical references with the BigQuery project
+prefix (`physionet-data.mimiciv_hosp...` and
+`physionet-data.mimiciv_derived...`); the schema/table names above are the
+corresponding DAG names. There are no `mimiciv_icu` references.
+
+### CTE references and joins
+
+- `diag`: `FROM mimiciv_hosp.diagnoses_icd`.
+- `com`: `FROM mimiciv_hosp.admissions ad LEFT JOIN diag`.
+- `ag`: `FROM mimiciv_derived.age`.
+- Final query: `FROM mimiciv_hosp.admissions ad LEFT JOIN com LEFT JOIN ag`.
+
+`diag`, `com`, and `ag` are CTEs, not additional physical tables.
+
+## 3. Columns and inferred types
+
+### Direct raw-table columns
+
+#### `mimiciv_hosp.admissions` (`ad`)
+
+| Column | Inferred type | Uses |
+|---|---|---|
+| `subject_id` | `INTEGER` | Final output identifier |
+| `hadm_id` | `INTEGER` | CCI grouping key, both CTE joins, final output/natural key |
+
+`admittime` is not referenced directly by `charlson.sql`; it is consumed by
+the dependency `age.sql` to produce `age.age`.
+
+#### `mimiciv_hosp.diagnoses_icd`
+
+| Column | Inferred type | Uses |
+|---|---|---|
+| `hadm_id` | `INTEGER` | Join to admissions and grouping association |
+| `icd_version` | integer/small integer | Routes `icd_code` into ICD-9 or ICD-10 branch |
+| `icd_code` | string/text | Prefix-tested against every Charlson code set |
+
+#### Transitive raw inputs of `mimiciv_derived.age`
+
+These are inputs of the required dependency, not direct references in
+`charlson.sql`:
+
+| Source table | Column | Inferred type | Dependency use |
+|---|---|---|---|
+| `mimiciv_hosp.admissions` | `subject_id` | `INTEGER` | Inner-join key to `patients` |
+| `mimiciv_hosp.admissions` | `hadm_id` | `INTEGER` | Dependency output admission key |
+| `mimiciv_hosp.admissions` | `admittime` | `TIMESTAMP` | Age calculation time point |
+| `mimiciv_hosp.patients` | `subject_id` | `INTEGER` | Inner-join key |
+| `mimiciv_hosp.patients` | `anchor_age` | integer/small integer | Age calculation |
+| `mimiciv_hosp.patients` | `anchor_year` | integer/small integer | Constructs the reference datetime |
+
+`anchor_year_group` is mentioned in comments in `age.sql` but is not selected
+or referenced by its SQL.
+
+### Intermediate CTE columns
+
+#### `diag`
+
+- `hadm_id`: inherited integer admission key.
+- `icd9_code`: string/text; `icd_code` only when `icd_version = 9`, otherwise
+  `NULL`.
+- `icd10_code`: string/text; `icd_code` only when `icd_version = 10`, otherwise
+  `NULL`.
+
+#### `com`
+
+- `hadm_id`: integer, grouped admission key.
+- The following `MAX(CASE ... THEN 1 ELSE 0 END)` columns are inferred integer
+  flags: `myocardial_infarct`, `congestive_heart_failure`,
+  `peripheral_vascular_disease`, `cerebrovascular_disease`, `dementia`,
+  `chronic_pulmonary_disease`, `rheumatic_disease`, `peptic_ulcer_disease`,
+  `mild_liver_disease`, `diabetes_without_cc`, `diabetes_with_cc`,
+  `paraplegia`, `renal_disease`, `malignant_cancer`,
+  `severe_liver_disease`, `metastatic_solid_tumor`, and `aids`.
+
+#### `ag`
+
+- `hadm_id`: integer.
+- `age`: computed `BIGINT`/integer-valued value, inherited from `mimiciv_derived.age`.
+- `age_score`: integer, generated by the thresholds `age <= 50`,
+  `age <= 60`, `age <= 70`, and `age <= 80`, with fallback `4`.
+
+### Final output columns and types
+
+The oracle manifest confirms all final columns as `INTEGER`; the SQL
+expressions are also integer-valued. Because the final joins are `LEFT JOIN`s,
+the flags/age-derived fields are nullable in the abstract SQL type system if a
+joined row is absent, even though the admissions-backed CTEs normally provide
+matching rows.
+
+| Output column | Expression/source | Type |
+|---|---|---|
+| `subject_id` | `ad.subject_id` | `INTEGER` |
+| `hadm_id` | `ad.hadm_id` | `INTEGER` |
+| `age_score` | `ag.age_score` | `INTEGER` |
+| `myocardial_infarct` | `com.myocardial_infarct` | `INTEGER` |
+| `congestive_heart_failure` | `com.congestive_heart_failure` | `INTEGER` |
+| `peripheral_vascular_disease` | `com.peripheral_vascular_disease` | `INTEGER` |
+| `cerebrovascular_disease` | `com.cerebrovascular_disease` | `INTEGER` |
+| `dementia` | `com.dementia` | `INTEGER` |
+| `chronic_pulmonary_disease` | `com.chronic_pulmonary_disease` | `INTEGER` |
+| `rheumatic_disease` | `com.rheumatic_disease` | `INTEGER` |
+| `peptic_ulcer_disease` | `com.peptic_ulcer_disease` | `INTEGER` |
+| `mild_liver_disease` | `com.mild_liver_disease` | `INTEGER` |
+| `diabetes_without_cc` | `com.diabetes_without_cc` | `INTEGER` |
+| `diabetes_with_cc` | `com.diabetes_with_cc` | `INTEGER` |
+| `paraplegia` | `com.paraplegia` | `INTEGER` |
+| `renal_disease` | `com.renal_disease` | `INTEGER` |
+| `malignant_cancer` | `com.malignant_cancer` | `INTEGER` |
+| `severe_liver_disease` | `com.severe_liver_disease` | `INTEGER` |
+| `metastatic_solid_tumor` | `com.metastatic_solid_tumor` | `INTEGER` |
+| `aids` | `com.aids` | `INTEGER` |
+| `charlson_comorbidity_index` | Weighted integer expression in final `SELECT` | `INTEGER` |
+
+## 4. Filters and row inclusion
+
+There are **no `WHERE` clauses**, no itemid filters, no explicit time window,
+no value constraints, and no code exclusions. Diagnosis code tests occur
+inside `CASE` expressions and change per-admission flags; they do not remove
+diagnosis or admission rows. The only row-inclusion conditions are the joins
+listed below.
+
+The `diag` CTE uses `icd_version = 9` and `icd_version = 10` as CASE
+discriminators. A diagnosis with another/null version produces `NULL` in both
+`icd9_code` and `icd10_code` and cannot satisfy a comorbidity branch.
+
+## 5. Joins
+
+| Query location | Type | Condition | Effect |
+|---|---|---|---|
+| `com` CTE | `LEFT JOIN` | `ad.hadm_id = diag.hadm_id` | Retains every admission in the `com` admission universe; diagnosis absence yields the `ELSE 0` flags |
+| Final query | `LEFT JOIN` | `ad.hadm_id = com.hadm_id` | Retains every row from final `admissions` |
+| Final query | `LEFT JOIN` | `com.hadm_id = ag.hadm_id` | Attaches the age score through the grouped comorbidity key |
+| `age.sql` dependency | `INNER JOIN` | `ad.subject_id = pa.subject_id` | Supplies the dependency's age rows only for admissions with a matching patient |
+
+Charlson's own joins do not use diagnosis date, subject identifier, or an ICU
+stay identifier; the required `age.sql` dependency separately joins on
+`subject_id` as shown in the table.
+
+## 6. Aggregation and score arithmetic
+
+`com` has `GROUP BY ad.hadm_id`. Each disease indicator is a
+`MAX(CASE ... THEN 1 ELSE 0 END)`, so multiple diagnosis rows for one admission
+collapse to a binary presence flag. There are no window functions, `DISTINCT`,
+or other aggregations.
+
+The final score is exactly:
+
+```sql
+age_score
++ myocardial_infarct + congestive_heart_failure
++ peripheral_vascular_disease + cerebrovascular_disease
++ dementia + chronic_pulmonary_disease
++ rheumatic_disease + peptic_ulcer_disease
++ GREATEST(mild_liver_disease, 3 * severe_liver_disease)
++ GREATEST(2 * diabetes_with_cc, diabetes_without_cc)
++ GREATEST(2 * malignant_cancer, 6 * metastatic_solid_tumor)
++ 2 * paraplegia + 2 * renal_disease
++ 6 * aids
+AS charlson_comorbidity_index
+```
+
+Thus severe liver disease supersedes mild liver disease when weighted, diabetes
+with chronic complication supersedes uncomplicated diabetes when weighted,
+malignant cancer/metastatic tumor use the greater weighted branch, paraplegia
+and renal disease have weight 2, and AIDS has weight 6. This describes the SQL
+arithmetic; it is not a clinical interpretation.
+
+## 7. Literal ICD code specification (verbatim)
+
+All sets below filter `mimiciv_hosp.diagnoses_icd.icd_code` through the
+`diag.icd9_code` or `diag.icd10_code` branch, with the corresponding
+`icd_version` discriminator described above. Each set feeds the named `com`
+CTE output column. `BETWEEN` ranges are recorded as ranges exactly as written;
+they are not expanded or normalized.
+
+The exact version discriminators are also source-coded conditions on
+`mimiciv_hosp.diagnoses_icd.icd_version`:
+
+```sql
+CASE WHEN icd_version = 9 THEN icd_code ELSE NULL END AS icd9_code
+CASE WHEN icd_version = 10 THEN icd_code ELSE NULL END AS icd10_code
+```
+
+They feed the intermediate `diag.icd9_code` and `diag.icd10_code` columns,
+which in turn feed all 17 `com` flags and their final columns.
+
+### `com.myocardial_infarct`
+
+Source: `mimiciv_hosp.diagnoses_icd`; feeds `com.myocardial_infarct` and final
+`myocardial_infarct`.
+
+```sql
+SUBSTR(icd9_code, 1, 3) IN ('410', '412')
+SUBSTR(icd10_code, 1, 3) IN ('I21', 'I22')
+SUBSTR(icd10_code, 1, 4) = 'I252'
+```
+
+### `com.congestive_heart_failure`
+
+Source: `mimiciv_hosp.diagnoses_icd`; feeds `com.congestive_heart_failure` and
+final `congestive_heart_failure`.
+
+```sql
+SUBSTR(icd9_code, 1, 3) = '428'
+SUBSTR(icd9_code, 1, 5) IN ('39891', '40201', '40211', '40291', '40401', '40403',
+    '40411', '40413', '40491', '40493')
+SUBSTR(icd9_code, 1, 4) BETWEEN '4254' AND '4259'
+SUBSTR(icd10_code, 1, 3) IN ('I43', 'I50')
+SUBSTR(icd10_code, 1, 4) IN ('I099', 'I110', 'I130', 'I132', 'I255', 'I420',
+    'I425', 'I426', 'I427', 'I428', 'I429', 'P290')
+```
+
+### `com.peripheral_vascular_disease`
+
+Source: `mimiciv_hosp.diagnoses_icd`; feeds `com.peripheral_vascular_disease`
+and final `peripheral_vascular_disease`.
+
+```sql
+SUBSTR(icd9_code, 1, 3) IN ('440', '441')
+SUBSTR(icd9_code, 1, 4) IN ('0930', '4373', '4471', '5571', '5579', 'V434')
+SUBSTR(icd9_code, 1, 4) BETWEEN '4431' AND '4439'
+SUBSTR(icd10_code, 1, 3) IN ('I70', 'I71')
+SUBSTR(icd10_code, 1, 4) IN ('I731', 'I738', 'I739', 'I771', 'I790',
+    'I792', 'K551', 'K558', 'K559', 'Z958', 'Z959')
+```
+
+### `com.cerebrovascular_disease`
+
+Source: `mimiciv_hosp.diagnoses_icd`; feeds `com.cerebrovascular_disease` and
+final `cerebrovascular_disease`.
+
+```sql
+SUBSTR(icd9_code, 1, 3) BETWEEN '430' AND '438'
+SUBSTR(icd9_code, 1, 5) = '36234'
+SUBSTR(icd10_code, 1, 3) IN ('G45', 'G46')
+SUBSTR(icd10_code, 1, 3) BETWEEN 'I60' AND 'I69'
+SUBSTR(icd10_code, 1, 4) = 'H340'
+```
+
+### `com.dementia`
+
+Source: `mimiciv_hosp.diagnoses_icd`; feeds `com.dementia` and final `dementia`.
+
+```sql
+SUBSTR(icd9_code, 1, 3) = '290'
+SUBSTR(icd9_code, 1, 4) IN ('2941', '3312')
+SUBSTR(icd10_code, 1, 3) IN ('F00', 'F01', 'F02', 'F03', 'G30')
+SUBSTR(icd10_code, 1, 4) IN ('F051', 'G311')
+```
+
+### `com.chronic_pulmonary_disease`
+
+Source: `mimiciv_hosp.diagnoses_icd`; feeds `com.chronic_pulmonary_disease` and
+final `chronic_pulmonary_disease`.
+
+```sql
+SUBSTR(icd9_code, 1, 3) BETWEEN '490' AND '505'
+SUBSTR(icd9_code, 1, 4) IN ('4168', '4169', '5064', '5081', '5088')
+SUBSTR(icd10_code, 1, 3) BETWEEN 'J40' AND 'J47'
+SUBSTR(icd10_code, 1, 3) BETWEEN 'J60' AND 'J67'
+SUBSTR(icd10_code, 1, 4) IN ('I278', 'I279', 'J684', 'J701', 'J703')
+```
+
+### `com.rheumatic_disease`
+
+Source: `mimiciv_hosp.diagnoses_icd`; feeds `com.rheumatic_disease` and final
+`rheumatic_disease`.
+
+```sql
+SUBSTR(icd9_code, 1, 3) = '725'
+SUBSTR(icd9_code, 1, 4) IN ('4465', '7100', '7101', '7102', '7103', '7104',
+    '7140', '7141', '7142', '7148')
+SUBSTR(icd10_code, 1, 3) IN ('M05', 'M06', 'M32', 'M33', 'M34')
+SUBSTR(icd10_code, 1, 4) IN ('M315', 'M351', 'M353', 'M360')
+```
+
+### `com.peptic_ulcer_disease`
+
+Source: `mimiciv_hosp.diagnoses_icd`; feeds `com.peptic_ulcer_disease` and final
+`peptic_ulcer_disease`.
+
+```sql
+SUBSTR(icd9_code, 1, 3) IN ('531', '532', '533', '534')
+SUBSTR(icd10_code, 1, 3) IN ('K25', 'K26', 'K27', 'K28')
+```
+
+### `com.mild_liver_disease`
+
+Source: `mimiciv_hosp.diagnoses_icd`; feeds `com.mild_liver_disease` and final
+`mild_liver_disease`.
+
+```sql
+SUBSTR(icd9_code, 1, 3) IN ('570', '571')
+SUBSTR(icd9_code, 1, 4) IN ('0706', '0709', '5733', '5734', '5738', '5739', 'V427')
+SUBSTR(icd9_code, 1, 5) IN ('07022', '07023', '07032', '07033', '07044', '07054')
+SUBSTR(icd10_code, 1, 3) IN ('B18', 'K73', 'K74')
+SUBSTR(icd10_code, 1, 4) IN ('K700', 'K701', 'K702', 'K703', 'K709', 'K713',
+    'K714', 'K715', 'K717', 'K760', 'K762', 'K763', 'K764', 'K768', 'K769',
+    'Z944')
+```
+
+### `com.diabetes_without_cc`
+
+Source: `mimiciv_hosp.diagnoses_icd`; feeds `com.diabetes_without_cc` and final
+`diabetes_without_cc`.
+
+```sql
+SUBSTR(icd9_code, 1, 4) IN ('2500', '2501', '2502', '2503', '2508', '2509')
+SUBSTR(icd10_code, 1, 4) IN ('E100', 'E101', 'E106', 'E108', 'E109', 'E110', 'E111',
+    'E116', 'E118', 'E119', 'E120', 'E121', 'E126', 'E128', 'E129', 'E130',
+    'E131', 'E136', 'E138', 'E139', 'E140', 'E141', 'E146', 'E148', 'E149')
+```
+
+### `com.diabetes_with_cc`
+
+Source: `mimiciv_hosp.diagnoses_icd`; feeds `com.diabetes_with_cc` and final
+`diabetes_with_cc`.
+
+```sql
+SUBSTR(icd9_code, 1, 4) IN ('2504', '2505', '2506', '2507')
+SUBSTR(icd10_code, 1, 4) IN ('E102', 'E103', 'E104', 'E105', 'E107', 'E112', 'E113',
+    'E114', 'E115', 'E117', 'E122', 'E123', 'E124', 'E125', 'E127', 'E132',
+    'E133', 'E134', 'E135', 'E137', 'E142', 'E143', 'E144', 'E145', 'E147')
+```
+
+### `com.paraplegia`
+
+Source: `mimiciv_hosp.diagnoses_icd`; feeds `com.paraplegia` and final
+`paraplegia`.
+
+```sql
+SUBSTR(icd9_code, 1, 3) IN ('342', '343')
+SUBSTR(icd9_code, 1, 4) IN ('3341', '3440', '3441', '3442', '3443', '3444',
+    '3445', '3446', '3449')
+SUBSTR(icd10_code, 1, 3) IN ('G81', 'G82')
+SUBSTR(icd10_code, 1, 4) IN ('G041', 'G114', 'G801', 'G802', 'G830', 'G831',
+    'G832', 'G833', 'G834', 'G839')
+```
+
+### `com.renal_disease`
+
+Source: `mimiciv_hosp.diagnoses_icd`; feeds `com.renal_disease` and final
+`renal_disease`.
+
+```sql
+SUBSTR(icd9_code, 1, 3) IN ('582', '585', '586', 'V56')
+SUBSTR(icd9_code, 1, 4) IN ('5880', 'V420', 'V451')
+SUBSTR(icd9_code, 1, 4) BETWEEN '5830' AND '5837'
+SUBSTR(icd9_code, 1, 5) IN ('40301', '40311', '40391', '40402', '40403', '40412',
+    '40413', '40492', '40493')
+SUBSTR(icd10_code, 1, 3) IN ('N18', 'N19')
+SUBSTR(icd10_code, 1, 4) IN ('I120', 'I131', 'N032', 'N033', 'N034', 'N035',
+    'N036', 'N037', 'N052', 'N053', 'N054', 'N055', 'N056', 'N057', 'N250',
+    'Z490', 'Z491', 'Z492', 'Z940', 'Z992')
+```
+
+### `com.malignant_cancer`
+
+Source: `mimiciv_hosp.diagnoses_icd`; feeds `com.malignant_cancer` and final
+`malignant_cancer`.
+
+```sql
+SUBSTR(icd9_code, 1, 3) BETWEEN '140' AND '172'
+SUBSTR(icd9_code, 1, 4) BETWEEN '1740' AND '1958'
+SUBSTR(icd9_code, 1, 3) BETWEEN '200' AND '208'
+SUBSTR(icd9_code, 1, 4) = '2386'
+SUBSTR(icd10_code, 1, 3) IN ('C43', 'C88')
+SUBSTR(icd10_code, 1, 3) BETWEEN 'C00' AND 'C26'
+SUBSTR(icd10_code, 1, 3) BETWEEN 'C30' AND 'C34'
+SUBSTR(icd10_code, 1, 3) BETWEEN 'C37' AND 'C41'
+SUBSTR(icd10_code, 1, 3) BETWEEN 'C45' AND 'C58'
+SUBSTR(icd10_code, 1, 3) BETWEEN 'C60' AND 'C76'
+SUBSTR(icd10_code, 1, 3) BETWEEN 'C81' AND 'C85'
+SUBSTR(icd10_code, 1, 3) BETWEEN 'C90' AND 'C97'
+```
+
+### `com.severe_liver_disease`
+
+Source: `mimiciv_hosp.diagnoses_icd`; feeds `com.severe_liver_disease` and final
+`severe_liver_disease`.
+
+```sql
+SUBSTR(icd9_code, 1, 4) IN ('4560', '4561', '4562')
+SUBSTR(icd9_code, 1, 4) BETWEEN '5722' AND '5728'
+SUBSTR(icd10_code, 1, 4) IN ('I850', 'I859', 'I864', 'I982', 'K704', 'K711',
+    'K721', 'K729', 'K765', 'K766', 'K767')
+```
+
+### `com.metastatic_solid_tumor`
+
+Source: `mimiciv_hosp.diagnoses_icd`; feeds `com.metastatic_solid_tumor` and
+final `metastatic_solid_tumor`.
+
+```sql
+SUBSTR(icd9_code, 1, 3) IN ('196', '197', '198', '199')
+SUBSTR(icd10_code, 1, 3) IN ('C77', 'C78', 'C79', 'C80')
+```
+
+### `com.aids`
+
+Source: `mimiciv_hosp.diagnoses_icd`; feeds `com.aids` and final `aids`.
+
+```sql
+SUBSTR(icd9_code, 1, 3) IN ('042', '043', '044')
+SUBSTR(icd10_code, 1, 3) IN ('B20', 'B21', 'B22', 'B24')
+```
+
+No itemid, LOINC, CPT, medication, or other coding system is referenced.
+The diagnosis coding systems are selected by `icd_version` values `9` and
+`10`; the code literals above are the complete source SQL specification.
+
+## 8. Temporal logic and natural grain
+
+Charlson itself has no temporal predicate, date column, time window, or
+diagnosis-time ordering. Every diagnosis row linked to an admission contributes
+to that admission's `MAX` flags regardless of diagnosis date because no such
+date is selected or filtered.
+
+The only temporal calculation is inherited through `age`:
+
+```sql
+pa.anchor_age
++ DATETIME_DIFF(
+    ad.admittime,
+    DATETIME(pa.anchor_year, 1, 1, 0, 0, 0),
+    YEAR
+  ) AS age
+```
+
+`ag.age_score` then uses the inclusive ordered thresholds:
+
+```sql
+CASE WHEN age <= 50 THEN 0
+     WHEN age <= 60 THEN 1
+     WHEN age <= 70 THEN 2
+     WHEN age <= 80 THEN 3
+     ELSE 4 END
+```
+
+The natural grain is **one row per hospital admission (`hadm_id`)**. The
+manifest records `hadm_id` as the single natural key and 431,231 output rows.
+`subject_id` is also emitted, but is not the manifest key. `com` aggregates
+diagnoses to this grain and the final query is driven by `admissions`.
+
+## 9. Semantically essential inputs
+
+The following inputs can change inclusion, identity, grouping, age carry-forward
+(there is no temporal carry-forward here), or a clinically meaningful derived
+value:
+
+| Input | Branch/output controlled |
+|---|---|
+| `admissions.hadm_id` | Output natural key; `com` grouping; diagnosis and age joins; every row's admission identity |
+| `admissions.subject_id` | Final `subject_id` output; source patient identity associated with the admission |
+| `diagnoses_icd.hadm_id` | Associates each diagnosis with an admission and therefore controls which grouped row can receive a flag |
+| `diagnoses_icd.icd_version` | Selects `icd9_code` versus `icd10_code` in `diag`; controls which exact code branch is eligible |
+| `diagnoses_icd.icd_code` | Prefix/length tests controlling all 17 comorbidity flags and, through them, `charlson_comorbidity_index` |
+| `age.hadm_id` | Controls whether the dependency row joins to `ag.age_score` |
+| `age.age` | Controls `age_score` and therefore the final index through the four age thresholds |
+| Dependency inputs `admittime`, `anchor_age`, `anchor_year` | Control the value of `age.age`, hence age score and final index; `age.sql` also needs both `subject_id` columns for its inner join |
+
+For the diagnosis branches, each of the 17 flags is independently controlled
+by its corresponding literal set above. The weighted score additionally
+depends on the `GREATEST` branch selection and the integer weights in the final
+expression. A missing diagnosis row does not remove an admission; because of
+the `LEFT JOIN` and `ELSE 0`, it contributes zero-valued flags. A missing age
+dependency row can leave the age score and final arithmetic null.
+
+The cross-concept notes report that the served FHIR `Patient.birthDate` is
+synthesized from earliest transfer time rather than exactly from the source
+`anchor_year`/`anchor_age` pair, and that the resulting age divergence is
+inherited by age consumers including `charlson`. This is an upstream
+representability fact to carry forward; it is not a change to this source SQL
+analysis and is not a resource-ID inversion proposal.
+
+## 10. Evidence read and checks
+
+Read and checked:
+
+- `mimic-iv/concept_dag/concept_dag.json` — `charlson` path, level 1,
+  dependency `age`, external tables, and stored SHA256.
+- `mimic-iv/concepts/comorbidity/charlson.sql` — all CTEs, joins, columns,
+  predicates, code literals, aggregation, score arithmetic, and final output.
+- `mimic-iv/concepts/demographics/age.sql` — required dependency source
+  tables, columns, inner join, and age calculation.
+- `mimic-iv/concepts_fhir/carryover/age/source-analyst.md` and
+  `mimic-iv/concepts_fhir/carryover/age/fhir-prober.md` — reusable dependency
+  analysis and previously observed mapping evidence.
+- `mimic-iv/concepts_fhir/MIMIC_NOTES.md` — ICD/Condition coding behavior,
+  stale raw NDJSON warning, identifier policy, and the age-derived concept
+  representability note.
+- `mimic-iv/concepts_fhir/MIMIC_NOTES.d/README.md` and a keyword check across
+  `MIMIC_NOTES.d/*.md` — no Charlson-specific note fragment was present; no
+  additional relevant fragment altered this source-side analysis.
+- `mimic-iv/concepts_fhir/LOOP_CONTRACT.md` — inherited age divergence note.
+- `mimic-iv/concepts_fhir/oracle/oracle_manifest.full.json` — final INTEGER
+  schema, `hadm_id` key, and row-grain metadata.
+
+`uv run mimic_utils concept_dag --check` completed successfully with
+`DAG matches stored artifacts (JSON + Markdown)`.
+
+**Carryover artifact:** `mimic-iv/concepts_fhir/carryover/charlson/source-analyst.md`
