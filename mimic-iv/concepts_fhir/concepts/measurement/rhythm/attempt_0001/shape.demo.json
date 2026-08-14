@@ -1,0 +1,44 @@
+{
+  "candidate": "/Users/nau025/Documents/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/rhythm/attempt_0001/candidate.demo.parquet/*.parquet",
+  "candidate_row_count": 12437,
+  "concept": "rhythm",
+  "dataset": "demo",
+  "executed": true,
+  "format_version": "2.0",
+  "gated": [
+    "execution",
+    "column_names",
+    "column_types"
+  ],
+  "mode": "shape",
+  "not_gated": [
+    "row_count"
+  ],
+  "note": "Shape is correct. This earns permission to spend an HPC run; it is not evidence of correctness.",
+  "oracle_full_row_count": 5873723,
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "charttime",
+      "heart_rhythm",
+      "ectopy_type",
+      "ectopy_frequency",
+      "ectopy_type_secondary",
+      "ectopy_frequency_secondary"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "charttime",
+      "heart_rhythm",
+      "ectopy_type",
+      "ectopy_frequency",
+      "ectopy_type_secondary",
+      "ectopy_frequency_secondary"
+    ],
+    "extra_columns": [],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": []
+  },
+  "verdict": "shape_ok"
+}
