@@ -1,0 +1,8 @@
+{
+  "concept": "icustay_detail",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "30072022",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/demographics/icustay_detail/attempt_0004",
+  "submitted_at": "2026-08-17T06:35:27.355881+00:00",
+  "walltime": "2:00:00"
+}
