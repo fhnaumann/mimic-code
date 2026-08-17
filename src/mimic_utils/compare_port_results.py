@@ -225,6 +225,7 @@ import argparse
 import glob
 import json
 import logging
+import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
@@ -967,6 +968,35 @@ def _candidate_columns(con: Any, scan: str) -> Dict[str, str]:
 
 _ID_COLUMNS = frozenset({"subject_id", "hadm_id", "stay_id"})
 
+# Every MIMIC identifier column a concept emits must be accompanied by the FHIR
+# resource key of the resource that identifier came off. Downstream SQL-on-FHIR
+# consumers join derived tables on `getResourceKey()` and never on the integers,
+# so a table without the key is unusable to them -- and unusably *silently*, as
+# an empty join rather than an error.
+#
+# Required, not merely permitted. The keys are computed inside every port
+# already (they are the join spine between the ViewDefinitions); the failure
+# mode this guards is dropping them at the outermost SELECT, which is what all
+# 36 first-generation ports did because the mapping docs told them to. A
+# whitelist would leave that outcome legal. See
+# `mimic-iv/concepts_fhir/TODO_reopen_resource_keys.md`.
+_ID_TO_KEY = {
+    "subject_id": "patient_key",
+    "hadm_id": "encounter_key",
+    "stay_id": "icu_encounter_key",
+    "specimen_id": "specimen_key",
+}
+
+_KEY_COLUMNS = frozenset(_ID_TO_KEY.values())
+
+_KEY_TO_ID = {key: identifier for identifier, key in _ID_TO_KEY.items()}
+
+# `getResourceKey()` returns the type-prefixed form -- `Patient/0a8eebfd-...` --
+# in every position, as a primary key and as a reference key alike, which is
+# what makes the two join. The bare UUID is `.id`, a different value that joins
+# to nothing. Both are VARCHAR, so only the value shape tells them apart.
+_RE_RESOURCE_KEY = re.compile(r"^[A-Za-z]+/.+")
+
 
 def _schema_hints(incompatible: Sequence[Dict[str, str]]) -> list[str]:
     """Name the known cause of a type mismatch, where there is exactly one.
@@ -1007,14 +1037,29 @@ def _schema_hints(incompatible: Sequence[Dict[str, str]]) -> list[str]:
 
 
 def _compare_schemas(
-    expected: Sequence[Dict[str, str]], actual: Dict[str, str]
+    expected: Sequence[Dict[str, str]],
+    actual: Dict[str, str],
+    required_keys: Optional[Sequence[str]] = None,
 ) -> Dict[str, Any]:
-    """Column name and type comparison against the manifest."""
+    """Column name and type comparison against the manifest.
+
+    *required_keys* is the concept's declared ``key_columns`` -- the FHIR
+    resource keys its output must carry beside the MIMIC identifiers. Declared
+    in the manifest rather than inferred here, because the manifest is what an
+    agent reads to learn the target shape (LOOP_CONTRACT.md, "The oracle is
+    computed once"), and the whole reason the first 36 ports shipped without
+    keys is that the requirement lived only in prose.
+    """
     expected_names = [c["name"] for c in expected]
     expected_types = {c["name"]: c["type"] for c in expected}
+    required_keys = sorted(required_keys or ())
 
     missing = [n for n in expected_names if n not in actual]
     extra = [n for n in actual if n not in expected_types]
+    # A resource key is an expected extra, so it is not a shape violation; any
+    # other extra column still is.
+    unexpected = [n for n in extra if n not in _KEY_COLUMNS]
+    missing_keys = [k for k in required_keys if k not in actual]
 
     incompatible = []
     for name in expected_names:
@@ -1026,15 +1071,134 @@ def _compare_schemas(
     result: Dict[str, Any] = {
         "expected_columns": expected_names,
         "actual_columns": list(actual),
+        "required_key_columns": required_keys,
         "missing_columns": missing,
         "extra_columns": extra,
+        "unexpected_columns": unexpected,
+        "missing_key_columns": missing_keys,
         "incompatible_types": incompatible,
-        "match": not missing and not extra and not incompatible,
+        "match": not missing
+        and not unexpected
+        and not missing_keys
+        and not incompatible,
     }
     hints = _schema_hints(incompatible)
+    if missing_keys:
+        hints.append(
+            f"missing resource key column(s) {', '.join(missing_keys)}. Every "
+            f"MIMIC identifier column carries a paired FHIR resource key: "
+            f"subject_id+patient_key, hadm_id+encounter_key, "
+            f"stay_id+icu_encounter_key, specimen_id+specimen_key. The key is "
+            f"already computed as the join spine between the ViewDefinitions -- "
+            f"project it verbatim from getResourceKey() on the resource's own "
+            f"view, uncast. See the `fhir-mapping` skill, 'Identifier spine'."
+        )
     if hints:
         result["hints"] = hints
     return result
+
+
+def _check_key_prefixes(con: Any, scan: str, keys: Sequence[str]) -> list[Dict[str, str]]:
+    """Resource keys that are not in the ``Type/id`` form ``getResourceKey()`` emits.
+
+    A bare UUID passes both the name check and the type check -- it is a VARCHAR
+    called ``patient_key`` -- and then joins to nothing downstream, silently, as
+    zero rows.  The only thing that separates it from a real resource key is the
+    prefix, so the prefix is what gets asserted.
+
+    Sampled rather than exhaustive: this is a shape gate, and one malformed
+    value in a column is the whole column's construction being wrong, not a data
+    quirk.
+    """
+    malformed: list[Dict[str, str]] = []
+    for key in keys:
+        try:
+            row = con.execute(
+                f"SELECT {key} FROM {scan} WHERE {key} IS NOT NULL LIMIT 1"
+            ).fetchone()
+        except Exception:  # noqa: BLE001 -- absence is the schema check's finding
+            continue
+        if row is None or row[0] is None:
+            continue
+        value = str(row[0])
+        if not _RE_RESOURCE_KEY.match(value):
+            malformed.append(
+                {
+                    "column": key,
+                    "sample": value[:64],
+                    "reason": (
+                        "not the Type/id form getResourceKey() returns. A bare "
+                        "UUID is Resource.id, which joins to nothing. Project "
+                        "getResourceKey() verbatim and do not strip the prefix."
+                    ),
+                }
+            )
+    return malformed
+
+
+def _check_key_alignment(
+    con: Any, scan: str, keys: Sequence[str], actual: Dict[str, str]
+) -> list[Dict[str, Any]]:
+    """Resource keys that do not stand in 1:1 correspondence with their identifier.
+
+    The comparator never compares a key column -- keys are absent from the
+    oracle, so both diff paths project the manifest's ``columns`` and skip them.
+    That leaves the whole key contract unverified on full data by everything
+    else in the loop: a key joined off the wrong resource, or picked by a
+    ``MAX()`` over a group that was not as constant as assumed, produces a
+    well-named, well-typed, correctly-prefixed column carrying the wrong value.
+    Nothing downstream would report it either -- it joins, just to the wrong row.
+
+    The invariant is exact rather than statistical. Each key is
+    ``uuid_generate_v5(<type namespace>, <identifier>)``, so the mapping is a
+    bijection: within the rows where both are present, one identifier has one
+    key and one key has one identifier.
+
+    Restricted to rows where **both** are non-NULL, which is what makes it safe
+    to gate. A port may legitimately hold a key without its identifier -- an
+    Encounter view unfiltered by ``identifier.system`` yields a key for the ICU
+    and ED streams while ``hadm_id_str`` is NULL there -- so comparing whole-
+    column distinct counts would false-reject that shape. Pair cardinality does
+    not care.
+    """
+    misaligned: list[Dict[str, Any]] = []
+    for key in keys:
+        id_column = _KEY_TO_ID.get(key)
+        # `patient_key` on a concept with no `subject_id` (kdigo_creatinine) has
+        # nothing to align against. Presence and prefix are already checked.
+        if id_column is None or id_column not in actual or key not in actual:
+            continue
+        try:
+            row = con.execute(
+                f"SELECT count(DISTINCT {id_column}), count(DISTINCT {key}), count(*) "
+                f"FROM (SELECT DISTINCT {id_column}, {key} FROM {scan} "
+                f"WHERE {id_column} IS NOT NULL AND {key} IS NOT NULL)"
+            ).fetchone()
+        except Exception:  # noqa: BLE001 -- absence is the schema check's finding
+            continue
+        if row is None:
+            continue
+        ids, ks, pairs = int(row[0]), int(row[1]), int(row[2])
+        if ids == pairs and ks == pairs:
+            continue
+        misaligned.append(
+            {
+                "column": key,
+                "identifier": id_column,
+                "distinct_identifiers": ids,
+                "distinct_keys": ks,
+                "distinct_pairs": pairs,
+                "reason": (
+                    f"{id_column} and {key} are not 1:1 over the rows where both "
+                    f"are present: {ids} identifier(s) and {ks} key(s) span "
+                    f"{pairs} distinct pair(s). The ETL derives the key from the "
+                    f"identifier, so this cannot happen in the served data -- the "
+                    f"key is joined off the wrong resource, or selected by an "
+                    f"aggregate over a group in which it is not constant."
+                ),
+            }
+        )
+    return misaligned
 
 
 # ---------------------------------------------------------------------------
@@ -1289,7 +1453,9 @@ def compare_shape(
         # still gets its columns checked -- the verdict is `unsure` either way,
         # because row count is never a demo gate.
         if row_count == 0:
-            result["schema"] = _compare_schemas(entry["columns"], actual)
+            result["schema"] = _compare_schemas(
+            entry["columns"], actual, entry.get("key_columns")
+        )
             result["verdict"] = "unsure"
             result["note"] = (
                 "0 demo rows: the 100-patient cohort may legitimately contain "
@@ -1297,7 +1463,20 @@ def compare_shape(
             )
             return result
 
-        result["schema"] = _compare_schemas(entry["columns"], actual)
+        result["schema"] = _compare_schemas(
+            entry["columns"], actual, entry.get("key_columns")
+        )
+        present_keys = [
+            k for k in result["schema"]["required_key_columns"] if k in actual
+        ]
+        malformed = _check_key_prefixes(con, scan, present_keys)
+        if malformed:
+            result["schema"]["malformed_key_columns"] = malformed
+            result["schema"]["match"] = False
+        misaligned = _check_key_alignment(con, scan, present_keys, actual)
+        if misaligned:
+            result["schema"]["misaligned_key_columns"] = misaligned
+            result["schema"]["match"] = False
         if not result["schema"]["match"]:
             result["verdict"] = "shape_fail"
         else:
@@ -2089,7 +2268,21 @@ def compare_full(
                 f"{entry['row_count']}: the manifest is stale relative to this oracle."
             )
 
-        result["schema"] = _compare_schemas(entry["columns"], actual)
+        result["schema"] = _compare_schemas(
+            entry["columns"], actual, entry.get("key_columns")
+        )
+        if candidate_rows:
+            present_keys = [
+                k for k in result["schema"]["required_key_columns"] if k in actual
+            ]
+            malformed = _check_key_prefixes(con, scan, present_keys)
+            if malformed:
+                result["schema"]["malformed_key_columns"] = malformed
+                result["schema"]["match"] = False
+            misaligned = _check_key_alignment(con, scan, present_keys, actual)
+            if misaligned:
+                result["schema"]["misaligned_key_columns"] = misaligned
+                result["schema"]["match"] = False
 
         # A keyed join across mismatched columns yields noise, not a diagnosis.
         if not result["schema"]["match"]:
@@ -2814,7 +3007,14 @@ def report_verdict(result: Dict[str, Any]) -> int:
     if result.get("error"):
         logging.warning("  error: %s", result["error"])
     schema = result.get("schema") or {}
-    for field in ("missing_columns", "extra_columns", "incompatible_types"):
+    for field in (
+        "missing_columns",
+        "unexpected_columns",
+        "missing_key_columns",
+        "malformed_key_columns",
+        "misaligned_key_columns",
+        "incompatible_types",
+    ):
         if schema.get(field):
             logging.warning("  %s: %s", field, schema[field])
     return EXIT_UNSURE if verdict == "review" else EXIT_FAIL

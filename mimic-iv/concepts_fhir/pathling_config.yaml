@@ -1,0 +1,44 @@
+# Per-environment Pathling-server config for `mimic_utils register-derived-concepts`.
+#
+# Deliberately the same shape as config/pathling_config.yaml in the thesis
+# pipeline repo, so one mental model covers both.
+#
+# `active_environment` selects ONE block for the whole run; override it with the
+# ACTIVE_PATHLING_ENV env var or the `--env` flag. Every block needs a
+# `base_url`. `token_url` is the auth switch: omit it (or leave it blank) for an
+# auth-off server -- `local` below -- and the other OAuth fields may be omitted
+# too; the client then sends no Authorization header. Set `token_url` (as in
+# `prod`) to turn auth on, which additionally requires `client_id`, `scopes` and
+# a `client_secret`. Only the ACTIVE environment is validated, so inactive
+# blocks may stay blank or partial.
+#
+# The OAuth2 `client_secret` is Jinja-interpolated from an env var and is the
+# only secret in the file. It is read from the process environment or from a
+# `.env` at the repo root; nothing else here is interpolated.
+#
+# `verify_tls` is the explicit TLS trust configuration -- true (the default)
+# verifies against the system trust store, false accepts a self-signed
+# certificate, and a string is a CA bundle path. The bundle path is
+# Jinja-interpolated like the secret rather than committed, since it is
+# machine-local; an unset CSIRO_CA_BUNDLE renders blank and falls back to the
+# system trust store (it does NOT disable verification).
+
+active_environment: local
+
+environments:
+  local:
+    base_url: http://localhost:8080/fhir/
+
+  prod:
+    # Must be the instance whose /fhir/.well-known/smart-configuration names the
+    # same issuer as `token_url`. pathling.dw.csiro.au is a DIFFERENT tenant
+    # (pathling-dev-internal); a pathling-mimic-iv token fails JWKS lookup
+    # there and the server answers with a bare `invalid_token` 401.
+    base_url: https://pathling-mimic-iv.dw.csiro.au/fhir/
+    token_url: https://signet.dw.csiro.au/t/pathling/e/pathling-mimic-iv/token
+    client_id: fhnaumann-pipeline
+    scopes:
+      - openid system/*.*
+    client_secret: "{{ PATHLING_PROD_SECRET | default('') }}"
+    # *.dw.csiro.au chains to a CSIRO CA that certifi does not carry.
+    verify_tls: "{{ CSIRO_CA_BUNDLE | default('') }}"

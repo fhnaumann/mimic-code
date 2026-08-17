@@ -57,6 +57,16 @@ count, columns and types, the natural key, and an order-independent content hash
 An agent reads the manifest to learn the target shape without touching the 14.5 GB
 oracle.
 
+It also carries `key_columns`, which is the one field describing the **candidate**
+rather than the oracle: the FHIR resource keys the port must emit beside its MIMIC
+identifier columns, for the downstream SQL-on-FHIR consumers that join on
+`getResourceKey()` and cannot use the integers. The oracle has no such column, so
+these are never compared as values — they are checked for presence and for the
+`Type/id` value shape by the schema gate, and both comparison paths project the
+manifest's `columns` explicitly, so a key can never enter a diff. The requirement
+lives here rather than in prose because prose already failed at it once: see
+`TODO_reopen_resource_keys.md`.
+
 ## Comparison method
 
 Keyed row-level diff, executed as DuckDB SQL. Never materialise rows into Python —

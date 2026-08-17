@@ -1,0 +1,45 @@
+{
+  "resourceType": "Library",
+  "id": "rhythm",
+  "url": "https://fhnaumann.masters/pathling/Library/rhythm",
+  "version": "3",
+  "name": "rhythm",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "rhythm_encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/rhythm-rhythm_encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "rhythm_observation",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/rhythm-rhythm_observation"
+    },
+    {
+      "type": "depends-on",
+      "label": "rhythm_patient",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/rhythm-rhythm_patient"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH observation_rows AS (\n    SELECT\n        o.patient_key,\n        o.encounter_key,\n        o.effective_datetime,\n        o.item_code,\n        o.item_system,\n        o.value_string\n    FROM rhythm_observation o\n    WHERE o.item_system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items'\n        AND o.item_code IN ('220048', '224650', '224651', '226479', '226480')\n), typed_rows AS (\n    SELECT\n        p.subject_id_str,\n        p.patient_key,\n        TRY_CAST(o.effective_datetime AS TIMESTAMP_NTZ) AS charttime,\n        o.item_code,\n        o.value_string\n    FROM observation_rows o\n    INNER JOIN rhythm_patient p\n        ON o.patient_key = p.patient_key\n    INNER JOIN rhythm_encounter e\n        ON o.encounter_key = e.encounter_key\n    WHERE e.stay_id_str IS NOT NULL\n), pivoted AS (\n    SELECT\n        subject_id_str,\n        charttime,\n        MAX(patient_key) AS patient_key,\n        CASE\n            WHEN COUNT(CASE WHEN item_code = '220048' AND value_string IS NOT NULL THEN 1 END) = 0\n                THEN NULL\n            ELSE concat_ws(\n                '; ',\n                sort_array(collect_set(\n                    CASE WHEN item_code = '220048' THEN value_string END\n                ))\n            )\n        END AS heart_rhythm,\n        MAX(CASE WHEN item_code = '224650' THEN value_string END) AS ectopy_type,\n        MAX(CASE WHEN item_code = '224651' THEN value_string END) AS ectopy_frequency,\n        MAX(CASE WHEN item_code = '226479' THEN value_string END) AS ectopy_type_secondary,\n        MAX(CASE WHEN item_code = '226480' THEN value_string END) AS ectopy_frequency_secondary\n    FROM typed_rows\n    GROUP BY subject_id_str, charttime\n)\nSELECT\n    patient_key,\n    CAST(charttime AS TIMESTAMP_NTZ) AS charttime,\n    CAST(heart_rhythm AS VARCHAR(255)) AS heart_rhythm,\n    CAST(ectopy_type AS VARCHAR(255)) AS ectopy_type,\n    CAST(ectopy_frequency AS VARCHAR(255)) AS ectopy_frequency,\n    CAST(ectopy_type_secondary AS VARCHAR(255)) AS ectopy_type_secondary,\n    CAST(ectopy_frequency_secondary AS VARCHAR(255)) AS ectopy_frequency_secondary\nFROM pivoted;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBvYnNlcnZhdGlvbl9yb3dzIEFTICgKICAgIFNFTEVDVAogICAgICAgIG8ucGF0aWVudF9rZXksCiAgICAgICAgby5lbmNvdW50ZXJfa2V5LAogICAgICAgIG8uZWZmZWN0aXZlX2RhdGV0aW1lLAogICAgICAgIG8uaXRlbV9jb2RlLAogICAgICAgIG8uaXRlbV9zeXN0ZW0sCiAgICAgICAgby52YWx1ZV9zdHJpbmcKICAgIEZST00gcmh5dGhtX29ic2VydmF0aW9uIG8KICAgIFdIRVJFIG8uaXRlbV9zeXN0ZW0gPSAnaHR0cDovL21pbWljLm1pdC5lZHUvZmhpci9taW1pYy9Db2RlU3lzdGVtL21pbWljLWNoYXJ0ZXZlbnRzLWQtaXRlbXMnCiAgICAgICAgQU5EIG8uaXRlbV9jb2RlIElOICgnMjIwMDQ4JywgJzIyNDY1MCcsICcyMjQ2NTEnLCAnMjI2NDc5JywgJzIyNjQ4MCcpCiksIHR5cGVkX3Jvd3MgQVMgKAogICAgU0VMRUNUCiAgICAgICAgcC5zdWJqZWN0X2lkX3N0ciwKICAgICAgICBwLnBhdGllbnRfa2V5LAogICAgICAgIFRSWV9DQVNUKG8uZWZmZWN0aXZlX2RhdGV0aW1lIEFTIFRJTUVTVEFNUF9OVFopIEFTIGNoYXJ0dGltZSwKICAgICAgICBvLml0ZW1fY29kZSwKICAgICAgICBvLnZhbHVlX3N0cmluZwogICAgRlJPTSBvYnNlcnZhdGlvbl9yb3dzIG8KICAgIElOTkVSIEpPSU4gcmh5dGhtX3BhdGllbnQgcAogICAgICAgIE9OIG8ucGF0aWVudF9rZXkgPSBwLnBhdGllbnRfa2V5CiAgICBJTk5FUiBKT0lOIHJoeXRobV9lbmNvdW50ZXIgZQogICAgICAgIE9OIG8uZW5jb3VudGVyX2tleSA9IGUuZW5jb3VudGVyX2tleQogICAgV0hFUkUgZS5zdGF5X2lkX3N0ciBJUyBOT1QgTlVMTAopLCBwaXZvdGVkIEFTICgKICAgIFNFTEVDVAogICAgICAgIHN1YmplY3RfaWRfc3RyLAogICAgICAgIGNoYXJ0dGltZSwKICAgICAgICBNQVgocGF0aWVudF9rZXkpIEFTIHBhdGllbnRfa2V5LAogICAgICAgIENBU0UKICAgICAgICAgICAgV0hFTiBDT1VOVChDQVNFIFdIRU4gaXRlbV9jb2RlID0gJzIyMDA0OCcgQU5EIHZhbHVlX3N0cmluZyBJUyBOT1QgTlVMTCBUSEVOIDEgRU5EKSA9IDAKICAgICAgICAgICAgICAgIFRIRU4gTlVMTAogICAgICAgICAgICBFTFNFIGNvbmNhdF93cygKICAgICAgICAgICAgICAgICc7ICcsCiAgICAgICAgICAgICAgICBzb3J0X2FycmF5KGNvbGxlY3Rfc2V0KAogICAgICAgICAgICAgICAgICAgIENBU0UgV0hFTiBpdGVtX2NvZGUgPSAnMjIwMDQ4JyBUSEVOIHZhbHVlX3N0cmluZyBFTkQKICAgICAgICAgICAgICAgICkpCiAgICAgICAgICAgICkKICAgICAgICBFTkQgQVMgaGVhcnRfcmh5dGhtLAogICAgICAgIE1BWChDQVNFIFdIRU4gaXRlbV9jb2RlID0gJzIyNDY1MCcgVEhFTiB2YWx1ZV9zdHJpbmcgRU5EKSBBUyBlY3RvcHlfdHlwZSwKICAgICAgICBNQVgoQ0FTRSBXSEVOIGl0ZW1fY29kZSA9ICcyMjQ2NTEnIFRIRU4gdmFsdWVfc3RyaW5nIEVORCkgQVMgZWN0b3B5X2ZyZXF1ZW5jeSwKICAgICAgICBNQVgoQ0FTRSBXSEVOIGl0ZW1fY29kZSA9ICcyMjY0NzknIFRIRU4gdmFsdWVfc3RyaW5nIEVORCkgQVMgZWN0b3B5X3R5cGVfc2Vjb25kYXJ5LAogICAgICAgIE1BWChDQVNFIFdIRU4gaXRlbV9jb2RlID0gJzIyNjQ4MCcgVEhFTiB2YWx1ZV9zdHJpbmcgRU5EKSBBUyBlY3RvcHlfZnJlcXVlbmN5X3NlY29uZGFyeQogICAgRlJPTSB0eXBlZF9yb3dzCiAgICBHUk9VUCBCWSBzdWJqZWN0X2lkX3N0ciwgY2hhcnR0aW1lCikKU0VMRUNUCiAgICBwYXRpZW50X2tleSwKICAgIENBU1QoY2hhcnR0aW1lIEFTIFRJTUVTVEFNUF9OVFopIEFTIGNoYXJ0dGltZSwKICAgIENBU1QoaGVhcnRfcmh5dGhtIEFTIFZBUkNIQVIoMjU1KSkgQVMgaGVhcnRfcmh5dGhtLAogICAgQ0FTVChlY3RvcHlfdHlwZSBBUyBWQVJDSEFSKDI1NSkpIEFTIGVjdG9weV90eXBlLAogICAgQ0FTVChlY3RvcHlfZnJlcXVlbmN5IEFTIFZBUkNIQVIoMjU1KSkgQVMgZWN0b3B5X2ZyZXF1ZW5jeSwKICAgIENBU1QoZWN0b3B5X3R5cGVfc2Vjb25kYXJ5IEFTIFZBUkNIQVIoMjU1KSkgQVMgZWN0b3B5X3R5cGVfc2Vjb25kYXJ5LAogICAgQ0FTVChlY3RvcHlfZnJlcXVlbmN5X3NlY29uZGFyeSBBUyBWQVJDSEFSKDI1NSkpIEFTIGVjdG9weV9mcmVxdWVuY3lfc2Vjb25kYXJ5CkZST00gcGl2b3RlZDsK"
+    }
+  ]
+}

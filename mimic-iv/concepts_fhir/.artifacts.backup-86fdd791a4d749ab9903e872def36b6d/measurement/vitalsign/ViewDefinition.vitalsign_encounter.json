@@ -1,0 +1,32 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/vitalsign-vitalsign_encounter",
+  "name": "vitalsign_encounter",
+  "resource": "Encounter",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "encounter_key"
+        },
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_key"
+        }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu')",
+      "column": [
+        {
+          "path": "value",
+          "name": "stay_id_str"
+        }
+      ]
+    }
+  ],
+  "id": "vitalsign-vitalsign-encounter",
+  "version": "1"
+}

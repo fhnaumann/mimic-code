@@ -78,6 +78,55 @@ def _export_oracle_command(**kwargs) -> int:
         return 1
 
 
+def _register_derived_concepts_command(**kwargs) -> int:
+    """Dispatch for ``mimic_utils register-derived-concepts``.
+
+    Imports inside the function so that the whole CLI keeps working on a machine
+    with none of the ``upload`` extras installed -- the same reason the embedded
+    Pathling runner is gated.  Exit codes: 2 for anything that stops the run
+    before it starts, 1 for a failed write or a read-back mismatch, 0 otherwise.
+    """
+    import logging
+
+    try:
+        from mimic_utils.artifact_upload import (
+            RegistrationError,
+            register_derived_concepts,
+        )
+        from mimic_utils.pathling_config import ConfigError
+    except ImportError as exc:
+        logging.error(
+            "register-derived-concepts needs the upload extras: "
+            "pip install -e '.[upload]' (%s)", exc,
+        )
+        return 2
+
+    concepts = kwargs.get("concepts") or ()
+    every = kwargs.get("every", False)
+    if not concepts and not every:
+        logging.error("name at least one concept, or pass --all")
+        return 2
+    if concepts and every:
+        logging.error("--all registers everything; do not also name concepts")
+        return 2
+
+    try:
+        return register_derived_concepts(
+            concepts,
+            every=every,
+            env_name=kwargs.get("env_name"),
+            config_path=kwargs.get("config_path"),
+            artifact_root=kwargs.get("artifact_root"),
+            dry_run=kwargs.get("dry_run", False),
+        )
+    except ConfigError as exc:
+        logging.error("cannot reach a Pathling server: %s", exc)
+        return 2
+    except RegistrationError as exc:
+        logging.error("registration failed: %s", exc)
+        return 1
+
+
 def _compare_port_results_command(**kwargs) -> int:
     """Dispatch for ``mimic_utils compare-port-results``.
 
@@ -555,6 +604,54 @@ def main():
     manifest_parser.add_argument("--threads", type=int, default=8)
     manifest_parser.add_argument("--memory-limit", default="16GB")
     manifest_parser.set_defaults(func=_oracle_manifest_command)
+
+    register_parser = subparsers.add_parser(
+        "register-derived-concepts",
+        help="Upload exported concept artifacts to a Pathling server so they can be "
+             "referenced by name.",
+        description=(
+            "Register exported concept bundles (ViewDefinitions + Library) on a "
+            "SQL-on-FHIR server.\n\n"
+            "Only concepts present in the artifact directory can be registered; "
+            "export-mappings withholds any port that still projects a MIMIC "
+            "identifier. Dependencies are pulled in and uploaded first.\n\n"
+            "Writes are idempotent PUTs by id, so re-running is always safe. Every "
+            "resource is read back and compared; a mismatch is fatal. Each concept is "
+            "then smoke-tested, and a smoke failure is reported loudly but does NOT "
+            "fail the command -- registering a view and executing one are different "
+            "things, and two known upstream Pathling bugs currently break execution "
+            "for some correctly-registered concepts."
+        ),
+        formatter_class=RawDescriptionHelpFormatter,
+    )
+    register_parser.add_argument(
+        "concepts", nargs="*", metavar="CONCEPT",
+        help="Concept stems to register (e.g. age charlson). Dependencies are added "
+             "automatically. Omit and pass --all to register everything ready.",
+    )
+    register_parser.add_argument(
+        "--all", dest="every", action="store_true", default=False,
+        help="Register every concept in the artifact directory.",
+    )
+    register_parser.add_argument(
+        "--env", dest="env_name", default=None, metavar="NAME",
+        help="Environment from pathling_config.yaml (e.g. local, prod). Overrides "
+             "ACTIVE_PATHLING_ENV and the file's active_environment.",
+    )
+    register_parser.add_argument(
+        "--config", dest="config_path", default=None, metavar="PATH",
+        help="Pathling config path (default: mimic-iv/concepts_fhir/pathling_config.yaml).",
+    )
+    register_parser.add_argument(
+        "--artifact-root", dest="artifact_root", default=None, metavar="DIR",
+        help="Artifact directory (default: mimic-iv/concepts_fhir/artifacts).",
+    )
+    register_parser.add_argument(
+        "--dry-run", dest="dry_run", action="store_true", default=False,
+        help="Print the resolved target and the resources that would be sent, then "
+             "stop. Writes nothing and requests no token.",
+    )
+    register_parser.set_defaults(func=_register_derived_concepts_command)
 
     # -- conversion-loop commands (concept state machine + DB preflight) ----
     _register_conversion_commands(subparsers)

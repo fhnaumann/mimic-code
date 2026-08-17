@@ -1,0 +1,64 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/oxygen_delivery-oxygen_delivery_observation",
+  "name": "oxygen_delivery_observation",
+  "resource": "Observation",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "observation_key"
+        },
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_key"
+        },
+        {
+          "path": "encounter.getReferenceKey(Encounter)",
+          "name": "encounter_key"
+        },
+        {
+          "path": "(effective).ofType(dateTime)",
+          "name": "effective_datetime"
+        },
+        {
+          "path": "(effective).ofType(Period).start",
+          "name": "effective_period_start"
+        },
+        {
+          "path": "(value).ofType(Quantity).value",
+          "name": "quantity_value"
+        },
+        {
+          "path": "(value).ofType(string)",
+          "name": "string_value"
+        },
+        {
+          "path": "issued",
+          "name": "issued"
+        }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items' and (code='223834' or code='227582' or code='227287' or code='226732'))",
+      "column": [
+        {
+          "path": "code",
+          "name": "code"
+        },
+        {
+          "path": "system",
+          "name": "system"
+        },
+        {
+          "path": "display",
+          "name": "display"
+        }
+      ]
+    }
+  ],
+  "id": "oxygen-delivery-oxygen-delivery-observation",
+  "version": "2"
+}

@@ -179,9 +179,46 @@ prober reports these columns as `VARCHAR` for exactly this reason — that is th
 FHIR type, not the required output type. Full recipe (ViewDefinition blocks plus
 the join) in the `fhir-mapping` skill, "Identifier spine".
 
-The UUID keys are still needed, as the **join** keys between resources
-(`Observation.subject.getReferenceKey(Patient)` = `Patient.getResourceKey()`).
-Project both: the UUID to join on, the identifier value to emit.
+The resource keys are needed twice over, and both are required outputs.
+
+They are the **join** keys between resources
+(`Observation.subject.getReferenceKey(Patient)` = `Patient.getResourceKey()`),
+and they are **output columns in their own right**: every identifier column a
+concept emits is accompanied by the key of the resource it came off —
+`subject_id`+`patient_key`, `hadm_id`+`encounter_key`, `stay_id`+
+`icu_encounter_key`, `specimen_id`+`specimen_key`. The manifest declares them
+per concept as `key_columns` and the shape gate fails a port that omits one.
+
+Emit the key **uncast and verbatim**. It has no manifest type, and it is not
+interchangeable with `Resource.id` — see the next entry.
+
+- Corrected 2026-08-17. This entry previously read "project both: the UUID to
+  join on, the identifier value to emit", which every port read as licence to
+  drop the key at the outermost `SELECT`. All 36 were reopened to add it. The
+  consumer is a downstream SQL-on-FHIR layer that joins derived tables on
+  `getResourceKey()` and cannot use the integers, so an integer-only table
+  joins to nothing — silently, as an empty result rather than an error. See
+  `TODO_reopen_resource_keys.md`.
+
+## `getResourceKey()` is type-prefixed; `Resource.id` is the bare UUID
+
+`getResourceKey()` returns `Patient/0a8eebfd-a352-522e-89f0-1d4a13abdebc` — the
+type-prefixed form — in **every** position, as a resource's own key and as the
+value `getReferenceKey()` returns for a reference to it. That the two are byte-
+identical is what makes them join, and the SQL-on-FHIR specification requires it.
+
+`Resource.id` is the bare UUID, without the prefix. It is a different value. A
+derived table keyed on it joins to nothing, and because both are `VARCHAR`
+columns with the same plausible name, nothing but the value shape distinguishes
+them. Never substitute `.id` for a resource key, and never strip the prefix.
+
+- Affected: every derived table's key columns, and any downstream join onto
+  `Patient.getResourceKey()`.
+- Verified: 2026-08-17, synthetic Patient + Encounter through the installed
+  Pathling. `getResourceKey()` on Patient returned `Patient/0a8eebfd-…` while
+  `id` returned `0a8eebfd-…`; `subject.getReferenceKey(Patient)` returned the
+  prefixed form; the equi-join on the two matched 1/1 rows. The shape gate now
+  samples each declared key column and rejects anything not in `Type/id` form.
 
 Resource and reference ids are opaque identity, not encoded clinical data.
 They may be compared for equality to join resources, group/deduplicate one
@@ -766,3 +803,17 @@ source row. `micro_org` and `micro_susc` additionally drop rows where
   against `count(distinct micro_specimen_id)` per `test_itemid` (71/71 exact);
   raw row counts do not. `fhir_observation_micro_org.sql:11,32,91-96`,
   `…_micro_susc.sql:7,40,67-72`, `…_micro_test.sql:11,124-129`.
+
+## Labevents DST normalization can change dependent time-window aggregates
+
+- Affected: `Observation.effectiveDateTime` from labevents,
+  `Specimen.collection.collectedDateTime`, and dependent concepts that window
+  or aggregate blood-gas rows by `charttime`.
+- Verified: `bg` attempt_0007 full-data comparison found 57 selected labevents
+  rows across six specimens whose source 02:xx anchors were normalized to 03:xx
+  by `mimic-fhir/sql/fhir_observation_labevents.sql:15,121`. Six unshifted 03:00
+  FiO2 observations then entered bg's four-hour latest-preceding window after
+  the anchor moved, accounting for all six residual second-order conflict rows;
+  the direct and propagated set closed all 70 conflicts.
+  `mimic-fhir/sql/fhir_specimen_lab.sql:9,18,58` preserves only the normalized
+  collection time. The oracle wall times are not recoverable from served FHIR.

@@ -111,7 +111,7 @@ class TestClean:
     def test_an_ordinary_lab_pivot_is_clean(self):
         sql = """
         WITH filtered AS (
-            SELECT p.subject_id_str, s.specimen_id_str, l.code,
+            SELECT p.subject_id_str, p.patient_key, s.specimen_id_str, l.code,
                    TRY_CAST(l.effective_datetime AS TIMESTAMP_NTZ) AS charttime,
                    CAST(l.quantity_value AS DOUBLE) AS value_num
             FROM lab_observation l
@@ -120,10 +120,72 @@ class TestClean:
             WHERE l.code IN ('51003', '50911')
         )
         SELECT CAST(subject_id_str AS INTEGER) AS subject_id,
+               patient_key,
                MAX(CASE WHEN code = '51003' THEN value_num END) AS troponin_t
-        FROM filtered GROUP BY subject_id_str
+        FROM filtered GROUP BY subject_id_str, patient_key
         """
         assert lint_sql_text(sql) == []
+
+
+class TestMissingResourceKey:
+    """A MIMIC identifier emitted without the FHIR key it is paired with.
+
+    The defect these guard is not a wrong value but an unusable table: a
+    downstream SQL-on-FHIR consumer joins on `getResourceKey()`, so an
+    integer-only output joins to nothing -- silently, as zero rows.
+    """
+
+    def test_subject_id_without_patient_key_is_flagged(self):
+        sql = "SELECT CAST(p.subject_id_str AS INTEGER) AS subject_id FROM patient p"
+        assert _rules(sql) == {"missing-resource-key"}
+
+    def test_the_paired_key_clears_it(self):
+        sql = (
+            "SELECT CAST(p.subject_id_str AS INTEGER) AS subject_id, p.patient_key "
+            "FROM patient p"
+        )
+        assert _rules(sql) == set()
+
+    def test_a_key_joined_on_but_not_emitted_does_not_count(self):
+        # The join spine mentions `patient_key` in every port; only the
+        # outermost SELECT's output satisfies the rule.
+        sql = (
+            "SELECT CAST(p.subject_id_str AS INTEGER) AS subject_id "
+            "FROM observation o JOIN patient p ON o.patient_key = p.patient_key"
+        )
+        assert _rules(sql) == {"missing-resource-key"}
+
+    def test_one_finding_per_unpaired_identifier(self):
+        sql = (
+            "SELECT CAST(p.subject_id_str AS INTEGER) AS subject_id, "
+            "CAST(e.hadm_id_str AS INTEGER) AS hadm_id, e.encounter_key "
+            "FROM encounter e JOIN patient p ON e.patient_key = p.patient_key"
+        )
+        findings = [f for f in lint_sql_text(sql) if f.rule == "missing-resource-key"]
+        assert [f.message.split()[0] for f in findings] == ["subject_id"]
+
+    def test_patient_key_is_owed_even_without_a_subject_id_column(self):
+        # `kdigo_creatinine` emits hadm_id and stay_id and no subject_id. Every
+        # concept is patient-scoped, so it owes a patient_key regardless -- and
+        # the shape gate requires one, so a lint that let this pass would send a
+        # port an hour into a run to learn it.
+        sql = (
+            "SELECT CAST(e.hadm_id_str AS INTEGER) AS hadm_id, "
+            "CAST(i.stay_id_str AS INTEGER) AS stay_id, "
+            "e.encounter_key, i.icu_encounter_key "
+            "FROM encounter e JOIN icu_encounter i ON 1=1"
+        )
+        assert _rules(sql) == {"missing-resource-key"}
+
+    def test_a_fragment_emitting_no_identifier_is_not_a_concept_output(self):
+        # The unconditional patient_key obligation must not fire on arbitrary
+        # SQL; emitting a MIMIC identifier is what marks a concept output.
+        assert _rules("SELECT count(*) FROM observation") == set()
+
+    def test_unparseable_sql_yields_no_finding_rather_than_a_false_reject(self):
+        # A lint that false-rejects blocks the loop; export_mappings hard-fails
+        # on an unparseable file already.
+        assert _rules("SELECT AS AS FROM FROM (((") == set()
 
     def test_findings_carry_line_numbers(self):
         findings = lint_sql_text("SELECT 1\nSELECT MD5(x)\n")

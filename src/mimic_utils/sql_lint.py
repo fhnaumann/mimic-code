@@ -29,6 +29,15 @@ optimises. An agent that cannot reach agreement has two honest moves -- fix the
 mapping, or declare the gap and let the row diverge -- and a third dishonest one
 that scores better than either. The gate exists to remove the third.
 
+The third class is the first one caused by the documentation being *wrong*
+rather than ignored. ``fhir-mapping/SKILL.md`` said a resource key "must never
+reach the output", so all 36 first-generation ports computed the key as their
+join spine and then dropped it at the outermost SELECT -- correctly, per the
+instruction. Downstream SQL-on-FHIR consumers join derived tables on
+``getResourceKey()`` and cannot use the integers, so every one of those tables
+was unusable to them. Fixing the prose is necessary and is not a control; this
+rule is the control. See ``mimic-iv/concepts_fhir/TODO_reopen_resource_keys.md``.
+
 Scope is deliberately narrow. These rules encode *known* defect classes only --
 the ones a full-data divergence already taught us. Discovering a new class is
 still the mismatch-diagnostician's job; when it finds one, add a rule here so
@@ -99,8 +108,117 @@ _REMEDY = (
     "  divergence, not a puzzle -- emit the typed NULL for an ancillary column,\n"
     "  or let the row diverge for the judge. If the lost input changes the core\n"
     "  derivation, the whole concept is a representation block, not a partial\n"
-    "  port. See LOOP_CONTRACT.md 'Essential loss blocks the concept'."
+    "  port. See LOOP_CONTRACT.md 'Essential loss blocks the concept'.\n"
+    "  Remedy for missing-resource-key: project the paired key on the outermost\n"
+    "  SELECT -- subject_id+patient_key, hadm_id+encounter_key,\n"
+    "  stay_id+icu_encounter_key, specimen_id+specimen_key. Take it from\n"
+    "  getResourceKey() on the resource's own view, verbatim and uncast; the\n"
+    "  bare UUID (Resource.id) is a different value that joins to nothing.\n"
+    "  See .opencode/skills/fhir-mapping/SKILL.md 'Identifier spine'."
 )
+
+
+#: Each MIMIC identifier column and the FHIR resource key that must accompany
+#: it. Kept in step with ``compare_port_results._ID_TO_KEY``, which gates the
+#: same requirement on the materialized output; this catches it in seconds
+#: instead of an hour into a run.
+_ID_TO_KEY = {
+    "subject_id": "patient_key",
+    "hadm_id": "encounter_key",
+    "stay_id": "icu_encounter_key",
+    "specimen_id": "specimen_key",
+}
+
+
+def _emitted_columns(text: str) -> Optional[set[str]]:
+    """Output column names of the outermost ``SELECT``, or None if unreadable.
+
+    Parsed rather than matched: ``patient_key`` appears in the ``ON`` clause of
+    essentially every port, so a token search cannot tell a key that is joined
+    on from a key that is emitted -- and it is exactly that distinction the rule
+    is about.
+
+    Returns None rather than raising when the SQL will not parse. A lint that
+    false-rejects blocks the loop, which is the expensive direction of error for
+    a gate that cannot be argued with; an unparseable file fails at
+    ``export_mappings``, which does hard-fail, and needs no second opinion here.
+    """
+    try:
+        import sqlglot
+        from sqlglot import exp
+    except ImportError:  # pragma: no cover - env-dependent
+        return None
+    try:
+        tree = sqlglot.parse_one(text, dialect="spark")
+    except Exception:  # noqa: BLE001 -- sqlglot raises a family of parse errors
+        return None
+    if tree is None:
+        return None
+    select = tree if isinstance(tree, exp.Select) else tree.find(exp.Select)
+    if select is None:
+        return None
+    return {e.alias_or_name for e in select.expressions if e.alias_or_name}
+
+
+def _missing_key_findings(text: str) -> list["Finding"]:
+    """Resource keys the outermost ``SELECT`` owes but does not emit.
+
+    Two sources of obligation. Each identifier column pulls in its paired key,
+    and ``patient_key`` is owed unconditionally: every concept in the corpus is
+    patient-scoped and every source resource carries an unconditional
+    ``subject`` reference, so the key is always reachable. ``kdigo_creatinine``
+    is the case that makes the difference -- it emits no ``subject_id`` and owes
+    a ``patient_key`` regardless. Without that, this would pass a port the shape
+    gate then rejects, which is the one outcome a pre-run check exists to
+    prevent.
+    """
+    emitted = _emitted_columns(text)
+    if emitted is None:
+        return []
+    identifiers = [c for c in _ID_TO_KEY if c in emitted]
+    # Emitting a MIMIC identifier is what marks a query as a concept output.
+    # Without that test the unconditional `patient_key` obligation would fire on
+    # any fragment that happens to be linted, which is a false reject.
+    if not identifiers:
+        return []
+    lines = text.splitlines()
+    # key column -> the identifier that obliges it, or None when unconditional
+    obliged: dict[str, Optional[str]] = {"patient_key": None}
+    for id_column in identifiers:
+        obliged[_ID_TO_KEY[id_column]] = id_column
+
+    findings: list[Finding] = []
+    for key_column, id_column in sorted(obliged.items()):
+        if key_column in emitted:
+            continue
+        number, raw = 1, key_column
+        if id_column is not None:
+            pattern = re.compile(rf"\bAS\s+{id_column}\b", re.IGNORECASE)
+            number, raw = next(
+                ((i, ln) for i, ln in enumerate(lines, start=1) if pattern.search(ln)),
+                (1, id_column),
+            )
+        subject = (
+            f"{id_column} is emitted without {key_column}"
+            if id_column is not None
+            else f"{key_column} is not emitted, and every concept owes one"
+        )
+        findings.append(
+            Finding(
+                rule="missing-resource-key",
+                line=number,
+                text=raw,
+                message=(
+                    f"{subject}. Downstream SQL-on-FHIR consumers join on "
+                    f"getResourceKey() and cannot use the integers, so the table "
+                    f"is unusable to them -- and silently, as an empty join. Take "
+                    f"the key verbatim and uncast from the resource's own view, "
+                    f"or from a reference to it where that view is not "
+                    f"materialized; the two return identical values"
+                ),
+            )
+        )
+    return findings
 
 
 @dataclass
@@ -192,7 +310,11 @@ def lint_sql_text(text: str) -> list[Finding]:
                     ),
                 )
             )
-    return findings
+    # Whole-query rather than per-line: a column that is absent has no line of
+    # its own, so this one is reported against the identifier it should have
+    # accompanied.
+    findings.extend(_missing_key_findings(text))
+    return sorted(findings, key=lambda f: f.line)
 
 
 def lint_sql_file(path: str | Path) -> list[Finding]:

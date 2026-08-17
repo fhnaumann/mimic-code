@@ -1,0 +1,50 @@
+{
+  "resourceType": "Library",
+  "id": "cardiac-marker",
+  "url": "https://fhnaumann.masters/pathling/Library/cardiac_marker",
+  "version": "4",
+  "name": "cardiac_marker",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/cardiac_marker-encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "lab_observation",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/cardiac_marker-lab_observation"
+    },
+    {
+      "type": "depends-on",
+      "label": "patient",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/cardiac_marker-patient"
+    },
+    {
+      "type": "depends-on",
+      "label": "specimen",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/cardiac_marker-specimen"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH filtered_rows AS (\n    SELECT\n        p.subject_id_str,\n        e.hadm_id_str,\n        s.specimen_id_str,\n        l.code,\n        l.system,\n        l.effective_datetime,\n        l.quantity_value\n    FROM lab_observation l\n    INNER JOIN patient p\n        ON l.patient_key = p.patient_key\n    INNER JOIN specimen s\n        ON l.specimen_key = s.specimen_key\n    LEFT JOIN encounter e\n        ON l.encounter_key = e.encounter_key\n    WHERE l.system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-d-labitems'\n        AND l.code IN ('51003', '50911', '50963')\n        AND l.quantity_value IS NOT NULL\n), typed_rows AS (\n    SELECT\n        CAST(subject_id_str AS INTEGER) AS subject_id,\n        CAST(hadm_id_str AS INTEGER) AS hadm_id,\n        CAST(specimen_id_str AS INTEGER) AS specimen_id,\n        CAST(code AS VARCHAR(32)) AS code,\n        CAST(system AS VARCHAR(255)) AS system,\n        CAST(quantity_value AS DOUBLE) AS value_num,\n        TRY_CAST(effective_datetime AS TIMESTAMP_NTZ) AS charttime\n    FROM filtered_rows\n), grouped AS (\n    SELECT\n        MAX(subject_id) AS subject_id,\n        MAX(hadm_id) AS hadm_id,\n        MAX(charttime) AS charttime,\n        specimen_id,\n        MAX(CASE WHEN code = '51003' THEN value_num ELSE NULL END) AS troponin_t,\n        MAX(CASE WHEN code = '50911' THEN value_num ELSE NULL END) AS ck_mb,\n        MAX(CASE WHEN code = '50963' THEN value_num ELSE NULL END) AS ntprobnp\n    FROM typed_rows\n    GROUP BY specimen_id\n)\nSELECT\n    CAST(grouped.subject_id AS INTEGER) AS subject_id,\n    CAST(grouped.hadm_id AS INTEGER) AS hadm_id,\n    CAST(grouped.charttime AS TIMESTAMP_NTZ) AS charttime,\n    CAST(grouped.specimen_id AS INTEGER) AS specimen_id,\n    CAST(grouped.troponin_t AS DOUBLE) AS troponin_t,\n    CAST(grouped.ck_mb AS DOUBLE) AS ck_mb,\n    CAST(grouped.ntprobnp AS DOUBLE) AS ntprobnp\nFROM grouped\n;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBmaWx0ZXJlZF9yb3dzIEFTICgKICAgIFNFTEVDVAogICAgICAgIHAuc3ViamVjdF9pZF9zdHIsCiAgICAgICAgZS5oYWRtX2lkX3N0ciwKICAgICAgICBzLnNwZWNpbWVuX2lkX3N0ciwKICAgICAgICBsLmNvZGUsCiAgICAgICAgbC5zeXN0ZW0sCiAgICAgICAgbC5lZmZlY3RpdmVfZGF0ZXRpbWUsCiAgICAgICAgbC5xdWFudGl0eV92YWx1ZQogICAgRlJPTSBsYWJfb2JzZXJ2YXRpb24gbAogICAgSU5ORVIgSk9JTiBwYXRpZW50IHAKICAgICAgICBPTiBsLnBhdGllbnRfa2V5ID0gcC5wYXRpZW50X2tleQogICAgSU5ORVIgSk9JTiBzcGVjaW1lbiBzCiAgICAgICAgT04gbC5zcGVjaW1lbl9rZXkgPSBzLnNwZWNpbWVuX2tleQogICAgTEVGVCBKT0lOIGVuY291bnRlciBlCiAgICAgICAgT04gbC5lbmNvdW50ZXJfa2V5ID0gZS5lbmNvdW50ZXJfa2V5CiAgICBXSEVSRSBsLnN5c3RlbSA9ICdodHRwOi8vbWltaWMubWl0LmVkdS9maGlyL21pbWljL0NvZGVTeXN0ZW0vbWltaWMtZC1sYWJpdGVtcycKICAgICAgICBBTkQgbC5jb2RlIElOICgnNTEwMDMnLCAnNTA5MTEnLCAnNTA5NjMnKQogICAgICAgIEFORCBsLnF1YW50aXR5X3ZhbHVlIElTIE5PVCBOVUxMCiksIHR5cGVkX3Jvd3MgQVMgKAogICAgU0VMRUNUCiAgICAgICAgQ0FTVChzdWJqZWN0X2lkX3N0ciBBUyBJTlRFR0VSKSBBUyBzdWJqZWN0X2lkLAogICAgICAgIENBU1QoaGFkbV9pZF9zdHIgQVMgSU5URUdFUikgQVMgaGFkbV9pZCwKICAgICAgICBDQVNUKHNwZWNpbWVuX2lkX3N0ciBBUyBJTlRFR0VSKSBBUyBzcGVjaW1lbl9pZCwKICAgICAgICBDQVNUKGNvZGUgQVMgVkFSQ0hBUigzMikpIEFTIGNvZGUsCiAgICAgICAgQ0FTVChzeXN0ZW0gQVMgVkFSQ0hBUigyNTUpKSBBUyBzeXN0ZW0sCiAgICAgICAgQ0FTVChxdWFudGl0eV92YWx1ZSBBUyBET1VCTEUpIEFTIHZhbHVlX251bSwKICAgICAgICBUUllfQ0FTVChlZmZlY3RpdmVfZGF0ZXRpbWUgQVMgVElNRVNUQU1QX05UWikgQVMgY2hhcnR0aW1lCiAgICBGUk9NIGZpbHRlcmVkX3Jvd3MKKSwgZ3JvdXBlZCBBUyAoCiAgICBTRUxFQ1QKICAgICAgICBNQVgoc3ViamVjdF9pZCkgQVMgc3ViamVjdF9pZCwKICAgICAgICBNQVgoaGFkbV9pZCkgQVMgaGFkbV9pZCwKICAgICAgICBNQVgoY2hhcnR0aW1lKSBBUyBjaGFydHRpbWUsCiAgICAgICAgc3BlY2ltZW5faWQsCiAgICAgICAgTUFYKENBU0UgV0hFTiBjb2RlID0gJzUxMDAzJyBUSEVOIHZhbHVlX251bSBFTFNFIE5VTEwgRU5EKSBBUyB0cm9wb25pbl90LAogICAgICAgIE1BWChDQVNFIFdIRU4gY29kZSA9ICc1MDkxMScgVEhFTiB2YWx1ZV9udW0gRUxTRSBOVUxMIEVORCkgQVMgY2tfbWIsCiAgICAgICAgTUFYKENBU0UgV0hFTiBjb2RlID0gJzUwOTYzJyBUSEVOIHZhbHVlX251bSBFTFNFIE5VTEwgRU5EKSBBUyBudHByb2JucAogICAgRlJPTSB0eXBlZF9yb3dzCiAgICBHUk9VUCBCWSBzcGVjaW1lbl9pZAopClNFTEVDVAogICAgQ0FTVChncm91cGVkLnN1YmplY3RfaWQgQVMgSU5URUdFUikgQVMgc3ViamVjdF9pZCwKICAgIENBU1QoZ3JvdXBlZC5oYWRtX2lkIEFTIElOVEVHRVIpIEFTIGhhZG1faWQsCiAgICBDQVNUKGdyb3VwZWQuY2hhcnR0aW1lIEFTIFRJTUVTVEFNUF9OVFopIEFTIGNoYXJ0dGltZSwKICAgIENBU1QoZ3JvdXBlZC5zcGVjaW1lbl9pZCBBUyBJTlRFR0VSKSBBUyBzcGVjaW1lbl9pZCwKICAgIENBU1QoZ3JvdXBlZC50cm9wb25pbl90IEFTIERPVUJMRSkgQVMgdHJvcG9uaW5fdCwKICAgIENBU1QoZ3JvdXBlZC5ja19tYiBBUyBET1VCTEUpIEFTIGNrX21iLAogICAgQ0FTVChncm91cGVkLm50cHJvYm5wIEFTIERPVUJMRSkgQVMgbnRwcm9ibnAKRlJPTSBncm91cGVkCjsK"
+    }
+  ]
+}

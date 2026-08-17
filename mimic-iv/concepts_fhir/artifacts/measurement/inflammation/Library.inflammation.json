@@ -1,0 +1,50 @@
+{
+  "resourceType": "Library",
+  "id": "inflammation",
+  "url": "https://fhnaumann.masters/pathling/Library/inflammation",
+  "version": "3",
+  "name": "inflammation",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/inflammation-encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "lab_observation",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/inflammation-lab_observation"
+    },
+    {
+      "type": "depends-on",
+      "label": "patient",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/inflammation-patient"
+    },
+    {
+      "type": "depends-on",
+      "label": "specimen",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/inflammation-specimen"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH filtered_rows AS (\n    SELECT\n        p.subject_id_str,\n        p.patient_key,\n        e.hadm_id_str,\n        e.encounter_key,\n        s.specimen_id_str,\n        s.specimen_key,\n        l.effective_datetime,\n        l.quantity_value,\n        l.quantity_comparator,\n        l.value_string\n    FROM lab_observation l\n    LEFT JOIN patient p\n        ON l.patient_key = p.patient_key\n    LEFT JOIN specimen s\n        ON l.specimen_key = s.specimen_key\n    LEFT JOIN encounter e\n        ON l.encounter_key = e.encounter_key\n    WHERE l.system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-d-labitems'\n        AND l.code = '50889'\n        AND l.quantity_value IS NOT NULL\n        AND l.quantity_comparator IS NULL\n        AND l.value_string IS NULL\n), typed_rows AS (\n    SELECT\n        CAST(subject_id_str AS INTEGER) AS subject_id,\n        patient_key,\n        CAST(hadm_id_str AS INTEGER) AS hadm_id,\n        encounter_key,\n        TRY_CAST(effective_datetime AS TIMESTAMP_NTZ) AS charttime,\n        CAST(specimen_id_str AS INTEGER) AS specimen_id,\n        specimen_key,\n        CAST(quantity_value AS DOUBLE) AS value_num\n    FROM filtered_rows\n    WHERE CAST(quantity_value AS DOUBLE) > 0\n), grouped AS (\n    SELECT\n        MAX(subject_id) AS subject_id,\n        MAX(hadm_id) AS hadm_id,\n        MAX(charttime) AS charttime,\n        specimen_id,\n        MAX(value_num) AS crp,\n        MAX(patient_key) AS patient_key,\n        MAX(encounter_key) AS encounter_key,\n        MAX(specimen_key) AS specimen_key\n    FROM typed_rows\n    GROUP BY specimen_id\n)\nSELECT\n    CAST(charttime AS TIMESTAMP_NTZ) AS charttime,\n    CAST(crp AS DOUBLE) AS crp,\n    patient_key,\n    encounter_key,\n    specimen_key\nFROM grouped\n;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBmaWx0ZXJlZF9yb3dzIEFTICgKICAgIFNFTEVDVAogICAgICAgIHAuc3ViamVjdF9pZF9zdHIsCiAgICAgICAgcC5wYXRpZW50X2tleSwKICAgICAgICBlLmhhZG1faWRfc3RyLAogICAgICAgIGUuZW5jb3VudGVyX2tleSwKICAgICAgICBzLnNwZWNpbWVuX2lkX3N0ciwKICAgICAgICBzLnNwZWNpbWVuX2tleSwKICAgICAgICBsLmVmZmVjdGl2ZV9kYXRldGltZSwKICAgICAgICBsLnF1YW50aXR5X3ZhbHVlLAogICAgICAgIGwucXVhbnRpdHlfY29tcGFyYXRvciwKICAgICAgICBsLnZhbHVlX3N0cmluZwogICAgRlJPTSBsYWJfb2JzZXJ2YXRpb24gbAogICAgTEVGVCBKT0lOIHBhdGllbnQgcAogICAgICAgIE9OIGwucGF0aWVudF9rZXkgPSBwLnBhdGllbnRfa2V5CiAgICBMRUZUIEpPSU4gc3BlY2ltZW4gcwogICAgICAgIE9OIGwuc3BlY2ltZW5fa2V5ID0gcy5zcGVjaW1lbl9rZXkKICAgIExFRlQgSk9JTiBlbmNvdW50ZXIgZQogICAgICAgIE9OIGwuZW5jb3VudGVyX2tleSA9IGUuZW5jb3VudGVyX2tleQogICAgV0hFUkUgbC5zeXN0ZW0gPSAnaHR0cDovL21pbWljLm1pdC5lZHUvZmhpci9taW1pYy9Db2RlU3lzdGVtL21pbWljLWQtbGFiaXRlbXMnCiAgICAgICAgQU5EIGwuY29kZSA9ICc1MDg4OScKICAgICAgICBBTkQgbC5xdWFudGl0eV92YWx1ZSBJUyBOT1QgTlVMTAogICAgICAgIEFORCBsLnF1YW50aXR5X2NvbXBhcmF0b3IgSVMgTlVMTAogICAgICAgIEFORCBsLnZhbHVlX3N0cmluZyBJUyBOVUxMCiksIHR5cGVkX3Jvd3MgQVMgKAogICAgU0VMRUNUCiAgICAgICAgQ0FTVChzdWJqZWN0X2lkX3N0ciBBUyBJTlRFR0VSKSBBUyBzdWJqZWN0X2lkLAogICAgICAgIHBhdGllbnRfa2V5LAogICAgICAgIENBU1QoaGFkbV9pZF9zdHIgQVMgSU5URUdFUikgQVMgaGFkbV9pZCwKICAgICAgICBlbmNvdW50ZXJfa2V5LAogICAgICAgIFRSWV9DQVNUKGVmZmVjdGl2ZV9kYXRldGltZSBBUyBUSU1FU1RBTVBfTlRaKSBBUyBjaGFydHRpbWUsCiAgICAgICAgQ0FTVChzcGVjaW1lbl9pZF9zdHIgQVMgSU5URUdFUikgQVMgc3BlY2ltZW5faWQsCiAgICAgICAgc3BlY2ltZW5fa2V5LAogICAgICAgIENBU1QocXVhbnRpdHlfdmFsdWUgQVMgRE9VQkxFKSBBUyB2YWx1ZV9udW0KICAgIEZST00gZmlsdGVyZWRfcm93cwogICAgV0hFUkUgQ0FTVChxdWFudGl0eV92YWx1ZSBBUyBET1VCTEUpID4gMAopLCBncm91cGVkIEFTICgKICAgIFNFTEVDVAogICAgICAgIE1BWChzdWJqZWN0X2lkKSBBUyBzdWJqZWN0X2lkLAogICAgICAgIE1BWChoYWRtX2lkKSBBUyBoYWRtX2lkLAogICAgICAgIE1BWChjaGFydHRpbWUpIEFTIGNoYXJ0dGltZSwKICAgICAgICBzcGVjaW1lbl9pZCwKICAgICAgICBNQVgodmFsdWVfbnVtKSBBUyBjcnAsCiAgICAgICAgTUFYKHBhdGllbnRfa2V5KSBBUyBwYXRpZW50X2tleSwKICAgICAgICBNQVgoZW5jb3VudGVyX2tleSkgQVMgZW5jb3VudGVyX2tleSwKICAgICAgICBNQVgoc3BlY2ltZW5fa2V5KSBBUyBzcGVjaW1lbl9rZXkKICAgIEZST00gdHlwZWRfcm93cwogICAgR1JPVVAgQlkgc3BlY2ltZW5faWQKKQpTRUxFQ1QKICAgIENBU1QoY2hhcnR0aW1lIEFTIFRJTUVTVEFNUF9OVFopIEFTIGNoYXJ0dGltZSwKICAgIENBU1QoY3JwIEFTIERPVUJMRSkgQVMgY3JwLAogICAgcGF0aWVudF9rZXksCiAgICBlbmNvdW50ZXJfa2V5LAogICAgc3BlY2ltZW5fa2V5CkZST00gZ3JvdXBlZAo7Cg=="
+    }
+  ]
+}

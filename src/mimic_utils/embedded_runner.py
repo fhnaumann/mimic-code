@@ -64,6 +64,7 @@ from mimic_utils.derived_dependencies import (
     load_staged_dependency_plan,
     resolve_dependency_plan,
 )
+from mimic_utils.export_mappings import strip_mimic_ids
 
 # Env keys, so a job script can point the executor at a warehouse without
 # threading a flag through every layer.
@@ -355,11 +356,21 @@ class EmbeddedExecutor:
         so each result is cached before the next dependency or the target
         concept replaces those labels.  The resulting view is named after the
         canonical derived concept stem (for example, ``age``).
+
+        Each dependency is materialised in its **published** shape, not its
+        attempt shape: the identifier strip the export applies runs here too, so
+        ``FROM age`` offers the columns a registered Library actually serves.
+        Without this the loop hands a dependent something the artifact tree will
+        not, and a port can join on ``age.hadm_id``, pass every gate, and ship a
+        bundle referencing a column that is not there -- which is what
+        ``charlson`` did.  A dependency not yet re-mapped onto resource keys
+        keeps its identifiers, so this constrains a dependent exactly as far as
+        its dependency has been migrated, and no further.
         """
         registered: List[str] = []
         for spec in specs:
             definitions = discover_view_definitions(spec.path)
-            sql = read_concept_sql(spec.path)
+            sql = strip_mimic_ids(spec.concept, read_concept_sql(spec.path)).sql
             self.register_views(definitions)
             try:
                 frame = self.run_sql(sql)

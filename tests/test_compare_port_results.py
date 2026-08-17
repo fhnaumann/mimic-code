@@ -23,6 +23,8 @@ import pytest
 
 from mimic_utils.compare_port_results import (
     DEFAULT_ATOL,
+    _check_key_alignment,
+    _check_key_prefixes,
     DEFAULT_RTOL,
     EXIT_FAIL,
     EXIT_PASS,
@@ -2049,3 +2051,80 @@ class TestUnkeyedTolerances:
             diff["identical"] + diff["differing_conflict"] + diff["differing_null_only"]
             == r["divergence"]["oracle_rows"]
         )
+
+
+class TestResourceKeyChecks:
+    """The key contract is the one part of the output nothing else verifies.
+
+    Keys are absent from the oracle, so both diff paths project the manifest's
+    ``columns`` and skip them. A key joined off the wrong resource, or selected
+    by an aggregate over a group in which it is not constant, yields a column
+    that is present, correctly typed, correctly prefixed -- and wrong. It even
+    joins downstream, just to the wrong row.
+    """
+
+    ACTUAL = {
+        "subject_id": "INTEGER",
+        "patient_key": "VARCHAR",
+        "hadm_id": "INTEGER",
+        "encounter_key": "VARCHAR",
+    }
+
+    def _table(self, sql):
+        con = duckdb.connect()
+        con.execute(f"CREATE TABLE x AS {sql}")
+        return con
+
+    def test_a_bijective_key_passes(self):
+        con = self._table(
+            "SELECT 1 subject_id, 'Patient/a' patient_key "
+            "UNION ALL SELECT 2, 'Patient/b'"
+        )
+        assert _check_key_alignment(con, "x", ["patient_key"], self.ACTUAL) == []
+
+    def test_two_identifiers_collapsed_onto_one_key_is_caught(self):
+        # The MAX()-over-a-non-constant-group failure: both rows survive, both
+        # carry a well-formed key, and one of them names the wrong patient.
+        con = self._table(
+            "SELECT 1 subject_id, 'Patient/a' patient_key "
+            "UNION ALL SELECT 2, 'Patient/a'"
+        )
+        found = _check_key_alignment(con, "x", ["patient_key"], self.ACTUAL)
+        assert [f["column"] for f in found] == ["patient_key"]
+        assert found[0]["distinct_identifiers"] == 2
+        assert found[0]["distinct_keys"] == 1
+
+    def test_one_identifier_spanning_two_keys_is_caught(self):
+        con = self._table(
+            "SELECT 1 subject_id, 'Patient/a' patient_key "
+            "UNION ALL SELECT 1, 'Patient/b'"
+        )
+        found = _check_key_alignment(con, "x", ["patient_key"], self.ACTUAL)
+        assert found and found[0]["distinct_keys"] == 2
+
+    def test_a_key_without_its_identifier_is_not_a_violation(self):
+        # An Encounter view unfiltered by identifier.system holds a key for the
+        # ICU and ED streams while hadm_id_str is NULL there. Comparing whole
+        # -column distinct counts would reject that legitimate shape.
+        con = self._table(
+            "SELECT 1 subject_id, 'Patient/a' patient_key "
+            "UNION ALL SELECT NULL, 'Patient/b'"
+        )
+        assert _check_key_alignment(con, "x", ["patient_key"], self.ACTUAL) == []
+
+    def test_a_key_with_no_paired_identifier_column_is_skipped(self):
+        # kdigo_creatinine emits no subject_id and still owes a patient_key.
+        # There is nothing to align against; presence and prefix still apply.
+        con = self._table("SELECT 'Patient/a' patient_key")
+        assert _check_key_alignment(con, "x", ["patient_key"], {"patient_key": "VARCHAR"}) == []
+
+    def test_a_bare_uuid_is_rejected_by_the_prefix_check(self):
+        con = self._table("SELECT '0a8eebfd-a352-522e-89f0-1d4a13abdebc' patient_key")
+        found = _check_key_prefixes(con, "x", ["patient_key"])
+        assert [f["column"] for f in found] == ["patient_key"]
+
+    def test_the_prefixed_form_passes_the_prefix_check(self):
+        con = self._table(
+            "SELECT 'Patient/0a8eebfd-a352-522e-89f0-1d4a13abdebc' patient_key"
+        )
+        assert _check_key_prefixes(con, "x", ["patient_key"]) == []

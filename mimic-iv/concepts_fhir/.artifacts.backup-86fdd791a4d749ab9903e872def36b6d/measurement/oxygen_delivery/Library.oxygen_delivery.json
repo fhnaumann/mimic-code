@@ -1,0 +1,45 @@
+{
+  "resourceType": "Library",
+  "id": "oxygen-delivery",
+  "url": "https://fhnaumann.masters/pathling/Library/oxygen_delivery",
+  "version": "2",
+  "name": "oxygen_delivery",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "oxygen_delivery_encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/oxygen_delivery-oxygen_delivery_encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "oxygen_delivery_observation",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/oxygen_delivery-oxygen_delivery_observation"
+    },
+    {
+      "type": "depends-on",
+      "label": "oxygen_delivery_patient",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/oxygen_delivery-oxygen_delivery_patient"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH observation_rows AS (\n    SELECT\n        o.patient_key,\n        o.encounter_key,\n        o.code,\n        o.system,\n        TRY_CAST(\n            COALESCE(o.effective_datetime, o.effective_period_start)\n            AS TIMESTAMP_NTZ\n        ) AS charttime,\n        CAST(o.quantity_value AS DOUBLE) AS valuenum,\n        o.string_value AS value,\n        o.issued\n    FROM oxygen_delivery_observation o\n    WHERE o.system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items'\n        AND o.code IN ('223834', '227582', '227287', '226732')\n), identified_rows AS (\n    SELECT\n        o.patient_key,\n        o.encounter_key,\n        p.subject_id_str,\n        e.stay_id_str,\n        o.code,\n        o.system,\n        o.charttime,\n        o.valuenum,\n        o.value,\n        o.issued\n    FROM observation_rows o\n    INNER JOIN oxygen_delivery_patient p\n        ON o.patient_key = p.patient_key\n    INNER JOIN oxygen_delivery_encounter e\n        ON o.encounter_key = e.encounter_key\n), flow_stg1 AS (\n    SELECT\n        patient_key,\n        encounter_key,\n        subject_id_str,\n        stay_id_str,\n        charttime,\n        CASE\n            WHEN code IN ('223834', '227582') THEN '223834'\n            ELSE code\n        END AS item_code,\n        value,\n        valuenum,\n        issued\n    FROM identified_rows\n    WHERE code IN ('223834', '227582', '227287')\n        AND (valuenum IS NOT NULL OR value IS NOT NULL)\n), flow_stg2 AS (\n    SELECT\n        f.*,\n        ROW_NUMBER() OVER (\n            PARTITION BY patient_key, charttime, item_code\n            ORDER BY issued DESC, valuenum DESC\n        ) AS rn\n    FROM flow_stg1 f\n), flow_selected AS (\n    SELECT\n        patient_key,\n        encounter_key,\n        subject_id_str,\n        stay_id_str,\n        charttime,\n        item_code,\n        valuenum\n    FROM flow_stg2\n    WHERE rn = 1\n), device_ranked AS (\n    SELECT\n        patient_key,\n        charttime,\n        code,\n        value AS o2_device,\n        ROW_NUMBER() OVER (\n            PARTITION BY patient_key, charttime, code\n            ORDER BY issued DESC NULLS LAST, value DESC NULLS LAST\n        ) AS rn\n    FROM identified_rows\n    WHERE code = '226732'\n), stg AS (\n    SELECT\n        f.subject_id_str,\n        f.stay_id_str,\n        f.charttime,\n        f.item_code,\n        f.valuenum,\n        d.o2_device,\n        d.rn\n    FROM flow_selected f\n    LEFT JOIN device_ranked d\n        ON f.patient_key = d.patient_key\n        AND f.charttime = d.charttime\n)\nSELECT\n    CAST(subject_id_str AS INTEGER) AS subject_id,\n    CAST(MAX(CAST(stay_id_str AS INTEGER)) AS INTEGER) AS stay_id,\n    CAST(charttime AS TIMESTAMP_NTZ) AS charttime,\n    CAST(MAX(CASE WHEN item_code = '223834' THEN valuenum ELSE NULL END) AS FLOAT) AS o2_flow,\n    CAST(MAX(CASE WHEN item_code = '227287' THEN valuenum ELSE NULL END) AS FLOAT) AS o2_flow_additional,\n    CAST(MAX(CASE WHEN rn = 1 THEN o2_device ELSE NULL END) AS VARCHAR(255)) AS o2_delivery_device_1,\n    CAST(MAX(CASE WHEN rn = 2 THEN o2_device ELSE NULL END) AS VARCHAR(255)) AS o2_delivery_device_2,\n    CAST(MAX(CASE WHEN rn = 3 THEN o2_device ELSE NULL END) AS VARCHAR(255)) AS o2_delivery_device_3,\n    CAST(MAX(CASE WHEN rn = 4 THEN o2_device ELSE NULL END) AS VARCHAR(255)) AS o2_delivery_device_4\nFROM stg\nGROUP BY subject_id_str, charttime\n;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBvYnNlcnZhdGlvbl9yb3dzIEFTICgKICAgIFNFTEVDVAogICAgICAgIG8ucGF0aWVudF9rZXksCiAgICAgICAgby5lbmNvdW50ZXJfa2V5LAogICAgICAgIG8uY29kZSwKICAgICAgICBvLnN5c3RlbSwKICAgICAgICBUUllfQ0FTVCgKICAgICAgICAgICAgQ09BTEVTQ0Uoby5lZmZlY3RpdmVfZGF0ZXRpbWUsIG8uZWZmZWN0aXZlX3BlcmlvZF9zdGFydCkKICAgICAgICAgICAgQVMgVElNRVNUQU1QX05UWgogICAgICAgICkgQVMgY2hhcnR0aW1lLAogICAgICAgIENBU1Qoby5xdWFudGl0eV92YWx1ZSBBUyBET1VCTEUpIEFTIHZhbHVlbnVtLAogICAgICAgIG8uc3RyaW5nX3ZhbHVlIEFTIHZhbHVlLAogICAgICAgIG8uaXNzdWVkCiAgICBGUk9NIG94eWdlbl9kZWxpdmVyeV9vYnNlcnZhdGlvbiBvCiAgICBXSEVSRSBvLnN5c3RlbSA9ICdodHRwOi8vbWltaWMubWl0LmVkdS9maGlyL21pbWljL0NvZGVTeXN0ZW0vbWltaWMtY2hhcnRldmVudHMtZC1pdGVtcycKICAgICAgICBBTkQgby5jb2RlIElOICgnMjIzODM0JywgJzIyNzU4MicsICcyMjcyODcnLCAnMjI2NzMyJykKKSwgaWRlbnRpZmllZF9yb3dzIEFTICgKICAgIFNFTEVDVAogICAgICAgIG8ucGF0aWVudF9rZXksCiAgICAgICAgby5lbmNvdW50ZXJfa2V5LAogICAgICAgIHAuc3ViamVjdF9pZF9zdHIsCiAgICAgICAgZS5zdGF5X2lkX3N0ciwKICAgICAgICBvLmNvZGUsCiAgICAgICAgby5zeXN0ZW0sCiAgICAgICAgby5jaGFydHRpbWUsCiAgICAgICAgby52YWx1ZW51bSwKICAgICAgICBvLnZhbHVlLAogICAgICAgIG8uaXNzdWVkCiAgICBGUk9NIG9ic2VydmF0aW9uX3Jvd3MgbwogICAgSU5ORVIgSk9JTiBveHlnZW5fZGVsaXZlcnlfcGF0aWVudCBwCiAgICAgICAgT04gby5wYXRpZW50X2tleSA9IHAucGF0aWVudF9rZXkKICAgIElOTkVSIEpPSU4gb3h5Z2VuX2RlbGl2ZXJ5X2VuY291bnRlciBlCiAgICAgICAgT04gby5lbmNvdW50ZXJfa2V5ID0gZS5lbmNvdW50ZXJfa2V5CiksIGZsb3dfc3RnMSBBUyAoCiAgICBTRUxFQ1QKICAgICAgICBwYXRpZW50X2tleSwKICAgICAgICBlbmNvdW50ZXJfa2V5LAogICAgICAgIHN1YmplY3RfaWRfc3RyLAogICAgICAgIHN0YXlfaWRfc3RyLAogICAgICAgIGNoYXJ0dGltZSwKICAgICAgICBDQVNFCiAgICAgICAgICAgIFdIRU4gY29kZSBJTiAoJzIyMzgzNCcsICcyMjc1ODInKSBUSEVOICcyMjM4MzQnCiAgICAgICAgICAgIEVMU0UgY29kZQogICAgICAgIEVORCBBUyBpdGVtX2NvZGUsCiAgICAgICAgdmFsdWUsCiAgICAgICAgdmFsdWVudW0sCiAgICAgICAgaXNzdWVkCiAgICBGUk9NIGlkZW50aWZpZWRfcm93cwogICAgV0hFUkUgY29kZSBJTiAoJzIyMzgzNCcsICcyMjc1ODInLCAnMjI3Mjg3JykKICAgICAgICBBTkQgKHZhbHVlbnVtIElTIE5PVCBOVUxMIE9SIHZhbHVlIElTIE5PVCBOVUxMKQopLCBmbG93X3N0ZzIgQVMgKAogICAgU0VMRUNUCiAgICAgICAgZi4qLAogICAgICAgIFJPV19OVU1CRVIoKSBPVkVSICgKICAgICAgICAgICAgUEFSVElUSU9OIEJZIHBhdGllbnRfa2V5LCBjaGFydHRpbWUsIGl0ZW1fY29kZQogICAgICAgICAgICBPUkRFUiBCWSBpc3N1ZWQgREVTQywgdmFsdWVudW0gREVTQwogICAgICAgICkgQVMgcm4KICAgIEZST00gZmxvd19zdGcxIGYKKSwgZmxvd19zZWxlY3RlZCBBUyAoCiAgICBTRUxFQ1QKICAgICAgICBwYXRpZW50X2tleSwKICAgICAgICBlbmNvdW50ZXJfa2V5LAogICAgICAgIHN1YmplY3RfaWRfc3RyLAogICAgICAgIHN0YXlfaWRfc3RyLAogICAgICAgIGNoYXJ0dGltZSwKICAgICAgICBpdGVtX2NvZGUsCiAgICAgICAgdmFsdWVudW0KICAgIEZST00gZmxvd19zdGcyCiAgICBXSEVSRSBybiA9IDEKKSwgZGV2aWNlX3JhbmtlZCBBUyAoCiAgICBTRUxFQ1QKICAgICAgICBwYXRpZW50X2tleSwKICAgICAgICBjaGFydHRpbWUsCiAgICAgICAgY29kZSwKICAgICAgICB2YWx1ZSBBUyBvMl9kZXZpY2UsCiAgICAgICAgUk9XX05VTUJFUigpIE9WRVIgKAogICAgICAgICAgICBQQVJUSVRJT04gQlkgcGF0aWVudF9rZXksIGNoYXJ0dGltZSwgY29kZQogICAgICAgICAgICBPUkRFUiBCWSBpc3N1ZWQgREVTQyBOVUxMUyBMQVNULCB2YWx1ZSBERVNDIE5VTExTIExBU1QKICAgICAgICApIEFTIHJuCiAgICBGUk9NIGlkZW50aWZpZWRfcm93cwogICAgV0hFUkUgY29kZSA9ICcyMjY3MzInCiksIHN0ZyBBUyAoCiAgICBTRUxFQ1QKICAgICAgICBmLnN1YmplY3RfaWRfc3RyLAogICAgICAgIGYuc3RheV9pZF9zdHIsCiAgICAgICAgZi5jaGFydHRpbWUsCiAgICAgICAgZi5pdGVtX2NvZGUsCiAgICAgICAgZi52YWx1ZW51bSwKICAgICAgICBkLm8yX2RldmljZSwKICAgICAgICBkLnJuCiAgICBGUk9NIGZsb3dfc2VsZWN0ZWQgZgogICAgTEVGVCBKT0lOIGRldmljZV9yYW5rZWQgZAogICAgICAgIE9OIGYucGF0aWVudF9rZXkgPSBkLnBhdGllbnRfa2V5CiAgICAgICAgQU5EIGYuY2hhcnR0aW1lID0gZC5jaGFydHRpbWUKKQpTRUxFQ1QKICAgIENBU1Qoc3ViamVjdF9pZF9zdHIgQVMgSU5URUdFUikgQVMgc3ViamVjdF9pZCwKICAgIENBU1QoTUFYKENBU1Qoc3RheV9pZF9zdHIgQVMgSU5URUdFUikpIEFTIElOVEVHRVIpIEFTIHN0YXlfaWQsCiAgICBDQVNUKGNoYXJ0dGltZSBBUyBUSU1FU1RBTVBfTlRaKSBBUyBjaGFydHRpbWUsCiAgICBDQVNUKE1BWChDQVNFIFdIRU4gaXRlbV9jb2RlID0gJzIyMzgzNCcgVEhFTiB2YWx1ZW51bSBFTFNFIE5VTEwgRU5EKSBBUyBGTE9BVCkgQVMgbzJfZmxvdywKICAgIENBU1QoTUFYKENBU0UgV0hFTiBpdGVtX2NvZGUgPSAnMjI3Mjg3JyBUSEVOIHZhbHVlbnVtIEVMU0UgTlVMTCBFTkQpIEFTIEZMT0FUKSBBUyBvMl9mbG93X2FkZGl0aW9uYWwsCiAgICBDQVNUKE1BWChDQVNFIFdIRU4gcm4gPSAxIFRIRU4gbzJfZGV2aWNlIEVMU0UgTlVMTCBFTkQpIEFTIFZBUkNIQVIoMjU1KSkgQVMgbzJfZGVsaXZlcnlfZGV2aWNlXzEsCiAgICBDQVNUKE1BWChDQVNFIFdIRU4gcm4gPSAyIFRIRU4gbzJfZGV2aWNlIEVMU0UgTlVMTCBFTkQpIEFTIFZBUkNIQVIoMjU1KSkgQVMgbzJfZGVsaXZlcnlfZGV2aWNlXzIsCiAgICBDQVNUKE1BWChDQVNFIFdIRU4gcm4gPSAzIFRIRU4gbzJfZGV2aWNlIEVMU0UgTlVMTCBFTkQpIEFTIFZBUkNIQVIoMjU1KSkgQVMgbzJfZGVsaXZlcnlfZGV2aWNlXzMsCiAgICBDQVNUKE1BWChDQVNFIFdIRU4gcm4gPSA0IFRIRU4gbzJfZGV2aWNlIEVMU0UgTlVMTCBFTkQpIEFTIFZBUkNIQVIoMjU1KSkgQVMgbzJfZGVsaXZlcnlfZGV2aWNlXzQKRlJPTSBzdGcKR1JPVVAgQlkgc3ViamVjdF9pZF9zdHIsIGNoYXJ0dGltZQo7Cg=="
+    }
+  ]
+}

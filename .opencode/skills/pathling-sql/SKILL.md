@@ -53,6 +53,16 @@ boundary being compared. Transitive dependencies are prepared in dependency
 order as well. The runner stages the same immutable dependency attempts for the
 HPC leg, so demo and full execution expose the same SQL tables.
 
+The registered view is the dependency's **published** shape, not its raw
+attempt output: the runner applies the same MIMIC identifier strip the artifact
+export does, so the columns you can select are the columns a registered Library
+serves. A dependency that emits resource keys therefore offers
+`patient_key`/`encounter_key`/`icu_encounter_key`/`specimen_key` and *not* the
+`subject_id`/`hadm_id`/`stay_id`/`specimen_id` those keys replace — join on the
+keys. A dependency not yet re-mapped onto keys still carries its identifiers,
+so the constraint tracks how far each dependency has migrated. See rule 4 of
+"Identifier spine" in the `fhir-mapping` skill.
+
 ## Attempt artifacts
 
 An attempt directory holds exactly two hand-authored things:
@@ -94,9 +104,16 @@ SELECT
     CAST(e.hadm_id_str    AS INTEGER)                 AS hadm_id,      -- manifest: INTEGER
     CAST(e.period_start   AS TIMESTAMP_NTZ)           AS admittime,    -- manifest: TIMESTAMP
     CAST(NULL             AS SMALLINT)                AS anchor_age,   -- manifest: SMALLINT
-    CAST(v.value          AS DOUBLE)                  AS valuenum      -- manifest: DOUBLE
+    CAST(v.value          AS DOUBLE)                  AS valuenum,     -- manifest: DOUBLE
+    p.patient_key,                                                     -- key_columns: uncast
+    e.encounter_key
 FROM ...
 ```
+
+The manifest's `key_columns` are the exception to "cast every column": they have
+no declared type and must be projected verbatim from `getResourceKey()`. Casting
+one, stripping its `Type/` prefix, or substituting `Resource.id` all produce a
+`VARCHAR` column with the right name that joins to nothing downstream.
 
 The gate allows numeric widening (`INTEGER` where the manifest says `BIGINT` is
 fine) and date/datetime interchange. It does **not** forgive string-vs-number:
@@ -104,10 +121,14 @@ fine) and date/datetime interchange. It does **not** forgive string-vs-number:
 most common one. If a column reaches the gate as `VARCHAR` and the manifest says
 otherwise, the cast is missing — that diagnosis needs no probing.
 
-Identifier columns have a second failure mode stacked on the cast: `subject_id`,
-`hadm_id`, `stay_id` must come from `identifier.value`, not `getResourceKey()`,
-or the cast is applied to a UUID. See "Identifier spine" in the `fhir-mapping`
-skill and the identifier entry in `MIMIC_NOTES.md`.
+Identifier columns have two further failure modes stacked on the cast. First,
+`subject_id`, `hadm_id`, `stay_id` must come from `identifier.value`, not
+`getResourceKey()`, or the cast is applied to a resource key. Second, each one
+must be emitted **together with** that resource key as a separate column —
+`subject_id`+`patient_key`, `hadm_id`+`encounter_key`, `stay_id`+
+`icu_encounter_key`, `specimen_id`+`specimen_key` — which the manifest declares
+as `key_columns` and the gate enforces. See "Identifier spine" in the
+`fhir-mapping` skill and the identifier entry in `MIMIC_NOTES.md`.
 
 ### Datetimes: `CAST(… AS TIMESTAMP_NTZ)`, and nothing wrapped around it
 

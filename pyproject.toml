@@ -49,6 +49,19 @@ fhir = [
     "pyspark==4.0.2",
     "duckdb==1.5.5",
 ]
+# Registering exported concept artifacts on a Pathling server
+# (`register-derived-concepts`). Optional because everything else here -- the
+# state machine, the DAG, the comparator, the export -- works offline, and only
+# this one command talks to a server.
+#
+# Floors rather than pins: this is a developer tool run by hand a few times, not
+# a correctness gate, so it has no cluster version to stay in step with.
+upload = [
+    "httpx>=0.27",
+    "pyyaml>=6.0",
+    "jinja2>=3.1",
+    "python-dotenv>=1.0",
+]
 
 [project.scripts]
 mimic_utils = "mimic_utils.__main__:main"

@@ -593,10 +593,10 @@ def _h_metrics_report(
 
 
 def _h_export_mappings(artifact_root: Optional[str] = None) -> _Ec:
-    """Rebuild the canonical-layout export of finalized concept SQL."""
+    """Rebuild the canonical-layout export of finalized concept bundles."""
     try:
-        path, count = export_mappings(artifact_root=artifact_root)
-        print(f"Exported {count} finalized mapping(s) -> {path}")
+        for line in export_mappings(artifact_root=artifact_root).summary():
+            print(line)
         return 0
     except (StateError, OSError) as exc:
         print(f"ERROR: {exc}")
