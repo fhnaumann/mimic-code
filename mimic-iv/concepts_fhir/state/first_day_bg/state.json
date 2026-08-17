@@ -1,0 +1,19 @@
+{
+  "attempt": 1,
+  "category": "firstday",
+  "completed_at": "2026-08-17T00:39:46.505677+00:00",
+  "concept_name": "first_day_bg",
+  "dependencies": [
+    "bg"
+  ],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accepted COMPLETED_WITH_DIVERGENCE: the sole 1/73,181 output-row divergence is wholly inherited from bg. Six labevents for specimen 44663261 were irreversibly normalized from 2151-03-14 02:02 to 03:02 by mimic-fhir/sql/fhir_observation_labevents.sql:15,121, with the same loss at mimic-fhir/sql/fhir_specimen_lab.sql:18,58; Observation.issued from fhir_observation_labevents.sql:16,122 is storetime and does not preserve charttime. For stay 33143532, the canonical 02:30 upper bound includes the oracle row but excludes the served 03:02 row, reproducing all five conflicts and four calculated NULLs. No FHIR field or opaque resource id can recover the original wall time; expanding the window or subtracting an hour would corrupt genuine rows. The proven upstream DST loss and its second-order aggregate/window effects are exempt from essential-loss blocking. 73,180/73,181 rows identical; 1/73,181 affected; dependency bg is judge-accepted COMPLETED_WITH_DIVERGENCE.",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 1,
+  "started_at": "2026-08-16T23:53:52.620391+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-17T00:39:46.506125+00:00"
+}

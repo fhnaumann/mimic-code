@@ -1,0 +1,4 @@
+## Labevents DST normalization can change dependent time-window aggregates
+
+- Affected: `Observation.effectiveDateTime` from `mimiciv_hosp.labevents`, `Specimen.collection.collectedDateTime`, and dependent concepts that window or aggregate `bg` rows by `charttime`.
+- Verified: `first_day_bg` attempt_0001 full-data divergence — all 6 selected labevents rows for specimen 44663261 had source `charttime=2151-03-14 02:02` normalized to `03:02` by `mimic-fhir/sql/fhir_observation_labevents.sql:15,121`; `mimic-fhir/sql/fhir_specimen_lab.sql:18,58` preserves only the same normalized time. The resulting one-hour shift moved one dependency `bg` row beyond stay 33143532's inclusive upper bound, accounting for the sole 1/73,181 `differing_conflict` row and all nine differing output columns, with zero residual divergence rows.
