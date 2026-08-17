@@ -1,0 +1,23 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/charlson-0004-condition",
+  "name": "condition",
+  "resource": "Condition",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "condition_key" },
+        { "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_key" },
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd9' or system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd10')",
+      "column": [
+        { "path": "code", "name": "icd_code" },
+        { "path": "system", "name": "code_system" }
+      ]
+    }
+  ]
+}
