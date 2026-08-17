@@ -1,17 +1,33 @@
 {
-  "attempt": 2,
+  "attempt": 3,
   "category": "measurement",
-  "completed_at": "2026-08-14T01:03:47.457331+00:00",
+  "completed_at": "2026-08-17T04:24:36.488948+00:00",
   "concept_name": "rhythm",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "Judge accepted the attributed full-data divergence: mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 casts ce.charttime through TIMESTAMPTZ and writes Observation.effectiveDateTime, the exact source of the candidate charttime. The comparator replayed every divergence with zero residuals: 95 differing_conflict, 645 only_oracle, and 42 only_candidate rows, including 603 key collisions and 42 repaired pairings. The 645 uniquely shifted events are 0.0110% of 5,873,723 oracle rows, consistent with DST-gap rarity. Canonical and candidate rhythm both group by subject_id and charttime with equivalent ordered distinct STRING_AGG and lexical MAX; opaque resource IDs were used only for equality joins and not inverted. Fidelity is 5,872,983/5,873,723 identical (99.9874%), with no unrepresentable columns and no divergent dependencies.",
-  "engineering_counter": 3,
+  "divergence_justification": "Judge accepted the attributed divergence: mimic-fhir/sql/fhir_observation_chartevents.sql:9 casts ce.charttime through TIMESTAMPTZ and line 67 writes Observation.effectiveDateTime, the source of candidate charttime. The comparator exhaustively replayed every divergence with zero residuals: 95 differing_conflict, 645 only_oracle, and 42 only_candidate, including 603 key collisions and 42 repaired pairings. The 645 shifted events are 0.0110% of 5,873,723 oracle rows, consistent with DST-gap rarity. Canonical and candidate SQL both group by (subject_id, charttime) with equivalent ordered-distinct STRING_AGG and lexical MAX, explaining the collision aggregates. Resource IDs remained opaque and were not inverted. Fidelity is 5,872,983/5,873,723 identical (99.9874%), with no unrepresentable columns and no divergent dependencies.",
+  "engineering_counter": 4,
   "error_message": null,
-  "hpc_counter": 2,
-  "reopen_history": [],
-  "semantic_counter": 1,
-  "started_at": "2026-08-14T00:49:05.627332+00:00",
+  "hpc_counter": 3,
+  "reopen_history": [
+    {
+      "at": "2026-08-17T04:01:44.550683+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 3,
+        "hpc": 2,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Judge accepted the attributed full-data divergence: mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 casts ce.charttime through TIMESTAMPTZ and writes Observation.effectiveDateTime, the exact source of the candidate charttime. The comparator replayed every divergence with zero residuals: 95 differing_conflict, 645 only_oracle, and 42 only_candidate rows, including 603 key collisions and 42 repaired pairings. The 645 uniquely shifted events are 0.0110% of 5,873,723 oracle rows, consistent with DST-gap rarity. Canonical and candidate rhythm both group by subject_id and charttime with equivalent ordered distinct STRING_AGG and lexical MAX; opaque resource IDs were used only for equality joins and not inverted. Fidelity is 5,872,983/5,873,723 identical (99.9874%), with no unrepresentable columns and no divergent dependencies.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 2,
+  "started_at": "2026-08-17T04:01:44.552883+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-14T01:03:47.457982+00:00"
+  "updated_at": "2026-08-17T04:24:36.489267+00:00"
 }
