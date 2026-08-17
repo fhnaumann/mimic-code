@@ -1,14 +1,14 @@
 {
-  "attempt": 2,
+  "attempt": 3,
   "category": "demographics",
-  "completed_at": "2026-08-13T04:42:18.652340+00:00",
+  "completed_at": "2026-08-17T07:20:36.750517+00:00",
   "concept_name": "icustay_times",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "Equivalence judge accepted the contested 8-row divergence (7 intime_hr and 1 outtime_hr; 8/73,181 = 0.011%) as intrinsic upstream MIMIC-on-FHIR transformation loss. mimic-fhir/sql/fhir_observation_chartevents.sql:9 casts source chartevents.charttime through TIMESTAMPTZ and line 67 writes Observation.effectiveDateTime, so spring-forward-gap 02:mm values become 03:mm; MIN after this many-to-one transformation can select a genuine 03:00/03:02 row, and the original wall time is unrecoverable from FHIR. Observation.id is opaque and UUID reconstruction is forbidden. Schema and row identity matched, 73,173/73,181 rows were identical, and the localized endpoint loss is ancillary: it changes no row inclusion, key, grouping, carry-forward, or clinical branch.",
-  "engineering_counter": 3,
+  "divergence_justification": "Judge accepted the contested divergence: mimic-fhir/sql/fhir_observation_chartevents.sql:9 casts source charttime through TIMESTAMPTZ and line 67 writes the transformed value to Observation.effectiveDateTime. Thus MIN(transform(charttime)) differs from transform(MIN(charttime)) across spring-forward gaps, accounting for seven intime_hr aggregate conflicts; the one outtime_hr conflict is directly replay-attributed to the same cast. All 8/73,181 conflicts (0.011%) are accounted for, and the original 02:mm wall times are unrecoverable from FHIR because effectiveDateTime carries only the normalized value and issued carries storetime. Resource ids are opaque and cannot recover them. The loss changes no row inclusion, stay_id key, grouping, or temporal carry-forward, and is accepted under the contract's proven-DST upstream-defect exemption.",
+  "engineering_counter": 4,
   "error_message": null,
-  "hpc_counter": 2,
+  "hpc_counter": 3,
   "reopen_history": [
     {
       "at": "2026-08-13T04:05:14.700771+00:00",
@@ -23,10 +23,25 @@
       "superseded_decided_by": null,
       "superseded_justification": null,
       "superseded_status": "COMPLETED"
+    },
+    {
+      "at": "2026-08-17T06:54:42.023914+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 3,
+        "hpc": 2,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Equivalence judge accepted the contested 8-row divergence (7 intime_hr and 1 outtime_hr; 8/73,181 = 0.011%) as intrinsic upstream MIMIC-on-FHIR transformation loss. mimic-fhir/sql/fhir_observation_chartevents.sql:9 casts source chartevents.charttime through TIMESTAMPTZ and line 67 writes Observation.effectiveDateTime, so spring-forward-gap 02:mm values become 03:mm; MIN after this many-to-one transformation can select a genuine 03:00/03:02 row, and the original wall time is unrecoverable from FHIR. Observation.id is opaque and UUID reconstruction is forbidden. Schema and row identity matched, 73,173/73,181 rows were identical, and the localized endpoint loss is ancillary: it changes no row inclusion, key, grouping, carry-forward, or clinical branch.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
-  "semantic_counter": 1,
-  "started_at": "2026-08-13T04:05:14.702191+00:00",
+  "semantic_counter": 2,
+  "started_at": "2026-08-17T06:54:42.025484+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-13T04:42:18.652620+00:00"
+  "updated_at": "2026-08-17T07:20:36.907278+00:00"
 }

@@ -1,0 +1,9 @@
+Evidence block: Concept `icustay_times`, attempt `0003`.
+
+Judge verdict: `accept` for the `contested` review. `mimic-fhir/sql/fhir_observation_chartevents.sql:9` casts source `chartevents.charttime` through `TIMESTAMPTZ`, and line 67 writes the transformed value to `Observation.effectiveDateTime`. The canonical SQL computes `MIN/MAX` over source wall times while the candidate computes `MIN/MAX` over transformed FHIR values; across the spring-forward gap, `MIN(transform(charttime))` does not equal `transform(MIN(charttime))`. Seven source 02:mm minima normalize so genuine 03:00/03:02 rows become candidate minima; the remaining outtime conflict directly replays the same cast. All 8/73,181 conflicts (0.011%) are therefore accounted for: seven aggregate residuals and one direct replay.
+
+The original wall times are unrecoverable: `Observation.effectiveDateTime` contains only the normalized value and `Observation.issued` comes from `storetime` (`fhir_observation_chartevents.sql:68`). Resource identity is opaque and cannot be used as a semantic side channel. The divergence changes eight endpoint values but does not change row inclusion, the `stay_id` natural key, grouping membership, or temporal carry-forward; the contract's proven-DST exemption applies and the loss is accepted, not blocked.
+
+Fidelity: 73,173/73,181 rows identical (99.9891%); no excluded columns, so representable fraction is also 99.9891%. Divergence classes: 8 `differing_conflict` (7 `intime_hr`, 1 `outtime_hr`), zero `only_oracle`, zero `only_candidate`, and zero `differing_null_only`. FHIR path: `(effective).ofType(dateTime)` / `Observation.effectiveDateTime`. Dependencies: none divergent.
+
+Files read: `LOOP_CONTRACT.md`, curated `MIMIC_NOTES.md`, canonical source SQL, oracle manifest entry, attempt_0003 comparison and run metadata, SQL and four ViewDefinitions, full attempt history/evidence, and cited upstream ETL SQL. No files were changed by the judge.

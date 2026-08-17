@@ -1,0 +1,9 @@
+Evidence block: Concept `icustay_times`, attempt `0003`; tier `contested`.
+
+The seven residual `intime_hr` conflicts are upstream ETL transformation loss, not a fixable port bug. `mimic-fhir/sql/fhir_observation_chartevents.sql:9` casts every source `charttime` through `TIMESTAMPTZ`, and line 67 writes the transformed value as `effectiveDateTime`. The canonical concept computes `MIN(source charttime)`, while the candidate necessarily computes `MIN(transformed charttime)`; these do not commute across the DST spring-forward gap. Source minima of 02:mm become 03:mm, while genuine unchanged 03:00/03:02 rows can become the candidate minimum. The separate outtime conflict is the directly replay-attributed DST shift.
+
+The original 02:mm wall times are not recoverable from allowed FHIR values: `effectiveDateTime` carries only normalized 03:mm, while `issued` is sourced from `storetime`; a genuine 03:mm and normalized 02:mm are indistinguishable. The pre-cast charttime used in upstream UUID construction is opaque identity and cannot be parsed, regenerated, hashed, hardcoded, or used as a semantic side channel. No implementation retry is recommended and no carryover stage is invalidated.
+
+Files read: `comparison.full.json`, `run_meta.full.json`, `concept.sql`, all four ViewDefinitions, canonical source SQL, oracle manifest, carryover files, prior attempt evidence, `LOOP_CONTRACT.md`, `MIMIC_NOTES.md`, and `/Users/nau025/Documents/mimic-fhir/sql/fhir_observation_chartevents.sql`.
+
+Dataset-wide finding: the existing `MIMIC_NOTES.d/icustay_times.md` claim that `MIN(transform(charttime))` can differ from `transform(MIN(charttime))` after chartevents DST normalization was independently confirmed and sharpened by the current full run. No implementation or curated notes file was edited by the diagnostician.
