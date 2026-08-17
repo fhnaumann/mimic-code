@@ -1,0 +1,135 @@
+{
+  "attempt_dir": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/demographics/age/attempt_0003",
+  "column_types": {
+    "admittime": "timestamp_ntz",
+    "age": "bigint",
+    "anchor_age": "smallint",
+    "anchor_year": "smallint",
+    "encounter_key": "string",
+    "hadm_id": "int",
+    "patient_key": "string",
+    "subject_id": "int"
+  },
+  "columns": [
+    "subject_id",
+    "hadm_id",
+    "admittime",
+    "anchor_age",
+    "anchor_year",
+    "age",
+    "patient_key",
+    "encounter_key"
+  ],
+  "concept": "age",
+  "dataset": "full",
+  "divergence": {
+    "attributed": [],
+    "blocking": [
+      {
+        "class": "differing_conflict",
+        "count": 504,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "classification": "keyed",
+    "conflict_attribution": {
+      "attempted": true,
+      "attributed_rows": 44,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "columns": {
+        "admittime": 44
+      },
+      "columns_considered": [
+        "admittime"
+      ],
+      "complete": false,
+      "conflict_rows": 504,
+      "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+      "residual_rows": 460,
+      "timezone": "America/New_York"
+    },
+    "contested": [
+      {
+        "class": "differing_conflict",
+        "count": 504,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "declared_unrepresentable": {
+      "anchor_age": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); the pair is collapsed, so anchor_age is not exactly recoverable and a typed NULL is emitted.",
+      "anchor_year": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); min(year(Encounter.period.start)) is only an approximation, not exact, so anchor_year is not exactly recoverable and a typed NULL is emitted."
+    },
+    "diagnostician_required": true,
+    "gap_shaped": [
+      {
+        "class": "differing_null_only",
+        "count": 430727,
+        "declared_unrepresentable": {
+          "anchor_age": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); the pair is collapsed, so anchor_age is not exactly recoverable and a typed NULL is emitted.",
+          "anchor_year": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); min(year(Encounter.period.start)) is only an approximation, not exact, so anchor_year is not exactly recoverable and a typed NULL is emitted."
+        },
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      }
+    ],
+    "identical_fraction": 0.0,
+    "identical_representable_rows": 430727,
+    "identical_rows": 0,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "key_attribution": null,
+    "notes": [
+      "44 of 504 conflicting rows replay the upstream upstream_timestamptz_dst_shift; 460 do not and are unexplained. The tier stays `contested` on those residual rows: diagnose them, not the attributed ones."
+    ],
+    "oracle_rows": 431231,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "representable_excludes": [
+      "anchor_age",
+      "anchor_year"
+    ],
+    "representable_fraction": 0.998831,
+    "reviewable": [
+      {
+        "class": "differing_conflict",
+        "count": 504,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      },
+      {
+        "class": "differing_null_only",
+        "count": 430727,
+        "declared_unrepresentable": {
+          "anchor_age": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); the pair is collapsed, so anchor_age is not exactly recoverable and a typed NULL is emitted.",
+          "anchor_year": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); min(year(Encounter.period.start)) is only an approximation, not exact, so anchor_year is not exactly recoverable and a typed NULL is emitted."
+        },
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "engine": "pathling-embedded",
+  "format_version": "1.0",
+  "generated_at": "2026-08-17T02:10:11.420132+00:00",
+  "oracle": "/scratch3/nau025/oracle/mimic4-full.db",
+  "oracle_row_count": 431231,
+  "row_count": 431231,
+  "timings_seconds": {
+    "compare": 1.179,
+    "execute": 16.891
+  },
+  "verdict": "review",
+  "view_labels": [
+    "encounter",
+    "patient"
+  ],
+  "warehouse": "/scratch3/nau025/mimic-on-fhir-delta/spark_warehouse"
+}

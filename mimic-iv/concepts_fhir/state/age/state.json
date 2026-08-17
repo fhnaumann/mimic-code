@@ -1,15 +1,33 @@
 {
-  "attempt": 2,
+  "attempt": 3,
   "category": "demographics",
-  "completed_at": "2026-08-07T04:36:38.457707+00:00",
+  "completed_at": "2026-08-17T02:18:39.397059+00:00",
   "concept_name": "age",
   "dependencies": [],
-  "divergence_decided_by": "human",
-  "divergence_justification": "Intrinsic representability gap, upstream-ETL-confirmed. 430,727/431,231 rows (99.883%) identical on all representable columns. age conflicts on 460 rows (0.107%): mimic-fhir/sql/fhir_patient.sql:15 synthesises Patient.birthDate as MIN(transfers.intime)-anchor_age, not anchor_year-anchor_age; canonical age needs anchor_year, which no FHIR element carries. admittime conflicts on 44 rows (0.010%): fhir_encounter.sql:65 casts through TIMESTAMPTZ, normalising DST-gap wall times irreversibly. anchor_age/anchor_year emitted as typed NULLs per contract. Divergence propagates to creatinine_baseline, oasis, charlson, sapsii, which all select age.",
-  "engineering_counter": 3,
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Intrinsic upstream transformation divergence. mimic-fhir/sql/fhir_patient.sql:15,108 synthesizes Patient.birthDate from MIN(transfers.intime)-anchor_age, while canonical mimic-iv/concepts/demographics/age.sql:30 requires the unrecoverable anchor_age/anchor_year pair, explaining all 460 age conflicts. mimic-fhir/sql/fhir_encounter.sql:65,149-151 irreversibly normalizes 44 DST-gap admission times, exhaustively replayed by the comparator. The anchor outputs are valid ancillary typed NULLs; all rows, keys, and grain are preserved. Under the contract's explicit birthDate and DST upstream-defect exemptions, these conflicts are accepted rather than blocked, including their clinically meaningful effect on age.",
+  "engineering_counter": 4,
   "error_message": null,
-  "hpc_counter": 1,
-  "semantic_counter": 2,
-  "started_at": "2026-08-07T03:14:05.380691+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE"
+  "hpc_counter": 2,
+  "reopen_history": [
+    {
+      "at": "2026-08-17T01:52:00.483731+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 3,
+        "hpc": 1,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which this port computes as\n  its join spine but drops at the outermost SELECT. The attempt adds patient_key and encounter_key beside subject_id\n  and hadm_id, per the manifest's key_columns. Additive and shape-only: both comparison paths project manifest columns\n  explicitly, so no compared value can change. Also requires adding getResourceKey() to ViewDefinition.encounter.json,\n  which currently projects only a reference key.",
+      "superseded_decided_by": "human",
+      "superseded_error": null,
+      "superseded_justification": "Intrinsic representability gap, upstream-ETL-confirmed. 430,727/431,231 rows (99.883%) identical on all representable columns. age conflicts on 460 rows (0.107%): mimic-fhir/sql/fhir_patient.sql:15 synthesises Patient.birthDate as MIN(transfers.intime)-anchor_age, not anchor_year-anchor_age; canonical age needs anchor_year, which no FHIR element carries. admittime conflicts on 44 rows (0.010%): fhir_encounter.sql:65 casts through TIMESTAMPTZ, normalising DST-gap wall times irreversibly. anchor_age/anchor_year emitted as typed NULLs per contract. Divergence propagates to creatinine_baseline, oasis, charlson, sapsii, which all select age.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 3,
+  "started_at": "2026-08-17T01:52:00.485513+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-17T02:18:39.397477+00:00"
 }

@@ -1,0 +1,4 @@
+{
+  "anchor_age": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); the pair is collapsed, so anchor_age is not exactly recoverable and a typed NULL is emitted.",
+  "anchor_year": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); min(year(Encounter.period.start)) is only an approximation, not exact, so anchor_year is not exactly recoverable and a typed NULL is emitted."
+}

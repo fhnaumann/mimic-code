@@ -1,0 +1,1052 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/demographics/age/attempt_0003/candidate.full.parquet/*.parquet",
+  "comparison": "keyed_join",
+  "concept": "age",
+  "dataset": "full",
+  "diagnostics": [
+    "CONTESTED \u2014 a value conflict. Either a port bug or upstream ETL transformation loss; the data cannot tell you which:",
+    "  504 \u00d7 differing_conflict (0.117% of oracle rows) \u2014 matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone",
+    "    column 'age' conflicts on 460 row(s) (0.107% of oracle rows)",
+    "    column 'admittime' conflicts on 44 row(s) (0.010% of oracle rows)",
+    "  bar for an accept: A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "GAP-SHAPED \u2014 consistent with a MIMIC-on-FHIR coverage gap:",
+    "  430,727 \u00d7 differing_null_only \u2014 matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing",
+    "    column 'anchor_age' is NULL in the candidate on 431,231 row(s) [declared unrepresentable]",
+    "    column 'anchor_year' is NULL in the candidate on 431,231 row(s) [declared unrepresentable]",
+    "    declared 'anchor_age': No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); the pair is collapsed, so anchor_age is not exactly recoverable and a typed NULL is emitted.",
+    "    declared 'anchor_year': No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); min(year(Encounter.period.start)) is only an approximation, not exact, so anchor_year is not exactly recoverable and a typed NULL is emitted.",
+    "0 of 431,231 oracle rows reproduced identically (0.00%)",
+    "430,727 of 431,231 identical on the representable columns (99.88%), excluding the declared-and-confirmed all-NULL column(s): anchor_age, anchor_year",
+    "note: 44 of 504 conflicting rows replay the upstream upstream_timestamptz_dst_shift; 460 do not and are unexplained. The tier stays `contested` on those residual rows: diagnose them, not the attributed ones."
+  ],
+  "diff": {
+    "classification": "keyed",
+    "columns_candidate_null": {
+      "anchor_age": 431231,
+      "anchor_year": 431231
+    },
+    "columns_conflicting": {
+      "admittime": 44,
+      "age": 460
+    },
+    "columns_differing": {
+      "admittime": 44,
+      "age": 460,
+      "anchor_age": 431231,
+      "anchor_year": 431231
+    },
+    "conflict_attribution": {
+      "attempted": true,
+      "attributed_rows": 44,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "columns": {
+        "admittime": 44
+      },
+      "columns_considered": [
+        "admittime"
+      ],
+      "complete": false,
+      "conflict_rows": 504,
+      "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+      "residual_rows": 460,
+      "samples": [
+        {
+          "admittime__candidate": "2174-03-13T03:01:00",
+          "admittime__oracle": "2174-03-13T02:01:00",
+          "admittime__replayed": "2174-03-13T03:01:00",
+          "age__candidate": 55,
+          "age__oracle": 55,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 55,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2174,
+          "hadm_id": 20103518,
+          "subject_id__candidate": 14200390,
+          "subject_id__oracle": 14200390
+        },
+        {
+          "admittime__candidate": "2161-03-08T03:09:00",
+          "admittime__oracle": "2161-03-08T02:09:00",
+          "admittime__replayed": "2161-03-08T03:09:00",
+          "age__candidate": 85,
+          "age__oracle": 85,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 82,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2158,
+          "hadm_id": 25923001,
+          "subject_id__candidate": 17021029,
+          "subject_id__oracle": 17021029
+        },
+        {
+          "admittime__candidate": "2133-03-08T03:48:00",
+          "admittime__oracle": "2133-03-08T02:48:00",
+          "admittime__replayed": "2133-03-08T03:48:00",
+          "age__candidate": 76,
+          "age__oracle": 76,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 76,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2133,
+          "hadm_id": 26274322,
+          "subject_id__candidate": 14196357,
+          "subject_id__oracle": 14196357
+        },
+        {
+          "admittime__candidate": "2130-03-12T03:27:00",
+          "admittime__oracle": "2130-03-12T02:27:00",
+          "admittime__replayed": "2130-03-12T03:27:00",
+          "age__candidate": 26,
+          "age__oracle": 26,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 26,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2130,
+          "hadm_id": 23441305,
+          "subject_id__candidate": 11467043,
+          "subject_id__oracle": 11467043
+        },
+        {
+          "admittime__candidate": "2118-03-13T03:02:00",
+          "admittime__oracle": "2118-03-13T02:02:00",
+          "admittime__replayed": "2118-03-13T03:02:00",
+          "age__candidate": 19,
+          "age__oracle": 19,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 18,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2117,
+          "hadm_id": 22528388,
+          "subject_id__candidate": 19596777,
+          "subject_id__oracle": 19596777
+        },
+        {
+          "admittime__candidate": "2136-03-11T03:06:00",
+          "admittime__oracle": "2136-03-11T02:06:00",
+          "admittime__replayed": "2136-03-11T03:06:00",
+          "age__candidate": 52,
+          "age__oracle": 52,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 51,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2135,
+          "hadm_id": 21458623,
+          "subject_id__candidate": 18570322,
+          "subject_id__oracle": 18570322
+        },
+        {
+          "admittime__candidate": "2176-03-10T03:50:00",
+          "admittime__oracle": "2176-03-10T02:50:00",
+          "admittime__replayed": "2176-03-10T03:50:00",
+          "age__candidate": 85,
+          "age__oracle": 85,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 85,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2176,
+          "hadm_id": 20625637,
+          "subject_id__candidate": 10539155,
+          "subject_id__oracle": 10539155
+        },
+        {
+          "admittime__candidate": "2157-03-13T03:37:00",
+          "admittime__oracle": "2157-03-13T02:37:00",
+          "admittime__replayed": "2157-03-13T03:37:00",
+          "age__candidate": 81,
+          "age__oracle": 81,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 81,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2157,
+          "hadm_id": 23885986,
+          "subject_id__candidate": 19624399,
+          "subject_id__oracle": 19624399
+        },
+        {
+          "admittime__candidate": "2148-03-10T03:56:00",
+          "admittime__oracle": "2148-03-10T02:56:00",
+          "admittime__replayed": "2148-03-10T03:56:00",
+          "age__candidate": 51,
+          "age__oracle": 51,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 48,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2145,
+          "hadm_id": 21119556,
+          "subject_id__candidate": 15770081,
+          "subject_id__oracle": 15770081
+        },
+        {
+          "admittime__candidate": "2121-03-09T03:07:00",
+          "admittime__oracle": "2121-03-09T02:07:00",
+          "admittime__replayed": "2121-03-09T03:07:00",
+          "age__candidate": 28,
+          "age__oracle": 28,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 23,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2116,
+          "hadm_id": 26334878,
+          "subject_id__candidate": 18299078,
+          "subject_id__oracle": 18299078
+        },
+        {
+          "admittime__candidate": "2173-03-14T03:03:00",
+          "admittime__oracle": "2173-03-14T02:03:00",
+          "admittime__replayed": "2173-03-14T03:03:00",
+          "age__candidate": 47,
+          "age__oracle": 47,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 43,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2169,
+          "hadm_id": 28017218,
+          "subject_id__candidate": 10180652,
+          "subject_id__oracle": 10180652
+        },
+        {
+          "admittime__candidate": "2176-03-10T03:16:00",
+          "admittime__oracle": "2176-03-10T02:16:00",
+          "admittime__replayed": "2176-03-10T03:16:00",
+          "age__candidate": 62,
+          "age__oracle": 62,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 62,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2176,
+          "hadm_id": 24649933,
+          "subject_id__candidate": 17326358,
+          "subject_id__oracle": 17326358
+        },
+        {
+          "admittime__candidate": "2130-03-12T03:42:00",
+          "admittime__oracle": "2130-03-12T02:42:00",
+          "admittime__replayed": "2130-03-12T03:42:00",
+          "age__candidate": 50,
+          "age__oracle": 50,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 50,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2130,
+          "hadm_id": 21168904,
+          "subject_id__candidate": 10641905,
+          "subject_id__oracle": 10641905
+        },
+        {
+          "admittime__candidate": "2189-03-08T03:59:00",
+          "admittime__oracle": "2189-03-08T02:59:00",
+          "admittime__replayed": "2189-03-08T03:59:00",
+          "age__candidate": 41,
+          "age__oracle": 41,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 37,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2185,
+          "hadm_id": 26355824,
+          "subject_id__candidate": 19746069,
+          "subject_id__oracle": 19746069
+        },
+        {
+          "admittime__candidate": "2184-03-14T03:02:00",
+          "admittime__oracle": "2184-03-14T02:02:00",
+          "admittime__replayed": "2184-03-14T03:02:00",
+          "age__candidate": 48,
+          "age__oracle": 48,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 48,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2184,
+          "hadm_id": 24844151,
+          "subject_id__candidate": 18890018,
+          "subject_id__oracle": 18890018
+        },
+        {
+          "admittime__candidate": "2158-03-12T03:52:00",
+          "admittime__oracle": "2158-03-12T02:52:00",
+          "admittime__replayed": "2158-03-12T03:52:00",
+          "age__candidate": 20,
+          "age__oracle": 20,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 20,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2158,
+          "hadm_id": 21114401,
+          "subject_id__candidate": 10418685,
+          "subject_id__oracle": 10418685
+        },
+        {
+          "admittime__candidate": "2130-03-12T03:43:00",
+          "admittime__oracle": "2130-03-12T02:43:00",
+          "admittime__replayed": "2130-03-12T03:43:00",
+          "age__candidate": 21,
+          "age__oracle": 21,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 21,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2130,
+          "hadm_id": 23354915,
+          "subject_id__candidate": 19824892,
+          "subject_id__oracle": 19824892
+        },
+        {
+          "admittime__candidate": "2156-03-14T03:11:00",
+          "admittime__oracle": "2156-03-14T02:11:00",
+          "admittime__replayed": "2156-03-14T03:11:00",
+          "age__candidate": 70,
+          "age__oracle": 70,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 70,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2156,
+          "hadm_id": 24280615,
+          "subject_id__candidate": 15039779,
+          "subject_id__oracle": 15039779
+        },
+        {
+          "admittime__candidate": "2156-03-14T03:39:00",
+          "admittime__oracle": "2156-03-14T02:39:00",
+          "admittime__replayed": "2156-03-14T03:39:00",
+          "age__candidate": 25,
+          "age__oracle": 25,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 25,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2156,
+          "hadm_id": 24945409,
+          "subject_id__candidate": 13807601,
+          "subject_id__oracle": 13807601
+        },
+        {
+          "admittime__candidate": "2126-03-10T03:40:00",
+          "admittime__oracle": "2126-03-10T02:40:00",
+          "admittime__replayed": "2126-03-10T03:40:00",
+          "age__candidate": 63,
+          "age__oracle": 63,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 63,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2126,
+          "hadm_id": 27739906,
+          "subject_id__candidate": 14799933,
+          "subject_id__oracle": 14799933
+        }
+      ],
+      "timezone": "America/New_York"
+    },
+    "differing": 431231,
+    "differing_conflict": 504,
+    "differing_null_only": 430727,
+    "excluded_as_unrepresentable": [
+      "anchor_age",
+      "anchor_year"
+    ],
+    "identical": 0,
+    "identical_representable": 430727,
+    "key": [
+      "hadm_id"
+    ],
+    "only_candidate": 0,
+    "only_oracle": 0,
+    "samples": {
+      "differing_conflict": [
+        {
+          "admittime__candidate": "2175-03-15T02:29:00",
+          "admittime__oracle": "2175-03-15T02:29:00",
+          "age__candidate": 35,
+          "age__oracle": 33,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 33,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2175,
+          "hadm_id": 29047836,
+          "subject_id__candidate": 16723546,
+          "subject_id__oracle": 16723546
+        },
+        {
+          "admittime__candidate": "2173-02-05T23:30:00",
+          "admittime__oracle": "2173-02-05T23:30:00",
+          "age__candidate": 33,
+          "age__oracle": 31,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 33,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2175,
+          "hadm_id": 29479418,
+          "subject_id__candidate": 16723546,
+          "subject_id__oracle": 16723546
+        },
+        {
+          "admittime__candidate": "2183-02-28T00:00:00",
+          "admittime__oracle": "2183-02-28T00:00:00",
+          "age__candidate": 43,
+          "age__oracle": 41,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 33,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2175,
+          "hadm_id": 22737968,
+          "subject_id__candidate": 16723546,
+          "subject_id__oracle": 16723546
+        },
+        {
+          "admittime__candidate": "2158-03-12T03:52:00",
+          "admittime__oracle": "2158-03-12T02:52:00",
+          "age__candidate": 20,
+          "age__oracle": 20,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 20,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2158,
+          "hadm_id": 21114401,
+          "subject_id__candidate": 10418685,
+          "subject_id__oracle": 10418685
+        },
+        {
+          "admittime__candidate": "2172-04-27T20:31:00",
+          "admittime__oracle": "2172-04-27T20:31:00",
+          "age__candidate": 86,
+          "age__oracle": 85,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 83,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2170,
+          "hadm_id": 21521681,
+          "subject_id__candidate": 15955544,
+          "subject_id__oracle": 15955544
+        },
+        {
+          "admittime__candidate": "2169-03-11T17:34:00",
+          "admittime__oracle": "2169-03-11T17:34:00",
+          "age__candidate": 83,
+          "age__oracle": 82,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 83,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2170,
+          "hadm_id": 29204264,
+          "subject_id__candidate": 15955544,
+          "subject_id__oracle": 15955544
+        },
+        {
+          "admittime__candidate": "2170-09-19T09:42:00",
+          "admittime__oracle": "2170-09-19T09:42:00",
+          "age__candidate": 84,
+          "age__oracle": 83,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 83,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2170,
+          "hadm_id": 25515016,
+          "subject_id__candidate": 15955544,
+          "subject_id__oracle": 15955544
+        },
+        {
+          "admittime__candidate": "2172-03-23T19:42:00",
+          "admittime__oracle": "2172-03-23T19:42:00",
+          "age__candidate": 86,
+          "age__oracle": 85,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 83,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2170,
+          "hadm_id": 23698564,
+          "subject_id__candidate": 15955544,
+          "subject_id__oracle": 15955544
+        },
+        {
+          "admittime__candidate": "2178-10-12T16:15:00",
+          "admittime__oracle": "2178-10-12T16:15:00",
+          "age__candidate": 69,
+          "age__oracle": 60,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 60,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2178,
+          "hadm_id": 27487813,
+          "subject_id__candidate": 11425757,
+          "subject_id__oracle": 11425757
+        },
+        {
+          "admittime__candidate": "2169-09-18T21:12:00",
+          "admittime__oracle": "2169-09-18T21:12:00",
+          "age__candidate": 60,
+          "age__oracle": 51,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 60,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2178,
+          "hadm_id": 21839252,
+          "subject_id__candidate": 11425757,
+          "subject_id__oracle": 11425757
+        },
+        {
+          "admittime__candidate": "2180-11-08T05:25:00",
+          "admittime__oracle": "2180-11-08T05:25:00",
+          "age__candidate": 71,
+          "age__oracle": 62,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 60,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2178,
+          "hadm_id": 24642620,
+          "subject_id__candidate": 11425757,
+          "subject_id__oracle": 11425757
+        },
+        {
+          "admittime__candidate": "2178-07-08T17:20:00",
+          "admittime__oracle": "2178-07-08T17:20:00",
+          "age__candidate": 69,
+          "age__oracle": 60,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 60,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2178,
+          "hadm_id": 26634656,
+          "subject_id__candidate": 11425757,
+          "subject_id__oracle": 11425757
+        },
+        {
+          "admittime__candidate": "2189-08-21T06:59:00",
+          "admittime__oracle": "2189-08-21T06:59:00",
+          "age__candidate": 91,
+          "age__oracle": 85,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 85,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2189,
+          "hadm_id": 24488202,
+          "subject_id__candidate": 12357866,
+          "subject_id__oracle": 12357866
+        },
+        {
+          "admittime__candidate": "2189-10-25T20:55:00",
+          "admittime__oracle": "2189-10-25T20:55:00",
+          "age__candidate": 91,
+          "age__oracle": 85,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 85,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2189,
+          "hadm_id": 20652217,
+          "subject_id__candidate": 12357866,
+          "subject_id__oracle": 12357866
+        },
+        {
+          "admittime__candidate": "2183-08-23T19:52:00",
+          "admittime__oracle": "2183-08-23T19:52:00",
+          "age__candidate": 85,
+          "age__oracle": 79,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 85,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2189,
+          "hadm_id": 25063967,
+          "subject_id__candidate": 12357866,
+          "subject_id__oracle": 12357866
+        },
+        {
+          "admittime__candidate": "2174-12-31T00:00:00",
+          "admittime__oracle": "2174-12-31T00:00:00",
+          "age__candidate": 83,
+          "age__oracle": 84,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 84,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2174,
+          "hadm_id": 29865259,
+          "subject_id__candidate": 13816100,
+          "subject_id__oracle": 13816100
+        },
+        {
+          "admittime__candidate": "2175-09-04T23:25:00",
+          "admittime__oracle": "2175-09-04T23:25:00",
+          "age__candidate": 84,
+          "age__oracle": 85,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 84,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2174,
+          "hadm_id": 27373991,
+          "subject_id__candidate": 13816100,
+          "subject_id__oracle": 13816100
+        },
+        {
+          "admittime__candidate": "2176-03-27T16:55:00",
+          "admittime__oracle": "2176-03-27T16:55:00",
+          "age__candidate": 85,
+          "age__oracle": 86,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 84,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2174,
+          "hadm_id": 27146733,
+          "subject_id__candidate": 13816100,
+          "subject_id__oracle": 13816100
+        },
+        {
+          "admittime__candidate": "2175-11-15T22:02:00",
+          "admittime__oracle": "2175-11-15T22:02:00",
+          "age__candidate": 84,
+          "age__oracle": 85,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 84,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2174,
+          "hadm_id": 26026527,
+          "subject_id__candidate": 13816100,
+          "subject_id__oracle": 13816100
+        },
+        {
+          "admittime__candidate": "2175-03-08T14:05:00",
+          "admittime__oracle": "2175-03-08T14:05:00",
+          "age__candidate": 84,
+          "age__oracle": 85,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 84,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2174,
+          "hadm_id": 21730760,
+          "subject_id__candidate": 13816100,
+          "subject_id__oracle": 13816100
+        }
+      ],
+      "differing_null_only": [
+        {
+          "admittime__candidate": "2141-04-09T00:00:00",
+          "admittime__oracle": "2141-04-09T00:00:00",
+          "age__candidate": 76,
+          "age__oracle": 76,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 76,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2141,
+          "hadm_id": 27067660,
+          "subject_id__candidate": 17038917,
+          "subject_id__oracle": 17038917
+        },
+        {
+          "admittime__candidate": "2145-02-28T05:21:00",
+          "admittime__oracle": "2145-02-28T05:21:00",
+          "age__candidate": 84,
+          "age__oracle": 84,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 80,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2141,
+          "hadm_id": 26332624,
+          "subject_id__candidate": 17114229,
+          "subject_id__oracle": 17114229
+        },
+        {
+          "admittime__candidate": "2141-08-06T22:42:00",
+          "admittime__oracle": "2141-08-06T22:42:00",
+          "age__candidate": 80,
+          "age__oracle": 80,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 80,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2141,
+          "hadm_id": 24582960,
+          "subject_id__candidate": 17114229,
+          "subject_id__oracle": 17114229
+        },
+        {
+          "admittime__candidate": "2141-11-18T00:00:00",
+          "admittime__oracle": "2141-11-18T00:00:00",
+          "age__candidate": 80,
+          "age__oracle": 80,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 80,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2141,
+          "hadm_id": 29035306,
+          "subject_id__candidate": 17114229,
+          "subject_id__oracle": 17114229
+        },
+        {
+          "admittime__candidate": "2177-06-19T23:35:00",
+          "admittime__oracle": "2177-06-19T23:35:00",
+          "age__candidate": 56,
+          "age__oracle": 56,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 56,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2177,
+          "hadm_id": 27994939,
+          "subject_id__candidate": 14892820,
+          "subject_id__oracle": 14892820
+        },
+        {
+          "admittime__candidate": "2112-06-04T22:53:00",
+          "admittime__oracle": "2112-06-04T22:53:00",
+          "age__candidate": 77,
+          "age__oracle": 77,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 77,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2112,
+          "hadm_id": 22749980,
+          "subject_id__candidate": 14449520,
+          "subject_id__oracle": 14449520
+        },
+        {
+          "admittime__candidate": "2140-01-19T16:54:00",
+          "admittime__oracle": "2140-01-19T16:54:00",
+          "age__candidate": 29,
+          "age__oracle": 29,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 29,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2140,
+          "hadm_id": 27121275,
+          "subject_id__candidate": 18535260,
+          "subject_id__oracle": 18535260
+        },
+        {
+          "admittime__candidate": "2174-01-20T19:00:00",
+          "admittime__oracle": "2174-01-20T19:00:00",
+          "age__candidate": 71,
+          "age__oracle": 71,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 68,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2171,
+          "hadm_id": 28781923,
+          "subject_id__candidate": 17256511,
+          "subject_id__oracle": 17256511
+        },
+        {
+          "admittime__candidate": "2171-03-09T17:40:00",
+          "admittime__oracle": "2171-03-09T17:40:00",
+          "age__candidate": 68,
+          "age__oracle": 68,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 68,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2171,
+          "hadm_id": 23166567,
+          "subject_id__candidate": 17256511,
+          "subject_id__oracle": 17256511
+        },
+        {
+          "admittime__candidate": "2174-02-17T16:23:00",
+          "admittime__oracle": "2174-02-17T16:23:00",
+          "age__candidate": 71,
+          "age__oracle": 71,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 68,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2171,
+          "hadm_id": 26977160,
+          "subject_id__candidate": 17256511,
+          "subject_id__oracle": 17256511
+        },
+        {
+          "admittime__candidate": "2173-06-08T23:52:00",
+          "admittime__oracle": "2173-06-08T23:52:00",
+          "age__candidate": 70,
+          "age__oracle": 70,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 68,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2171,
+          "hadm_id": 25100368,
+          "subject_id__candidate": 17256511,
+          "subject_id__oracle": 17256511
+        },
+        {
+          "admittime__candidate": "2174-04-19T19:32:00",
+          "admittime__oracle": "2174-04-19T19:32:00",
+          "age__candidate": 71,
+          "age__oracle": 71,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 68,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2171,
+          "hadm_id": 26448340,
+          "subject_id__candidate": 17256511,
+          "subject_id__oracle": 17256511
+        },
+        {
+          "admittime__candidate": "2175-01-14T21:54:00",
+          "admittime__oracle": "2175-01-14T21:54:00",
+          "age__candidate": 72,
+          "age__oracle": 72,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 68,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2171,
+          "hadm_id": 26980370,
+          "subject_id__candidate": 17256511,
+          "subject_id__oracle": 17256511
+        },
+        {
+          "admittime__candidate": "2174-10-28T14:19:00",
+          "admittime__oracle": "2174-10-28T14:19:00",
+          "age__candidate": 71,
+          "age__oracle": 71,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 68,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2171,
+          "hadm_id": 27307767,
+          "subject_id__candidate": 17256511,
+          "subject_id__oracle": 17256511
+        },
+        {
+          "admittime__candidate": "2173-10-20T08:37:00",
+          "admittime__oracle": "2173-10-20T08:37:00",
+          "age__candidate": 70,
+          "age__oracle": 70,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 68,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2171,
+          "hadm_id": 20577555,
+          "subject_id__candidate": 17256511,
+          "subject_id__oracle": 17256511
+        },
+        {
+          "admittime__candidate": "2174-12-18T15:36:00",
+          "admittime__oracle": "2174-12-18T15:36:00",
+          "age__candidate": 71,
+          "age__oracle": 71,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 68,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2171,
+          "hadm_id": 29699781,
+          "subject_id__candidate": 17256511,
+          "subject_id__oracle": 17256511
+        },
+        {
+          "admittime__candidate": "2174-12-28T13:57:00",
+          "admittime__oracle": "2174-12-28T13:57:00",
+          "age__candidate": 71,
+          "age__oracle": 71,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 68,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2171,
+          "hadm_id": 23230110,
+          "subject_id__candidate": 17256511,
+          "subject_id__oracle": 17256511
+        },
+        {
+          "admittime__candidate": "2175-02-04T11:51:00",
+          "admittime__oracle": "2175-02-04T11:51:00",
+          "age__candidate": 72,
+          "age__oracle": 72,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 68,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2171,
+          "hadm_id": 25344377,
+          "subject_id__candidate": 17256511,
+          "subject_id__oracle": 17256511
+        },
+        {
+          "admittime__candidate": "2174-09-23T01:31:00",
+          "admittime__oracle": "2174-09-23T01:31:00",
+          "age__candidate": 71,
+          "age__oracle": 71,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 68,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2171,
+          "hadm_id": 26018869,
+          "subject_id__candidate": 17256511,
+          "subject_id__oracle": 17256511
+        },
+        {
+          "admittime__candidate": "2173-12-10T16:36:00",
+          "admittime__oracle": "2173-12-10T16:36:00",
+          "age__candidate": 70,
+          "age__oracle": 70,
+          "anchor_age__candidate": null,
+          "anchor_age__oracle": 68,
+          "anchor_year__candidate": null,
+          "anchor_year__oracle": 2171,
+          "hadm_id": 23028713,
+          "subject_id__candidate": 17256511,
+          "subject_id__oracle": 17256511
+        }
+      ],
+      "only_candidate": [],
+      "only_oracle": []
+    }
+  },
+  "divergence": {
+    "attributed": [],
+    "blocking": [
+      {
+        "class": "differing_conflict",
+        "count": 504,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "classification": "keyed",
+    "conflict_attribution": {
+      "attempted": true,
+      "attributed_rows": 44,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "columns": {
+        "admittime": 44
+      },
+      "columns_considered": [
+        "admittime"
+      ],
+      "complete": false,
+      "conflict_rows": 504,
+      "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+      "residual_rows": 460,
+      "timezone": "America/New_York"
+    },
+    "contested": [
+      {
+        "class": "differing_conflict",
+        "count": 504,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "declared_unrepresentable": {
+      "anchor_age": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); the pair is collapsed, so anchor_age is not exactly recoverable and a typed NULL is emitted.",
+      "anchor_year": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); min(year(Encounter.period.start)) is only an approximation, not exact, so anchor_year is not exactly recoverable and a typed NULL is emitted."
+    },
+    "diagnostician_required": true,
+    "gap_shaped": [
+      {
+        "class": "differing_null_only",
+        "count": 430727,
+        "declared_unrepresentable": {
+          "anchor_age": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); the pair is collapsed, so anchor_age is not exactly recoverable and a typed NULL is emitted.",
+          "anchor_year": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); min(year(Encounter.period.start)) is only an approximation, not exact, so anchor_year is not exactly recoverable and a typed NULL is emitted."
+        },
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      }
+    ],
+    "identical_fraction": 0.0,
+    "identical_representable_rows": 430727,
+    "identical_rows": 0,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "key_attribution": null,
+    "notes": [
+      "44 of 504 conflicting rows replay the upstream upstream_timestamptz_dst_shift; 460 do not and are unexplained. The tier stays `contested` on those residual rows: diagnose them, not the attributed ones."
+    ],
+    "oracle_rows": 431231,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "representable_excludes": [
+      "anchor_age",
+      "anchor_year"
+    ],
+    "representable_fraction": 0.998831,
+    "reviewable": [
+      {
+        "class": "differing_conflict",
+        "count": 504,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      },
+      {
+        "class": "differing_null_only",
+        "count": 430727,
+        "declared_unrepresentable": {
+          "anchor_age": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); the pair is collapsed, so anchor_age is not exactly recoverable and a typed NULL is emitted.",
+          "anchor_year": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); min(year(Encounter.period.start)) is only an approximation, not exact, so anchor_year is not exactly recoverable and a typed NULL is emitted."
+        },
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "3978795427240068505844319",
+    "manifest_row_count": 431231,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.age"
+  },
+  "row_count": {
+    "candidate": 431231,
+    "delta": 0,
+    "gated": false,
+    "match": true,
+    "oracle": 431231
+  },
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "hadm_id",
+      "admittime",
+      "anchor_age",
+      "anchor_year",
+      "age",
+      "patient_key",
+      "encounter_key"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "hadm_id",
+      "admittime",
+      "anchor_age",
+      "anchor_year",
+      "age"
+    ],
+    "extra_columns": [
+      "patient_key",
+      "encounter_key"
+    ],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": [],
+    "missing_key_columns": [],
+    "required_key_columns": [
+      "encounter_key",
+      "patient_key"
+    ],
+    "unexpected_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "unrepresentable": {
+    "confirmed": {
+      "anchor_age": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); the pair is collapsed, so anchor_age is not exactly recoverable and a typed NULL is emitted.",
+      "anchor_year": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); min(year(Encounter.period.start)) is only an approximation, not exact, so anchor_year is not exactly recoverable and a typed NULL is emitted."
+    },
+    "declared": {
+      "anchor_age": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); the pair is collapsed, so anchor_age is not exactly recoverable and a typed NULL is emitted.",
+      "anchor_year": "No FHIR element. Patient.birthDate stores only (anchor_year - anchor_age); min(year(Encounter.period.start)) is only an approximation, not exact, so anchor_year is not exactly recoverable and a typed NULL is emitted."
+    },
+    "policy": "A declared column must be 100% NULL in the candidate. Declaring a column and then emitting an estimate for it is blocking: it converts a reviewable coverage gap into a value conflict.",
+    "undeclared_fully_null_columns": [],
+    "violations": []
+  },
+  "verdict": "review"
+}
