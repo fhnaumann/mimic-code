@@ -1,14 +1,14 @@
 {
-  "attempt": 2,
+  "attempt": 3,
   "category": "medication",
-  "completed_at": "2026-08-11T08:33:08.246235+00:00",
+  "completed_at": "2026-08-17T03:08:10.282041+00:00",
   "concept_name": "dobutamine",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "MIMIC-on-FHIR does not populate MedicationAdministration.identifier.value with inputevents.linkorderid; the ICU ETL neither selects nor writes that field (mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,42-100), so the declared typed NULL explains the linkorderid gap. The remaining key substitution and endtime conflict are intrinsic: lines 8-9 cast source start/end through TIMESTAMPTZ, lines 61-65 write only those transformed values to MedicationAdministration.effectivePeriod, and line 20 creates an opaque timestamp-free UUID. Source 2165-03-10 02:28 is irreversibly normalized to 03:28 in the America/New_York spring-forward gap and cannot be distinguished from a genuine 03:28 by any FHIR query. The attributed conflict is 1/8513 (0.0117%), consistent with DST-gap rarity. Representable fidelity is 8511/8513 (99.9765%), excluding linkorderid.",
-  "engineering_counter": 2,
+  "divergence_justification": "ICU MedicationAdministration does not populate identifier.value or another recoverable input-event/link-order identifier; mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,38-100 omits linkorderid and uses orderid only inside an opaque UUID. Typed NULL therefore faithfully explains the 8,511 null-only rows. The remaining endtime conflict and re-keyed row are completely attributed, with zero residual, to the TIMESTAMPTZ casts writing effectivePeriod.start/end at lines 8-9 and 61-69. The ancillary identifier loss does not alter row inclusion, grain, grouping, carry-forward, or clinical outputs.",
+  "engineering_counter": 3,
   "error_message": null,
-  "hpc_counter": 2,
+  "hpc_counter": 3,
   "reopen_history": [
     {
       "at": "2026-08-11T06:12:18.099561+00:00",
@@ -23,10 +23,25 @@
       "superseded_decided_by": "judge",
       "superseded_justification": "Judge-accepted intrinsic contested divergence: MedicationAdministration.identifier is not populated by mimic-fhir/sql/fhir_medication_administration_icu.sql:42-100, so inputevents.linkorderid has no FHIR element or recoverable representation and the declared typed NULL explains the 8,510 null-only rows. The same ETL casts naive inputevents starttime/endtime through TIMESTAMPTZ at lines 8-9 and writes those normalized values at lines 64-65, irreversibly shifting DST-gap 02:28 values to 03:28; UUID construction at line 20 excludes timestamps, so the two key shifts and one endtime conflict cannot be recovered by any FHIR query. Representable fidelity is 8,510/8,513 (99.9648%), excluding linkorderid.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-17T02:52:46.695114+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 2,
+        "hpc": 2,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which this port drops at\n  the outermost SELECT. The attempt adds the manifest's declared key_columns (patient_key, icu_encounter_key).\n  patient_key comes from subject.getReferenceKey(Patient) on the ICU Encounter view the port already materializes for\n  stay_id, not from a new Patient view. Change only the outermost projection: leave value expressions, casts and\n  ViewDefinition column names as they are, so that identical comparison figures remain proof the change was inert.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "MIMIC-on-FHIR does not populate MedicationAdministration.identifier.value with inputevents.linkorderid; the ICU ETL neither selects nor writes that field (mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,42-100), so the declared typed NULL explains the linkorderid gap. The remaining key substitution and endtime conflict are intrinsic: lines 8-9 cast source start/end through TIMESTAMPTZ, lines 61-65 write only those transformed values to MedicationAdministration.effectivePeriod, and line 20 creates an opaque timestamp-free UUID. Source 2165-03-10 02:28 is irreversibly normalized to 03:28 in the America/New_York spring-forward gap and cannot be distinguished from a genuine 03:28 by any FHIR query. The attributed conflict is 1/8513 (0.0117%), consistent with DST-gap rarity. Representable fidelity is 8511/8513 (99.9765%), excluding linkorderid.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
-  "semantic_counter": 2,
-  "started_at": "2026-08-11T06:12:18.101179+00:00",
+  "semantic_counter": 3,
+  "started_at": "2026-08-17T02:52:46.697010+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-11T08:33:08.246474+00:00"
+  "updated_at": "2026-08-17T03:08:10.282551+00:00"
 }

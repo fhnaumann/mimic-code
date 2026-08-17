@@ -1,0 +1,268 @@
+{
+  "attempt_dir": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/medication/dobutamine/attempt_0003",
+  "column_types": {
+    "endtime": "timestamp_ntz",
+    "icu_encounter_key": "string",
+    "linkorderid": "int",
+    "patient_key": "string",
+    "starttime": "timestamp_ntz",
+    "stay_id": "int",
+    "vaso_amount": "float",
+    "vaso_rate": "float"
+  },
+  "columns": [
+    "stay_id",
+    "linkorderid",
+    "vaso_rate",
+    "vaso_amount",
+    "starttime",
+    "endtime",
+    "patient_key",
+    "icu_encounter_key"
+  ],
+  "concept": "dobutamine",
+  "dataset": "full",
+  "divergence": {
+    "attributed": [
+      {
+        "attributed_rows": 1,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "class": "differing_conflict",
+        "columns": {
+          "endtime": 1
+        },
+        "count": 1,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element this column is sourced from, and (b) that the attributed fraction is consistent with DST-gap rarity. Either failing makes this `bug`.",
+        "proof": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      },
+      {
+        "attributed_rows": 1,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "class": "only_oracle",
+        "count": 1,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element the shifted *key* column is sourced from, (b) that the attributed fraction is consistent with DST-gap rarity, and (c) that both unpaired sets are fully accounted for -- a residual `only_candidate` row is still a row the port invented. Any failing makes this `bug`. Do NOT accept a port that recovers the pre-shift value by reconstructing a resource id: the shift is intrinsic, and inverting the ETL's id-generation is not a mapping.",
+        "keys": [
+          "starttime"
+        ],
+        "proof": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      },
+      {
+        "attributed_rows": 1,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "class": "only_candidate",
+        "count": 1,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element the shifted *key* column is sourced from, (b) that the attributed fraction is consistent with DST-gap rarity, and (c) that both unpaired sets are fully accounted for -- a residual `only_candidate` row is still a row the port invented. Any failing makes this `bug`. Do NOT accept a port that recovers the pre-shift value by reconstructing a resource id: the shift is intrinsic, and inverting the ETL's id-generation is not a mapping.",
+        "keys": [
+          "starttime"
+        ],
+        "proof": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      }
+    ],
+    "blocking": [],
+    "classification": "keyed",
+    "conflict_attribution": {
+      "attempted": true,
+      "attributed_rows": 1,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "columns": {
+        "endtime": 1
+      },
+      "columns_considered": [
+        "endtime"
+      ],
+      "complete": true,
+      "conflict_rows": 1,
+      "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+      "residual_rows": 0,
+      "timezone": "America/New_York"
+    },
+    "contested": [],
+    "declared_unrepresentable": {
+      "linkorderid": "No FHIR element. MedicationAdministration.identifier is absent across the served ICU MedicationAdministration resources, and the ICU ETL writes no linkorderid, orderid, or inputevent identifier; the opaque resource UUID cannot be inverted to the source linkorderid."
+    },
+    "diagnostician_required": false,
+    "gap_shaped": [
+      {
+        "class": "differing_null_only",
+        "count": 8511,
+        "declared_unrepresentable": {
+          "linkorderid": "No FHIR element. MedicationAdministration.identifier is absent across the served ICU MedicationAdministration resources, and the ICU ETL writes no linkorderid, orderid, or inputevent identifier; the opaque resource UUID cannot be inverted to the source linkorderid."
+        },
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      }
+    ],
+    "identical_fraction": 0.0,
+    "identical_representable_rows": 8511,
+    "identical_rows": 0,
+    "judge_bar": "Cite the FHIR element or path that does not exist in the MIMIC-on-FHIR IG, show it explains the magnitude and shape of the divergence, and confirm every defensible mapping was tried.\nA value conflict is also present but has been machine-attributed to an upstream transformation (see `divergence.attributed`), which is why this result is gap-shaped rather than contested. Rule on the gap on its own merits, and check the attribution's provenance and fraction as `divergence.attributed[].judge_must_confirm` states.",
+    "judge_required": true,
+    "key_attribution": {
+      "attempted": true,
+      "attributed_only_candidate": 1,
+      "attributed_only_oracle": 1,
+      "attributed_only_oracle_collided": 0,
+      "attributed_only_oracle_repaired": 1,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "complete": true,
+      "keys_considered": [
+        "starttime"
+      ],
+      "only_candidate": 1,
+      "only_oracle": 1,
+      "operation": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+      "residual_only_candidate": 0,
+      "residual_only_oracle": 0,
+      "timezone": "America/New_York"
+    },
+    "notes": [
+      "1 of 1 conflicting rows -- all of them -- replay the upstream upstream_timestamptz_dst_shift exactly, over column(s) endtime. `differing_conflict` moved from `contested` to `attributed`; a diagnosis of this class would only re-derive the replay, so the diagnostician can be skipped. The judge cannot: it still has to confirm provenance and fraction, and still has to rule.",
+      "1 `only_oracle` and 1 `only_candidate` rows -- all of them -- are the same rows, re-paired once the oracle key is replayed through the upstream upstream_timestamptz_dst_shift over key column(s) starttime. The port did not lose a row or invent one; the shift moved the row out of its key. Both classes moved to `attributed`, so the diagnostician can be skipped. The judge cannot -- and must not accept a port that recovers the pre-shift key by reconstructing a resource id, which is an inversion of the ETL, not a mapping."
+    ],
+    "oracle_rows": 8513,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "representable_excludes": [
+      "linkorderid"
+    ],
+    "representable_fraction": 0.999765,
+    "reviewable": [
+      {
+        "class": "differing_null_only",
+        "count": 8511,
+        "declared_unrepresentable": {
+          "linkorderid": "No FHIR element. MedicationAdministration.identifier is absent across the served ICU MedicationAdministration resources, and the ICU ETL writes no linkorderid, orderid, or inputevent identifier; the opaque resource UUID cannot be inverted to the source linkorderid."
+        },
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      },
+      {
+        "attributed_rows": 1,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "class": "differing_conflict",
+        "columns": {
+          "endtime": 1
+        },
+        "count": 1,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element this column is sourced from, and (b) that the attributed fraction is consistent with DST-gap rarity. Either failing makes this `bug`.",
+        "proof": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      },
+      {
+        "attributed_rows": 1,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "class": "only_oracle",
+        "count": 1,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element the shifted *key* column is sourced from, (b) that the attributed fraction is consistent with DST-gap rarity, and (c) that both unpaired sets are fully accounted for -- a residual `only_candidate` row is still a row the port invented. Any failing makes this `bug`. Do NOT accept a port that recovers the pre-shift value by reconstructing a resource id: the shift is intrinsic, and inverting the ETL's id-generation is not a mapping.",
+        "keys": [
+          "starttime"
+        ],
+        "proof": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      },
+      {
+        "attributed_rows": 1,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "class": "only_candidate",
+        "count": 1,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element the shifted *key* column is sourced from, (b) that the attributed fraction is consistent with DST-gap rarity, and (c) that both unpaired sets are fully accounted for -- a residual `only_candidate` row is still a row the port invented. Any failing makes this `bug`. Do NOT accept a port that recovers the pre-shift value by reconstructing a resource id: the shift is intrinsic, and inverting the ETL's id-generation is not a mapping.",
+        "keys": [
+          "starttime"
+        ],
+        "proof": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      }
+    ],
+    "tier": "gap_shaped",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "engine": "pathling-embedded",
+  "format_version": "1.0",
+  "generated_at": "2026-08-17T03:02:21.223434+00:00",
+  "oracle": "/scratch3/nau025/oracle/mimic4-full.db",
+  "oracle_row_count": 8513,
+  "row_count": 8513,
+  "timings_seconds": {
+    "compare": 0.889,
+    "execute": 21.695
+  },
+  "verdict": "review",
+  "view_labels": [
+    "encounter_icu",
+    "medication_administration"
+  ],
+  "warehouse": "/scratch3/nau025/mimic-on-fhir-delta/spark_warehouse"
+}
