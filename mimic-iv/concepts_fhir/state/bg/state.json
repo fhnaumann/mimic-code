@@ -1,15 +1,33 @@
 {
-  "attempt": 6,
+  "attempt": 7,
   "category": "measurement",
-  "completed_at": "2026-08-08T00:38:12.485762+00:00",
+  "completed_at": "2026-08-17T04:34:44.209678+00:00",
   "concept_name": "bg",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "Judge accepted the 70/511637 (0.014%) unkeyed full-tuple residual: mimic-fhir/sql/fhir_observation_labevents.sql:15,121, fhir_observation_chartevents.sql:9,67, and fhir_specimen_lab.sql:18,58 cast source chart times through TIMESTAMPTZ, irreversibly normalizing DST-gap wall times before writing Observation.effectiveDateTime and Specimen.collection.collectedDateTime. FHIR carries only the normalized time; Observation.issued is storetime, so the original wall time and exact chart-window ordering are unrecoverable by any FHIR query. The current port uses TIMESTAMP_NTZ, exact specimen grouping/itemids, and NULLIF(value_string, '___') for the separate fhir_observation_labevents.sql:133-136 comments fallback. No divergent dependencies; schema and row count match. Judge verdict: accept.",
-  "engineering_counter": 11,
+  "divergence_justification": "Accepted intrinsic upstream divergence: mimic-fhir/sql/fhir_observation_labevents.sql:15,121 irreversibly normalizes DST-gap charttime before writing Observation.effectiveDateTime. Comparator replay explains 64 conflicts, and six further conflicts are fully accounted for as second-order effects through bg's four-hour FiO2 window. Observation.issued is storetime and Specimen.collection.collectedDateTime repeats the same normalized timestamp (fhir_specimen_lab.sql:9,18,58), so the oracle wall time is unrecoverable from served FHIR without forbidden resource-ID inference.",
+  "engineering_counter": 12,
   "error_message": null,
-  "hpc_counter": 4,
-  "semantic_counter": 1,
-  "started_at": "2026-08-08T00:19:07.711828+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE"
+  "hpc_counter": 5,
+  "reopen_history": [
+    {
+      "at": "2026-08-17T04:02:19.249701+00:00",
+      "baseline": {
+        "attempt": 6,
+        "engineering": 11,
+        "hpc": 4,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Judge accepted the 70/511637 (0.014%) unkeyed full-tuple residual: mimic-fhir/sql/fhir_observation_labevents.sql:15,121, fhir_observation_chartevents.sql:9,67, and fhir_specimen_lab.sql:18,58 cast source chart times through TIMESTAMPTZ, irreversibly normalizing DST-gap wall times before writing Observation.effectiveDateTime and Specimen.collection.collectedDateTime. FHIR carries only the normalized time; Observation.issued is storetime, so the original wall time and exact chart-window ordering are unrecoverable by any FHIR query. The current port uses TIMESTAMP_NTZ, exact specimen grouping/itemids, and NULLIF(value_string, '___') for the separate fhir_observation_labevents.sql:133-136 comments fallback. No divergent dependencies; schema and row count match. Judge verdict: accept.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 2,
+  "started_at": "2026-08-17T04:02:19.251189+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-17T04:34:44.210111+00:00"
 }
