@@ -1,17 +1,33 @@
 {
-  "attempt": 2,
+  "attempt": 3,
   "category": "demographics",
-  "completed_at": "2026-08-14T04:44:28.191319+00:00",
+  "completed_at": "2026-08-17T07:37:00.077939+00:00",
   "concept_name": "weight_durations",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "Attempt 0002's complete divergence is caused by upstream America/New_York TIMESTAMPTZ normalization. fhir_observation_chartevents.sql:9,67 writes shifted charttime to Observation.effectiveDateTime, and fhir_encounter_icu.sql:31-32,97-100 writes shifted ICU times to Encounter.period. All 38 only-oracle and 32 only-candidate rows are key-attributed with no residual, including six collisions propagated through LEAD and UNION ALL. Of 56 conflicts, 39 replay directly and the remaining 17 close under full transformed-source replay as 9 ICU arithmetic and 8 chartevents window effects. Original wall times are absent from served FHIR and opaque resource IDs are not inverted. The rare 0.0206% conflict fraction is DST-consistent, and the contract's upstream-DST exemption applies.",
-  "engineering_counter": 2,
+  "divergence_justification": "Judge accept: attempt 0003 reproduces every value obtainable from served FHIR. The 38 oracle-only, 32 candidate-only, and 56 conflict rows (39 direct/collision replayed; 17 closed by full source-side replay as nine ICU-intime arithmetic effects and eight chartevents/LEAD effects) are completely explained by upstream America/New_York TIMESTAMPTZ normalization at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 and mimic-fhir/sql/fhir_encounter_icu.sql:31-32,97-100, propagated through LEAD, two-hour ICU arithmetic, backfill, and UNION ALL. Fidelity is 272357/272445 identical (99.9677%); original wall times are unrecoverable from FHIR, opaque resource IDs were not inverted, and required resource-key columns are additive identity only. The contract's DST transformation exception applies; this is COMPLETED_WITH_DIVERGENCE, not essential-loss blocking.",
+  "engineering_counter": 3,
   "error_message": null,
-  "hpc_counter": 2,
-  "reopen_history": [],
-  "semantic_counter": 2,
-  "started_at": "2026-08-14T04:16:15.317219+00:00",
+  "hpc_counter": 3,
+  "reopen_history": [
+    {
+      "at": "2026-08-17T06:55:26.168080+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 2,
+        "hpc": 2,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Attempt 0002's complete divergence is caused by upstream America/New_York TIMESTAMPTZ normalization. fhir_observation_chartevents.sql:9,67 writes shifted charttime to Observation.effectiveDateTime, and fhir_encounter_icu.sql:31-32,97-100 writes shifted ICU times to Encounter.period. All 38 only-oracle and 32 only-candidate rows are key-attributed with no residual, including six collisions propagated through LEAD and UNION ALL. Of 56 conflicts, 39 replay directly and the remaining 17 close under full transformed-source replay as 9 ICU arithmetic and 8 chartevents window effects. Original wall times are absent from served FHIR and opaque resource IDs are not inverted. The rare 0.0206% conflict fraction is DST-consistent, and the contract's upstream-DST exemption applies.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 3,
+  "started_at": "2026-08-17T06:55:26.169668+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-14T04:44:28.191612+00:00"
+  "updated_at": "2026-08-17T07:37:00.078359+00:00"
 }

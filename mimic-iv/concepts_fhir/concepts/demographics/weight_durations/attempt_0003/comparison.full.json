@@ -1,0 +1,1053 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/demographics/weight_durations/attempt_0003/candidate.full.parquet/*.parquet",
+  "comparison": "keyed_join",
+  "concept": "weight_durations",
+  "dataset": "full",
+  "diagnostics": [
+    "CONTESTED \u2014 a value conflict. Either a port bug or upstream ETL transformation loss; the data cannot tell you which:",
+    "  56 \u00d7 differing_conflict (0.021% of oracle rows) \u2014 matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone",
+    "    column 'starttime' conflicts on 56 row(s) (0.021% of oracle rows)",
+    "    column 'weight' conflicts on 1 row(s) (0.000% of oracle rows)",
+    "  bar for an accept: A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "ATTRIBUTED \u2014 a value conflict the comparator replayed to an upstream mimic-fhir transformation over every conflicting row. No port can invert it, so there is nothing to diagnose; the judge still rules:",
+    "  38 \u00d7 only_oracle (0.014% of oracle rows) \u2014 all 38 replay upstream_timestamptz_dst_shift",
+    "    citations: mimic-fhir/sql/fhir_observation_chartevents.sql:9,67, mimic-fhir/sql/fhir_observation_labevents.sql:15,121, mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65, mimic-fhir/sql/fhir_specimen_lab.sql:18,58, mimic-fhir/sql/fhir_encounter.sql:65, mimic-fhir/sql/fhir_medication_request.sql:43-44, mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69",
+    "  32 \u00d7 only_candidate (0.012% of oracle rows) \u2014 all 32 replay upstream_timestamptz_dst_shift",
+    "    citations: mimic-fhir/sql/fhir_observation_chartevents.sql:9,67, mimic-fhir/sql/fhir_observation_labevents.sql:15,121, mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65, mimic-fhir/sql/fhir_specimen_lab.sql:18,58, mimic-fhir/sql/fhir_encounter.sql:65, mimic-fhir/sql/fhir_medication_request.sql:43-44, mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69",
+    "    example row: {'stay_id': 30531473, 'endtime': datetime.datetime(2175, 3, 12, 3, 0), 'starttime__oracle': datetime.datetime(2175, 3, 12, 2, 0), 'starttime__candidate': datetime.datetime(2175, 3, 12, 1, 0), 'weight__oracle': Decimal('79.900'), 'weight__candidate': Decimal('79.900'), 'weight_type__oracle': 'daily', 'weight_type__candidate': 'daily', 'starttime__replayed': datetime.datetime(2175, 3, 12, 3, 0)}",
+    "  the judge must still confirm: Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element the shifted *key* column is sourced from, (b) that the attributed fraction is consistent with DST-gap rarity, and (c) that both unpaired sets are fully accounted for -- a residual `only_candidate` row is still a row the port invented. Any failing makes this `bug`. Do NOT accept a port that recovers the pre-shift value by reconstructing a resource id: the shift is intrinsic, and inverting the ETL's id-generation is not a mapping.",
+    "272,357 of 272,445 oracle rows reproduced identically (99.97%)",
+    "note: 39 of 56 conflicting rows replay the upstream upstream_timestamptz_dst_shift; 17 do not and are unexplained. The tier stays `contested` on those residual rows: diagnose them, not the attributed ones.",
+    "note: 38 `only_oracle` and 32 `only_candidate` rows -- all of them -- are the same rows, re-paired once the oracle key is replayed through the upstream upstream_timestamptz_dst_shift over key column(s) endtime. The port did not lose a row or invent one; the shift moved the row out of its key. Both classes moved to `attributed`, so the diagnostician can be skipped. The judge cannot -- and must not accept a port that recovers the pre-shift key by reconstructing a resource id, which is an inversion of the ETL, not a mapping.",
+    "note: 6 of those rows did not move into an empty key: the replayed key was one the candidate already held, so the row was absorbed into an existing one rather than re-appearing beside it. The conflict at each of those keys is the other half of the same event and is attributed with it -- do not count them as two findings. What the comparator has NOT shown is that the merged value is what this concept's own aggregation would produce from the two source rows; confirm that from the concept SQL."
+  ],
+  "diff": {
+    "classification": "keyed",
+    "columns_candidate_null": {},
+    "columns_conflicting": {
+      "starttime": 56,
+      "weight": 1
+    },
+    "columns_differing": {
+      "starttime": 56,
+      "weight": 1
+    },
+    "conflict_attribution": {
+      "attempted": true,
+      "attributed_by_key_collision": 12,
+      "attributed_rows": 39,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "collision_operation": "The oracle row is unpaired and its key, replayed through the upstream America/New_York TIMESTAMPTZ cast, is a key the candidate already holds and already paired with a different oracle row. The shift did not move this row out of its key into an empty one -- it moved it on top of an existing one, so the candidate has one row where the oracle has two and whatever the concept does at that key (a GROUP BY aggregate, a ROW_NUMBER pick) saw one extra source row. The unpaired oracle row and the conflict at the collided key are therefore the same event counted twice, and both are attributed. Checked by semi-join over the unpaired set in full, not sampled. What this does NOT establish is that the candidate's merged value is what the concept would have produced from the two source rows: that depends on the concept's own aggregation, which the comparator does not model. The judge confirms it.",
+      "columns": {
+        "starttime": 39
+      },
+      "columns_considered": [
+        "starttime"
+      ],
+      "complete": false,
+      "conflict_rows": 56,
+      "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+      "residual_rows": 17,
+      "samples": [
+        {
+          "endtime": "2175-03-12T03:00:00",
+          "starttime__candidate": "2175-03-12T01:00:00",
+          "starttime__oracle": "2175-03-12T02:00:00",
+          "starttime__replayed": "2175-03-12T03:00:00",
+          "stay_id": 30531473,
+          "weight__candidate": "79.900",
+          "weight__oracle": "79.900",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2175-03-12T03:00:00",
+          "starttime__candidate": "2175-03-12T03:00:00",
+          "starttime__oracle": "2175-03-12T02:00:00",
+          "starttime__replayed": "2175-03-12T03:00:00",
+          "stay_id": 30531473,
+          "weight__candidate": "79.900",
+          "weight__oracle": "79.900",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2169-03-12T04:17:00",
+          "starttime__candidate": "2169-03-12T03:08:00",
+          "starttime__oracle": "2169-03-12T02:08:00",
+          "starttime__replayed": "2169-03-12T03:08:00",
+          "stay_id": 32605880,
+          "weight__candidate": "85.000",
+          "weight__oracle": "85.000",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2126-03-10T05:00:00",
+          "starttime__candidate": "2126-03-10T03:00:00",
+          "starttime__oracle": "2126-03-10T02:00:00",
+          "starttime__replayed": "2126-03-10T03:00:00",
+          "stay_id": 30872492,
+          "weight__candidate": "70.000",
+          "weight__oracle": "70.000",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2192-03-12T05:00:00",
+          "starttime__candidate": "2192-03-11T03:00:00",
+          "starttime__oracle": "2192-03-11T02:00:00",
+          "starttime__replayed": "2192-03-11T03:00:00",
+          "stay_id": 33398298,
+          "weight__candidate": "99.000",
+          "weight__oracle": "99.000",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2112-03-13T03:01:00",
+          "starttime__candidate": "2112-03-13T03:00:00",
+          "starttime__oracle": "2112-03-13T02:00:00",
+          "starttime__replayed": "2112-03-13T03:00:00",
+          "stay_id": 39604563,
+          "weight__candidate": "83.700",
+          "weight__oracle": "83.700",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2114-03-11T03:01:00",
+          "starttime__candidate": "2114-03-11T03:00:00",
+          "starttime__oracle": "2114-03-11T02:00:00",
+          "starttime__replayed": "2114-03-11T03:00:00",
+          "stay_id": 31345521,
+          "weight__candidate": "135.600",
+          "weight__oracle": "135.600",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2132-03-10T04:00:00",
+          "starttime__candidate": "2132-03-09T03:00:00",
+          "starttime__oracle": "2132-03-09T02:00:00",
+          "starttime__replayed": "2132-03-09T03:00:00",
+          "stay_id": 37317860,
+          "weight__candidate": "79.100",
+          "weight__oracle": "79.100",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2127-03-17T05:00:00",
+          "starttime__candidate": "2127-03-09T03:00:00",
+          "starttime__oracle": "2127-03-09T02:00:00",
+          "starttime__replayed": "2127-03-09T03:00:00",
+          "stay_id": 38801217,
+          "weight__candidate": "67.100",
+          "weight__oracle": "67.100",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2119-03-13T00:00:00",
+          "starttime__candidate": "2119-03-12T03:00:00",
+          "starttime__oracle": "2119-03-12T02:00:00",
+          "starttime__replayed": "2119-03-12T03:00:00",
+          "stay_id": 31948538,
+          "weight__candidate": "77.000",
+          "weight__oracle": "77.000",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2145-03-15T04:00:00",
+          "starttime__candidate": "2145-03-14T03:00:00",
+          "starttime__oracle": "2145-03-14T02:00:00",
+          "starttime__replayed": "2145-03-14T03:00:00",
+          "stay_id": 35220236,
+          "weight__candidate": "83.100",
+          "weight__oracle": "83.100",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2123-03-15T05:00:00",
+          "starttime__candidate": "2123-03-14T03:00:00",
+          "starttime__oracle": "2123-03-14T02:00:00",
+          "starttime__replayed": "2123-03-14T03:00:00",
+          "stay_id": 37193328,
+          "weight__candidate": "100.800",
+          "weight__oracle": "100.800",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2110-03-10T21:00:00",
+          "starttime__candidate": "2110-03-09T03:00:00",
+          "starttime__oracle": "2110-03-09T02:00:00",
+          "starttime__replayed": "2110-03-09T03:00:00",
+          "stay_id": 39473385,
+          "weight__candidate": "81.600",
+          "weight__oracle": "81.600",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2117-03-14T03:39:00",
+          "starttime__candidate": "2117-03-14T03:30:00",
+          "starttime__oracle": "2117-03-14T02:30:00",
+          "starttime__replayed": "2117-03-14T03:30:00",
+          "stay_id": 30618117,
+          "weight__candidate": "97.000",
+          "weight__oracle": "97.000",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2180-03-13T04:00:00",
+          "starttime__candidate": "2180-03-12T03:00:00",
+          "starttime__oracle": "2180-03-12T02:00:00",
+          "starttime__replayed": "2180-03-12T03:00:00",
+          "stay_id": 31592274,
+          "weight__candidate": "87.800",
+          "weight__oracle": "87.800",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2184-03-14T04:00:00",
+          "starttime__candidate": "2184-03-14T03:00:00",
+          "starttime__oracle": "2184-03-14T02:00:00",
+          "starttime__replayed": "2184-03-14T03:00:00",
+          "stay_id": 38979670,
+          "weight__candidate": "74.500",
+          "weight__oracle": "74.500",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2141-03-12T03:00:00",
+          "starttime__candidate": "2141-03-12T01:00:00",
+          "starttime__oracle": "2141-03-12T02:00:00",
+          "starttime__replayed": "2141-03-12T03:00:00",
+          "stay_id": 37461538,
+          "weight__candidate": "101.400",
+          "weight__oracle": "101.400",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2141-03-12T03:00:00",
+          "starttime__candidate": "2141-03-12T03:00:00",
+          "starttime__oracle": "2141-03-12T02:00:00",
+          "starttime__replayed": "2141-03-12T03:00:00",
+          "stay_id": 37461538,
+          "weight__candidate": "101.400",
+          "weight__oracle": "101.400",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2200-03-12T16:58:31",
+          "starttime__candidate": "2200-03-09T03:00:00",
+          "starttime__oracle": "2200-03-09T02:00:00",
+          "starttime__replayed": "2200-03-09T03:00:00",
+          "stay_id": 39082298,
+          "weight__candidate": "81.800",
+          "weight__oracle": "81.800",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2159-03-12T00:00:00",
+          "starttime__candidate": "2159-03-11T03:00:00",
+          "starttime__oracle": "2159-03-11T02:00:00",
+          "starttime__replayed": "2159-03-11T03:00:00",
+          "stay_id": 32074674,
+          "weight__candidate": "58.300",
+          "weight__oracle": "58.300",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        }
+      ],
+      "timezone": "America/New_York"
+    },
+    "differing": 56,
+    "differing_conflict": 56,
+    "differing_null_only": 0,
+    "excluded_as_unrepresentable": [],
+    "identical": 272357,
+    "identical_representable": 272357,
+    "key": [
+      "stay_id",
+      "endtime"
+    ],
+    "key_attribution": {
+      "attempted": true,
+      "attributed_only_candidate": 32,
+      "attributed_only_oracle": 38,
+      "attributed_only_oracle_collided": 6,
+      "attributed_only_oracle_repaired": 32,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "collision_operation": "The oracle row is unpaired and its key, replayed through the upstream America/New_York TIMESTAMPTZ cast, is a key the candidate already holds and already paired with a different oracle row. The shift did not move this row out of its key into an empty one -- it moved it on top of an existing one, so the candidate has one row where the oracle has two and whatever the concept does at that key (a GROUP BY aggregate, a ROW_NUMBER pick) saw one extra source row. The unpaired oracle row and the conflict at the collided key are therefore the same event counted twice, and both are attributed. Checked by semi-join over the unpaired set in full, not sampled. What this does NOT establish is that the candidate's merged value is what the concept would have produced from the two source rows: that depends on the concept's own aggregation, which the comparator does not model. The judge confirms it.",
+      "complete": true,
+      "keys_considered": [
+        "endtime"
+      ],
+      "only_candidate": 32,
+      "only_oracle": 38,
+      "operation": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+      "residual_only_candidate": 0,
+      "residual_only_oracle": 0,
+      "samples": [
+        {
+          "_route": "repaired",
+          "endtime": "2184-03-14T02:00:00",
+          "endtime__replayed": "2184-03-14T03:00:00",
+          "stay_id": 38979670
+        },
+        {
+          "_route": "repaired",
+          "endtime": "2145-03-14T02:00:00",
+          "endtime__replayed": "2145-03-14T03:00:00",
+          "stay_id": 35220236
+        },
+        {
+          "_route": "repaired",
+          "endtime": "2159-03-11T02:00:00",
+          "endtime__replayed": "2159-03-11T03:00:00",
+          "stay_id": 32074674
+        },
+        {
+          "_route": "repaired",
+          "endtime": "2127-03-09T02:00:00",
+          "endtime__replayed": "2127-03-09T03:00:00",
+          "stay_id": 38801217
+        },
+        {
+          "_route": "key_collision",
+          "endtime": "2137-03-10T02:00:00",
+          "endtime__replayed": "2137-03-10T03:00:00",
+          "stay_id": 33518404
+        },
+        {
+          "_route": "repaired",
+          "endtime": "2189-03-08T02:00:00",
+          "endtime__replayed": "2189-03-08T03:00:00",
+          "stay_id": 31028572
+        },
+        {
+          "_route": "repaired",
+          "endtime": "2170-03-11T02:07:00",
+          "endtime__replayed": "2170-03-11T03:07:00",
+          "stay_id": 30056217
+        },
+        {
+          "_route": "repaired",
+          "endtime": "2141-03-12T02:00:00",
+          "endtime__replayed": "2141-03-12T03:00:00",
+          "stay_id": 32305539
+        },
+        {
+          "_route": "repaired",
+          "endtime": "2123-03-14T02:00:00",
+          "endtime__replayed": "2123-03-14T03:00:00",
+          "stay_id": 32870616
+        },
+        {
+          "_route": "repaired",
+          "endtime": "2114-03-11T02:00:00",
+          "endtime__replayed": "2114-03-11T03:00:00",
+          "stay_id": 31345521
+        },
+        {
+          "_route": "repaired",
+          "endtime": "2121-03-09T02:00:00",
+          "endtime__replayed": "2121-03-09T03:00:00",
+          "stay_id": 39323481
+        },
+        {
+          "_route": "repaired",
+          "endtime": "2180-03-12T02:00:00",
+          "endtime__replayed": "2180-03-12T03:00:00",
+          "stay_id": 31592274
+        },
+        {
+          "_route": "repaired",
+          "endtime": "2169-03-12T02:08:00",
+          "endtime__replayed": "2169-03-12T03:08:00",
+          "stay_id": 32605880
+        },
+        {
+          "_route": "repaired",
+          "endtime": "2160-03-09T02:59:00",
+          "endtime__replayed": "2160-03-09T03:59:00",
+          "stay_id": 37568338
+        },
+        {
+          "_route": "repaired",
+          "endtime": "2119-03-12T02:00:00",
+          "endtime__replayed": "2119-03-12T03:00:00",
+          "stay_id": 31948538
+        },
+        {
+          "_route": "key_collision",
+          "endtime": "2141-03-12T02:00:00",
+          "endtime__replayed": "2141-03-12T03:00:00",
+          "stay_id": 37461538
+        },
+        {
+          "_route": "repaired",
+          "endtime": "2126-03-10T02:00:00",
+          "endtime__replayed": "2126-03-10T03:00:00",
+          "stay_id": 30872492
+        },
+        {
+          "_route": "repaired",
+          "endtime": "2110-03-09T02:00:00",
+          "endtime__replayed": "2110-03-09T03:00:00",
+          "stay_id": 39473385
+        },
+        {
+          "_route": "repaired",
+          "endtime": "2132-03-09T02:00:00",
+          "endtime__replayed": "2132-03-09T03:00:00",
+          "stay_id": 34689947
+        },
+        {
+          "_route": "repaired",
+          "endtime": "2117-03-14T02:30:00",
+          "endtime__replayed": "2117-03-14T03:30:00",
+          "stay_id": 30618117
+        }
+      ],
+      "timezone": "America/New_York"
+    },
+    "only_candidate": 32,
+    "only_oracle": 38,
+    "samples": {
+      "differing_conflict": [
+        {
+          "endtime": "2114-03-11T03:01:00",
+          "starttime__candidate": "2114-03-11T03:00:00",
+          "starttime__oracle": "2114-03-11T02:00:00",
+          "stay_id": 31345521,
+          "weight__candidate": "135.600",
+          "weight__oracle": "135.600",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2132-03-10T04:00:00",
+          "starttime__candidate": "2132-03-09T03:00:00",
+          "starttime__oracle": "2132-03-09T02:00:00",
+          "stay_id": 37317860,
+          "weight__candidate": "79.100",
+          "weight__oracle": "79.100",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2127-03-17T05:00:00",
+          "starttime__candidate": "2127-03-09T03:00:00",
+          "starttime__oracle": "2127-03-09T02:00:00",
+          "stay_id": 38801217,
+          "weight__candidate": "67.100",
+          "weight__oracle": "67.100",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2147-03-12T04:00:00",
+          "starttime__candidate": "2147-03-12T01:01:00",
+          "starttime__oracle": "2147-03-12T00:01:00",
+          "stay_id": 36404931,
+          "weight__candidate": "81.500",
+          "weight__oracle": "81.500",
+          "weight_type__candidate": "admit",
+          "weight_type__oracle": "admit"
+        },
+        {
+          "endtime": "2170-03-11T03:06:00",
+          "starttime__candidate": "2170-03-11T01:14:00",
+          "starttime__oracle": "2170-03-11T02:07:00",
+          "stay_id": 30056217,
+          "weight__candidate": "65.500",
+          "weight__oracle": "65.500",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2170-03-11T04:05:00",
+          "starttime__candidate": "2170-03-11T03:07:00",
+          "starttime__oracle": "2170-03-11T03:06:00",
+          "stay_id": 30056217,
+          "weight__candidate": "65.500",
+          "weight__oracle": "65.500",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2187-03-28T12:00:00",
+          "starttime__candidate": "2187-03-11T01:29:00",
+          "starttime__oracle": "2187-03-11T00:29:00",
+          "stay_id": 30388989,
+          "weight__candidate": "129.900",
+          "weight__oracle": "129.900",
+          "weight_type__candidate": "admit",
+          "weight_type__oracle": "admit"
+        },
+        {
+          "endtime": "2141-03-16T16:33:25",
+          "starttime__candidate": "2141-03-12T03:00:00",
+          "starttime__oracle": "2141-03-12T02:00:00",
+          "stay_id": 32305539,
+          "weight__candidate": "112.200",
+          "weight__oracle": "112.200",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2163-03-17T00:00:00",
+          "starttime__candidate": "2163-03-13T03:00:00",
+          "starttime__oracle": "2163-03-13T02:00:00",
+          "stay_id": 34273236,
+          "weight__candidate": "101.400",
+          "weight__oracle": "101.400",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2134-03-14T03:03:00",
+          "starttime__candidate": "2134-03-14T03:00:00",
+          "starttime__oracle": "2134-03-14T02:00:00",
+          "stay_id": 36683831,
+          "weight__candidate": "116.000",
+          "weight__oracle": "116.000",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2160-03-09T03:01:00",
+          "starttime__candidate": "2160-03-09T01:01:00",
+          "starttime__oracle": "2160-03-09T02:59:00",
+          "stay_id": 37568338,
+          "weight__candidate": "146.000",
+          "weight__oracle": "146.000",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2160-03-09T04:05:00",
+          "starttime__candidate": "2160-03-09T03:59:00",
+          "starttime__oracle": "2160-03-09T03:01:00",
+          "stay_id": 37568338,
+          "weight__candidate": "146.000",
+          "weight__oracle": "146.000",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2177-03-09T03:00:00",
+          "starttime__candidate": "2177-03-09T01:00:00",
+          "starttime__oracle": "2177-03-09T02:00:00",
+          "stay_id": 30350713,
+          "weight__candidate": "90.400",
+          "weight__oracle": "90.400",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2177-03-09T03:00:00",
+          "starttime__candidate": "2177-03-09T03:00:00",
+          "starttime__oracle": "2177-03-09T02:00:00",
+          "stay_id": 30350713,
+          "weight__candidate": "90.400",
+          "weight__oracle": "90.400",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2181-03-12T20:06:31",
+          "starttime__candidate": "2181-03-11T01:34:00",
+          "starttime__oracle": "2181-03-11T00:34:00",
+          "stay_id": 36521920,
+          "weight__candidate": "90.200",
+          "weight__oracle": "90.200",
+          "weight_type__candidate": "admit",
+          "weight_type__oracle": "admit"
+        },
+        {
+          "endtime": "2126-03-10T05:00:00",
+          "starttime__candidate": "2126-03-10T03:00:00",
+          "starttime__oracle": "2126-03-10T02:00:00",
+          "stay_id": 30872492,
+          "weight__candidate": "70.000",
+          "weight__oracle": "70.000",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2192-03-12T05:00:00",
+          "starttime__candidate": "2192-03-11T03:00:00",
+          "starttime__oracle": "2192-03-11T02:00:00",
+          "stay_id": 33398298,
+          "weight__candidate": "99.000",
+          "weight__oracle": "99.000",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2153-03-11T05:00:00",
+          "starttime__candidate": "2153-03-11T01:48:38",
+          "starttime__oracle": "2153-03-11T00:48:38",
+          "stay_id": 37061810,
+          "weight__candidate": "124.000",
+          "weight__oracle": "124.000",
+          "weight_type__candidate": "admit",
+          "weight_type__oracle": "admit"
+        },
+        {
+          "endtime": "2112-03-13T03:01:00",
+          "starttime__candidate": "2112-03-13T03:00:00",
+          "starttime__oracle": "2112-03-13T02:00:00",
+          "stay_id": 39604563,
+          "weight__candidate": "83.700",
+          "weight__oracle": "83.700",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        },
+        {
+          "endtime": "2119-03-13T00:00:00",
+          "starttime__candidate": "2119-03-12T03:00:00",
+          "starttime__oracle": "2119-03-12T02:00:00",
+          "stay_id": 31948538,
+          "weight__candidate": "77.000",
+          "weight__oracle": "77.000",
+          "weight_type__candidate": "daily",
+          "weight_type__oracle": "daily"
+        }
+      ],
+      "differing_null_only": [],
+      "only_candidate": [
+        {
+          "endtime": "2132-03-09T03:00:00",
+          "stay_id": 34689947
+        },
+        {
+          "endtime": "2134-03-14T03:00:00",
+          "stay_id": 36683831
+        },
+        {
+          "endtime": "2112-03-13T03:00:00",
+          "stay_id": 39604563
+        },
+        {
+          "endtime": "2187-03-11T03:00:00",
+          "stay_id": 33443524
+        },
+        {
+          "endtime": "2123-03-14T03:00:00",
+          "stay_id": 32870616
+        },
+        {
+          "endtime": "2198-03-11T03:09:00",
+          "stay_id": 37523171
+        },
+        {
+          "endtime": "2126-03-10T03:00:00",
+          "stay_id": 30872492
+        },
+        {
+          "endtime": "2127-03-09T03:00:00",
+          "stay_id": 38801217
+        },
+        {
+          "endtime": "2145-03-14T03:00:00",
+          "stay_id": 35220236
+        },
+        {
+          "endtime": "2159-03-11T03:00:00",
+          "stay_id": 32074674
+        },
+        {
+          "endtime": "2160-03-09T03:59:00",
+          "stay_id": 37568338
+        },
+        {
+          "endtime": "2189-03-08T03:00:00",
+          "stay_id": 31028572
+        },
+        {
+          "endtime": "2193-03-10T03:00:00",
+          "stay_id": 32107176
+        },
+        {
+          "endtime": "2114-03-11T03:05:00",
+          "stay_id": 38435398
+        },
+        {
+          "endtime": "2114-03-11T03:00:00",
+          "stay_id": 31345521
+        },
+        {
+          "endtime": "2170-03-11T03:07:00",
+          "stay_id": 30056217
+        },
+        {
+          "endtime": "2119-03-12T03:00:00",
+          "stay_id": 31948538
+        },
+        {
+          "endtime": "2163-03-13T03:00:00",
+          "stay_id": 34273236
+        },
+        {
+          "endtime": "2160-03-09T03:11:00",
+          "stay_id": 37568338
+        },
+        {
+          "endtime": "2117-03-14T03:30:00",
+          "stay_id": 30618117
+        }
+      ],
+      "only_oracle": [
+        {
+          "endtime": "2184-03-14T02:00:00",
+          "stay_id": 38979670
+        },
+        {
+          "endtime": "2145-03-14T02:00:00",
+          "stay_id": 35220236
+        },
+        {
+          "endtime": "2159-03-11T02:00:00",
+          "stay_id": 32074674
+        },
+        {
+          "endtime": "2189-03-08T02:00:00",
+          "stay_id": 31028572
+        },
+        {
+          "endtime": "2170-03-11T02:07:00",
+          "stay_id": 30056217
+        },
+        {
+          "endtime": "2141-03-12T02:00:00",
+          "stay_id": 32305539
+        },
+        {
+          "endtime": "2127-03-09T02:00:00",
+          "stay_id": 38801217
+        },
+        {
+          "endtime": "2137-03-10T02:00:00",
+          "stay_id": 33518404
+        },
+        {
+          "endtime": "2123-03-14T02:00:00",
+          "stay_id": 32870616
+        },
+        {
+          "endtime": "2180-03-12T02:00:00",
+          "stay_id": 31592274
+        },
+        {
+          "endtime": "2169-03-12T02:08:00",
+          "stay_id": 32605880
+        },
+        {
+          "endtime": "2160-03-09T02:59:00",
+          "stay_id": 37568338
+        },
+        {
+          "endtime": "2114-03-11T02:00:00",
+          "stay_id": 31345521
+        },
+        {
+          "endtime": "2121-03-09T02:00:00",
+          "stay_id": 39323481
+        },
+        {
+          "endtime": "2119-03-12T02:00:00",
+          "stay_id": 31948538
+        },
+        {
+          "endtime": "2126-03-10T02:00:00",
+          "stay_id": 30872492
+        },
+        {
+          "endtime": "2141-03-12T02:00:00",
+          "stay_id": 37461538
+        },
+        {
+          "endtime": "2132-03-09T02:00:00",
+          "stay_id": 34689947
+        },
+        {
+          "endtime": "2117-03-14T02:30:00",
+          "stay_id": 30618117
+        },
+        {
+          "endtime": "2192-03-11T02:00:00",
+          "stay_id": 33398298
+        }
+      ]
+    }
+  },
+  "divergence": {
+    "attributed": [
+      {
+        "attributed_rows": 38,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "class": "only_oracle",
+        "count": 38,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element the shifted *key* column is sourced from, (b) that the attributed fraction is consistent with DST-gap rarity, and (c) that both unpaired sets are fully accounted for -- a residual `only_candidate` row is still a row the port invented. Any failing makes this `bug`. Do NOT accept a port that recovers the pre-shift value by reconstructing a resource id: the shift is intrinsic, and inverting the ETL's id-generation is not a mapping.",
+        "keys": [
+          "endtime"
+        ],
+        "proof": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      },
+      {
+        "attributed_rows": 32,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "class": "only_candidate",
+        "count": 32,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element the shifted *key* column is sourced from, (b) that the attributed fraction is consistent with DST-gap rarity, and (c) that both unpaired sets are fully accounted for -- a residual `only_candidate` row is still a row the port invented. Any failing makes this `bug`. Do NOT accept a port that recovers the pre-shift value by reconstructing a resource id: the shift is intrinsic, and inverting the ETL's id-generation is not a mapping.",
+        "keys": [
+          "endtime"
+        ],
+        "proof": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      }
+    ],
+    "blocking": [
+      {
+        "class": "differing_conflict",
+        "count": 56,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "classification": "keyed",
+    "conflict_attribution": {
+      "attempted": true,
+      "attributed_by_key_collision": 12,
+      "attributed_rows": 39,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "collision_operation": "The oracle row is unpaired and its key, replayed through the upstream America/New_York TIMESTAMPTZ cast, is a key the candidate already holds and already paired with a different oracle row. The shift did not move this row out of its key into an empty one -- it moved it on top of an existing one, so the candidate has one row where the oracle has two and whatever the concept does at that key (a GROUP BY aggregate, a ROW_NUMBER pick) saw one extra source row. The unpaired oracle row and the conflict at the collided key are therefore the same event counted twice, and both are attributed. Checked by semi-join over the unpaired set in full, not sampled. What this does NOT establish is that the candidate's merged value is what the concept would have produced from the two source rows: that depends on the concept's own aggregation, which the comparator does not model. The judge confirms it.",
+      "columns": {
+        "starttime": 39
+      },
+      "columns_considered": [
+        "starttime"
+      ],
+      "complete": false,
+      "conflict_rows": 56,
+      "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+      "residual_rows": 17,
+      "timezone": "America/New_York"
+    },
+    "contested": [
+      {
+        "class": "differing_conflict",
+        "count": 56,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "declared_unrepresentable": {},
+    "diagnostician_required": true,
+    "gap_shaped": [],
+    "identical_fraction": 0.999677,
+    "identical_rows": 272357,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "key_attribution": {
+      "attempted": true,
+      "attributed_only_candidate": 32,
+      "attributed_only_oracle": 38,
+      "attributed_only_oracle_collided": 6,
+      "attributed_only_oracle_repaired": 32,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "collision_operation": "The oracle row is unpaired and its key, replayed through the upstream America/New_York TIMESTAMPTZ cast, is a key the candidate already holds and already paired with a different oracle row. The shift did not move this row out of its key into an empty one -- it moved it on top of an existing one, so the candidate has one row where the oracle has two and whatever the concept does at that key (a GROUP BY aggregate, a ROW_NUMBER pick) saw one extra source row. The unpaired oracle row and the conflict at the collided key are therefore the same event counted twice, and both are attributed. Checked by semi-join over the unpaired set in full, not sampled. What this does NOT establish is that the candidate's merged value is what the concept would have produced from the two source rows: that depends on the concept's own aggregation, which the comparator does not model. The judge confirms it.",
+      "complete": true,
+      "keys_considered": [
+        "endtime"
+      ],
+      "only_candidate": 32,
+      "only_oracle": 38,
+      "operation": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+      "residual_only_candidate": 0,
+      "residual_only_oracle": 0,
+      "timezone": "America/New_York"
+    },
+    "notes": [
+      "39 of 56 conflicting rows replay the upstream upstream_timestamptz_dst_shift; 17 do not and are unexplained. The tier stays `contested` on those residual rows: diagnose them, not the attributed ones.",
+      "38 `only_oracle` and 32 `only_candidate` rows -- all of them -- are the same rows, re-paired once the oracle key is replayed through the upstream upstream_timestamptz_dst_shift over key column(s) endtime. The port did not lose a row or invent one; the shift moved the row out of its key. Both classes moved to `attributed`, so the diagnostician can be skipped. The judge cannot -- and must not accept a port that recovers the pre-shift key by reconstructing a resource id, which is an inversion of the ETL, not a mapping.",
+      "6 of those rows did not move into an empty key: the replayed key was one the candidate already held, so the row was absorbed into an existing one rather than re-appearing beside it. The conflict at each of those keys is the other half of the same event and is attributed with it -- do not count them as two findings. What the comparator has NOT shown is that the merged value is what this concept's own aggregation would produce from the two source rows; confirm that from the concept SQL."
+    ],
+    "oracle_rows": 272445,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [
+      {
+        "class": "differing_conflict",
+        "count": 56,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      },
+      {
+        "attributed_rows": 38,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "class": "only_oracle",
+        "count": 38,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element the shifted *key* column is sourced from, (b) that the attributed fraction is consistent with DST-gap rarity, and (c) that both unpaired sets are fully accounted for -- a residual `only_candidate` row is still a row the port invented. Any failing makes this `bug`. Do NOT accept a port that recovers the pre-shift value by reconstructing a resource id: the shift is intrinsic, and inverting the ETL's id-generation is not a mapping.",
+        "keys": [
+          "endtime"
+        ],
+        "proof": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      },
+      {
+        "attributed_rows": 32,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "class": "only_candidate",
+        "count": 32,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element the shifted *key* column is sourced from, (b) that the attributed fraction is consistent with DST-gap rarity, and (c) that both unpaired sets are fully accounted for -- a residual `only_candidate` row is still a row the port invented. Any failing makes this `bug`. Do NOT accept a port that recovers the pre-shift value by reconstructing a resource id: the shift is intrinsic, and inverting the ETL's id-generation is not a mapping.",
+        "keys": [
+          "endtime"
+        ],
+        "proof": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "2512822479788147515302735",
+    "manifest_row_count": 272445,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.weight_durations"
+  },
+  "row_count": {
+    "candidate": 272445,
+    "delta": 0,
+    "gated": false,
+    "match": true,
+    "oracle": 272445
+  },
+  "schema": {
+    "actual_columns": [
+      "stay_id",
+      "starttime",
+      "endtime",
+      "weight",
+      "weight_type",
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "expected_columns": [
+      "stay_id",
+      "starttime",
+      "endtime",
+      "weight",
+      "weight_type"
+    ],
+    "extra_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": [],
+    "missing_key_columns": [],
+    "required_key_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "unexpected_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "verdict": "review"
+}
