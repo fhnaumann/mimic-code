@@ -1,17 +1,33 @@
 {
-  "attempt": 1,
+  "attempt": 2,
   "category": "organfailure",
-  "completed_at": "2026-08-12T05:40:05.680639+00:00",
+  "completed_at": "2026-08-17T03:56:20.058157+00:00",
   "concept_name": "kdigo_creatinine",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "Judge accepted the contested divergence: mimic-fhir/sql/fhir_observation_labevents.sql:15 casts labevents.charttime through TIMESTAMPTZ and line 121 writes the irreversibly DST-normalized value to Observation.effectiveDateTime; fhir_specimen_lab.sql:18,58 repeats the loss. FHIR retains only labevent_id, so normalized 03:xx cannot be distinguished from genuine 03:xx and exact source ordering and 48-hour/7-day window membership are unrecoverable. The full run reproduced 599447/599607 rows identically (99.9733%); 160 conflicts comprise charttime 145, creat 1, prior-48-hour 17, prior-seven-day 9, with 138 directly replay-attributed and 21 of the remaining 22 explained as downstream window effects; the final difference is within comparator tolerance.",
-  "engineering_counter": 1,
+  "divergence_justification": "Accepted upstream DST transformation divergence. mimic-fhir/sql/fhir_observation_labevents.sql:15,121 irreversibly casts labevents.charttime through TIMESTAMPTZ before writing Observation.effectiveDateTime; mimic-fhir/sql/fhir_specimen_lab.sql:9,18,58 repeats the transformation for specimen timing. Attempt 0002 reads that element and preserves the canonical 48-hour and seven-day windows. Of 599607 rows, 599453 are identical and 154 conflict (0.0257%): 138 replay directly and 16 are downstream ordering/window effects of shifted source observations. FHIR contains no independent pre-normalization wall-time witness, so exact chronology and membership are unrecoverable.",
+  "engineering_counter": 2,
   "error_message": null,
-  "hpc_counter": 1,
-  "reopen_history": [],
-  "semantic_counter": 1,
-  "started_at": "2026-08-12T04:30:47.815219+00:00",
+  "hpc_counter": 2,
+  "reopen_history": [
+    {
+      "at": "2026-08-17T03:33:17.000965+00:00",
+      "baseline": {
+        "attempt": 1,
+        "engineering": 1,
+        "hpc": 1,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which this port drops at\n  the outermost SELECT. The attempt adds the manifest's declared key_columns (patient_key, encounter_key,\n  icu_encounter_key). Note this concept emits no subject_id column and still owes a patient_key: every concept is\n  patient-scoped and the key is reachable from the Encounter's subject reference. Change only the outermost projection:\n  leave value expressions, casts and ViewDefinition column names as they are, so that identical comparison figures\n  remain proof the change was inert.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Judge accepted the contested divergence: mimic-fhir/sql/fhir_observation_labevents.sql:15 casts labevents.charttime through TIMESTAMPTZ and line 121 writes the irreversibly DST-normalized value to Observation.effectiveDateTime; fhir_specimen_lab.sql:18,58 repeats the loss. FHIR retains only labevent_id, so normalized 03:xx cannot be distinguished from genuine 03:xx and exact source ordering and 48-hour/7-day window membership are unrecoverable. The full run reproduced 599447/599607 rows identically (99.9733%); 160 conflicts comprise charttime 145, creat 1, prior-48-hour 17, prior-seven-day 9, with 138 directly replay-attributed and 21 of the remaining 22 explained as downstream window effects; the final difference is within comparator tolerance.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 2,
+  "started_at": "2026-08-17T03:33:17.002402+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-12T05:40:05.681186+00:00"
+  "updated_at": "2026-08-17T03:56:20.058446+00:00"
 }
