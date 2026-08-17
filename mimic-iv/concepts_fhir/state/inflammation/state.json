@@ -1,17 +1,33 @@
 {
-  "attempt": 2,
+  "attempt": 3,
   "category": "measurement",
-  "completed_at": "2026-08-12T04:23:57.517860+00:00",
+  "completed_at": "2026-08-17T03:29:52.537688+00:00",
   "concept_name": "inflammation",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "Judge accepted the attributed divergence: mimic-fhir/sql/fhir_observation_labevents.sql:15,121 casts labevents.charttime through TIMESTAMPTZ before writing Observation.effectiveDateTime, exactly the FHIR path used by the port. The sole conflict (1/117,898; 0.00085%) replayed completely as the America/New_York DST spring-forward normalization, consistent with DST-gap rarity and unrecoverable from FHIR; 117,897 rows otherwise matched.",
-  "engineering_counter": 3,
+  "divergence_justification": "Judge accepted the attributed divergence: the port reads Observation.effectiveDateTime via (effective).ofType(dateTime) and preserves the served wall value with TIMESTAMP_NTZ. mimic-fhir/sql/fhir_observation_labevents.sql:15 casts labevents.charttime through TIMESTAMPTZ and :121 serializes that transformed value as Observation.effectiveDateTime; the parallel specimen path is also transformed at mimic-fhir/sql/fhir_specimen_lab.sql:18,58. The comparator exhaustively replayed the sole charttime conflict as the America/New_York spring-forward normalization with zero residual. The affected fraction is 1/117,898 (0.000848%), consistent with DST-gap rarity, and the original wall time is unrecoverable from FHIR. All other 117,897 rows match and no essential representation loss remains.",
+  "engineering_counter": 4,
   "error_message": null,
-  "hpc_counter": 2,
-  "reopen_history": [],
-  "semantic_counter": 1,
-  "started_at": "2026-08-12T04:09:38.024925+00:00",
+  "hpc_counter": 3,
+  "reopen_history": [
+    {
+      "at": "2026-08-17T03:13:18.943726+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 3,
+        "hpc": 2,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which this port drops at\n  the outermost SELECT. The attempt adds the manifest's declared key_columns (patient_key, encounter_key, specimen_key).\n  Change only the outermost projection: leave value expressions, casts and ViewDefinition column names as they are, so\n  that identical comparison figures remain proof the change was inert.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Judge accepted the attributed divergence: mimic-fhir/sql/fhir_observation_labevents.sql:15,121 casts labevents.charttime through TIMESTAMPTZ before writing Observation.effectiveDateTime, exactly the FHIR path used by the port. The sole conflict (1/117,898; 0.00085%) replayed completely as the America/New_York DST spring-forward normalization, consistent with DST-gap rarity and unrecoverable from FHIR; 117,897 rows otherwise matched.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 2,
+  "started_at": "2026-08-17T03:13:18.945738+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-12T04:23:57.518201+00:00"
+  "updated_at": "2026-08-17T03:29:52.538062+00:00"
 }
