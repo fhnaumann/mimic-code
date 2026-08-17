@@ -1,0 +1,844 @@
+WARNING: Using incubator modules: jdk.incubator.vector
+:: loading settings :: url = jar:file:/scratch3/nau025/mimic-on-fhir-delta/.venv/lib/python3.12/site-packages/pyspark/jars/ivy-2.5.3.jar!/org/apache/ivy/core/settings/ivysettings.xml
+Ivy Default Cache set to: /home/nau025/.ivy2.5.2/cache
+The jars for the packages stored in: /home/nau025/.ivy2.5.2/jars
+au.csiro.pathling#library-runtime added as a dependency
+io.delta#delta-spark_2.13 added as a dependency
+:: resolving dependencies :: org.apache.spark#spark-submit-parent-dbf99cd4-56b5-4564-9f44-e318598e95a1;1.0
+	confs: [default]
+	found au.csiro.pathling#library-runtime;9.6.0 in central
+	found io.delta#delta-spark_2.13;4.0.0 in central
+	found io.delta#delta-storage;4.0.0 in central
+	found org.antlr#antlr4-runtime;4.13.1 in central
+:: resolution report :: resolve 419ms :: artifacts dl 11ms
+	:: modules in use:
+	au.csiro.pathling#library-runtime;9.6.0 from central in [default]
+	io.delta#delta-spark_2.13;4.0.0 from central in [default]
+	io.delta#delta-storage;4.0.0 from central in [default]
+	org.antlr#antlr4-runtime;4.13.1 from central in [default]
+	---------------------------------------------------------------------
+	|                  |            modules            ||   artifacts   |
+	|       conf       | number| search|dwnlded|evicted|| number|dwnlded|
+	---------------------------------------------------------------------
+	|      default     |   4   |   0   |   0   |   0   ||   4   |   0   |
+	---------------------------------------------------------------------
+:: retrieving :: org.apache.spark#spark-submit-parent-dbf99cd4-56b5-4564-9f44-e318598e95a1
+	confs: [default]
+	0 artifacts copied, 4 already retrieved (0kB/19ms)
+26/08/17 05:30:49 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Using Spark's default log4j profile: org/apache/spark/log4j2-defaults.properties
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+26/08/17 05:36:06 ERROR Inbox: Ignoring error
+java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+26/08/17 05:36:06 WARN Executor: Issue communicating with driver in heartbeater
+org.apache.spark.SparkException: Exception thrown in awaitResult: 
+	at org.apache.spark.util.SparkThreadUtils$.awaitResult(SparkThreadUtils.scala:53)
+	at org.apache.spark.util.ThreadUtils$.awaitResult(ThreadUtils.scala:342)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:75)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:101)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:85)
+	at org.apache.spark.storage.BlockManagerMaster.registerBlockManager(BlockManagerMaster.scala:81)
+	at org.apache.spark.storage.BlockManager.reregister(BlockManager.scala:669)
+	at org.apache.spark.executor.Executor.reportHeartBeat(Executor.scala:1296)
+	at org.apache.spark.executor.Executor.$anonfun$heartbeater$1(Executor.scala:307)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1937)
+	at org.apache.spark.Heartbeater$$anon$1.run(Heartbeater.scala:46)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:358)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	... 3 more
+26/08/17 05:36:16 ERROR Inbox: Ignoring error
+java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+26/08/17 05:36:16 WARN Executor: Issue communicating with driver in heartbeater
+org.apache.spark.SparkException: Exception thrown in awaitResult: 
+	at org.apache.spark.util.SparkThreadUtils$.awaitResult(SparkThreadUtils.scala:53)
+	at org.apache.spark.util.ThreadUtils$.awaitResult(ThreadUtils.scala:342)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:75)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:101)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:85)
+	at org.apache.spark.storage.BlockManagerMaster.registerBlockManager(BlockManagerMaster.scala:81)
+	at org.apache.spark.storage.BlockManager.reregister(BlockManager.scala:669)
+	at org.apache.spark.executor.Executor.reportHeartBeat(Executor.scala:1296)
+	at org.apache.spark.executor.Executor.$anonfun$heartbeater$1(Executor.scala:307)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1937)
+	at org.apache.spark.Heartbeater$$anon$1.run(Heartbeater.scala:46)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:358)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	... 3 more
+26/08/17 05:36:26 WARN Executor: Issue communicating with driver in heartbeater
+org.apache.spark.SparkException: Exception thrown in awaitResult: 
+	at org.apache.spark.util.SparkThreadUtils$.awaitResult(SparkThreadUtils.scala:53)
+	at org.apache.spark.util.ThreadUtils$.awaitResult(ThreadUtils.scala:342)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:75)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:101)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:85)
+	at org.apache.spark.storage.BlockManagerMaster.registerBlockManager(BlockManagerMaster.scala:81)
+	at org.apache.spark.storage.BlockManager.reregister(BlockManager.scala:669)
+	at org.apache.spark.executor.Executor.reportHeartBeat(Executor.scala:1296)
+	at org.apache.spark.executor.Executor.$anonfun$heartbeater$1(Executor.scala:307)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1937)
+	at org.apache.spark.Heartbeater$$anon$1.run(Heartbeater.scala:46)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:358)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	... 3 more
+26/08/17 05:36:26 ERROR Inbox: Ignoring error
+java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+26/08/17 05:36:36 WARN Executor: Issue communicating with driver in heartbeater
+org.apache.spark.SparkException: Exception thrown in awaitResult: 
+	at org.apache.spark.util.SparkThreadUtils$.awaitResult(SparkThreadUtils.scala:53)
+	at org.apache.spark.util.ThreadUtils$.awaitResult(ThreadUtils.scala:342)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:75)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:101)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:85)
+	at org.apache.spark.storage.BlockManagerMaster.registerBlockManager(BlockManagerMaster.scala:81)
+	at org.apache.spark.storage.BlockManager.reregister(BlockManager.scala:669)
+	at org.apache.spark.executor.Executor.reportHeartBeat(Executor.scala:1296)
+	at org.apache.spark.executor.Executor.$anonfun$heartbeater$1(Executor.scala:307)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1937)
+	at org.apache.spark.Heartbeater$$anon$1.run(Heartbeater.scala:46)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:358)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	... 3 more
+26/08/17 05:36:36 ERROR Inbox: Ignoring error
+java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+26/08/17 05:36:46 WARN Executor: Issue communicating with driver in heartbeater
+org.apache.spark.SparkException: Exception thrown in awaitResult: 
+	at org.apache.spark.util.SparkThreadUtils$.awaitResult(SparkThreadUtils.scala:53)
+	at org.apache.spark.util.ThreadUtils$.awaitResult(ThreadUtils.scala:342)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:75)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:101)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:85)
+	at org.apache.spark.storage.BlockManagerMaster.registerBlockManager(BlockManagerMaster.scala:81)
+	at org.apache.spark.storage.BlockManager.reregister(BlockManager.scala:669)
+	at org.apache.spark.executor.Executor.reportHeartBeat(Executor.scala:1296)
+	at org.apache.spark.executor.Executor.$anonfun$heartbeater$1(Executor.scala:307)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1937)
+	at org.apache.spark.Heartbeater$$anon$1.run(Heartbeater.scala:46)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:358)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	... 3 more
+26/08/17 05:36:46 ERROR Inbox: Ignoring error
+java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+26/08/17 05:36:56 WARN Executor: Issue communicating with driver in heartbeater
+org.apache.spark.SparkException: Exception thrown in awaitResult: 
+	at org.apache.spark.util.SparkThreadUtils$.awaitResult(SparkThreadUtils.scala:53)
+	at org.apache.spark.util.ThreadUtils$.awaitResult(ThreadUtils.scala:342)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:75)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:101)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:85)
+	at org.apache.spark.storage.BlockManagerMaster.registerBlockManager(BlockManagerMaster.scala:81)
+	at org.apache.spark.storage.BlockManager.reregister(BlockManager.scala:669)
+	at org.apache.spark.executor.Executor.reportHeartBeat(Executor.scala:1296)
+	at org.apache.spark.executor.Executor.$anonfun$heartbeater$1(Executor.scala:307)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1937)
+	at org.apache.spark.Heartbeater$$anon$1.run(Heartbeater.scala:46)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:358)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	... 3 more
+26/08/17 05:36:56 ERROR Inbox: Ignoring error
+java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+26/08/17 05:37:06 WARN Executor: Issue communicating with driver in heartbeater
+org.apache.spark.SparkException: Exception thrown in awaitResult: 
+	at org.apache.spark.util.SparkThreadUtils$.awaitResult(SparkThreadUtils.scala:53)
+	at org.apache.spark.util.ThreadUtils$.awaitResult(ThreadUtils.scala:342)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:75)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:101)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:85)
+	at org.apache.spark.storage.BlockManagerMaster.registerBlockManager(BlockManagerMaster.scala:81)
+	at org.apache.spark.storage.BlockManager.reregister(BlockManager.scala:669)
+	at org.apache.spark.executor.Executor.reportHeartBeat(Executor.scala:1296)
+	at org.apache.spark.executor.Executor.$anonfun$heartbeater$1(Executor.scala:307)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1937)
+	at org.apache.spark.Heartbeater$$anon$1.run(Heartbeater.scala:46)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:358)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	... 3 more
+26/08/17 05:37:06 ERROR Inbox: Ignoring error
+java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+26/08/17 05:37:16 WARN Executor: Issue communicating with driver in heartbeater
+org.apache.spark.SparkException: Exception thrown in awaitResult: 
+	at org.apache.spark.util.SparkThreadUtils$.awaitResult(SparkThreadUtils.scala:53)
+	at org.apache.spark.util.ThreadUtils$.awaitResult(ThreadUtils.scala:342)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:75)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:101)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:85)
+	at org.apache.spark.storage.BlockManagerMaster.registerBlockManager(BlockManagerMaster.scala:81)
+	at org.apache.spark.storage.BlockManager.reregister(BlockManager.scala:669)
+	at org.apache.spark.executor.Executor.reportHeartBeat(Executor.scala:1296)
+	at org.apache.spark.executor.Executor.$anonfun$heartbeater$1(Executor.scala:307)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1937)
+	at org.apache.spark.Heartbeater$$anon$1.run(Heartbeater.scala:46)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:358)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	... 3 more
+26/08/17 05:37:16 ERROR Inbox: Ignoring error
+java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+26/08/17 05:37:26 ERROR Inbox: Ignoring error
+java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+26/08/17 05:37:26 WARN Executor: Issue communicating with driver in heartbeater
+org.apache.spark.SparkException: Exception thrown in awaitResult: 
+	at org.apache.spark.util.SparkThreadUtils$.awaitResult(SparkThreadUtils.scala:53)
+	at org.apache.spark.util.ThreadUtils$.awaitResult(ThreadUtils.scala:342)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:75)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:101)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:85)
+	at org.apache.spark.storage.BlockManagerMaster.registerBlockManager(BlockManagerMaster.scala:81)
+	at org.apache.spark.storage.BlockManager.reregister(BlockManager.scala:669)
+	at org.apache.spark.executor.Executor.reportHeartBeat(Executor.scala:1296)
+	at org.apache.spark.executor.Executor.$anonfun$heartbeater$1(Executor.scala:307)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1937)
+	at org.apache.spark.Heartbeater$$anon$1.run(Heartbeater.scala:46)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:358)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	... 3 more
+26/08/17 05:37:37 ERROR Inbox: Ignoring error
+java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+26/08/17 05:37:37 WARN Executor: Issue communicating with driver in heartbeater
+org.apache.spark.SparkException: Exception thrown in awaitResult: 
+	at org.apache.spark.util.SparkThreadUtils$.awaitResult(SparkThreadUtils.scala:53)
+	at org.apache.spark.util.ThreadUtils$.awaitResult(ThreadUtils.scala:342)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:75)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:101)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:85)
+	at org.apache.spark.storage.BlockManagerMaster.registerBlockManager(BlockManagerMaster.scala:81)
+	at org.apache.spark.storage.BlockManager.reregister(BlockManager.scala:669)
+	at org.apache.spark.executor.Executor.reportHeartBeat(Executor.scala:1296)
+	at org.apache.spark.executor.Executor.$anonfun$heartbeater$1(Executor.scala:307)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1937)
+	at org.apache.spark.Heartbeater$$anon$1.run(Heartbeater.scala:46)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:358)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	... 3 more
+26/08/17 05:37:46 ERROR Inbox: Ignoring error
+java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+26/08/17 05:37:46 WARN Executor: Issue communicating with driver in heartbeater
+org.apache.spark.SparkException: Exception thrown in awaitResult: 
+	at org.apache.spark.util.SparkThreadUtils$.awaitResult(SparkThreadUtils.scala:53)
+	at org.apache.spark.util.ThreadUtils$.awaitResult(ThreadUtils.scala:342)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:75)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:101)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:85)
+	at org.apache.spark.storage.BlockManagerMaster.registerBlockManager(BlockManagerMaster.scala:81)
+	at org.apache.spark.storage.BlockManager.reregister(BlockManager.scala:669)
+	at org.apache.spark.executor.Executor.reportHeartBeat(Executor.scala:1296)
+	at org.apache.spark.executor.Executor.$anonfun$heartbeater$1(Executor.scala:307)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1937)
+	at org.apache.spark.Heartbeater$$anon$1.run(Heartbeater.scala:46)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:358)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	... 3 more
+26/08/17 05:37:56 ERROR Inbox: Ignoring error
+java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+26/08/17 05:37:56 WARN Executor: Issue communicating with driver in heartbeater
+org.apache.spark.SparkException: Exception thrown in awaitResult: 
+	at org.apache.spark.util.SparkThreadUtils$.awaitResult(SparkThreadUtils.scala:53)
+	at org.apache.spark.util.ThreadUtils$.awaitResult(ThreadUtils.scala:342)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:75)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:101)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:85)
+	at org.apache.spark.storage.BlockManagerMaster.registerBlockManager(BlockManagerMaster.scala:81)
+	at org.apache.spark.storage.BlockManager.reregister(BlockManager.scala:669)
+	at org.apache.spark.executor.Executor.reportHeartBeat(Executor.scala:1296)
+	at org.apache.spark.executor.Executor.$anonfun$heartbeater$1(Executor.scala:307)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1937)
+	at org.apache.spark.Heartbeater$$anon$1.run(Heartbeater.scala:46)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:358)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	... 3 more
+26/08/17 05:38:06 ERROR Inbox: Ignoring error
+java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+26/08/17 05:38:06 WARN Executor: Issue communicating with driver in heartbeater
+org.apache.spark.SparkException: Exception thrown in awaitResult: 
+	at org.apache.spark.util.SparkThreadUtils$.awaitResult(SparkThreadUtils.scala:53)
+	at org.apache.spark.util.ThreadUtils$.awaitResult(ThreadUtils.scala:342)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:75)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:101)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:85)
+	at org.apache.spark.storage.BlockManagerMaster.registerBlockManager(BlockManagerMaster.scala:81)
+	at org.apache.spark.storage.BlockManager.reregister(BlockManager.scala:669)
+	at org.apache.spark.executor.Executor.reportHeartBeat(Executor.scala:1296)
+	at org.apache.spark.executor.Executor.$anonfun$heartbeater$1(Executor.scala:307)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1937)
+	at org.apache.spark.Heartbeater$$anon$1.run(Heartbeater.scala:46)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:358)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	... 3 more
+26/08/17 05:38:16 ERROR Inbox: Ignoring error
+java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+26/08/17 05:38:16 WARN Executor: Issue communicating with driver in heartbeater
+org.apache.spark.SparkException: Exception thrown in awaitResult: 
+	at org.apache.spark.util.SparkThreadUtils$.awaitResult(SparkThreadUtils.scala:53)
+	at org.apache.spark.util.ThreadUtils$.awaitResult(ThreadUtils.scala:342)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:75)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:101)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:85)
+	at org.apache.spark.storage.BlockManagerMaster.registerBlockManager(BlockManagerMaster.scala:81)
+	at org.apache.spark.storage.BlockManager.reregister(BlockManager.scala:669)
+	at org.apache.spark.executor.Executor.reportHeartBeat(Executor.scala:1296)
+	at org.apache.spark.executor.Executor.$anonfun$heartbeater$1(Executor.scala:307)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1937)
+	at org.apache.spark.Heartbeater$$anon$1.run(Heartbeater.scala:46)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:358)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	... 3 more
+26/08/17 05:38:27 ERROR Inbox: Ignoring error
+java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+26/08/17 05:38:27 WARN Executor: Issue communicating with driver in heartbeater
+org.apache.spark.SparkException: Exception thrown in awaitResult: 
+	at org.apache.spark.util.SparkThreadUtils$.awaitResult(SparkThreadUtils.scala:53)
+	at org.apache.spark.util.ThreadUtils$.awaitResult(ThreadUtils.scala:342)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:75)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:101)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:85)
+	at org.apache.spark.storage.BlockManagerMaster.registerBlockManager(BlockManagerMaster.scala:81)
+	at org.apache.spark.storage.BlockManager.reregister(BlockManager.scala:669)
+	at org.apache.spark.executor.Executor.reportHeartBeat(Executor.scala:1296)
+	at org.apache.spark.executor.Executor.$anonfun$heartbeater$1(Executor.scala:307)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1937)
+	at org.apache.spark.Heartbeater$$anon$1.run(Heartbeater.scala:46)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:358)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	... 3 more
+26/08/17 05:38:36 ERROR Inbox: Ignoring error
+java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+26/08/17 05:38:36 WARN Executor: Issue communicating with driver in heartbeater
+org.apache.spark.SparkException: Exception thrown in awaitResult: 
+	at org.apache.spark.util.SparkThreadUtils$.awaitResult(SparkThreadUtils.scala:53)
+	at org.apache.spark.util.ThreadUtils$.awaitResult(ThreadUtils.scala:342)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:75)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:101)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:85)
+	at org.apache.spark.storage.BlockManagerMaster.registerBlockManager(BlockManagerMaster.scala:81)
+	at org.apache.spark.storage.BlockManager.reregister(BlockManager.scala:669)
+	at org.apache.spark.executor.Executor.reportHeartBeat(Executor.scala:1296)
+	at org.apache.spark.executor.Executor.$anonfun$heartbeater$1(Executor.scala:307)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1937)
+	at org.apache.spark.Heartbeater$$anon$1.run(Heartbeater.scala:46)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.runAndReset(FutureTask.java:358)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:305)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.apache.spark.storage.BlockManagerId.executorId()" because "idWithoutTopologyInfo" is null
+	at org.apache.spark.storage.BlockManagerMasterEndpoint.org$apache$spark$storage$BlockManagerMasterEndpoint$$register(BlockManagerMasterEndpoint.scala:689)
+	at org.apache.spark.storage.BlockManagerMasterEndpoint$$anonfun$receiveAndReply$1.applyOrElse(BlockManagerMasterEndpoint.scala:141)
+	at org.apache.spark.rpc.netty.Inbox.$anonfun$process$1(Inbox.scala:104)
+	at org.apache.spark.rpc.netty.Inbox.safelyCall(Inbox.scala:216)
+	at org.apache.spark.rpc.netty.Inbox.process(Inbox.scala:101)
+	at org.apache.spark.rpc.netty.MessageLoop.org$apache$spark$rpc$netty$MessageLoop$$receiveLoop(MessageLoop.scala:76)
+	at org.apache.spark.rpc.netty.MessageLoop$$anon$1.run(MessageLoop.scala:42)
+	... 3 more
+26/08/17 05:38:42 ERROR TransportChannelHandler: Connection to c265.cm.cluster/10.141.202.11:41453 has been quiet for 120000 ms while there are outstanding requests. Assuming connection is dead; please adjust spark.files.io.connectionTimeout if this is wrong.
+26/08/17 05:38:42 ERROR TransportRequestHandler: Error sending result StreamResponse[streamId=/jars/au.csiro.pathling_library-runtime-9.6.0.jar,byteCount=85637766,body=FileSegmentManagedBuffer[file=/home/nau025/.ivy2.5.2/jars/au.csiro.pathling_library-runtime-9.6.0.jar,offset=0,length=85637766]] to /10.141.202.11:55982; closing connection
+io.netty.channel.StacklessClosedChannelException
+	at io.netty.channel.AbstractChannel.close(ChannelPromise)(Unknown Source)
+26/08/17 05:38:42 ERROR SparkContext: Error initializing SparkContext.
+java.nio.channels.ClosedChannelException
+	at org.apache.spark.network.client.StreamInterceptor.channelInactive(StreamInterceptor.java:62)
+	at org.apache.spark.network.util.TransportFrameDecoder.channelInactive(TransportFrameDecoder.java:223)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelInactive(AbstractChannelHandlerContext.java:303)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelInactive(AbstractChannelHandlerContext.java:281)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelInactive(AbstractChannelHandlerContext.java:274)
+	at io.netty.channel.DefaultChannelPipeline$HeadContext.channelInactive(DefaultChannelPipeline.java:1352)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelInactive(AbstractChannelHandlerContext.java:301)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelInactive(AbstractChannelHandlerContext.java:281)
+	at io.netty.channel.DefaultChannelPipeline.fireChannelInactive(DefaultChannelPipeline.java:850)
+	at io.netty.channel.AbstractChannel$AbstractUnsafe$7.run(AbstractChannel.java:811)
+	at io.netty.util.concurrent.AbstractEventExecutor.runTask(AbstractEventExecutor.java:173)
+	at io.netty.util.concurrent.AbstractEventExecutor.safeExecute(AbstractEventExecutor.java:166)
+	at io.netty.util.concurrent.SingleThreadEventExecutor.runAllTasks(SingleThreadEventExecutor.java:472)
+	at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:566)
+	at io.netty.util.concurrent.SingleThreadEventExecutor$4.run(SingleThreadEventExecutor.java:998)
+	at io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74)
+	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+26/08/17 05:38:42 ERROR Utils: Uncaught exception in thread Thread-4
+java.lang.NullPointerException: Cannot invoke "org.apache.spark.rpc.RpcEndpointRef.ask(Object, scala.reflect.ClassTag)" because the return value of "org.apache.spark.scheduler.local.LocalSchedulerBackend.localEndpoint()" is null
+	at org.apache.spark.scheduler.local.LocalSchedulerBackend.org$apache$spark$scheduler$local$LocalSchedulerBackend$$stop(LocalSchedulerBackend.scala:178)
+	at org.apache.spark.scheduler.local.LocalSchedulerBackend.stop(LocalSchedulerBackend.scala:149)
+	at org.apache.spark.scheduler.SchedulerBackend.stop(SchedulerBackend.scala:34)
+	at org.apache.spark.scheduler.SchedulerBackend.stop$(SchedulerBackend.scala:34)
+	at org.apache.spark.scheduler.local.LocalSchedulerBackend.stop(LocalSchedulerBackend.scala:107)
+	at org.apache.spark.scheduler.TaskSchedulerImpl.$anonfun$stop$2(TaskSchedulerImpl.scala:966)
+	at org.apache.spark.util.Utils$.tryLogNonFatalError(Utils.scala:1300)
+	at org.apache.spark.scheduler.TaskSchedulerImpl.stop(TaskSchedulerImpl.scala:966)
+	at org.apache.spark.scheduler.DAGScheduler.$anonfun$stop$4(DAGScheduler.scala:3123)
+	at org.apache.spark.util.Utils$.tryLogNonFatalError(Utils.scala:1300)
+	at org.apache.spark.scheduler.DAGScheduler.stop(DAGScheduler.scala:3123)
+	at org.apache.spark.SparkContext.$anonfun$stop$12(SparkContext.scala:2346)
+	at org.apache.spark.util.Utils$.tryLogNonFatalError(Utils.scala:1300)
+	at org.apache.spark.SparkContext.stop(SparkContext.scala:2346)
+	at org.apache.spark.SparkContext.stop(SparkContext.scala:2297)
+	at org.apache.spark.SparkContext.<init>(SparkContext.scala:729)
+	at org.apache.spark.api.java.JavaSparkContext.<init>(JavaSparkContext.scala:59)
+	at java.base/jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at java.base/jdk.internal.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:75)
+	at java.base/jdk.internal.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:53)
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502)
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486)
+	at py4j.reflection.MethodInvoker.invoke(MethodInvoker.java:247)
+	at py4j.reflection.ReflectionEngine.invoke(ReflectionEngine.java:374)
+	at py4j.Gateway.invoke(Gateway.java:238)
+	at py4j.commands.ConstructorCommand.invokeConstructor(ConstructorCommand.java:80)
+	at py4j.commands.ConstructorCommand.execute(ConstructorCommand.java:69)
+	at py4j.ClientServerConnection.waitForCommands(ClientServerConnection.java:184)
+	at py4j.ClientServerConnection.run(ClientServerConnection.java:108)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+26/08/17 05:38:42 WARN MetricsSystem: Stopping a MetricsSystem that is not running
+====================================================================
+  Full-data run — concept 'charlson'
+  Attempt:   /scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/comorbidity/charlson/attempt_0005
+  Warehouse: /scratch3/nau025/mimic-on-fhir-delta/spark_warehouse
+  Oracle:    /scratch3/nau025/oracle/mimic4-full.db
+====================================================================
+
+
+  Timings: execute 661.6s, compare 0.0s
+
+    x full execution failed: An error occurred while calling None.org.apache.spark.api.java.JavaSparkContext.
+: java.nio.channels.ClosedChannelException
+	at org.apache.spark.network.client.StreamInterceptor.channelInactive(StreamInterceptor.java:62)
+	at org.apache.spark.network.util.TransportFrameDecoder.channelInactive(TransportFrameDecoder.java:223)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelInactive(AbstractChannelHandlerContext.java:303)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelInactive(AbstractChannelHandlerContext.java:281)
+	at io.netty.channel.AbstractChannelHandlerContext.fireChannelInactive(AbstractChannelHandlerContext.java:274)
+	at io.netty.channel.DefaultChannelPipeline$HeadContext.channelInactive(DefaultChannelPipeline.java:1352)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelInactive(AbstractChannelHandlerContext.java:301)
+	at io.netty.channel.AbstractChannelHandlerContext.invokeChannelInactive(AbstractChannelHandlerContext.java:281)
+	at io.netty.channel.DefaultChannelPipeline.fireChannelInactive(DefaultChannelPipeline.java:850)
+	at io.netty.channel.AbstractChannel$AbstractUnsafe$7.run(AbstractChannel.java:811)
+	at io.netty.util.concurrent.AbstractEventExecutor.runTask(AbstractEventExecutor.java:173)
+	at io.netty.util.concurrent.AbstractEventExecutor.safeExecute(AbstractEventExecutor.java:166)
+	at io.netty.util.concurrent.SingleThreadEventExecutor.runAllTasks(SingleThreadEventExecutor.java:472)
+	at io.netty.channel.nio.NioEventLoop.run(NioEventLoop.java:566)
+	at io.netty.util.concurrent.SingleThreadEventExecutor$4.run(SingleThreadEventExecutor.java:998)
+	at io.netty.util.internal.ThreadExecutorMap$2.run(ThreadExecutorMap.java:74)
+	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+
+
+====================================================================
+  Overall: FAIL — diagnose and retry in a new attempt
+====================================================================
+26/08/17 05:38:42 ERROR Utils: Uncaught exception in thread shutdown-hook-0
+java.lang.ExceptionInInitializerError
+	at org.apache.spark.executor.Executor.stop(Executor.scala:449)
+	at org.apache.spark.executor.Executor.$anonfun$stopHookReference$1(Executor.scala:94)
+	at org.apache.spark.util.SparkShutdownHook.run(ShutdownHookManager.scala:231)
+	at org.apache.spark.util.SparkShutdownHookManager.$anonfun$runAll$2(ShutdownHookManager.scala:205)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1937)
+	at org.apache.spark.util.SparkShutdownHookManager.$anonfun$runAll$1(ShutdownHookManager.scala:205)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at scala.util.Try$.apply(Try.scala:217)
+	at org.apache.spark.util.SparkShutdownHookManager.runAll(ShutdownHookManager.scala:205)
+	at org.apache.spark.util.SparkShutdownHookManager$$anon$2.run(ShutdownHookManager.scala:184)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.apache.spark.SparkEnv.conf()" because the return value of "org.apache.spark.SparkEnv$.get()" is null
+	at org.apache.spark.shuffle.ShuffleBlockPusher$.<clinit>(ShuffleBlockPusher.scala:503)
+	... 16 more
+26/08/17 05:38:42 WARN ShutdownHookManager: ShutdownHook '' failed, java.util.concurrent.ExecutionException: java.lang.ExceptionInInitializerError
+java.util.concurrent.ExecutionException: java.lang.ExceptionInInitializerError
+	at java.base/java.util.concurrent.FutureTask.report(FutureTask.java:122)
+	at java.base/java.util.concurrent.FutureTask.get(FutureTask.java:205)
+	at org.apache.hadoop.util.ShutdownHookManager.executeShutdown(ShutdownHookManager.java:124)
+	at org.apache.hadoop.util.ShutdownHookManager$1.run(ShutdownHookManager.java:95)
+Caused by: java.lang.ExceptionInInitializerError
+	at org.apache.spark.executor.Executor.stop(Executor.scala:449)
+	at org.apache.spark.executor.Executor.$anonfun$stopHookReference$1(Executor.scala:94)
+	at org.apache.spark.util.SparkShutdownHook.run(ShutdownHookManager.scala:231)
+	at org.apache.spark.util.SparkShutdownHookManager.$anonfun$runAll$2(ShutdownHookManager.scala:205)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1937)
+	at org.apache.spark.util.SparkShutdownHookManager.$anonfun$runAll$1(ShutdownHookManager.scala:205)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.scala:18)
+	at scala.util.Try$.apply(Try.scala:217)
+	at org.apache.spark.util.SparkShutdownHookManager.runAll(ShutdownHookManager.scala:205)
+	at org.apache.spark.util.SparkShutdownHookManager$$anon$2.run(ShutdownHookManager.scala:184)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+Caused by: java.lang.NullPointerException: Cannot invoke "org.apache.spark.SparkEnv.conf()" because the return value of "org.apache.spark.SparkEnv$.get()" is null
+	at org.apache.spark.shuffle.ShuffleBlockPusher$.<clinit>(ShuffleBlockPusher.scala:503)
+	... 16 more
+full run finished for charlson (runner exit 1)
+total 208
+drwxr-xr-x 6 nau025 hpc-users  4096 Aug 17 05:27 .
+drwxr-xr-x 6 nau025 hpc-users  4096 Aug 17 05:25 ..
+-rw-r--r-- 1 nau025 hpc-users   810 Aug 17 05:20 ViewDefinition.condition.json
+-rw-r--r-- 1 nau025 hpc-users   534 Aug 17 05:20 ViewDefinition.encounter.json
+-rw-r--r-- 1 nau025 hpc-users   443 Aug 17 05:20 ViewDefinition.patient.json
+drwxr-xr-x 2 nau025 hpc-users  4096 Aug 17 05:24 candidate.demo.parquet
+-rw-r--r-- 1 nau025 hpc-users 11004 Aug 17 05:20 concept.sql
+drwxr-xr-x 3 nau025 hpc-users  4096 Aug 17 05:25 dependencies
+-rw-r--r-- 1 nau025 hpc-users   190 Aug 17 05:27 dependency_manifest.json
+drwxr-xr-x 2 nau025 hpc-users  4096 Aug 17 05:26 evidence
+-rw-r--r-- 1 nau025 hpc-users 70014 Aug 17 02:10 oracle_manifest.full.json
+-rw-r--r-- 1 nau025 hpc-users  2115 Aug 17 05:24 shape.demo.json
+-rw-r--r-- 1 nau025 hpc-users 70720 Aug 17 05:38 slurm-30068637.out
+drwxr-xr-x 3 nau025 hpc-users  4096 Aug 17 05:25 src
+-rw-r--r-- 1 nau025 hpc-users  5957 Aug 17 05:25 submit.slurm
+ERROR: no comparison.full.json produced — the run did not reach a verdict
