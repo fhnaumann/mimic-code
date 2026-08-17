@@ -1,20 +1,36 @@
 {
-  "attempt": 1,
+  "attempt": 2,
   "category": "measurement",
-  "completed_at": "2026-08-14T06:51:40.971894+00:00",
+  "completed_at": "2026-08-17T01:02:26.173811+00:00",
   "concept_name": "creatinine_baseline",
   "dependencies": [
     "age",
     "chemistry"
   ],
-  "divergence_decided_by": "human",
-  "divergence_justification": "Inherited divergence with no creatinine_baseline-originated loss. All divergence   rows (460 age, 460 mdrd_est, 85 scr_baseline) trace to the age dependency, already   accepted as COMPLETED_WITH_DIVERGENCE by human decision. Root cause is upstream:   mimic-fhir/sql/fhir_patient.sql:15 synthesises Patient.birthDate as   MIN(transfers.intime)-anchor_age instead of anchoring to anchor_year, so FHIR-side   age diverges from canonical age.sql:30 exactly where year(MIN(transfers.intime)) !=   anchor_year. Independently verified on full MIMIC-IV v2.2 (HPC job 29971523): 460/431,231   admissions across 87 patients, error range -3..+13 years; anchor_year is recoverable   from no published timestamp (six candidate identities swept, best 99.9710%, none exact).   The age>=18 cohort filter flips 0 rows in practice. Upstream defect with a one-line fix,   reported as mimic-fhir/debug-patient-birthdate-anchor; the identical port becomes exact   once it lands. 430,771/431,231 (99.8933%) identical, no row gaps.",
-  "engineering_counter": 1,
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accept: all 460 conflicts are inherited from the accepted age dependency. Upstream /Users/nau025/Documents/mimic-fhir/sql/fhir_patient.sql:15 synthesizes Patient.birthDate from MIN(transfers.intime) - anchor_age and line 108 writes it; canonical age.sql:30 requires anchor_age and anchor_year, neither is carried by FHIR, Encounter-derived anchor years are inexact, and opaque resource IDs cannot recover them. Attempt 0002 correctly consumes FROM age and FROM chemistry; chemistry scr_min is exact. 430771/431231 rows are identical (99.8933%), with 460 age, 460 mdrd_est, and 85 scr_baseline conflicts, all inherited/propagated and no other divergence classes.",
+  "engineering_counter": 2,
   "error_message": null,
-  "hpc_counter": 1,
-  "reopen_history": [],
-  "semantic_counter": 2,
-  "started_at": "2026-08-14T04:14:51.626537+00:00",
+  "hpc_counter": 2,
+  "reopen_history": [
+    {
+      "at": "2026-08-17T00:41:38.578292+00:00",
+      "baseline": {
+        "attempt": 1,
+        "engineering": 1,
+        "hpc": 1,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "attempt_0001 violates LOOP_CONTRACT 'Derived dependencies in the candidate': it rederives both declared dependencies\n  from FHIR instead of consuming the staged temp views. age is recomputed inline as YEAR(Encounter.period.start) -\n  YEAR(Patient.birthDate); chemistry is recomputed as a labitem-50912 extraction over Observation+Specimen. Both temp\n  views were registered by the runner and never read. Rewrite as FROM age / FROM chemistry, with gender via LEFT JOIN\n  patient on age.subject_id per the oracle; ViewDefinition.observation.json and ViewDefinition.specimen.json should not\n  exist in the new attempt. The superseded justification's inherited-divergence claim was never tested against the age\n  dependency's own output and must be re-derived from this run's comparison, not carried over.",
+      "superseded_decided_by": "human",
+      "superseded_error": null,
+      "superseded_justification": "Inherited divergence with no creatinine_baseline-originated loss. All divergence   rows (460 age, 460 mdrd_est, 85 scr_baseline) trace to the age dependency, already   accepted as COMPLETED_WITH_DIVERGENCE by human decision. Root cause is upstream:   mimic-fhir/sql/fhir_patient.sql:15 synthesises Patient.birthDate as   MIN(transfers.intime)-anchor_age instead of anchoring to anchor_year, so FHIR-side   age diverges from canonical age.sql:30 exactly where year(MIN(transfers.intime)) !=   anchor_year. Independently verified on full MIMIC-IV v2.2 (HPC job 29971523): 460/431,231   admissions across 87 patients, error range -3..+13 years; anchor_year is recoverable   from no published timestamp (six candidate identities swept, best 99.9710%, none exact).   The age>=18 cohort filter flips 0 rows in practice. Upstream defect with a one-line fix,   reported as mimic-fhir/debug-patient-birthdate-anchor; the identical port becomes exact   once it lands. 430,771/431,231 (99.8933%) identical, no row gaps.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 3,
+  "started_at": "2026-08-17T00:41:38.579938+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-14T06:51:40.972368+00:00"
+  "updated_at": "2026-08-17T01:02:26.174113+00:00"
 }

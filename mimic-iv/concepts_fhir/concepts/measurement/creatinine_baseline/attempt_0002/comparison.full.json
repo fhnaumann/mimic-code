@@ -1,0 +1,447 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/creatinine_baseline/attempt_0002/candidate.full.parquet/*.parquet",
+  "comparison": "keyed_join",
+  "concept": "creatinine_baseline",
+  "dataset": "full",
+  "diagnostics": [
+    "CONTESTED \u2014 a value conflict. Either a port bug or upstream ETL transformation loss; the data cannot tell you which:",
+    "  460 \u00d7 differing_conflict (0.107% of oracle rows) \u2014 matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone",
+    "    column 'age' conflicts on 460 row(s) (0.107% of oracle rows)",
+    "    column 'mdrd_est' conflicts on 460 row(s) (0.107% of oracle rows)",
+    "    column 'scr_baseline' conflicts on 85 row(s) (0.020% of oracle rows)",
+    "  bar for an accept: A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "430,771 of 431,231 oracle rows reproduced identically (99.89%)",
+    "note: upstream conflict attribution not attempted: no datetime column in this concept; the DST cast cannot apply"
+  ],
+  "diff": {
+    "classification": "keyed",
+    "columns_candidate_null": {},
+    "columns_conflicting": {
+      "age": 460,
+      "mdrd_est": 460,
+      "scr_baseline": 85
+    },
+    "columns_differing": {
+      "age": 460,
+      "mdrd_est": 460,
+      "scr_baseline": 85
+    },
+    "conflict_attribution": {
+      "attempted": false,
+      "complete": false,
+      "why": "no datetime column in this concept; the DST cast cannot apply"
+    },
+    "differing": 460,
+    "differing_conflict": 460,
+    "differing_null_only": 0,
+    "excluded_as_unrepresentable": [],
+    "identical": 430771,
+    "identical_representable": 430771,
+    "key": [
+      "hadm_id"
+    ],
+    "only_candidate": 0,
+    "only_oracle": 0,
+    "samples": {
+      "differing_conflict": [
+        {
+          "age__candidate": 54,
+          "age__oracle": 51,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "M",
+          "gender__oracle": "M",
+          "hadm_id": 28349052,
+          "mdrd_est__candidate": 1.089098565967176,
+          "mdrd_est__oracle": 1.1001048664919217,
+          "scr_baseline__candidate": 0.9,
+          "scr_baseline__oracle": 0.9,
+          "scr_min__candidate": 0.9,
+          "scr_min__oracle": 0.9
+        },
+        {
+          "age__candidate": 51,
+          "age__oracle": 48,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "M",
+          "gender__oracle": "M",
+          "hadm_id": 23915513,
+          "mdrd_est__candidate": 1.1001043935860013,
+          "mdrd_est__oracle": 1.1118996826379188,
+          "scr_baseline__candidate": 0.5,
+          "scr_baseline__oracle": 0.5,
+          "scr_min__candidate": 0.5,
+          "scr_min__oracle": 0.5
+        },
+        {
+          "age__candidate": 21,
+          "age__oracle": 19,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "M",
+          "gender__oracle": "M",
+          "hadm_id": 27447283,
+          "mdrd_est__candidate": 1.2859406233363515,
+          "mdrd_est__oracle": 1.3087815303564498,
+          "scr_baseline__candidate": 0.4,
+          "scr_baseline__oracle": 0.4,
+          "scr_min__candidate": 0.4,
+          "scr_min__oracle": 0.4
+        },
+        {
+          "age__candidate": 24,
+          "age__oracle": 22,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "M",
+          "gender__oracle": "M",
+          "hadm_id": 23952838,
+          "mdrd_est__candidate": 1.2560865381994781,
+          "mdrd_est__oracle": 1.2754608643267642,
+          "scr_baseline__candidate": 0.5,
+          "scr_baseline__oracle": 0.5,
+          "scr_min__candidate": 0.5,
+          "scr_min__oracle": 0.5
+        },
+        {
+          "age__candidate": 24,
+          "age__oracle": 22,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "M",
+          "gender__oracle": "M",
+          "hadm_id": 23810311,
+          "mdrd_est__candidate": 1.2560865381994781,
+          "mdrd_est__oracle": 1.2754608643267642,
+          "scr_baseline__candidate": 0.5,
+          "scr_baseline__oracle": 0.5,
+          "scr_min__candidate": 0.5,
+          "scr_min__oracle": 0.5
+        },
+        {
+          "age__candidate": 24,
+          "age__oracle": 22,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "M",
+          "gender__oracle": "M",
+          "hadm_id": 22763676,
+          "mdrd_est__candidate": 1.2560865381994781,
+          "mdrd_est__oracle": 1.2754608643267642,
+          "scr_baseline__candidate": 0.6,
+          "scr_baseline__oracle": 0.6,
+          "scr_min__candidate": 0.6,
+          "scr_min__oracle": 0.6
+        },
+        {
+          "age__candidate": 30,
+          "age__oracle": 28,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "M",
+          "gender__oracle": "M",
+          "hadm_id": 21243837,
+          "mdrd_est__candidate": 1.207736342539384,
+          "mdrd_est__oracle": 1.2224839181076148,
+          "scr_baseline__candidate": 0.4,
+          "scr_baseline__oracle": 0.4,
+          "scr_min__candidate": 0.4,
+          "scr_min__oracle": 0.4
+        },
+        {
+          "age__candidate": 69,
+          "age__oracle": 68,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "M",
+          "gender__oracle": "M",
+          "hadm_id": 25932399,
+          "mdrd_est__candidate": 1.043135305491117,
+          "mdrd_est__oracle": 1.0458180372760157,
+          "scr_baseline__candidate": 0.4,
+          "scr_baseline__oracle": 0.4,
+          "scr_min__candidate": 0.4,
+          "scr_min__oracle": 0.4
+        },
+        {
+          "age__candidate": 64,
+          "age__oracle": 67,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "M",
+          "gender__oracle": "M",
+          "hadm_id": 23971658,
+          "mdrd_est__candidate": 1.0570303668934138,
+          "mdrd_est__oracle": 1.0485471191325542,
+          "scr_baseline__candidate": 0.8,
+          "scr_baseline__oracle": 0.8,
+          "scr_min__candidate": 0.8,
+          "scr_min__oracle": 0.8
+        },
+        {
+          "age__candidate": 69,
+          "age__oracle": 68,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "M",
+          "gender__oracle": "M",
+          "hadm_id": 25199453,
+          "mdrd_est__candidate": 1.043135305491117,
+          "mdrd_est__oracle": 1.0458180372760157,
+          "scr_baseline__candidate": 0.6,
+          "scr_baseline__oracle": 0.6,
+          "scr_min__candidate": 0.6,
+          "scr_min__oracle": 0.6
+        },
+        {
+          "age__candidate": 68,
+          "age__oracle": 67,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "M",
+          "gender__oracle": "M",
+          "hadm_id": 21359783,
+          "mdrd_est__candidate": 1.0458175954335802,
+          "mdrd_est__oracle": 1.0485471191325542,
+          "scr_baseline__candidate": 0.9,
+          "scr_baseline__oracle": 0.9,
+          "scr_min__candidate": 0.9,
+          "scr_min__oracle": 0.9
+        },
+        {
+          "age__candidate": 66,
+          "age__oracle": 63,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "F",
+          "gender__oracle": "F",
+          "hadm_id": 29231796,
+          "mdrd_est__candidate": 0.8117737173296006,
+          "mdrd_est__oracle": 0.8184443005799765,
+          "scr_baseline__candidate": 0.4,
+          "scr_baseline__oracle": 0.4,
+          "scr_min__candidate": 0.4,
+          "scr_min__oracle": 0.4
+        },
+        {
+          "age__candidate": 48,
+          "age__oracle": 47,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "F",
+          "gender__oracle": "F",
+          "hadm_id": 25072897,
+          "mdrd_est__candidate": 0.8585464433388315,
+          "mdrd_est__oracle": 0.8617323067756452,
+          "scr_baseline__candidate": 0.7,
+          "scr_baseline__oracle": 0.7,
+          "scr_min__candidate": 0.7,
+          "scr_min__oracle": 0.7
+        },
+        {
+          "age__candidate": 62,
+          "age__oracle": 59,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "F",
+          "gender__oracle": "F",
+          "hadm_id": 28502718,
+          "mdrd_est__candidate": 0.8207508359425568,
+          "mdrd_est__oracle": 0.8279432007421933,
+          "scr_baseline__candidate": 0.7,
+          "scr_baseline__oracle": 0.7,
+          "scr_min__candidate": 0.7,
+          "scr_min__oracle": 0.7
+        },
+        {
+          "age__candidate": 68,
+          "age__oracle": 65,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "F",
+          "gender__oracle": "F",
+          "hadm_id": 27799390,
+          "mdrd_est__candidate": 0.8075219179708407,
+          "mdrd_est__oracle": 0.8139571413844369,
+          "scr_baseline__candidate": 0.3,
+          "scr_baseline__oracle": 0.3,
+          "scr_min__candidate": 0.3,
+          "scr_min__oracle": 0.3
+        },
+        {
+          "age__candidate": 49,
+          "age__oracle": 48,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "F",
+          "gender__oracle": "F",
+          "hadm_id": 25370832,
+          "mdrd_est__candidate": 0.8554380195601723,
+          "mdrd_est__oracle": 0.8585467813291612,
+          "scr_baseline__candidate": 0.8554380195601723,
+          "scr_baseline__oracle": 0.8585467813291612,
+          "scr_min__candidate": null,
+          "scr_min__oracle": null
+        },
+        {
+          "age__candidate": 67,
+          "age__oracle": 64,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "F",
+          "gender__oracle": "F",
+          "hadm_id": 26702067,
+          "mdrd_est__candidate": 0.8096291613099001,
+          "mdrd_est__oracle": 0.816180108922277,
+          "scr_baseline__candidate": 0.4,
+          "scr_baseline__oracle": 0.4,
+          "scr_min__candidate": 0.4,
+          "scr_min__oracle": 0.4
+        },
+        {
+          "age__candidate": 65,
+          "age__oracle": 62,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "F",
+          "gender__oracle": "F",
+          "hadm_id": 26229743,
+          "mdrd_est__candidate": 0.8139568272860591,
+          "mdrd_est__oracle": 0.8207511536587335,
+          "scr_baseline__candidate": 0.7,
+          "scr_baseline__oracle": 0.7,
+          "scr_min__candidate": 0.7,
+          "scr_min__oracle": 0.7
+        },
+        {
+          "age__candidate": 68,
+          "age__oracle": 65,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "F",
+          "gender__oracle": "F",
+          "hadm_id": 20959644,
+          "mdrd_est__candidate": 0.8075219179708407,
+          "mdrd_est__oracle": 0.8139571413844369,
+          "scr_baseline__candidate": 0.3,
+          "scr_baseline__oracle": 0.3,
+          "scr_min__candidate": 0.3,
+          "scr_min__oracle": 0.3
+        },
+        {
+          "age__candidate": 38,
+          "age__oracle": 35,
+          "ckd__candidate": 0,
+          "ckd__oracle": 0,
+          "gender__candidate": "F",
+          "gender__oracle": "F",
+          "hadm_id": 27624264,
+          "mdrd_est__candidate": 0.894563537066505,
+          "mdrd_est__oracle": 0.9075991576563646,
+          "scr_baseline__candidate": 0.4,
+          "scr_baseline__oracle": 0.4,
+          "scr_min__candidate": 0.4,
+          "scr_min__oracle": 0.4
+        }
+      ],
+      "differing_null_only": [],
+      "only_candidate": [],
+      "only_oracle": []
+    }
+  },
+  "divergence": {
+    "attributed": [],
+    "blocking": [
+      {
+        "class": "differing_conflict",
+        "count": 460,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "classification": "keyed",
+    "conflict_attribution": {
+      "attempted": false,
+      "complete": false,
+      "why": "no datetime column in this concept; the DST cast cannot apply"
+    },
+    "contested": [
+      {
+        "class": "differing_conflict",
+        "count": 460,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "declared_unrepresentable": {},
+    "diagnostician_required": true,
+    "gap_shaped": [],
+    "identical_fraction": 0.998933,
+    "identical_rows": 430771,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "key_attribution": null,
+    "notes": [
+      "upstream conflict attribution not attempted: no datetime column in this concept; the DST cast cannot apply"
+    ],
+    "oracle_rows": 431231,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [
+      {
+        "class": "differing_conflict",
+        "count": 460,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "3973085088470630347988305",
+    "manifest_row_count": 431231,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.creatinine_baseline"
+  },
+  "row_count": {
+    "candidate": 431231,
+    "delta": 0,
+    "gated": false,
+    "match": true,
+    "oracle": 431231
+  },
+  "schema": {
+    "actual_columns": [
+      "hadm_id",
+      "gender",
+      "age",
+      "scr_min",
+      "ckd",
+      "mdrd_est",
+      "scr_baseline"
+    ],
+    "expected_columns": [
+      "hadm_id",
+      "gender",
+      "age",
+      "scr_min",
+      "ckd",
+      "mdrd_est",
+      "scr_baseline"
+    ],
+    "extra_columns": [],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "verdict": "review"
+}
