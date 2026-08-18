@@ -1,16 +1,33 @@
 {
-  "attempt": 2,
+  "attempt": 3,
   "category": "measurement",
-  "completed_at": "2026-08-10T05:23:47.527629+00:00",
+  "completed_at": "2026-08-18T00:13:36.969569+00:00",
   "concept_name": "blood_differential",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "Judge accepted the contested residual: 200 charttime conflicts are intrinsic upstream ETL loss. mimic-fhir/sql/fhir_observation_labevents.sql:15 casts naive labevents.charttime through TIMESTAMPTZ and :121-122 writes the transformed effectiveDateTime; DST-gap 02:xx values become 03:xx. The original wall time is not retained, issued is separately sourced from storetime, and no FHIR query can invert the non-injective transformation. Attempt 0002 uses TIMESTAMP_NTZ and has no remaining only-candidate, only-oracle, or null-only rows; 3,171,706/3,171,906 rows are identical (99.9937%).",
-  "engineering_counter": 3,
+  "divergence_justification": "All 200 divergences are charttime conflicts caused by irreversible upstream DST normalization. mimic-fhir/sql/fhir_observation_labevents.sql:15 casts naive labevents.charttime through TIMESTAMPTZ, and line 121 writes the result to Observation.effectiveDateTime; no FHIR element retains the original wall time. The candidate sources (effective).ofType(dateTime) and casts it to TIMESTAMP_NTZ, faithfully preserving the served value. The comparator replayed every conflict through America/New_York with zero residual. The affected 200/3,171,906 rows (0.0063%) are consistent with DST-gap rarity. Resource IDs remain opaque and provide no permissible recovery path. Although charttime is output and aggregated with MAX by specimen, the proven upstream DST defect is expressly exempt from essential-loss blocking.",
+  "engineering_counter": 4,
   "error_message": null,
-  "hpc_counter": 2,
-  "semantic_counter": 1,
-  "started_at": "2026-08-10T04:52:53.216806+00:00",
+  "hpc_counter": 3,
+  "reopen_history": [
+    {
+      "at": "2026-08-17T23:49:09.117710+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 3,
+        "hpc": 2,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Judge accepted the contested residual: 200 charttime conflicts are intrinsic upstream ETL loss. mimic-fhir/sql/fhir_observation_labevents.sql:15 casts naive labevents.charttime through TIMESTAMPTZ and :121-122 writes the transformed effectiveDateTime; DST-gap 02:xx values become 03:xx. The original wall time is not retained, issued is separately sourced from storetime, and no FHIR query can invert the non-injective transformation. Attempt 0002 uses TIMESTAMP_NTZ and has no remaining only-candidate, only-oracle, or null-only rows; 3,171,706/3,171,906 rows are identical (99.9937%).",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 2,
+  "started_at": "2026-08-17T23:49:09.119731+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-10T05:23:47.528095+00:00"
+  "updated_at": "2026-08-18T00:13:36.970014+00:00"
 }

@@ -1,0 +1,8 @@
+{
+  "concept": "blood_differential",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "30103841",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/blood_differential/attempt_0003",
+  "submitted_at": "2026-08-18T00:04:12.957949+00:00",
+  "walltime": "2:00:00"
+}
