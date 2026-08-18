@@ -1,0 +1,8 @@
+{
+  "concept": "complete_blood_count",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "30105580",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/complete_blood_count/attempt_0003",
+  "submitted_at": "2026-08-18T00:52:04.599676+00:00",
+  "walltime": "2:00:00"
+}

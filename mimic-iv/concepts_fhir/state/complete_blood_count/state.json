@@ -1,14 +1,14 @@
 {
-  "attempt": 2,
+  "attempt": 3,
   "category": "measurement",
-  "completed_at": "2026-08-11T06:55:16.473304+00:00",
+  "completed_at": "2026-08-18T01:01:49.196044+00:00",
   "concept_name": "complete_blood_count",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "Accepted contested divergence for complete_blood_count attempt_0002: 204 of 3,362,503 keyed rows (0.0061%) differ only in charttime, always candidate +1 hour; schema and row count are exact and 3,362,299 rows are identical. mimic-fhir/sql/fhir_observation_labevents.sql:15 casts naive labevents.charttime to TIMESTAMPTZ and line 121 writes the normalized value to Observation.effectiveDateTime; mimic-fhir/sql/fhir_specimen_lab.sql:9,18,58 performs the same transformation for Specimen.collection.collectedDateTime. During the DST spring-forward gap, source 02:xx and genuine 03:xx collapse to the same FHIR 03:xx value. Observation.issued is storetime (fhir_observation_labevents.sql:16,122), identifiers carry only labevent_id (:12,62,95-98), and no other mimic-fhir SQL writes labevents.charttime, so no FHIR query can recover which preimage occurred; subtracting an hour would corrupt genuine 03:xx values. Attempt_0002 uses the documented TIMESTAMP_NTZ mapping and there are no divergent dependencies.",
-  "engineering_counter": 2,
+  "divergence_justification": "Accepted attributed divergence for complete_blood_count attempt_0003: 204/3,362,503 rows (0.0061%) differ only in charttime, and all 204 replay exactly through the America/New_York TIMESTAMPTZ DST shift with residual 0. mimic-fhir/sql/fhir_observation_labevents.sql:15 casts labevents.charttime through TIMESTAMPTZ and line 121 writes the transformed value to Observation.effectiveDateTime; mimic-fhir/sql/fhir_specimen_lab.sql:18,58 repeats it for Specimen.collection.collectedDateTime. The cast collapses gap-hour 02:xx and genuine 03:xx preimages, so no FHIR query can recover the original wall time. The candidate otherwise reproduces 3,362,299 rows identically, uses the documented TIMESTAMP_NTZ mapping, and has no divergent dependencies.",
+  "engineering_counter": 3,
   "error_message": null,
-  "hpc_counter": 2,
+  "hpc_counter": 3,
   "reopen_history": [
     {
       "at": "2026-08-11T06:12:13.417393+00:00",
@@ -23,10 +23,25 @@
       "superseded_decided_by": "judge",
       "superseded_justification": "Judge accepted COMPLETED_WITH_DIVERGENCE: 204 charttime differing_conflict rows (0.0061%), all candidate +1 hour, are intrinsic DST-gap transformation loss. mimic-fhir/sql/fhir_observation_labevents.sql:15 casts naive labevents.charttime through TIMESTAMPTZ and :121 writes Observation.effectiveDateTime; mimic-fhir/sql/fhir_specimen_lab.sql:9,18,58 repeats the loss. Observation.issued is storetime at fhir_observation_labevents.sql:16,122 and identifiers carry labevent_id at :12,62,95-98; no FHIR path preserves original charttime, so the oracle value is unrecoverable. Candidate otherwise reproduces 3,362,299/3,362,503 rows identically with schema and row count matching.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-18T00:42:53.591195+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 2,
+        "hpc": 2,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Accepted contested divergence for complete_blood_count attempt_0002: 204 of 3,362,503 keyed rows (0.0061%) differ only in charttime, always candidate +1 hour; schema and row count are exact and 3,362,299 rows are identical. mimic-fhir/sql/fhir_observation_labevents.sql:15 casts naive labevents.charttime to TIMESTAMPTZ and line 121 writes the normalized value to Observation.effectiveDateTime; mimic-fhir/sql/fhir_specimen_lab.sql:9,18,58 performs the same transformation for Specimen.collection.collectedDateTime. During the DST spring-forward gap, source 02:xx and genuine 03:xx collapse to the same FHIR 03:xx value. Observation.issued is storetime (fhir_observation_labevents.sql:16,122), identifiers carry only labevent_id (:12,62,95-98), and no other mimic-fhir SQL writes labevents.charttime, so no FHIR query can recover which preimage occurred; subtracting an hour would corrupt genuine 03:xx values. Attempt_0002 uses the documented TIMESTAMP_NTZ mapping and there are no divergent dependencies.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
-  "semantic_counter": 2,
-  "started_at": "2026-08-11T06:12:13.419068+00:00",
+  "semantic_counter": 3,
+  "started_at": "2026-08-18T00:42:53.592838+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-11T06:55:16.473665+00:00"
+  "updated_at": "2026-08-18T01:01:49.196506+00:00"
 }
