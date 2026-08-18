@@ -1,14 +1,14 @@
 {
-  "attempt": 3,
+  "attempt": 4,
   "category": "measurement",
-  "completed_at": "2026-08-13T03:59:41.400267+00:00",
+  "completed_at": "2026-08-18T01:31:49.073261+00:00",
   "concept_name": "height",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "Judge accepted the attributed review: mimic-fhir/sql/fhir_observation_chartevents.sql:9 casts chartevents.charttime through TIMESTAMPTZ and line 67 writes the transformed value to Observation.effectiveDateTime, which is the candidate charttime source. The comparator replayed the America/New_York DST-gap transformation over all 2 conflicting charttime rows with zero residual; 2/33,474 (0.006%) is consistent with DST-gap rarity. Height values, row inclusion, natural key, grouping, and subject/stay assignment remain unchanged, so this is ancillary intrinsic upstream loss and the port is faithful as the data allows.",
-  "engineering_counter": 4,
+  "divergence_justification": "height attempt 0004 differs only on 2/33,474 charttime values (0.006%). mimic-fhir/sql/fhir_observation_chartevents.sql:9 casts source charttime through TIMESTAMPTZ, and line 67 writes it to Observation.effectiveDateTime, the element read by the port. The comparator replayed this America/New_York DST-gap transformation over every conflicting row with zero residual. Height values, row inclusion, grouping, subject/stay assignment, and natural grain remain equal. The port uses the required direct TIMESTAMP_NTZ mapping and does not infer values from opaque resource ids, so it is faithful to the served data.",
+  "engineering_counter": 5,
   "error_message": null,
-  "hpc_counter": 3,
+  "hpc_counter": 4,
   "reopen_history": [
     {
       "at": "2026-08-13T03:28:27.078382+00:00",
@@ -23,10 +23,25 @@
       "superseded_decided_by": null,
       "superseded_justification": null,
       "superseded_status": "COMPLETED"
+    },
+    {
+      "at": "2026-08-18T01:12:40.618863+00:00",
+      "baseline": {
+        "attempt": 3,
+        "engineering": 4,
+        "hpc": 3,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Judge accepted the attributed review: mimic-fhir/sql/fhir_observation_chartevents.sql:9 casts chartevents.charttime through TIMESTAMPTZ and line 67 writes the transformed value to Observation.effectiveDateTime, which is the candidate charttime source. The comparator replayed the America/New_York DST-gap transformation over all 2 conflicting charttime rows with zero residual; 2/33,474 (0.006%) is consistent with DST-gap rarity. Height values, row inclusion, natural key, grouping, and subject/stay assignment remain unchanged, so this is ancillary intrinsic upstream loss and the port is faithful as the data allows.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
-  "semantic_counter": 2,
-  "started_at": "2026-08-13T03:28:27.079816+00:00",
+  "semantic_counter": 3,
+  "started_at": "2026-08-18T01:12:40.622598+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-13T03:59:41.400568+00:00"
+  "updated_at": "2026-08-18T01:31:49.075032+00:00"
 }
