@@ -1,14 +1,14 @@
 {
-  "attempt": 3,
+  "attempt": 4,
   "category": "measurement",
-  "completed_at": "2026-08-13T03:20:01.109995+00:00",
+  "completed_at": "2026-08-18T01:33:23.085633+00:00",
   "concept_name": "icp",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "The chartevents ETL casts source charttime through TIMESTAMPTZ at fhir_observation_chartevents.sql:9 and writes the irreversibly normalized value to Observation.effectiveDateTime at line 67. All 17 shifted source rows are explained: two re-key to candidate rows and 15 collide at 03:00, causing four MAX conflicts. The original wall time is absent from admissible FHIR fields\u2014issued is storetime, and UUID inversion is forbidden\u2014so attempt 0003 is faithful to the served representation.",
-  "engineering_counter": 4,
+  "divergence_justification": "Judge-accepted attributed divergence: mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 casts chartevents.charttime through TIMESTAMPTZ before writing Observation.effectiveDateTime. The comparator exhaustively replayed that America/New_York DST-gap shift over all 4 differing_conflict rows and all 17 only_oracle/2 only_candidate key rows with zero residual; 15 occupied-key collisions and 2 repaired moves are the same 17 shifted events, and the 4 changed values follow the canonical grouped MAX. The affected fraction (17/173273 = 0.0098%; 4 conflicts = 0.0023%) is consistent with DST-gap rarity. The served wall time is unrecoverable and no Observation.id inversion is used; no divergent dependencies or essential source loss.",
+  "engineering_counter": 5,
   "error_message": null,
-  "hpc_counter": 3,
+  "hpc_counter": 4,
   "reopen_history": [
     {
       "at": "2026-08-13T03:01:30.119723+00:00",
@@ -23,10 +23,25 @@
       "superseded_decided_by": null,
       "superseded_justification": null,
       "superseded_status": "COMPLETED"
+    },
+    {
+      "at": "2026-08-18T01:13:11.981425+00:00",
+      "baseline": {
+        "attempt": 3,
+        "engineering": 4,
+        "hpc": 3,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "The chartevents ETL casts source charttime through TIMESTAMPTZ at fhir_observation_chartevents.sql:9 and writes the irreversibly normalized value to Observation.effectiveDateTime at line 67. All 17 shifted source rows are explained: two re-key to candidate rows and 15 collide at 03:00, causing four MAX conflicts. The original wall time is absent from admissible FHIR fields\u2014issued is storetime, and UUID inversion is forbidden\u2014so attempt 0003 is faithful to the served representation.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
-  "semantic_counter": 2,
-  "started_at": "2026-08-13T03:01:30.120893+00:00",
+  "semantic_counter": 3,
+  "started_at": "2026-08-18T01:13:11.983628+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-13T03:20:01.110276+00:00"
+  "updated_at": "2026-08-18T01:33:23.086157+00:00"
 }

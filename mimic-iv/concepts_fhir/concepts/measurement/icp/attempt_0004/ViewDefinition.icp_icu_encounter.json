@@ -1,0 +1,21 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/icp-0004-icp_icu_encounter",
+  "name": "icp_icu_encounter",
+  "resource": "Encounter",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "icu_encounter_key" },
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu')",
+      "column": [
+        { "path": "value", "name": "stay_id_str" }
+      ]
+    }
+  ]
+}

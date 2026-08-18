@@ -1,0 +1,49 @@
+{
+  "candidate": "/Users/nau025/Documents/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/icp/attempt_0004/candidate.demo.parquet/*.parquet",
+  "candidate_row_count": 303,
+  "concept": "icp",
+  "dataset": "demo",
+  "executed": true,
+  "format_version": "2.0",
+  "gated": [
+    "execution",
+    "column_names",
+    "column_types"
+  ],
+  "mode": "shape",
+  "not_gated": [
+    "row_count"
+  ],
+  "note": "Shape is correct. This earns permission to spend an HPC run; it is not evidence of correctness.",
+  "oracle_full_row_count": 173273,
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "patient_key",
+      "stay_id",
+      "icu_encounter_key",
+      "charttime",
+      "icp"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "stay_id",
+      "charttime",
+      "icp"
+    ],
+    "extra_columns": [
+      "patient_key",
+      "icu_encounter_key"
+    ],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": [],
+    "missing_key_columns": [],
+    "required_key_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "unexpected_columns": []
+  },
+  "verdict": "shape_ok"
+}
