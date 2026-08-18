@@ -1,16 +1,33 @@
 {
-  "attempt": 3,
+  "attempt": 4,
   "category": "measurement",
-  "completed_at": "2026-08-10T06:37:42.078024+00:00",
+  "completed_at": "2026-08-18T00:34:26.705297+00:00",
   "concept_name": "chemistry",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "Judge accept: upstream mimic-fhir/sql/fhir_observation_labevents.sql:15 casts naive labevents.charttime through TIMESTAMPTZ and :121 writes it to Observation.effectiveDateTime; fhir_specimen_lab.sql:9,18,58 stores the same transformed MAX(charttime). DST spring-forward-gap 02:xx to 03:xx normalization is non-injective, no independent FHIR element preserves the original, and no FHIR query can recover it. Attempt 0003 otherwise matches; accept 198 intrinsic charttime conflicts, with 3,811,325/3,811,523 identical rows (99.9948%) and no excluded columns.",
-  "engineering_counter": 4,
+  "divergence_justification": "Judge accept: attempt 0004's only divergence is 198 charttime differing_conflict rows, all exhaustively replayed to the America/New_York spring-forward TIMESTAMPTZ normalization with zero residual. Upstream mimic-fhir/sql/fhir_observation_labevents.sql:15,121 casts labevents.charttime and writes Observation.effectiveDateTime; mimic-fhir/sql/fhir_specimen_lab.sql:9,18,58 preserves the same normalized specimen timing. The original 02:xx wall time is unrecoverable by any FHIR query. The port reproduces 3,811,325/3,811,523 rows identically (99.9948%), and 198/3,811,523 (~0.0052%) is consistent with rare DST-gap times; no other divergence or excluded column exists. Resource keys remain opaque identities only.",
+  "engineering_counter": 5,
   "error_message": null,
-  "hpc_counter": 2,
-  "semantic_counter": 1,
-  "started_at": "2026-08-10T06:18:24.212811+00:00",
+  "hpc_counter": 3,
+  "reopen_history": [
+    {
+      "at": "2026-08-18T00:14:06.165067+00:00",
+      "baseline": {
+        "attempt": 3,
+        "engineering": 4,
+        "hpc": 2,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Judge accept: upstream mimic-fhir/sql/fhir_observation_labevents.sql:15 casts naive labevents.charttime through TIMESTAMPTZ and :121 writes it to Observation.effectiveDateTime; fhir_specimen_lab.sql:9,18,58 stores the same transformed MAX(charttime). DST spring-forward-gap 02:xx to 03:xx normalization is non-injective, no independent FHIR element preserves the original, and no FHIR query can recover it. Attempt 0003 otherwise matches; accept 198 intrinsic charttime conflicts, with 3,811,325/3,811,523 identical rows (99.9948%) and no excluded columns.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 2,
+  "started_at": "2026-08-18T00:14:06.167284+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-10T06:37:42.078566+00:00"
+  "updated_at": "2026-08-18T00:34:26.705559+00:00"
 }

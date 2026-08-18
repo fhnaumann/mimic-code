@@ -1,0 +1,31 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/chemistry-0004-lab_observation",
+  "name": "lab_observation",
+  "resource": "Observation",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "observation_key" },
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
+        { "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_key" },
+        { "path": "specimen.getReferenceKey(Specimen)", "name": "specimen_key" },
+        { "path": "(value).ofType(Quantity).value", "name": "quantity_value" },
+        { "path": "(value).ofType(Quantity).comparator", "name": "quantity_comparator" },
+        { "path": "(value).ofType(Quantity).unit", "name": "quantity_unit" },
+        { "path": "(value).ofType(string)", "name": "value_string" },
+        { "path": "(effective).ofType(dateTime)", "name": "effective_datetime" },
+        { "path": "(effective).ofType(Period).start", "name": "effective_period_start" }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-d-labitems' and (code='50862' or code='50930' or code='50976' or code='50868' or code='50882' or code='51006' or code='50893' or code='50902' or code='50912' or code='50931' or code='50983' or code='50971'))",
+      "column": [
+        { "path": "code", "name": "code" },
+        { "path": "system", "name": "system" },
+        { "path": "display", "name": "display" }
+      ]
+    }
+  ]
+}
