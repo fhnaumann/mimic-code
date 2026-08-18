@@ -1,0 +1,8 @@
+{
+  "concept": "coagulation",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "30104201",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/coagulation/attempt_0005",
+  "submitted_at": "2026-08-18T00:24:21.900391+00:00",
+  "walltime": "2:00:00"
+}

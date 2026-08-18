@@ -1,0 +1,64 @@
+{
+  "candidate": "/Users/nau025/Documents/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/coagulation/attempt_0005/candidate.demo.parquet/*.parquet",
+  "candidate_row_count": 1630,
+  "concept": "coagulation",
+  "dataset": "demo",
+  "executed": true,
+  "format_version": "2.0",
+  "gated": [
+    "execution",
+    "column_names",
+    "column_types"
+  ],
+  "mode": "shape",
+  "not_gated": [
+    "row_count"
+  ],
+  "note": "Shape is correct. This earns permission to spend an HPC run; it is not evidence of correctness.",
+  "oracle_full_row_count": 1543003,
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "patient_key",
+      "hadm_id",
+      "encounter_key",
+      "charttime",
+      "specimen_id",
+      "specimen_key",
+      "d_dimer",
+      "fibrinogen",
+      "thrombin",
+      "inr",
+      "pt",
+      "ptt"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "hadm_id",
+      "charttime",
+      "specimen_id",
+      "d_dimer",
+      "fibrinogen",
+      "thrombin",
+      "inr",
+      "pt",
+      "ptt"
+    ],
+    "extra_columns": [
+      "patient_key",
+      "encounter_key",
+      "specimen_key"
+    ],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": [],
+    "missing_key_columns": [],
+    "required_key_columns": [
+      "encounter_key",
+      "patient_key",
+      "specimen_key"
+    ],
+    "unexpected_columns": []
+  },
+  "verdict": "shape_ok"
+}
