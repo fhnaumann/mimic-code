@@ -247,15 +247,15 @@ All 36 are `COMPLETED_WITH_DIVERGENCE`, so all are reopenable. Tick as they land
 | ☑ | `icustay_detail` | 73,181 | `encounter_key`, `icu_encounter_key`, `patient_key` | already aliases keys in CTEs |
 | ☑ | `icustay_times` | 73,181 | `encounter_key`, `icu_encounter_key`, `patient_key` | also in UUID-inversion TODO |
 | ☑ | `weight_durations` | 272,445 | `icu_encounter_key`, `patient_key` |  |
-| ☐ | `blood_differential` | 3,171,906 | `encounter_key`, `patient_key`, `specimen_key` |  |
-| ☐ | `cardiac_marker` | 295,246 | `encounter_key`, `patient_key`, `specimen_key` |  |
-| ☐ | `chemistry` | 3,811,523 | `encounter_key`, `patient_key`, `specimen_key` |  |
-| ☐ | `coagulation` | 1,543,003 | `encounter_key`, `patient_key`, `specimen_key` |  |
-| ☐ | `complete_blood_count` | 3,362,503 | `encounter_key`, `patient_key`, `specimen_key` |  |
-| ☐ | `enzyme` | 1,639,514 | `encounter_key`, `patient_key`, `specimen_key` |  |
+| ☑ | `blood_differential` | 3,171,906 | `encounter_key`, `patient_key`, `specimen_key` |  |
+| ☑ | `cardiac_marker` | 295,246 | `encounter_key`, `patient_key`, `specimen_key` |  |
+| ☑ | `chemistry` | 3,811,523 | `encounter_key`, `patient_key`, `specimen_key` |  |
+| ☑ | `coagulation` | 1,543,003 | `encounter_key`, `patient_key`, `specimen_key` |  |
+| ☑ | `complete_blood_count` | 3,362,503 | `encounter_key`, `patient_key`, `specimen_key` |  |
+| ☑ | `enzyme` | 1,639,514 | `encounter_key`, `patient_key`, `specimen_key` |  |
 | ☑ | `inflammation` | 117,898 | `encounter_key`, `patient_key`, `specimen_key` | **DONE** — validates `specimen_key`; ViewDefinitions unchanged; keys aggregated with `MAX()` inside the pivot, verified constant per group (no leak across NULL `hadm_id`) |
-| ☐ | `height` | 33,474 | `icu_encounter_key`, `patient_key` | also in UUID-inversion TODO |
-| ☐ | `icp` | 173,273 | `icu_encounter_key`, `patient_key` | also in UUID-inversion TODO |
+| ☑ | `height` | 33,474 | `icu_encounter_key`, `patient_key` | also in UUID-inversion TODO |
+| ☑ | `icp` | 173,273 | `icu_encounter_key`, `patient_key` | also in UUID-inversion TODO |
 | ☐ | `oxygen_delivery` | 601,546 | `icu_encounter_key`, `patient_key` |  |
 | ☐ | `urine_output` | 3,321,748 | `icu_encounter_key`, `patient_key` |  |
 | ☐ | `vitalsign` | 9,745,500 | `icu_encounter_key`, `patient_key` | longest run in the corpus |
@@ -301,7 +301,7 @@ double-count it on the `J/65 reopened by a human` line for one piece of work.
 ## The reopen command
 
 ```bash
-mimic_utils reopen <concept> --by human --reason \
+mimic_utils reopen oxygen_delivery --by human --reason \
   "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() \
 resource keys, which the port computes internally but drops at the outermost \
 SELECT. The attempt adds the paired key column beside each MIMIC identifier \

@@ -1,0 +1,48 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/icustay_times-icustay_times_observation",
+  "name": "icustay_times_observation",
+  "resource": "Observation",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "observation_key"
+        },
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_key"
+        },
+        {
+          "path": "encounter.getReferenceKey(Encounter)",
+          "name": "icu_encounter_key"
+        },
+        {
+          "path": "(effective).ofType(dateTime)",
+          "name": "effective_datetime"
+        }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items' and code='220045')",
+      "column": [
+        {
+          "path": "code",
+          "name": "item_code"
+        },
+        {
+          "path": "system",
+          "name": "item_system"
+        },
+        {
+          "path": "display",
+          "name": "item_display"
+        }
+      ]
+    }
+  ],
+  "id": "icustay-times-icustay-times-observation",
+  "version": "3"
+}

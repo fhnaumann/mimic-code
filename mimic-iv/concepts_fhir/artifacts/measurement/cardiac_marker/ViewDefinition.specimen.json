@@ -1,0 +1,28 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/cardiac_marker-specimen",
+  "name": "specimen",
+  "resource": "Specimen",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "specimen_key"
+        }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/specimen-lab')",
+      "column": [
+        {
+          "path": "value",
+          "name": "specimen_id_str"
+        }
+      ]
+    }
+  ],
+  "id": "cardiac-marker-specimen",
+  "version": "5"
+}

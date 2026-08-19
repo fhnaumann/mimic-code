@@ -1,0 +1,60 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/enzyme-lab_observation",
+  "name": "lab_observation",
+  "resource": "Observation",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_key"
+        },
+        {
+          "path": "encounter.getReferenceKey(Encounter)",
+          "name": "encounter_key"
+        },
+        {
+          "path": "specimen.getReferenceKey(Specimen)",
+          "name": "specimen_key"
+        },
+        {
+          "path": "(effective).ofType(dateTime)",
+          "name": "effective_datetime"
+        },
+        {
+          "path": "(effective).ofType(Period).start",
+          "name": "effective_period_start"
+        },
+        {
+          "path": "(value).ofType(Quantity).value",
+          "name": "quantity_value"
+        },
+        {
+          "path": "(value).ofType(Quantity).comparator",
+          "name": "quantity_comparator"
+        },
+        {
+          "path": "(value).ofType(string)",
+          "name": "value_string"
+        }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-d-labitems' and (code='50861' or code='50863' or code='50878' or code='50867' or code='50885' or code='50883' or code='50884' or code='50910' or code='50911' or code='50927' or code='50954'))",
+      "column": [
+        {
+          "path": "code",
+          "name": "code"
+        },
+        {
+          "path": "system",
+          "name": "system"
+        }
+      ]
+    }
+  ],
+  "id": "enzyme-lab-observation",
+  "version": "3"
+}

@@ -144,7 +144,7 @@ ag AS (
             WHEN src_age.age <= 80 THEN 3
             ELSE 4
         END AS age_score
-    FROM age_src AS src_age
+    FROM age AS src_age
 ),
 scored AS (
     SELECT

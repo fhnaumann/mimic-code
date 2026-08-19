@@ -1,0 +1,50 @@
+{
+  "resourceType": "Library",
+  "id": "icustay-times",
+  "url": "https://fhnaumann.masters/pathling/Library/icustay_times",
+  "version": "3",
+  "name": "icustay_times",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "icustay_times_hospital_encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/icustay_times-icustay_times_hospital_encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "icustay_times_icu_encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/icustay_times-icustay_times_icu_encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "icustay_times_observation",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/icustay_times-icustay_times_observation"
+    },
+    {
+      "type": "depends-on",
+      "label": "icustay_times_patient",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/icustay_times-icustay_times_patient"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH icu_encounters AS (\n    SELECT\n        icu_encounter_key,\n        patient_key,\n        parent_encounter_key,\n        stay_id_str\n    FROM icustay_times_icu_encounter\n    WHERE stay_id_str IS NOT NULL\n), hospital_encounters AS (\n    SELECT\n        encounter_key,\n        hadm_id_str\n    FROM icustay_times_hospital_encounter\n    WHERE hadm_id_str IS NOT NULL\n), patient_ids AS (\n    SELECT\n        patient_key,\n        subject_id_str\n    FROM icustay_times_patient\n    WHERE subject_id_str IS NOT NULL\n), heart_rate_times AS (\n    SELECT\n        i.stay_id_str,\n        MIN(TRY_CAST(o.effective_datetime AS TIMESTAMP_NTZ)) AS intime_hr,\n        MAX(TRY_CAST(o.effective_datetime AS TIMESTAMP_NTZ)) AS outtime_hr\n    FROM icustay_times_observation o\n    INNER JOIN icu_encounters i\n        ON o.icu_encounter_key = i.icu_encounter_key\n    WHERE o.item_system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items'\n      AND o.item_code = '220045'\n    GROUP BY i.stay_id_str\n)\nSELECT\n    CAST(hr.intime_hr AS TIMESTAMP_NTZ) AS intime_hr,\n    CAST(hr.outtime_hr AS TIMESTAMP_NTZ) AS outtime_hr,\n    p.patient_key AS patient_key,\n    h.encounter_key AS encounter_key,\n    i.icu_encounter_key AS icu_encounter_key\nFROM icu_encounters i\nLEFT JOIN hospital_encounters h\n    ON i.parent_encounter_key = h.encounter_key\nLEFT JOIN patient_ids p\n    ON i.patient_key = p.patient_key\nLEFT JOIN heart_rate_times hr\n    ON i.stay_id_str = hr.stay_id_str\n;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBpY3VfZW5jb3VudGVycyBBUyAoCiAgICBTRUxFQ1QKICAgICAgICBpY3VfZW5jb3VudGVyX2tleSwKICAgICAgICBwYXRpZW50X2tleSwKICAgICAgICBwYXJlbnRfZW5jb3VudGVyX2tleSwKICAgICAgICBzdGF5X2lkX3N0cgogICAgRlJPTSBpY3VzdGF5X3RpbWVzX2ljdV9lbmNvdW50ZXIKICAgIFdIRVJFIHN0YXlfaWRfc3RyIElTIE5PVCBOVUxMCiksIGhvc3BpdGFsX2VuY291bnRlcnMgQVMgKAogICAgU0VMRUNUCiAgICAgICAgZW5jb3VudGVyX2tleSwKICAgICAgICBoYWRtX2lkX3N0cgogICAgRlJPTSBpY3VzdGF5X3RpbWVzX2hvc3BpdGFsX2VuY291bnRlcgogICAgV0hFUkUgaGFkbV9pZF9zdHIgSVMgTk9UIE5VTEwKKSwgcGF0aWVudF9pZHMgQVMgKAogICAgU0VMRUNUCiAgICAgICAgcGF0aWVudF9rZXksCiAgICAgICAgc3ViamVjdF9pZF9zdHIKICAgIEZST00gaWN1c3RheV90aW1lc19wYXRpZW50CiAgICBXSEVSRSBzdWJqZWN0X2lkX3N0ciBJUyBOT1QgTlVMTAopLCBoZWFydF9yYXRlX3RpbWVzIEFTICgKICAgIFNFTEVDVAogICAgICAgIGkuc3RheV9pZF9zdHIsCiAgICAgICAgTUlOKFRSWV9DQVNUKG8uZWZmZWN0aXZlX2RhdGV0aW1lIEFTIFRJTUVTVEFNUF9OVFopKSBBUyBpbnRpbWVfaHIsCiAgICAgICAgTUFYKFRSWV9DQVNUKG8uZWZmZWN0aXZlX2RhdGV0aW1lIEFTIFRJTUVTVEFNUF9OVFopKSBBUyBvdXR0aW1lX2hyCiAgICBGUk9NIGljdXN0YXlfdGltZXNfb2JzZXJ2YXRpb24gbwogICAgSU5ORVIgSk9JTiBpY3VfZW5jb3VudGVycyBpCiAgICAgICAgT04gby5pY3VfZW5jb3VudGVyX2tleSA9IGkuaWN1X2VuY291bnRlcl9rZXkKICAgIFdIRVJFIG8uaXRlbV9zeXN0ZW0gPSAnaHR0cDovL21pbWljLm1pdC5lZHUvZmhpci9taW1pYy9Db2RlU3lzdGVtL21pbWljLWNoYXJ0ZXZlbnRzLWQtaXRlbXMnCiAgICAgIEFORCBvLml0ZW1fY29kZSA9ICcyMjAwNDUnCiAgICBHUk9VUCBCWSBpLnN0YXlfaWRfc3RyCikKU0VMRUNUCiAgICBDQVNUKGhyLmludGltZV9ociBBUyBUSU1FU1RBTVBfTlRaKSBBUyBpbnRpbWVfaHIsCiAgICBDQVNUKGhyLm91dHRpbWVfaHIgQVMgVElNRVNUQU1QX05UWikgQVMgb3V0dGltZV9ociwKICAgIHAucGF0aWVudF9rZXkgQVMgcGF0aWVudF9rZXksCiAgICBoLmVuY291bnRlcl9rZXkgQVMgZW5jb3VudGVyX2tleSwKICAgIGkuaWN1X2VuY291bnRlcl9rZXkgQVMgaWN1X2VuY291bnRlcl9rZXkKRlJPTSBpY3VfZW5jb3VudGVycyBpCkxFRlQgSk9JTiBob3NwaXRhbF9lbmNvdW50ZXJzIGgKICAgIE9OIGkucGFyZW50X2VuY291bnRlcl9rZXkgPSBoLmVuY291bnRlcl9rZXkKTEVGVCBKT0lOIHBhdGllbnRfaWRzIHAKICAgIE9OIGkucGF0aWVudF9rZXkgPSBwLnBhdGllbnRfa2V5CkxFRlQgSk9JTiBoZWFydF9yYXRlX3RpbWVzIGhyCiAgICBPTiBpLnN0YXlfaWRfc3RyID0gaHIuc3RheV9pZF9zdHIKOwo="
+    }
+  ]
+}

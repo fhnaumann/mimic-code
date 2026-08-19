@@ -23,7 +23,7 @@ WITH lab_rows AS (
     FROM lab_observation l
     INNER JOIN patient p
         ON l.patient_key = p.patient_key
-    INNER JOIN specimen_src s
+    INNER JOIN specimen s
         ON l.specimen_key = s.specimen_key
     LEFT JOIN encounter e
         ON l.encounter_key = e.encounter_key
