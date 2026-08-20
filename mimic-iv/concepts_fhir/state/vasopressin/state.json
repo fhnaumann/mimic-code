@@ -1,17 +1,33 @@
 {
-  "attempt": 1,
+  "attempt": 2,
   "category": "medication",
-  "completed_at": "2026-08-14T02:44:04.958911+00:00",
+  "completed_at": "2026-08-20T05:08:11.205379+00:00",
   "concept_name": "vasopressin",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "Judge accept: inputevents.linkorderid has no representable FHIR mapping at MedicationAdministration.identifier.value or supportingInformation.reference; the ICU ETL does not select or write it (mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,38-103), so typed NULL is faithful and the gap is ancillary to the clinical grain (stay_id,starttime), inclusion, grouping, carry-forward, and vaso outputs. All defensible effective[x] and TIMESTAMP_NTZ mappings were tried. The sole endtime conflict is fully replayed to the upstream America/New_York TIMESTAMPTZ DST-gap cast at mimic-fhir/sql/fhir_medication_administration_icu.sql:9,61-69, with zero residual and 1/25,892 affected, consistent with DST-gap rarity.",
-  "engineering_counter": 1,
+  "divergence_justification": "Judge accept: inputevents.linkorderid has no served mapping at MedicationAdministration.identifier.value or MedicationAdministration.supportingInformation.reference; the ICU ETL neither selects nor writes it (mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,38-103), so typed NULL is faithful and the gap is ancillary to the clinical grain (stay_id,starttime), inclusion, grouping, carry-forward, vaso_rate, vaso_amount, and timing. All defensible effective[x], Quantity, and TIMESTAMP_NTZ mappings were tried without resource-id inversion. The sole endtime conflict is fully replayed to the upstream America/New_York TIMESTAMPTZ DST-gap cast at mimic-fhir/sql/fhir_medication_administration_icu.sql:9,61-69, with zero residual and 1/25,892 affected, consistent with DST-gap rarity.",
+  "engineering_counter": 2,
   "error_message": null,
-  "hpc_counter": 1,
-  "reopen_history": [],
-  "semantic_counter": 1,
-  "started_at": "2026-08-14T01:51:41.706385+00:00",
+  "hpc_counter": 2,
+  "reopen_history": [
+    {
+      "at": "2026-08-20T04:55:32.934317+00:00",
+      "baseline": {
+        "attempt": 1,
+        "engineering": 1,
+        "hpc": 1,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Judge accept: inputevents.linkorderid has no representable FHIR mapping at MedicationAdministration.identifier.value or supportingInformation.reference; the ICU ETL does not select or write it (mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,38-103), so typed NULL is faithful and the gap is ancillary to the clinical grain (stay_id,starttime), inclusion, grouping, carry-forward, and vaso outputs. All defensible effective[x] and TIMESTAMP_NTZ mappings were tried. The sole endtime conflict is fully replayed to the upstream America/New_York TIMESTAMPTZ DST-gap cast at mimic-fhir/sql/fhir_medication_administration_icu.sql:9,61-69, with zero residual and 1/25,892 affected, consistent with DST-gap rarity.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 2,
+  "started_at": "2026-08-20T04:55:32.943886+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-14T02:44:04.959165+00:00"
+  "updated_at": "2026-08-20T05:08:11.205780+00:00"
 }
