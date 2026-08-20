@@ -1,0 +1,47 @@
+WITH icu AS (
+    SELECT
+        CAST(p.subject_id_str AS INTEGER) AS subject_id,
+        CAST(e.stay_id_str AS INTEGER) AS stay_id,
+        TRY_CAST(e.period_start AS TIMESTAMP_NTZ) AS intime,
+        e.icu_encounter_key,
+        p.patient_key
+    FROM first_day_rrt_encounter e
+    LEFT JOIN first_day_rrt_patient p
+        ON e.patient_key = p.patient_key
+    WHERE e.stay_id_str IS NOT NULL
+), aggregated AS (
+    SELECT
+        i.subject_id,
+        i.stay_id,
+        MAX(r.dialysis_present) AS dialysis_present,
+        MAX(r.dialysis_active) AS dialysis_active,
+        CASE
+            WHEN COUNT(r.dialysis_type) = 0
+                THEN CAST(NULL AS VARCHAR(255))
+            ELSE concat_ws(
+                ', ',
+                sort_array(collect_set(r.dialysis_type))
+            )
+        END AS dialysis_type,
+        i.icu_encounter_key,
+        i.patient_key
+    FROM icu i
+    LEFT JOIN rrt r
+        ON i.icu_encounter_key = r.icu_encounter_key
+        AND r.charttime >= i.intime - INTERVAL 6 HOURS
+        AND r.charttime <= i.intime + INTERVAL 1 DAY
+    GROUP BY
+        i.subject_id,
+        i.stay_id,
+        i.icu_encounter_key,
+        i.patient_key
+)
+SELECT
+    CAST(a.subject_id AS INTEGER) AS subject_id,
+    CAST(a.stay_id AS INTEGER) AS stay_id,
+    CAST(a.dialysis_present AS INTEGER) AS dialysis_present,
+    CAST(a.dialysis_active AS INTEGER) AS dialysis_active,
+    CAST(a.dialysis_type AS VARCHAR(255)) AS dialysis_type,
+    a.icu_encounter_key,
+    a.patient_key
+FROM aggregated a;

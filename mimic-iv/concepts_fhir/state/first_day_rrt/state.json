@@ -1,0 +1,19 @@
+{
+  "attempt": 1,
+  "category": "firstday",
+  "completed_at": "2026-08-20T23:21:39.838334+00:00",
+  "concept_name": "first_day_rrt",
+  "dependencies": [
+    "rrt"
+  ],
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 2,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 0,
+  "started_at": "2026-08-20T22:49:05.654618+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-20T23:21:39.838710+00:00"
+}
