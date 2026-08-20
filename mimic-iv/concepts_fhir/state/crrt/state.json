@@ -1,14 +1,14 @@
 {
-  "attempt": 6,
+  "attempt": 7,
   "category": "treatment",
-  "completed_at": "2026-08-13T04:29:49.853065+00:00",
+  "completed_at": "2026-08-20T05:37:20.965864+00:00",
   "concept_name": "crrt",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "Judge accepted attempt_0006: mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 irreversibly normalizes spring-forward chartevents charttime before writing Observation.effectiveDateTime. The comparator found 287078/287152 identical rows, with 16 key-shift pairs and 32 residual collision losses producing 26 conflicts; the original wall time is unrecoverable by permissible FHIR queries because it survives only in opaque Observation.id identity. All defensible mappings were exhausted and this is the contract's accepted New York DST transformation loss.",
-  "engineering_counter": 9,
+  "divergence_justification": "Judge accepted attempt_0007: exhaustive comparator attribution closes all 26 differing_conflict, 48 only_oracle, and 16 only_candidate rows to the upstream America/New_York DST TIMESTAMPTZ normalization at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67. The current port sources Observation.effectiveDateTime, preserves repeated chartevent rows, faithfully applies the canonical MAX pivot including 32 collision effects, uses opaque resource-key equality only, and has no essential loss or residual divergence. 287078/287152 rows are identical (99.9742%); the 26 conflicts are 0.0091% and the 64 key-side findings are consistent with DST-gap rarity.",
+  "engineering_counter": 10,
   "error_message": null,
-  "hpc_counter": 6,
+  "hpc_counter": 7,
   "reopen_history": [
     {
       "at": "2026-08-11T06:12:17.408546+00:00",
@@ -51,10 +51,25 @@
       "superseded_decided_by": null,
       "superseded_justification": null,
       "superseded_status": "COMPLETED"
+    },
+    {
+      "at": "2026-08-20T05:17:34.770546+00:00",
+      "baseline": {
+        "attempt": 6,
+        "engineering": 9,
+        "hpc": 6,
+        "semantic": 3
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Judge accepted attempt_0006: mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 irreversibly normalizes spring-forward chartevents charttime before writing Observation.effectiveDateTime. The comparator found 287078/287152 identical rows, with 16 key-shift pairs and 32 residual collision losses producing 26 conflicts; the original wall time is unrecoverable by permissible FHIR queries because it survives only in opaque Observation.id identity. All defensible mappings were exhausted and this is the contract's accepted New York DST transformation loss.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
-  "semantic_counter": 3,
-  "started_at": "2026-08-13T04:04:52.003622+00:00",
+  "semantic_counter": 4,
+  "started_at": "2026-08-20T05:17:34.773047+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-13T04:29:49.853364+00:00"
+  "updated_at": "2026-08-20T05:37:20.966104+00:00"
 }
