@@ -1,0 +1,826 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/medication/acei/attempt_0006/candidate.full.parquet/*.parquet",
+  "comparison": "full_tuple_multiset",
+  "concept": "acei",
+  "dataset": "full",
+  "diagnostics": [
+    "RESIDUAL PAIRED \u2014 9,066 rows matched 1:1 on (acei, hadm_id, subject_id), differing only in (starttime, stoptime). The multiset `only_oracle`/`only_candidate` counts of 9,066 are the two halves of these substitutions; they are classified per column below.",
+    "ATTRIBUTED \u2014 a value conflict the comparator replayed to an upstream mimic-fhir transformation over every conflicting row. No port can invert it, so there is nothing to diagnose; the judge still rules:",
+    "  7 \u00d7 differing_conflict (0.006% of oracle rows) \u2014 all 7 replay upstream_timestamptz_dst_shift",
+    "    column 'starttime': 5 row(s) attributed",
+    "    column 'stoptime': 3 row(s) attributed",
+    "    citations: mimic-fhir/sql/fhir_observation_chartevents.sql:9,67, mimic-fhir/sql/fhir_observation_labevents.sql:15,121, mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65, mimic-fhir/sql/fhir_specimen_lab.sql:18,58, mimic-fhir/sql/fhir_encounter.sql:65, mimic-fhir/sql/fhir_medication_request.sql:43-44, mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69",
+    "    example row: {'subject_id': 15978408, 'hadm_id': 24932009, 'acei': 'Lisinopril', 'starttime__oracle': datetime.datetime(2186, 3, 11, 2, 0), 'starttime__candidate': datetime.datetime(2186, 3, 11, 2, 0), 'stoptime__oracle': datetime.datetime(2186, 3, 12, 2, 0), 'stoptime__candidate': datetime.datetime(2186, 3, 12, 3, 0), 'starttime__replayed': datetime.datetime(2186, 3, 11, 2, 0), 'stoptime__replayed': datetime.datetime(2186, 3, 12, 3, 0)}",
+    "  the judge must still confirm: Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element this column is sourced from, and (b) that the attributed fraction is consistent with DST-gap rarity. Either failing makes this `bug`.",
+    "GAP-SHAPED \u2014 consistent with a MIMIC-on-FHIR coverage gap:",
+    "  9,059 \u00d7 differing_null_only \u2014 matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing",
+    "    column 'starttime' is NULL in the candidate on 9,058 row(s)",
+    "    column 'stoptime' is NULL in the candidate on 9,051 row(s)",
+    "102,948 of 112,014 oracle rows reproduced identically (91.91%)",
+    "note: No unique key, but the residual paired 1:1 on acei, hadm_id, subject_id (anchored by subject_id, hadm_id), differing only in starttime, stoptime. The 9,066 multiset `only_candidate` rows are therefore the candidate half of those substitutions, not invented rows, and the classes below are classified per column as for a keyed concept.",
+    "note: 7 of 7 conflicting rows -- all of them -- replay the upstream upstream_timestamptz_dst_shift exactly, over column(s) starttime, stoptime. `differing_conflict` moved from `contested` to `attributed`; a diagnosis of this class would only re-derive the replay, so the diagnostician can be skipped. The judge cannot: it still has to confirm provenance and fraction, and still has to rule."
+  ],
+  "diff": {
+    "classification": "paired_residual",
+    "columns_candidate_null": {
+      "starttime": 9058,
+      "stoptime": 9051
+    },
+    "columns_conflicting": {
+      "starttime": 5,
+      "stoptime": 3
+    },
+    "conflict_attribution": {
+      "attempted": true,
+      "attributed_rows": 7,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "columns": {
+        "starttime": 5,
+        "stoptime": 3
+      },
+      "columns_considered": [
+        "starttime",
+        "stoptime"
+      ],
+      "complete": true,
+      "conflict_rows": 7,
+      "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+      "residual_rows": 0,
+      "samples": [
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 24932009,
+          "starttime__candidate": "2186-03-11T02:00:00",
+          "starttime__oracle": "2186-03-11T02:00:00",
+          "starttime__replayed": "2186-03-11T02:00:00",
+          "stoptime__candidate": "2186-03-12T03:00:00",
+          "stoptime__oracle": "2186-03-12T02:00:00",
+          "stoptime__replayed": "2186-03-12T03:00:00",
+          "subject_id": 15978408
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 28599875,
+          "starttime__candidate": "2141-03-11T08:00:00",
+          "starttime__oracle": "2141-03-11T08:00:00",
+          "starttime__replayed": "2141-03-11T08:00:00",
+          "stoptime__candidate": "2141-03-12T03:00:00",
+          "stoptime__oracle": "2141-03-12T02:00:00",
+          "stoptime__replayed": "2141-03-12T03:00:00",
+          "subject_id": 13505226
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 29447699,
+          "starttime__candidate": "2120-03-10T03:00:00",
+          "starttime__oracle": "2120-03-10T02:00:00",
+          "starttime__replayed": "2120-03-10T03:00:00",
+          "stoptime__candidate": "2120-03-13T10:00:00",
+          "stoptime__oracle": "2120-03-13T10:00:00",
+          "stoptime__replayed": "2120-03-13T10:00:00",
+          "subject_id": 11199268
+        },
+        {
+          "acei": "Captopril",
+          "hadm_id": 24463840,
+          "starttime__candidate": "2130-03-12T03:00:00",
+          "starttime__oracle": "2130-03-12T02:00:00",
+          "starttime__replayed": "2130-03-12T03:00:00",
+          "stoptime__candidate": "2130-03-12T11:00:00",
+          "stoptime__oracle": "2130-03-12T11:00:00",
+          "stoptime__replayed": "2130-03-12T11:00:00",
+          "subject_id": 12524765
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 22386994,
+          "starttime__candidate": "2157-03-13T03:00:00",
+          "starttime__oracle": "2157-03-13T02:00:00",
+          "starttime__replayed": "2157-03-13T03:00:00",
+          "stoptime__candidate": "2157-03-13T10:00:00",
+          "stoptime__oracle": "2157-03-13T10:00:00",
+          "stoptime__replayed": "2157-03-13T10:00:00",
+          "subject_id": 15975772
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 23080165,
+          "starttime__candidate": "2139-03-08T03:00:00",
+          "starttime__oracle": "2139-03-08T02:00:00",
+          "starttime__replayed": "2139-03-08T03:00:00",
+          "stoptime__candidate": "2139-03-08T23:00:00",
+          "stoptime__oracle": "2139-03-08T23:00:00",
+          "stoptime__replayed": "2139-03-08T23:00:00",
+          "subject_id": 18624734
+        },
+        {
+          "acei": "Ramipril",
+          "hadm_id": 27674477,
+          "starttime__candidate": "2163-03-13T03:00:00",
+          "starttime__oracle": "2163-03-13T02:00:00",
+          "starttime__replayed": "2163-03-13T03:00:00",
+          "stoptime__candidate": "2163-03-13T03:00:00",
+          "stoptime__oracle": "2163-03-13T02:00:00",
+          "stoptime__replayed": "2163-03-13T03:00:00",
+          "subject_id": 16184214
+        }
+      ],
+      "timezone": "America/New_York"
+    },
+    "differing": 9066,
+    "differing_conflict": 7,
+    "differing_null_only": 9059,
+    "excluded_as_unrepresentable": [],
+    "identical": 102948,
+    "identical_representable": 102948,
+    "key": null,
+    "multiset_only_candidate": 9066,
+    "multiset_only_oracle": 9066,
+    "only_candidate": 0,
+    "only_oracle": 0,
+    "residual_pairing": {
+      "anchor_columns": [
+        "subject_id",
+        "hadm_id"
+      ],
+      "anchored": true,
+      "attempted": true,
+      "column_drift": {
+        "acei": 0,
+        "hadm_id": 0,
+        "starttime": 18126,
+        "stoptime": 18108,
+        "subject_id": 0
+      },
+      "columns_candidate_null": {
+        "starttime": 9058,
+        "stoptime": 9051
+      },
+      "columns_conflicting": {
+        "starttime": 5,
+        "stoptime": 3
+      },
+      "conflict_attribution": {
+        "attempted": true,
+        "attributed_rows": 7,
+        "cause": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "columns": {
+          "starttime": 5,
+          "stoptime": 3
+        },
+        "columns_considered": [
+          "starttime",
+          "stoptime"
+        ],
+        "complete": true,
+        "conflict_rows": 7,
+        "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+        "residual_rows": 0,
+        "samples": [
+          {
+            "acei": "Lisinopril",
+            "hadm_id": 24932009,
+            "starttime__candidate": "2186-03-11T02:00:00",
+            "starttime__oracle": "2186-03-11T02:00:00",
+            "starttime__replayed": "2186-03-11T02:00:00",
+            "stoptime__candidate": "2186-03-12T03:00:00",
+            "stoptime__oracle": "2186-03-12T02:00:00",
+            "stoptime__replayed": "2186-03-12T03:00:00",
+            "subject_id": 15978408
+          },
+          {
+            "acei": "Lisinopril",
+            "hadm_id": 28599875,
+            "starttime__candidate": "2141-03-11T08:00:00",
+            "starttime__oracle": "2141-03-11T08:00:00",
+            "starttime__replayed": "2141-03-11T08:00:00",
+            "stoptime__candidate": "2141-03-12T03:00:00",
+            "stoptime__oracle": "2141-03-12T02:00:00",
+            "stoptime__replayed": "2141-03-12T03:00:00",
+            "subject_id": 13505226
+          },
+          {
+            "acei": "Lisinopril",
+            "hadm_id": 29447699,
+            "starttime__candidate": "2120-03-10T03:00:00",
+            "starttime__oracle": "2120-03-10T02:00:00",
+            "starttime__replayed": "2120-03-10T03:00:00",
+            "stoptime__candidate": "2120-03-13T10:00:00",
+            "stoptime__oracle": "2120-03-13T10:00:00",
+            "stoptime__replayed": "2120-03-13T10:00:00",
+            "subject_id": 11199268
+          },
+          {
+            "acei": "Captopril",
+            "hadm_id": 24463840,
+            "starttime__candidate": "2130-03-12T03:00:00",
+            "starttime__oracle": "2130-03-12T02:00:00",
+            "starttime__replayed": "2130-03-12T03:00:00",
+            "stoptime__candidate": "2130-03-12T11:00:00",
+            "stoptime__oracle": "2130-03-12T11:00:00",
+            "stoptime__replayed": "2130-03-12T11:00:00",
+            "subject_id": 12524765
+          },
+          {
+            "acei": "Lisinopril",
+            "hadm_id": 22386994,
+            "starttime__candidate": "2157-03-13T03:00:00",
+            "starttime__oracle": "2157-03-13T02:00:00",
+            "starttime__replayed": "2157-03-13T03:00:00",
+            "stoptime__candidate": "2157-03-13T10:00:00",
+            "stoptime__oracle": "2157-03-13T10:00:00",
+            "stoptime__replayed": "2157-03-13T10:00:00",
+            "subject_id": 15975772
+          },
+          {
+            "acei": "Lisinopril",
+            "hadm_id": 23080165,
+            "starttime__candidate": "2139-03-08T03:00:00",
+            "starttime__oracle": "2139-03-08T02:00:00",
+            "starttime__replayed": "2139-03-08T03:00:00",
+            "stoptime__candidate": "2139-03-08T23:00:00",
+            "stoptime__oracle": "2139-03-08T23:00:00",
+            "stoptime__replayed": "2139-03-08T23:00:00",
+            "subject_id": 18624734
+          },
+          {
+            "acei": "Ramipril",
+            "hadm_id": 27674477,
+            "starttime__candidate": "2163-03-13T03:00:00",
+            "starttime__oracle": "2163-03-13T02:00:00",
+            "starttime__replayed": "2163-03-13T03:00:00",
+            "stoptime__candidate": "2163-03-13T03:00:00",
+            "stoptime__oracle": "2163-03-13T02:00:00",
+            "stoptime__replayed": "2163-03-13T03:00:00",
+            "subject_id": 16184214
+          }
+        ],
+        "timezone": "America/New_York"
+      },
+      "paired": 9066,
+      "paired_conflict": 7,
+      "paired_equal": 0,
+      "paired_null_only": 9059,
+      "pairing_columns": [
+        "acei",
+        "hadm_id",
+        "subject_id"
+      ],
+      "residual_candidate": 9066,
+      "residual_oracle": 9066,
+      "samples": [
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 21396051,
+          "starttime__candidate": null,
+          "starttime__oracle": "2182-02-09T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2182-02-08T18:00:00",
+          "subject_id": 10013653
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 25591360,
+          "starttime__candidate": null,
+          "starttime__oracle": "2145-12-03T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2145-12-03T02:00:00",
+          "subject_id": 10096391
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 25615050,
+          "starttime__candidate": null,
+          "starttime__oracle": "2110-04-03T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2110-04-02T13:00:00",
+          "subject_id": 10101340
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 22603154,
+          "starttime__candidate": null,
+          "starttime__oracle": "2150-04-28T20:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2150-04-28T18:00:00",
+          "subject_id": 10107636
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 25263721,
+          "starttime__candidate": null,
+          "starttime__oracle": "2182-06-10T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2182-06-10T07:00:00",
+          "subject_id": 10144093
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 29021249,
+          "starttime__candidate": null,
+          "starttime__oracle": "2190-03-01T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2190-02-28T19:00:00",
+          "subject_id": 10144093
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 28378496,
+          "starttime__candidate": null,
+          "starttime__oracle": "2186-06-02T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2186-06-01T10:00:00",
+          "subject_id": 10174481
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 22289170,
+          "starttime__candidate": null,
+          "starttime__oracle": "2164-04-29T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2164-04-29T08:00:00",
+          "subject_id": 10188935
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 22289170,
+          "starttime__candidate": null,
+          "starttime__oracle": "2164-05-03T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2164-05-03T07:00:00",
+          "subject_id": 10188935
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 24841722,
+          "starttime__candidate": null,
+          "starttime__oracle": "2135-01-22T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2135-01-21T21:00:00",
+          "subject_id": 10209608
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 29074882,
+          "starttime__candidate": null,
+          "starttime__oracle": "2184-05-14T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2184-05-13T19:00:00",
+          "subject_id": 10222637
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 24290941,
+          "starttime__candidate": null,
+          "starttime__oracle": "2187-06-24T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2187-06-24T00:00:00",
+          "subject_id": 10239232
+        },
+        {
+          "acei": "Captopril",
+          "hadm_id": 20465720,
+          "starttime__candidate": null,
+          "starttime__oracle": "2177-05-14T20:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2177-05-14T13:00:00",
+          "subject_id": 10248673
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 27373523,
+          "starttime__candidate": null,
+          "starttime__oracle": "2119-11-10T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2119-11-09T19:00:00",
+          "subject_id": 10253747
+        },
+        {
+          "acei": "Captopril",
+          "hadm_id": 23481558,
+          "starttime__candidate": null,
+          "starttime__oracle": "2131-01-03T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2131-01-03T01:00:00",
+          "subject_id": 10266052
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 29020836,
+          "starttime__candidate": null,
+          "starttime__oracle": "2136-12-17T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2136-12-17T04:00:00",
+          "subject_id": 10292012
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 29280165,
+          "starttime__candidate": null,
+          "starttime__oracle": "2114-08-03T20:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2114-08-03T18:00:00",
+          "subject_id": 10292987
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 25698195,
+          "starttime__candidate": null,
+          "starttime__oracle": "2188-06-17T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2188-06-16T21:00:00",
+          "subject_id": 10332328
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 20767098,
+          "starttime__candidate": null,
+          "starttime__oracle": "2178-04-20T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2178-04-20T09:00:00",
+          "subject_id": 10364632
+        },
+        {
+          "acei": "Captopril",
+          "hadm_id": 20682084,
+          "starttime__candidate": null,
+          "starttime__oracle": "2153-09-05T20:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2153-09-05T18:00:00",
+          "subject_id": 10398549
+        }
+      ],
+      "substituted_columns": [
+        "starttime",
+        "stoptime"
+      ],
+      "unpaired_candidate": 0,
+      "unpaired_oracle": 0
+    },
+    "samples": {
+      "substitutions": [
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 21396051,
+          "starttime__candidate": null,
+          "starttime__oracle": "2182-02-09T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2182-02-08T18:00:00",
+          "subject_id": 10013653
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 25591360,
+          "starttime__candidate": null,
+          "starttime__oracle": "2145-12-03T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2145-12-03T02:00:00",
+          "subject_id": 10096391
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 25615050,
+          "starttime__candidate": null,
+          "starttime__oracle": "2110-04-03T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2110-04-02T13:00:00",
+          "subject_id": 10101340
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 22603154,
+          "starttime__candidate": null,
+          "starttime__oracle": "2150-04-28T20:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2150-04-28T18:00:00",
+          "subject_id": 10107636
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 25263721,
+          "starttime__candidate": null,
+          "starttime__oracle": "2182-06-10T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2182-06-10T07:00:00",
+          "subject_id": 10144093
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 29021249,
+          "starttime__candidate": null,
+          "starttime__oracle": "2190-03-01T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2190-02-28T19:00:00",
+          "subject_id": 10144093
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 28378496,
+          "starttime__candidate": null,
+          "starttime__oracle": "2186-06-02T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2186-06-01T10:00:00",
+          "subject_id": 10174481
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 22289170,
+          "starttime__candidate": null,
+          "starttime__oracle": "2164-04-29T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2164-04-29T08:00:00",
+          "subject_id": 10188935
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 22289170,
+          "starttime__candidate": null,
+          "starttime__oracle": "2164-05-03T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2164-05-03T07:00:00",
+          "subject_id": 10188935
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 24841722,
+          "starttime__candidate": null,
+          "starttime__oracle": "2135-01-22T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2135-01-21T21:00:00",
+          "subject_id": 10209608
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 29074882,
+          "starttime__candidate": null,
+          "starttime__oracle": "2184-05-14T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2184-05-13T19:00:00",
+          "subject_id": 10222637
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 24290941,
+          "starttime__candidate": null,
+          "starttime__oracle": "2187-06-24T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2187-06-24T00:00:00",
+          "subject_id": 10239232
+        },
+        {
+          "acei": "Captopril",
+          "hadm_id": 20465720,
+          "starttime__candidate": null,
+          "starttime__oracle": "2177-05-14T20:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2177-05-14T13:00:00",
+          "subject_id": 10248673
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 27373523,
+          "starttime__candidate": null,
+          "starttime__oracle": "2119-11-10T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2119-11-09T19:00:00",
+          "subject_id": 10253747
+        },
+        {
+          "acei": "Captopril",
+          "hadm_id": 23481558,
+          "starttime__candidate": null,
+          "starttime__oracle": "2131-01-03T08:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2131-01-03T01:00:00",
+          "subject_id": 10266052
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 29020836,
+          "starttime__candidate": null,
+          "starttime__oracle": "2136-12-17T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2136-12-17T04:00:00",
+          "subject_id": 10292012
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 29280165,
+          "starttime__candidate": null,
+          "starttime__oracle": "2114-08-03T20:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2114-08-03T18:00:00",
+          "subject_id": 10292987
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 25698195,
+          "starttime__candidate": null,
+          "starttime__oracle": "2188-06-17T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2188-06-16T21:00:00",
+          "subject_id": 10332328
+        },
+        {
+          "acei": "Lisinopril",
+          "hadm_id": 20767098,
+          "starttime__candidate": null,
+          "starttime__oracle": "2178-04-20T10:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2178-04-20T09:00:00",
+          "subject_id": 10364632
+        },
+        {
+          "acei": "Captopril",
+          "hadm_id": 20682084,
+          "starttime__candidate": null,
+          "starttime__oracle": "2153-09-05T20:00:00",
+          "stoptime__candidate": null,
+          "stoptime__oracle": "2153-09-05T18:00:00",
+          "subject_id": 10398549
+        }
+      ]
+    }
+  },
+  "divergence": {
+    "attributed": [
+      {
+        "attributed_rows": 7,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "class": "differing_conflict",
+        "columns": {
+          "starttime": 5,
+          "stoptime": 3
+        },
+        "count": 7,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element this column is sourced from, and (b) that the attributed fraction is consistent with DST-gap rarity. Either failing makes this `bug`.",
+        "proof": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "blocking": [],
+    "classification": "paired_residual",
+    "conflict_attribution": {
+      "attempted": true,
+      "attributed_rows": 7,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "columns": {
+        "starttime": 5,
+        "stoptime": 3
+      },
+      "columns_considered": [
+        "starttime",
+        "stoptime"
+      ],
+      "complete": true,
+      "conflict_rows": 7,
+      "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+      "residual_rows": 0,
+      "timezone": "America/New_York"
+    },
+    "contested": [],
+    "declared_unrepresentable": {},
+    "diagnostician_required": false,
+    "gap_shaped": [
+      {
+        "class": "differing_null_only",
+        "count": 9059,
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      }
+    ],
+    "identical_fraction": 0.919064,
+    "identical_rows": 102948,
+    "judge_bar": "Cite the FHIR element or path that does not exist in the MIMIC-on-FHIR IG, show it explains the magnitude and shape of the divergence, and confirm every defensible mapping was tried.\nA value conflict is also present but has been machine-attributed to an upstream transformation (see `divergence.attributed`), which is why this result is gap-shaped rather than contested. Rule on the gap on its own merits, and check the attribution's provenance and fraction as `divergence.attributed[].judge_must_confirm` states.",
+    "judge_required": true,
+    "key_attribution": null,
+    "notes": [
+      "No unique key, but the residual paired 1:1 on acei, hadm_id, subject_id (anchored by subject_id, hadm_id), differing only in starttime, stoptime. The 9,066 multiset `only_candidate` rows are therefore the candidate half of those substitutions, not invented rows, and the classes below are classified per column as for a keyed concept.",
+      "7 of 7 conflicting rows -- all of them -- replay the upstream upstream_timestamptz_dst_shift exactly, over column(s) starttime, stoptime. `differing_conflict` moved from `contested` to `attributed`; a diagnosis of this class would only re-derive the replay, so the diagnostician can be skipped. The judge cannot: it still has to confirm provenance and fraction, and still has to rule."
+    ],
+    "oracle_rows": 112014,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [
+      {
+        "class": "differing_null_only",
+        "count": 9059,
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      },
+      {
+        "attributed_rows": 7,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "class": "differing_conflict",
+        "columns": {
+          "starttime": 5,
+          "stoptime": 3
+        },
+        "count": 7,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element this column is sourced from, and (b) that the attributed fraction is consistent with DST-gap rarity. Either failing makes this `bug`.",
+        "proof": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "tier": "gap_shaped",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "1032835272963132826734966",
+    "manifest_row_count": 112014,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.acei"
+  },
+  "row_count": {
+    "candidate": 112014,
+    "delta": 0,
+    "gated": false,
+    "match": true,
+    "oracle": 112014
+  },
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "patient_key",
+      "hadm_id",
+      "encounter_key",
+      "acei",
+      "starttime",
+      "stoptime"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "hadm_id",
+      "acei",
+      "starttime",
+      "stoptime"
+    ],
+    "extra_columns": [
+      "patient_key",
+      "encounter_key"
+    ],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": [],
+    "missing_key_columns": [],
+    "required_key_columns": [
+      "encounter_key",
+      "patient_key"
+    ],
+    "unexpected_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "verdict": "review"
+}
