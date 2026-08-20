@@ -1,17 +1,33 @@
 {
-  "attempt": 2,
+  "attempt": 5,
   "category": "medication",
-  "completed_at": "2026-08-13T09:48:13.573055+00:00",
+  "completed_at": "2026-08-20T04:53:56.879471+00:00",
   "concept_name": "neuroblock",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "inputevents.orderid is irreversibly incorporated into opaque MedicationAdministration.id by mimic-fhir/sql/fhir_medication_administration_icu.sql:20,40,44, while lines 43-100 serialize no independent identifier/request/orderid path. The canonical concept uses orderid only as an administrative output; full-oracle (stay_id,starttime,endtime) uniquely identifies all 14,174 clinical rows. All defensible FHIR mappings and documented workarounds were applied, UUID inversion is forbidden, and there are no divergent dependencies. Typed NULL orderid is therefore an ancillary intrinsic divergence; the manifest-key VOID DIFF counts are not fidelity evidence.",
-  "engineering_counter": 2,
+  "divergence_justification": "Judge accept: mimic-fhir/sql/fhir_medication_administration_icu.sql:20 incorporates inputevents.orderid only into uuid_generate_v5, and lines 40,44 (with exhaustive construction at 42-101) write only the opaque MedicationAdministration.id; no independent identifier, request, request.identifier.value, or other orderid path exists. Resource-id parsing or UUID inversion is forbidden, so orderid is unrecoverable by any compliant query. The candidate's typed NULL orderid is faithful. The missing field is ancillary: neuroblock.sql:2-14 does not use orderid for inclusion, grouping, aggregation, carry-forward, temporal logic, or clinical derivation, and full-oracle (stay_id,starttime,endtime) is unique for all 14,174 rows. The manifest orderid key is comparison metadata, so the VOID DIFF counts do not measure fidelity. Exact medication codes/rate filter, ICU Encounter identifier mapping, Quantity casts, TIMESTAMP_NTZ handling, and required resource keys were applied; no divergent dependencies.",
+  "engineering_counter": 5,
   "error_message": null,
-  "hpc_counter": 2,
-  "reopen_history": [],
-  "semantic_counter": 2,
-  "started_at": "2026-08-13T06:53:51.514932+00:00",
+  "hpc_counter": 3,
+  "reopen_history": [
+    {
+      "at": "2026-08-20T04:22:37.558500+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 2,
+        "hpc": 2,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "inputevents.orderid is irreversibly incorporated into opaque MedicationAdministration.id by mimic-fhir/sql/fhir_medication_administration_icu.sql:20,40,44, while lines 43-100 serialize no independent identifier/request/orderid path. The canonical concept uses orderid only as an administrative output; full-oracle (stay_id,starttime,endtime) uniquely identifies all 14,174 clinical rows. All defensible FHIR mappings and documented workarounds were applied, UUID inversion is forbidden, and there are no divergent dependencies. Typed NULL orderid is therefore an ancillary intrinsic divergence; the manifest-key VOID DIFF counts are not fidelity evidence.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 3,
+  "started_at": "2026-08-20T04:35:40.433814+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-13T09:48:13.573365+00:00"
+  "updated_at": "2026-08-20T04:53:56.879886+00:00"
 }
