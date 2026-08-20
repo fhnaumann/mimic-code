@@ -1,0 +1,120 @@
+{
+  "attempt_dir": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/medication/norepinephrine/attempt_0003",
+  "column_types": {
+    "endtime": "timestamp_ntz",
+    "icu_encounter_key": "string",
+    "linkorderid": "int",
+    "patient_key": "string",
+    "starttime": "timestamp_ntz",
+    "stay_id": "int",
+    "vaso_amount": "float",
+    "vaso_rate": "float"
+  },
+  "columns": [
+    "stay_id",
+    "linkorderid",
+    "vaso_rate",
+    "vaso_amount",
+    "starttime",
+    "endtime",
+    "icu_encounter_key",
+    "patient_key"
+  ],
+  "concept": "norepinephrine",
+  "dataset": "full",
+  "divergence": {
+    "attributed": [],
+    "blocking": [
+      {
+        "class": "only_candidate",
+        "count": 336000,
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      }
+    ],
+    "classification": "keyed",
+    "conflict_attribution": null,
+    "contested": [
+      {
+        "class": "only_candidate",
+        "count": 336000,
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      }
+    ],
+    "declared_unrepresentable": {},
+    "diagnostician_required": true,
+    "gap_shaped": [
+      {
+        "class": "only_oracle",
+        "count": 336000,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "identical_fraction": 0.0,
+    "identical_rows": 0,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "key_attribution": {
+      "attempted": true,
+      "attributed_only_candidate": 0,
+      "attributed_only_oracle": 0,
+      "attributed_only_oracle_collided": 0,
+      "attributed_only_oracle_repaired": 0,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "complete": false,
+      "keys_considered": [
+        "starttime"
+      ],
+      "only_candidate": 336000,
+      "only_oracle": 336000,
+      "operation": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+      "residual_only_candidate": 336000,
+      "residual_only_oracle": 336000,
+      "timezone": "America/New_York"
+    },
+    "notes": [
+      "VOID DIFF -- column 'linkorderid' is declared unrepresentable and is part of the manifest key ['linkorderid', 'starttime']. No row could join, so every count below measures the key selection, not the port; `only_oracle` and `only_candidate` in particular are artefacts and carry no fidelity information. Rule on the declaration and the prober's evidence that the element is absent from MIMIC-on-FHIR. The manifest key is comparison metadata, never a claim about the concept's grain."
+    ],
+    "oracle_rows": 336000,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [
+      {
+        "class": "only_candidate",
+        "count": 336000,
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      },
+      {
+        "class": "only_oracle",
+        "count": 336000,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "engine": "pathling-embedded",
+  "format_version": "1.0",
+  "generated_at": "2026-08-20T04:50:10.349861+00:00",
+  "oracle": "/scratch3/nau025/oracle/mimic4-full.db",
+  "oracle_row_count": 336000,
+  "row_count": 336000,
+  "timings_seconds": {
+    "compare": 1.326,
+    "execute": 23.136
+  },
+  "verdict": "review",
+  "view_labels": [
+    "encounter_icu",
+    "medication_administration"
+  ],
+  "warehouse": "/scratch3/nau025/mimic-on-fhir-delta/spark_warehouse"
+}

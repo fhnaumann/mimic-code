@@ -21,3 +21,7 @@
 ## ICU MedicationAdministration does not serialize inputevent linkorderid (full-data confirmation)
 - Affected: `MedicationAdministration.identifier` and the source `inputevents.linkorderid` linkage
 - Verified: norepinephrine attempt_0001 full-data review covered 336,000 oracle and 336,000 candidate rows; `linkorderid` was non-null on all 336,000 source rows but necessarily NULL on all candidate rows. `mimic-fhir/sql/fhir_medication_administration_icu.sql:8-23,38-100` reads and serializes timing, amount, rate, itemid, subject and ICU context but never selects or writes `linkorderid` or an `identifier`; line 20 uses source `orderid` only inside the opaque resource UUID and provides no recoverable linkage value. The comparator marked its keyed diff VOID because declared `linkorderid` is in manifest key `(linkorderid,starttime)`.
+
+## ICU MedicationAdministration trims inputevent dosage units before serialization
+- Affected: `MedicationAdministration.dosage.rateQuantity.unit`, `MedicationAdministration.dosage.dose.unit`, and source `inputevents.rateuom`/`amountuom` discriminators
+- Verified: norepinephrine attempt_0002 implementation review of `mimic-fhir/sql/fhir_medication_administration_icu.sql:13-15,85-99` confirmed the ETL applies `TRIM` before writing both FHIR unit fields; the reusable Delta probe also found `mcg/kg/min` and `mg` on all 947 target rows.

@@ -1,0 +1,3 @@
+{
+  "linkorderid": "No FHIR element. ICU MedicationAdministration.identifier is absent across the served MedicationAdministration resources, and the ICU ETL writes no linkorderid, orderid, or inputevent identifier; the opaque resource UUID cannot be inverted to recover the source linkorderid. The manifest column is therefore emitted as typed NULL INTEGER."
+}

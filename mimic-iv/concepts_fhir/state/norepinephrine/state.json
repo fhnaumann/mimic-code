@@ -1,17 +1,33 @@
 {
-  "attempt": 1,
+  "attempt": 3,
   "category": "medication",
-  "completed_at": "2026-08-13T06:56:51.476046+00:00",
+  "completed_at": "2026-08-20T05:09:25.940631+00:00",
   "concept_name": "norepinephrine",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "The port faithfully reproduces all representable norepinephrine outputs. inputevents.linkorderid is irrecoverably absent because mimic-fhir/sql/fhir_medication_administration_icu.sql:8-23,38-100 neither selects nor writes it or MedicationAdministration.identifier; line 20 uses only orderid inside an opaque UUID, which cannot be inverted. Because linkorderid is declared unrepresentable and is in manifest key (linkorderid,starttime), the comparator's keyed diff is explicitly VOID DIFF and its only-candidate/only-oracle counts carry no fidelity information. The missing ancillary identifier is only projected by norepinephrine.sql:4 and does not affect inclusion or derivation. The small timing residual follows upstream TIMESTAMPTZ casts at mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69.",
-  "engineering_counter": 1,
+  "divergence_justification": "The full comparison is VOID DIFF because unrepresentable linkorderid is part of manifest key (linkorderid,starttime); its only-oracle/only-candidate findings do not measure fidelity. ICU MedicationAdministration.identifier is not written, and mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,38-100 carries neither linkorderid nor another semantic field from which it can be recovered; line 20's UUID is opaque and may not be inverted. Canonical norepinephrine.sql:4 only projects this administrative identifier, while all 336,000 source-event occurrences and their multiplicity are preserved, so the loss is ancillary. The remaining 58 timestamp rows are irreversibly normalized by upstream TIMESTAMPTZ casts at mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9 and Period writes at :61-66; candidate TIMESTAMP_NTZ faithfully preserves served values. All defensible mappings were applied, including corrected raw-rate mapping.",
+  "engineering_counter": 3,
   "error_message": null,
-  "hpc_counter": 1,
-  "reopen_history": [],
-  "semantic_counter": 1,
-  "started_at": "2026-08-13T05:42:36.917473+00:00",
+  "hpc_counter": 3,
+  "reopen_history": [
+    {
+      "at": "2026-08-20T04:25:18.467897+00:00",
+      "baseline": {
+        "attempt": 1,
+        "engineering": 1,
+        "hpc": 1,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "The port faithfully reproduces all representable norepinephrine outputs. inputevents.linkorderid is irrecoverably absent because mimic-fhir/sql/fhir_medication_administration_icu.sql:8-23,38-100 neither selects nor writes it or MedicationAdministration.identifier; line 20 uses only orderid inside an opaque UUID, which cannot be inverted. Because linkorderid is declared unrepresentable and is in manifest key (linkorderid,starttime), the comparator's keyed diff is explicitly VOID DIFF and its only-candidate/only-oracle counts carry no fidelity information. The missing ancillary identifier is only projected by norepinephrine.sql:4 and does not affect inclusion or derivation. The small timing residual follows upstream TIMESTAMPTZ casts at mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 3,
+  "started_at": "2026-08-20T04:43:40.776701+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-13T06:56:51.476368+00:00"
+  "updated_at": "2026-08-20T05:09:25.941005+00:00"
 }
