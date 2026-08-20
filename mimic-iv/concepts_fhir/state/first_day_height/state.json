@@ -1,0 +1,19 @@
+{
+  "attempt": 1,
+  "category": "firstday",
+  "completed_at": "2026-08-20T06:23:08.215868+00:00",
+  "concept_name": "first_day_height",
+  "dependencies": [
+    "height"
+  ],
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 2,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 0,
+  "started_at": "2026-08-20T05:52:12.405338+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-20T06:23:08.216314+00:00"
+}
