@@ -1,0 +1,45 @@
+{
+  "resourceType": "Library",
+  "id": "kdigo-creatinine",
+  "url": "https://fhnaumann.masters/pathling/Library/kdigo_creatinine",
+  "version": "2",
+  "name": "kdigo_creatinine",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "hospital_encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/kdigo_creatinine-hospital_encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "icu_encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/kdigo_creatinine-icu_encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "lab_observation",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/kdigo_creatinine-lab_observation"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH icu_encounters AS (\n    SELECT\n        i.encounter_key,\n        i.patient_key,\n        i.parent_encounter_key,\n        i.stay_id_str,\n        TRY_CAST(i.period_start AS TIMESTAMP_NTZ) AS intime,\n        TRY_CAST(i.period_end AS TIMESTAMP_NTZ) AS outtime\n    FROM icu_encounter i\n    WHERE i.stay_id_str IS NOT NULL\n), hospital_encounters AS (\n    SELECT\n        h.encounter_key,\n        h.hadm_id_str\n    FROM hospital_encounter h\n    WHERE h.hadm_id_str IS NOT NULL\n), icu_with_admission AS (\n    SELECT\n        i.patient_key,\n        i.stay_id_str,\n        i.intime,\n        i.outtime,\n        h.hadm_id_str\n    FROM icu_encounters i\n    LEFT JOIN hospital_encounters h\n        ON i.parent_encounter_key = h.encounter_key\n), observations AS (\n    SELECT\n        o.patient_key,\n        TRY_CAST(o.effective_datetime AS TIMESTAMP_NTZ) AS charttime,\n        CAST(o.quantity_value AS DOUBLE) AS creat_value\n    FROM lab_observation o\n    WHERE o.system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-d-labitems'\n        AND o.code = '50912'\n        AND o.quantity_value IS NOT NULL\n        AND o.quantity_comparator IS NULL\n        AND o.value_string IS NULL\n), cr AS (\n    SELECT\n        i.hadm_id_str,\n        i.stay_id_str,\n        o.charttime,\n        AVG(o.creat_value) AS creat\n    FROM icu_with_admission i\n    LEFT JOIN observations o\n        ON i.patient_key = o.patient_key\n        AND o.creat_value <= 150\n        AND o.charttime >= i.intime - INTERVAL 7 DAYS\n        AND o.charttime <= i.outtime\n    GROUP BY i.hadm_id_str, i.stay_id_str, o.charttime\n), cr48 AS (\n    SELECT\n        c.stay_id_str,\n        c.charttime,\n        MIN(prior.creat) AS creat_low_past_48hr\n    FROM cr c\n    LEFT JOIN cr prior\n        ON c.stay_id_str = prior.stay_id_str\n        AND prior.charttime < c.charttime\n        AND prior.charttime >= c.charttime - INTERVAL 48 HOURS\n    GROUP BY c.stay_id_str, c.charttime\n), cr7 AS (\n    SELECT\n        c.stay_id_str,\n        c.charttime,\n        MIN(prior.creat) AS creat_low_past_7day\n    FROM cr c\n    LEFT JOIN cr prior\n        ON c.stay_id_str = prior.stay_id_str\n        AND prior.charttime < c.charttime\n        AND prior.charttime >= c.charttime - INTERVAL 7 DAYS\n    GROUP BY c.stay_id_str, c.charttime\n)\nSELECT\n    CAST(cr.charttime AS TIMESTAMP) AS charttime,\n    CAST(cr.creat AS DOUBLE) AS creat,\n    CAST(cr48.creat_low_past_48hr AS DOUBLE) AS creat_low_past_48hr,\n    CAST(cr7.creat_low_past_7day AS DOUBLE) AS creat_low_past_7day,\n    (\n        SELECT MAX(i.patient_key)\n        FROM icu_encounters i\n        WHERE i.stay_id_str = cr.stay_id_str\n    ) AS patient_key,\n    (\n        SELECT MAX(h.encounter_key)\n        FROM icu_encounters i\n        LEFT JOIN hospital_encounters h\n            ON i.parent_encounter_key = h.encounter_key\n        WHERE i.stay_id_str = cr.stay_id_str\n    ) AS encounter_key,\n    (\n        SELECT MAX(i.encounter_key)\n        FROM icu_encounters i\n        WHERE i.stay_id_str = cr.stay_id_str\n    ) AS icu_encounter_key\nFROM cr\nLEFT JOIN cr48\n    ON cr.stay_id_str = cr48.stay_id_str\n    AND cr.charttime = cr48.charttime\nLEFT JOIN cr7\n    ON cr.stay_id_str = cr7.stay_id_str\n    AND cr.charttime = cr7.charttime\n;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBpY3VfZW5jb3VudGVycyBBUyAoCiAgICBTRUxFQ1QKICAgICAgICBpLmVuY291bnRlcl9rZXksCiAgICAgICAgaS5wYXRpZW50X2tleSwKICAgICAgICBpLnBhcmVudF9lbmNvdW50ZXJfa2V5LAogICAgICAgIGkuc3RheV9pZF9zdHIsCiAgICAgICAgVFJZX0NBU1QoaS5wZXJpb2Rfc3RhcnQgQVMgVElNRVNUQU1QX05UWikgQVMgaW50aW1lLAogICAgICAgIFRSWV9DQVNUKGkucGVyaW9kX2VuZCBBUyBUSU1FU1RBTVBfTlRaKSBBUyBvdXR0aW1lCiAgICBGUk9NIGljdV9lbmNvdW50ZXIgaQogICAgV0hFUkUgaS5zdGF5X2lkX3N0ciBJUyBOT1QgTlVMTAopLCBob3NwaXRhbF9lbmNvdW50ZXJzIEFTICgKICAgIFNFTEVDVAogICAgICAgIGguZW5jb3VudGVyX2tleSwKICAgICAgICBoLmhhZG1faWRfc3RyCiAgICBGUk9NIGhvc3BpdGFsX2VuY291bnRlciBoCiAgICBXSEVSRSBoLmhhZG1faWRfc3RyIElTIE5PVCBOVUxMCiksIGljdV93aXRoX2FkbWlzc2lvbiBBUyAoCiAgICBTRUxFQ1QKICAgICAgICBpLnBhdGllbnRfa2V5LAogICAgICAgIGkuc3RheV9pZF9zdHIsCiAgICAgICAgaS5pbnRpbWUsCiAgICAgICAgaS5vdXR0aW1lLAogICAgICAgIGguaGFkbV9pZF9zdHIKICAgIEZST00gaWN1X2VuY291bnRlcnMgaQogICAgTEVGVCBKT0lOIGhvc3BpdGFsX2VuY291bnRlcnMgaAogICAgICAgIE9OIGkucGFyZW50X2VuY291bnRlcl9rZXkgPSBoLmVuY291bnRlcl9rZXkKKSwgb2JzZXJ2YXRpb25zIEFTICgKICAgIFNFTEVDVAogICAgICAgIG8ucGF0aWVudF9rZXksCiAgICAgICAgVFJZX0NBU1Qoby5lZmZlY3RpdmVfZGF0ZXRpbWUgQVMgVElNRVNUQU1QX05UWikgQVMgY2hhcnR0aW1lLAogICAgICAgIENBU1Qoby5xdWFudGl0eV92YWx1ZSBBUyBET1VCTEUpIEFTIGNyZWF0X3ZhbHVlCiAgICBGUk9NIGxhYl9vYnNlcnZhdGlvbiBvCiAgICBXSEVSRSBvLnN5c3RlbSA9ICdodHRwOi8vbWltaWMubWl0LmVkdS9maGlyL21pbWljL0NvZGVTeXN0ZW0vbWltaWMtZC1sYWJpdGVtcycKICAgICAgICBBTkQgby5jb2RlID0gJzUwOTEyJwogICAgICAgIEFORCBvLnF1YW50aXR5X3ZhbHVlIElTIE5PVCBOVUxMCiAgICAgICAgQU5EIG8ucXVhbnRpdHlfY29tcGFyYXRvciBJUyBOVUxMCiAgICAgICAgQU5EIG8udmFsdWVfc3RyaW5nIElTIE5VTEwKKSwgY3IgQVMgKAogICAgU0VMRUNUCiAgICAgICAgaS5oYWRtX2lkX3N0ciwKICAgICAgICBpLnN0YXlfaWRfc3RyLAogICAgICAgIG8uY2hhcnR0aW1lLAogICAgICAgIEFWRyhvLmNyZWF0X3ZhbHVlKSBBUyBjcmVhdAogICAgRlJPTSBpY3Vfd2l0aF9hZG1pc3Npb24gaQogICAgTEVGVCBKT0lOIG9ic2VydmF0aW9ucyBvCiAgICAgICAgT04gaS5wYXRpZW50X2tleSA9IG8ucGF0aWVudF9rZXkKICAgICAgICBBTkQgby5jcmVhdF92YWx1ZSA8PSAxNTAKICAgICAgICBBTkQgby5jaGFydHRpbWUgPj0gaS5pbnRpbWUgLSBJTlRFUlZBTCA3IERBWVMKICAgICAgICBBTkQgby5jaGFydHRpbWUgPD0gaS5vdXR0aW1lCiAgICBHUk9VUCBCWSBpLmhhZG1faWRfc3RyLCBpLnN0YXlfaWRfc3RyLCBvLmNoYXJ0dGltZQopLCBjcjQ4IEFTICgKICAgIFNFTEVDVAogICAgICAgIGMuc3RheV9pZF9zdHIsCiAgICAgICAgYy5jaGFydHRpbWUsCiAgICAgICAgTUlOKHByaW9yLmNyZWF0KSBBUyBjcmVhdF9sb3dfcGFzdF80OGhyCiAgICBGUk9NIGNyIGMKICAgIExFRlQgSk9JTiBjciBwcmlvcgogICAgICAgIE9OIGMuc3RheV9pZF9zdHIgPSBwcmlvci5zdGF5X2lkX3N0cgogICAgICAgIEFORCBwcmlvci5jaGFydHRpbWUgPCBjLmNoYXJ0dGltZQogICAgICAgIEFORCBwcmlvci5jaGFydHRpbWUgPj0gYy5jaGFydHRpbWUgLSBJTlRFUlZBTCA0OCBIT1VSUwogICAgR1JPVVAgQlkgYy5zdGF5X2lkX3N0ciwgYy5jaGFydHRpbWUKKSwgY3I3IEFTICgKICAgIFNFTEVDVAogICAgICAgIGMuc3RheV9pZF9zdHIsCiAgICAgICAgYy5jaGFydHRpbWUsCiAgICAgICAgTUlOKHByaW9yLmNyZWF0KSBBUyBjcmVhdF9sb3dfcGFzdF83ZGF5CiAgICBGUk9NIGNyIGMKICAgIExFRlQgSk9JTiBjciBwcmlvcgogICAgICAgIE9OIGMuc3RheV9pZF9zdHIgPSBwcmlvci5zdGF5X2lkX3N0cgogICAgICAgIEFORCBwcmlvci5jaGFydHRpbWUgPCBjLmNoYXJ0dGltZQogICAgICAgIEFORCBwcmlvci5jaGFydHRpbWUgPj0gYy5jaGFydHRpbWUgLSBJTlRFUlZBTCA3IERBWVMKICAgIEdST1VQIEJZIGMuc3RheV9pZF9zdHIsIGMuY2hhcnR0aW1lCikKU0VMRUNUCiAgICBDQVNUKGNyLmNoYXJ0dGltZSBBUyBUSU1FU1RBTVApIEFTIGNoYXJ0dGltZSwKICAgIENBU1QoY3IuY3JlYXQgQVMgRE9VQkxFKSBBUyBjcmVhdCwKICAgIENBU1QoY3I0OC5jcmVhdF9sb3dfcGFzdF80OGhyIEFTIERPVUJMRSkgQVMgY3JlYXRfbG93X3Bhc3RfNDhociwKICAgIENBU1QoY3I3LmNyZWF0X2xvd19wYXN0XzdkYXkgQVMgRE9VQkxFKSBBUyBjcmVhdF9sb3dfcGFzdF83ZGF5LAogICAgKAogICAgICAgIFNFTEVDVCBNQVgoaS5wYXRpZW50X2tleSkKICAgICAgICBGUk9NIGljdV9lbmNvdW50ZXJzIGkKICAgICAgICBXSEVSRSBpLnN0YXlfaWRfc3RyID0gY3Iuc3RheV9pZF9zdHIKICAgICkgQVMgcGF0aWVudF9rZXksCiAgICAoCiAgICAgICAgU0VMRUNUIE1BWChoLmVuY291bnRlcl9rZXkpCiAgICAgICAgRlJPTSBpY3VfZW5jb3VudGVycyBpCiAgICAgICAgTEVGVCBKT0lOIGhvc3BpdGFsX2VuY291bnRlcnMgaAogICAgICAgICAgICBPTiBpLnBhcmVudF9lbmNvdW50ZXJfa2V5ID0gaC5lbmNvdW50ZXJfa2V5CiAgICAgICAgV0hFUkUgaS5zdGF5X2lkX3N0ciA9IGNyLnN0YXlfaWRfc3RyCiAgICApIEFTIGVuY291bnRlcl9rZXksCiAgICAoCiAgICAgICAgU0VMRUNUIE1BWChpLmVuY291bnRlcl9rZXkpCiAgICAgICAgRlJPTSBpY3VfZW5jb3VudGVycyBpCiAgICAgICAgV0hFUkUgaS5zdGF5X2lkX3N0ciA9IGNyLnN0YXlfaWRfc3RyCiAgICApIEFTIGljdV9lbmNvdW50ZXJfa2V5CkZST00gY3IKTEVGVCBKT0lOIGNyNDgKICAgIE9OIGNyLnN0YXlfaWRfc3RyID0gY3I0OC5zdGF5X2lkX3N0cgogICAgQU5EIGNyLmNoYXJ0dGltZSA9IGNyNDguY2hhcnR0aW1lCkxFRlQgSk9JTiBjcjcKICAgIE9OIGNyLnN0YXlfaWRfc3RyID0gY3I3LnN0YXlfaWRfc3RyCiAgICBBTkQgY3IuY2hhcnR0aW1lID0gY3I3LmNoYXJ0dGltZQo7Cg=="
+    }
+  ]
+}

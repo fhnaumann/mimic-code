@@ -1,0 +1,40 @@
+{
+  "resourceType": "Library",
+  "id": "age",
+  "url": "https://fhnaumann.masters/pathling/Library/age",
+  "version": "3",
+  "name": "age",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/age-encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "patient",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/age-patient"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "SELECT\n    TRY_CAST(e.period_start AS TIMESTAMP) AS admittime,\n    CAST(NULL AS SMALLINT) AS anchor_age,\n    CAST(NULL AS SMALLINT) AS anchor_year,\n    CAST(\n        YEAR(TRY_CAST(e.period_start AS TIMESTAMP_NTZ))\n        - YEAR(TRY_CAST(p.birth_date AS DATE))\n        AS BIGINT\n    ) AS age,\n    p.patient_key,\n    e.encounter_key\nFROM encounter e\nINNER JOIN patient p\n    ON e.patient_key = p.patient_key\nWHERE e.hadm_id_str IS NOT NULL\n;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "U0VMRUNUCiAgICBUUllfQ0FTVChlLnBlcmlvZF9zdGFydCBBUyBUSU1FU1RBTVApIEFTIGFkbWl0dGltZSwKICAgIENBU1QoTlVMTCBBUyBTTUFMTElOVCkgQVMgYW5jaG9yX2FnZSwKICAgIENBU1QoTlVMTCBBUyBTTUFMTElOVCkgQVMgYW5jaG9yX3llYXIsCiAgICBDQVNUKAogICAgICAgIFlFQVIoVFJZX0NBU1QoZS5wZXJpb2Rfc3RhcnQgQVMgVElNRVNUQU1QX05UWikpCiAgICAgICAgLSBZRUFSKFRSWV9DQVNUKHAuYmlydGhfZGF0ZSBBUyBEQVRFKSkKICAgICAgICBBUyBCSUdJTlQKICAgICkgQVMgYWdlLAogICAgcC5wYXRpZW50X2tleSwKICAgIGUuZW5jb3VudGVyX2tleQpGUk9NIGVuY291bnRlciBlCklOTkVSIEpPSU4gcGF0aWVudCBwCiAgICBPTiBlLnBhdGllbnRfa2V5ID0gcC5wYXRpZW50X2tleQpXSEVSRSBlLmhhZG1faWRfc3RyIElTIE5PVCBOVUxMCjsK"
+    }
+  ]
+}

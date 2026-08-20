@@ -1,0 +1,7 @@
+# Mismatch-diagnostician evidence — vitalsign, attempt 0002
+
+The diagnosis found no fixable port bug. The 343 `only_candidate` rows and 1,105 of 1,106 `only_oracle` rows are re-keyed/propagated effects of the upstream chartevents DST cast at `mimic-fhir/sql/fhir_observation_chartevents.sql:9,67`; the original wall time is absent from FHIR, `issued` is `storetime` rather than `charttime`, and resource IDs were not used. The 758 conflicts were already exhaustively attributed by the comparator to the same cast, and the candidate's `AVG`, `MAX`, plausibility filters, and temperature conversion match the canonical aggregation over the served observations (`mimic-iv/concepts/measurement/vitalsign.sql:8-71,99`; attempt SQL lines 35-93).
+
+The one residual oracle-only row is `(subject_id=13793458, stay_id=34934165, charttime=2151-10-03 05:14:00, glucose=96)`. It is removed before FHIR creation by the global hard-coded chartevents predicate at `mimic-fhir/sql/fhir_observation_chartevents.sql:34-38`, which removes the complete tuple despite the source containing duplicate `itemid=220621` rows that canonical grouping emits as one glucose row. No FHIR query can recover that absent Observation. This is upstream ETL coverage loss and essential for that residual because it changes row inclusion; the judge must decide the terminal semantic outcome.
+
+No carryover stage should be invalidated. No new dataset-wide note was reported.

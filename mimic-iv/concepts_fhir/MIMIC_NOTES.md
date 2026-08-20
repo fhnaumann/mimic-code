@@ -413,6 +413,11 @@ substitute for either source time.
   candidate-only NULL `starttime`/`stoptime`/`stay_id` tuples matched exactly by
   `(subject_id, hadm_id, antibiotic, route)` and multiplicity to 43,453
   oracle-only omitted intervals (43,338 reversed and 115 one-sided-NULL).
+- Verified: full-data `acei` attempt_0006 independently confirmed 9,059
+  paired `differing_null_only` endpoint rows and 7 additional endpoint
+  conflicts exhaustively attributed to the `TIMESTAMPTZ` cast at
+  `mimic-fhir/sql/fhir_medication_request.sql:43-44`; the direct-plus-mix
+  candidate preserved all 112,014 rows.
 
 
 ## FHIR datetimes carry an offset — cast to TIMESTAMP_NTZ, never to TIMESTAMP
@@ -512,8 +517,15 @@ row.
   FHIR element and resource identity is opaque, so it is not recoverable by any
   query. A separate `oxygen_delivery` finding confirms the collision half:
   34 `only_oracle`, 31 `only_candidate` and 3 `differing_conflict` rows, all
-  inside one 02:00–03:00 hour on the second Sunday in March, of which 31
-  re-paired and 3 landed on keys the candidate already held.
+   inside one 02:00–03:00 hour on the second Sunday in March, of which 31
+   re-paired and 3 landed on keys the candidate already held.
+
+- Verified: full-data `phenylephrine` attempt_0003 independently replayed the
+  ICU MedicationAdministration effective-time cast. Forty-seven selected
+  source rows across 19 stays were shifted (30 start endpoints and 29 end
+  endpoints); the comparator attributed 46 direct conflicts and the remaining
+  apparent conflicts closed under stay-plus-replayed-endpoint alignment. The
+  source wall times are absent from FHIR.
 
 ## Encounter has three identifier systems — class discriminates none of them
 
@@ -816,4 +828,35 @@ source row. `micro_org` and `micro_susc` additionally drop rows where
   the anchor moved, accounting for all six residual second-order conflict rows;
   the direct and propagated set closed all 70 conflicts.
   `mimic-fhir/sql/fhir_specimen_lab.sql:9,18,58` preserves only the normalized
-  collection time. The oracle wall times are not recoverable from served FHIR.
+   collection time. The oracle wall times are not recoverable from served FHIR.
+
+## ICU MedicationAdministration omits inputevent linkorderid
+
+The ICU MedicationAdministration ETL does not serialize the source
+`inputevents.linkorderid` as an identifier or other FHIR element. The source
+administration row remains identifiable by its served resource only as opaque
+identity; that identity cannot be inverted to recover the administrative
+linkage value.
+
+- Affected: `MedicationAdministration.identifier`,
+  `MedicationAdministration.supportingInformation`, and source
+  `inputevents.linkorderid`.
+- Verified: full-data `phenylephrine` attempt_0003 found `linkorderid` non-NULL
+  on all 193,260 oracle rows and candidate `NULL` on all 193,260 rows; the
+  exhaustive ETL projection at `mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,38-100`
+  writes no such element. The judge accepted it as ancillary administrative
+  linkage.
+
+## ICU MedicationAdministration Quantity values are served at decimal scale six
+
+ICU MedicationAdministration dosage amount and rate Quantity values are
+materialized in the served Delta warehouse at six-decimal precision. The
+discarded low-order source precision is not retained in another FHIR element.
+
+- Affected: `MedicationAdministration.dosage.dose.value` and
+  `MedicationAdministration.dosage.rateQuantity.value`.
+- Verified: full-data `phenylephrine` attempt_0003 traced the residual numeric
+  differences to `mimic-fhir/sql/fhir_medication_administration_icu.sql:12,85-90`
+  and `:14,91-99`; endpoint-aligned amount and rate values remained within the
+  comparator tolerance, while the original low-order precision was not
+  recoverable by any FHIR query.

@@ -1,14 +1,14 @@
 {
-  "attempt": 2,
+  "attempt": 3,
   "category": "medication",
-  "completed_at": "2026-08-11T08:23:31.502452+00:00",
+  "completed_at": "2026-08-20T04:11:29.725785+00:00",
   "concept_name": "antibiotic",
   "dependencies": [],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "Accepted by equivalence judge: MedicationRequest.dispenseRequest.validityPeriod.start/end are intrinsically omitted for reversed or incomplete intervals by mimic-fhir/sql/fhir_medication_request.sql:172-177, while authoredOn and identifiers at :55,75,111-124 preserve neither original endpoints nor the ICU assignment input; this explains all 43,453 differing_null_only rows and stay_id gaps. The same ETL casts endpoints through TIMESTAMPTZ at :43-44, irreversibly normalizing America/New_York DST-gap wall times; request-level re-pairing accounts for all 70 conflicts, including the three comparator positional-pairing artifacts at src/mimic_utils/compare_port_results.py:1342-1355. All defensible mappings were applied and no query can recover the lost values.",
-  "engineering_counter": 2,
-  "error_message": null,
-  "hpc_counter": 2,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 3,
+  "error_message": "Equivalence judge blocked attempt 0003: essential loss in MedicationRequest.dispenseRequest.validityPeriod.start/end. mimic-fhir/sql/fhir_medication_request.sql:172-177 omits invalid or incomplete periods, leaving 43,453 differing_null_only rows (starttime NULL 43,369; stoptime NULL 43,422) and 13,494 unavailable stay_id assignments because the canonical antibiotic temporal ICU join at mimic-iv/concepts/medication/antibiotic.sql:198-201 needs starttime. No FHIR query can recover the endpoints; authoredOn at fhir_medication_request.sql:55,124 is pharmacy entertime. Oracle/candidate rows 735,462 each; schema matched; 691,939 identical (94.0822%), representable fidelity 94.0822%. The 70 conflicts are separately intrinsic DST normalization at fhir_medication_request.sql:43-44 and non-blocking.",
+  "hpc_counter": 3,
   "reopen_history": [
     {
       "at": "2026-08-11T06:12:14.973477+00:00",
@@ -23,10 +23,25 @@
       "superseded_decided_by": "judge",
       "superseded_justification": "Judge accepted attempt 0001's contested unkeyed multiset divergence. The missing FHIR paths are MedicationRequest.dispenseRequest.validityPeriod.start/end: mimic-fhir/sql/fhir_medication_request.sql:172-177 omits invalid or incomplete intervals, and authoredOn at :55,124 is pharmacy entertime rather than either source endpoint, so ICU stay_id cannot be reconstructed when starttime is absent. The same ETL at :43-44 irreversibly normalizes DST-gap endpoints through TIMESTAMPTZ (+3600 seconds). Exhaustive EXCEPT ALL pairing accounted for all 43,576 mirrored divergences, with no invented rows; all defensible direct/mix mappings and filters were applied. The judge reported 691,886/735,462 exact tuples (94.075%).",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-20T03:46:07.726024+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 2,
+        "hpc": 2,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Accepted by equivalence judge: MedicationRequest.dispenseRequest.validityPeriod.start/end are intrinsically omitted for reversed or incomplete intervals by mimic-fhir/sql/fhir_medication_request.sql:172-177, while authoredOn and identifiers at :55,75,111-124 preserve neither original endpoints nor the ICU assignment input; this explains all 43,453 differing_null_only rows and stay_id gaps. The same ETL casts endpoints through TIMESTAMPTZ at :43-44, irreversibly normalizing America/New_York DST-gap wall times; request-level re-pairing accounts for all 70 conflicts, including the three comparator positional-pairing artifacts at src/mimic_utils/compare_port_results.py:1342-1355. All defensible mappings were applied and no query can recover the lost values.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
-  "semantic_counter": 2,
-  "started_at": "2026-08-11T06:12:14.975506+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-11T08:23:31.502764+00:00"
+  "semantic_counter": 3,
+  "started_at": "2026-08-20T03:46:07.728551+00:00",
+  "status": "BLOCKED_REPRESENTATION",
+  "updated_at": "2026-08-20T04:11:29.726194+00:00"
 }

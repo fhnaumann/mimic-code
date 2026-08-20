@@ -1,0 +1,40 @@
+{
+  "resourceType": "Library",
+  "id": "neuroblock",
+  "url": "https://fhnaumann.masters/pathling/Library/neuroblock",
+  "version": "5",
+  "name": "neuroblock",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "encounter_icu",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/neuroblock-encounter_icu"
+    },
+    {
+      "type": "depends-on",
+      "label": "medication_administration",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/neuroblock-medication_administration"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH filtered_rows AS (\n    SELECT\n        ma.patient_key,\n        ma.encounter_key,\n        ma.effective_datetime,\n        ma.effective_period_start,\n        ma.effective_period_end,\n        ma.rate_value,\n        ma.amount_value,\n        ma.item_code,\n        ma.code_system\n    FROM medication_administration AS ma\n    WHERE ma.code_system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-medication-icu'\n      AND ma.item_code IN ('222062', '221555')\n      AND ma.rate_value IS NOT NULL\n), typed_rows AS (\n    SELECT\n        e.stay_id_str,\n        ma.patient_key,\n        e.encounter_key AS icu_encounter_key,\n        CAST(ma.rate_value AS DOUBLE) AS rate_value_double,\n        CAST(ma.amount_value AS DOUBLE) AS amount_value_double,\n        TRY_CAST(ma.effective_period_start AS TIMESTAMP_NTZ) AS starttime_value,\n        COALESCE(\n            TRY_CAST(ma.effective_period_end AS TIMESTAMP_NTZ),\n            TRY_CAST(ma.effective_datetime AS TIMESTAMP_NTZ)\n        ) AS endtime_value\n    FROM filtered_rows AS ma\n    LEFT JOIN encounter_icu AS e\n      ON ma.encounter_key = e.encounter_key\n     AND e.stay_system = 'http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu'\n)\nSELECT\n    CAST(NULL AS INTEGER) AS orderid,\n    CAST(rate_value_double AS FLOAT) AS drug_rate,\n    CAST(amount_value_double AS FLOAT) AS drug_amount,\n    CAST(starttime_value AS TIMESTAMP_NTZ) AS starttime,\n    CAST(endtime_value AS TIMESTAMP_NTZ) AS endtime,\n    icu_encounter_key,\n    patient_key\nFROM typed_rows;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBmaWx0ZXJlZF9yb3dzIEFTICgKICAgIFNFTEVDVAogICAgICAgIG1hLnBhdGllbnRfa2V5LAogICAgICAgIG1hLmVuY291bnRlcl9rZXksCiAgICAgICAgbWEuZWZmZWN0aXZlX2RhdGV0aW1lLAogICAgICAgIG1hLmVmZmVjdGl2ZV9wZXJpb2Rfc3RhcnQsCiAgICAgICAgbWEuZWZmZWN0aXZlX3BlcmlvZF9lbmQsCiAgICAgICAgbWEucmF0ZV92YWx1ZSwKICAgICAgICBtYS5hbW91bnRfdmFsdWUsCiAgICAgICAgbWEuaXRlbV9jb2RlLAogICAgICAgIG1hLmNvZGVfc3lzdGVtCiAgICBGUk9NIG1lZGljYXRpb25fYWRtaW5pc3RyYXRpb24gQVMgbWEKICAgIFdIRVJFIG1hLmNvZGVfc3lzdGVtID0gJ2h0dHA6Ly9taW1pYy5taXQuZWR1L2ZoaXIvbWltaWMvQ29kZVN5c3RlbS9taW1pYy1tZWRpY2F0aW9uLWljdScKICAgICAgQU5EIG1hLml0ZW1fY29kZSBJTiAoJzIyMjA2MicsICcyMjE1NTUnKQogICAgICBBTkQgbWEucmF0ZV92YWx1ZSBJUyBOT1QgTlVMTAopLCB0eXBlZF9yb3dzIEFTICgKICAgIFNFTEVDVAogICAgICAgIGUuc3RheV9pZF9zdHIsCiAgICAgICAgbWEucGF0aWVudF9rZXksCiAgICAgICAgZS5lbmNvdW50ZXJfa2V5IEFTIGljdV9lbmNvdW50ZXJfa2V5LAogICAgICAgIENBU1QobWEucmF0ZV92YWx1ZSBBUyBET1VCTEUpIEFTIHJhdGVfdmFsdWVfZG91YmxlLAogICAgICAgIENBU1QobWEuYW1vdW50X3ZhbHVlIEFTIERPVUJMRSkgQVMgYW1vdW50X3ZhbHVlX2RvdWJsZSwKICAgICAgICBUUllfQ0FTVChtYS5lZmZlY3RpdmVfcGVyaW9kX3N0YXJ0IEFTIFRJTUVTVEFNUF9OVFopIEFTIHN0YXJ0dGltZV92YWx1ZSwKICAgICAgICBDT0FMRVNDRSgKICAgICAgICAgICAgVFJZX0NBU1QobWEuZWZmZWN0aXZlX3BlcmlvZF9lbmQgQVMgVElNRVNUQU1QX05UWiksCiAgICAgICAgICAgIFRSWV9DQVNUKG1hLmVmZmVjdGl2ZV9kYXRldGltZSBBUyBUSU1FU1RBTVBfTlRaKQogICAgICAgICkgQVMgZW5kdGltZV92YWx1ZQogICAgRlJPTSBmaWx0ZXJlZF9yb3dzIEFTIG1hCiAgICBMRUZUIEpPSU4gZW5jb3VudGVyX2ljdSBBUyBlCiAgICAgIE9OIG1hLmVuY291bnRlcl9rZXkgPSBlLmVuY291bnRlcl9rZXkKICAgICBBTkQgZS5zdGF5X3N5c3RlbSA9ICdodHRwOi8vbWltaWMubWl0LmVkdS9maGlyL21pbWljL2lkZW50aWZpZXIvZW5jb3VudGVyLWljdScKKQpTRUxFQ1QKICAgIENBU1QoTlVMTCBBUyBJTlRFR0VSKSBBUyBvcmRlcmlkLAogICAgQ0FTVChyYXRlX3ZhbHVlX2RvdWJsZSBBUyBGTE9BVCkgQVMgZHJ1Z19yYXRlLAogICAgQ0FTVChhbW91bnRfdmFsdWVfZG91YmxlIEFTIEZMT0FUKSBBUyBkcnVnX2Ftb3VudCwKICAgIENBU1Qoc3RhcnR0aW1lX3ZhbHVlIEFTIFRJTUVTVEFNUF9OVFopIEFTIHN0YXJ0dGltZSwKICAgIENBU1QoZW5kdGltZV92YWx1ZSBBUyBUSU1FU1RBTVBfTlRaKSBBUyBlbmR0aW1lLAogICAgaWN1X2VuY291bnRlcl9rZXksCiAgICBwYXRpZW50X2tleQpGUk9NIHR5cGVkX3Jvd3M7Cg=="
+    }
+  ]
+}

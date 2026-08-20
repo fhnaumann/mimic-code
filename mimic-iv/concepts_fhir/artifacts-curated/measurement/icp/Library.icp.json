@@ -1,0 +1,45 @@
+{
+  "resourceType": "Library",
+  "id": "icp",
+  "url": "https://fhnaumann.masters/pathling/Library/icp",
+  "version": "4",
+  "name": "icp",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "icp_icu_encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/icp-icp_icu_encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "icp_observation",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/icp-icp_observation"
+    },
+    {
+      "type": "depends-on",
+      "label": "icp_patient",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/icp-icp_patient"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH filtered_rows AS (\n    SELECT\n        p.subject_id_str,\n        e.stay_id_str,\n        o.patient_key,\n        o.icu_encounter_key,\n        TRY_CAST(o.effective_datetime AS TIMESTAMP_NTZ) AS charttime,\n        CAST(o.quantity_value AS DOUBLE) AS quantity_num\n    FROM icp_observation o\n    INNER JOIN icp_patient p\n        ON o.patient_key = p.patient_key\n    INNER JOIN icp_icu_encounter e\n        ON o.icu_encounter_key = e.icu_encounter_key\n        AND o.patient_key = e.patient_key\n    WHERE o.code_system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items'\n        AND o.item_code IN ('220765', '227989')\n        AND p.subject_id_str IS NOT NULL\n        AND e.stay_id_str IS NOT NULL\n), grouped AS (\n    SELECT\n        subject_id_str,\n        stay_id_str,\n        charttime,\n        MAX(patient_key) AS patient_key,\n        MAX(icu_encounter_key) AS icu_encounter_key,\n        MAX(\n            CASE\n                WHEN quantity_num > 0 AND quantity_num < 100 THEN quantity_num\n                ELSE NULL\n            END\n        ) AS icp\n    FROM filtered_rows\n    GROUP BY subject_id_str, stay_id_str, charttime\n)\nSELECT\n    patient_key AS patient_key,\n    icu_encounter_key AS icu_encounter_key,\n    CAST(charttime AS TIMESTAMP) AS charttime,\n    CAST(icp AS FLOAT) AS icp\nFROM grouped\n;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBmaWx0ZXJlZF9yb3dzIEFTICgKICAgIFNFTEVDVAogICAgICAgIHAuc3ViamVjdF9pZF9zdHIsCiAgICAgICAgZS5zdGF5X2lkX3N0ciwKICAgICAgICBvLnBhdGllbnRfa2V5LAogICAgICAgIG8uaWN1X2VuY291bnRlcl9rZXksCiAgICAgICAgVFJZX0NBU1Qoby5lZmZlY3RpdmVfZGF0ZXRpbWUgQVMgVElNRVNUQU1QX05UWikgQVMgY2hhcnR0aW1lLAogICAgICAgIENBU1Qoby5xdWFudGl0eV92YWx1ZSBBUyBET1VCTEUpIEFTIHF1YW50aXR5X251bQogICAgRlJPTSBpY3Bfb2JzZXJ2YXRpb24gbwogICAgSU5ORVIgSk9JTiBpY3BfcGF0aWVudCBwCiAgICAgICAgT04gby5wYXRpZW50X2tleSA9IHAucGF0aWVudF9rZXkKICAgIElOTkVSIEpPSU4gaWNwX2ljdV9lbmNvdW50ZXIgZQogICAgICAgIE9OIG8uaWN1X2VuY291bnRlcl9rZXkgPSBlLmljdV9lbmNvdW50ZXJfa2V5CiAgICAgICAgQU5EIG8ucGF0aWVudF9rZXkgPSBlLnBhdGllbnRfa2V5CiAgICBXSEVSRSBvLmNvZGVfc3lzdGVtID0gJ2h0dHA6Ly9taW1pYy5taXQuZWR1L2ZoaXIvbWltaWMvQ29kZVN5c3RlbS9taW1pYy1jaGFydGV2ZW50cy1kLWl0ZW1zJwogICAgICAgIEFORCBvLml0ZW1fY29kZSBJTiAoJzIyMDc2NScsICcyMjc5ODknKQogICAgICAgIEFORCBwLnN1YmplY3RfaWRfc3RyIElTIE5PVCBOVUxMCiAgICAgICAgQU5EIGUuc3RheV9pZF9zdHIgSVMgTk9UIE5VTEwKKSwgZ3JvdXBlZCBBUyAoCiAgICBTRUxFQ1QKICAgICAgICBzdWJqZWN0X2lkX3N0ciwKICAgICAgICBzdGF5X2lkX3N0ciwKICAgICAgICBjaGFydHRpbWUsCiAgICAgICAgTUFYKHBhdGllbnRfa2V5KSBBUyBwYXRpZW50X2tleSwKICAgICAgICBNQVgoaWN1X2VuY291bnRlcl9rZXkpIEFTIGljdV9lbmNvdW50ZXJfa2V5LAogICAgICAgIE1BWCgKICAgICAgICAgICAgQ0FTRQogICAgICAgICAgICAgICAgV0hFTiBxdWFudGl0eV9udW0gPiAwIEFORCBxdWFudGl0eV9udW0gPCAxMDAgVEhFTiBxdWFudGl0eV9udW0KICAgICAgICAgICAgICAgIEVMU0UgTlVMTAogICAgICAgICAgICBFTkQKICAgICAgICApIEFTIGljcAogICAgRlJPTSBmaWx0ZXJlZF9yb3dzCiAgICBHUk9VUCBCWSBzdWJqZWN0X2lkX3N0ciwgc3RheV9pZF9zdHIsIGNoYXJ0dGltZQopClNFTEVDVAogICAgcGF0aWVudF9rZXkgQVMgcGF0aWVudF9rZXksCiAgICBpY3VfZW5jb3VudGVyX2tleSBBUyBpY3VfZW5jb3VudGVyX2tleSwKICAgIENBU1QoY2hhcnR0aW1lIEFTIFRJTUVTVEFNUCkgQVMgY2hhcnR0aW1lLAogICAgQ0FTVChpY3AgQVMgRkxPQVQpIEFTIGljcApGUk9NIGdyb3VwZWQKOwo="
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/vitalsign-vitalsign_observation",
+  "name": "vitalsign_observation",
+  "resource": "Observation",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "encounter.getReferenceKey(Encounter)",
+          "name": "icu_encounter_key"
+        },
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_key"
+        },
+        {
+          "path": "(effective).ofType(dateTime)",
+          "name": "effective_datetime"
+        },
+        {
+          "path": "(effective).ofType(Period).start",
+          "name": "effective_period_start"
+        },
+        {
+          "path": "(value).ofType(Quantity).value",
+          "name": "quantity_value"
+        },
+        {
+          "path": "(value).ofType(string)",
+          "name": "string_value"
+        }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items' and (code='220045' or code='225309' or code='225310' or code='225312' or code='220050' or code='220051' or code='220052' or code='220179' or code='220180' or code='220181' or code='220210' or code='224690' or code='220277' or code='225664' or code='220621' or code='226537' or code='223762' or code='223761' or code='224642'))",
+      "column": [
+        {
+          "path": "code",
+          "name": "item_code"
+        },
+        {
+          "path": "system",
+          "name": "item_system"
+        }
+      ]
+    }
+  ],
+  "id": "vitalsign-vitalsign-observation",
+  "version": "2"
+}

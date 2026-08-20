@@ -1,17 +1,33 @@
 {
-  "attempt": 1,
+  "attempt": 2,
   "category": "medication",
-  "completed_at": "2026-08-13T12:26:20.754332+00:00",
+  "completed_at": "2026-08-20T04:22:50.223209+00:00",
   "concept_name": "nsaid",
   "dependencies": [],
-  "divergence_decided_by": "human",
-  "divergence_justification": "Human override of the judge's blocked ruling on the same artifact; no rerun, the comparison is unchanged. The 10,276 differing_null_only rows are MedicationRequest.dispenseRequest.validityPeriod.start/end, which mimic-fhir/sql/fhir_medication_request.sql:172-176 emits only WHEN ph_STARTTIME IS NOT NULL AND (ph_STARTTIME <= ph_STOPTIME) -- so an invalid or reversed prescription interval carries no period at all. authoredOn is pharmacy entertime (:55,124), not either endpoint, and no other served element preserves them; the direct and medication-mix branches were both covered. All 18 differing_conflict rows replay the TIMESTAMPTZ cast at :43-44 exactly with residual_rows 0, which is why the comparator tiered this gap_shaped rather than contested. The loss is ancillary, not essential: nsaid applies no temporal filter, has no carry-forward, and its grain (subject_id, hadm_id, drug) survives intact. Three concepts hit the identical ETL statement in the identical columns and were judge-accepted -- acei 91.91% identical with 9,059 null-only, arb 91.95% with 3,179, antibiotic 94.08% with 43,453. nsaid is 95.63% identical with 10,276 (4.4%): the highest fidelity and the lowest null fraction of the four, and the only one blocked. antibiotic's start times genuinely drive downstream suspicion-of-infection windows and were accepted with four times the missing rows, so the essential/ancillary line was not drawn where the ruling put it.",
-  "engineering_counter": 1,
-  "error_message": null,
-  "hpc_counter": 1,
-  "reopen_history": [],
-  "semantic_counter": 2,
-  "started_at": "2026-08-13T09:43:27.794589+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-13T12:26:20.754583+00:00"
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 2,
+  "error_message": "Equivalence judge blocked intrinsic essential loss: MedicationRequest.dispenseRequest.validityPeriod.start/end are absent for invalid or incomplete prescription intervals under mimic-fhir/sql/fhir_medication_request.sql:172-177; authoredOn and Medication/ingredient paths do not preserve the source endpoints. Canonical nsaid.sql:30-35 emits these clinically meaningful start/stop outputs. Full attempt_0002 reproduced 225384/235678 rows identically (95.63%); 10276 differing_null_only rows (starttime NULL 10276, stoptime NULL 10249) remain, plus 18 differing_conflict rows fully attributed to the upstream DST cast at mimic-fhir/sql/fhir_medication_request.sql:43-44,172-177. The DST subset is not the blocking cause.",
+  "hpc_counter": 2,
+  "reopen_history": [
+    {
+      "at": "2026-08-20T04:06:19.627694+00:00",
+      "baseline": {
+        "attempt": 1,
+        "engineering": 1,
+        "hpc": 1,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+      "superseded_decided_by": "human",
+      "superseded_error": null,
+      "superseded_justification": "Human override of the judge's blocked ruling on the same artifact; no rerun, the comparison is unchanged. The 10,276 differing_null_only rows are MedicationRequest.dispenseRequest.validityPeriod.start/end, which mimic-fhir/sql/fhir_medication_request.sql:172-176 emits only WHEN ph_STARTTIME IS NOT NULL AND (ph_STARTTIME <= ph_STOPTIME) -- so an invalid or reversed prescription interval carries no period at all. authoredOn is pharmacy entertime (:55,124), not either endpoint, and no other served element preserves them; the direct and medication-mix branches were both covered. All 18 differing_conflict rows replay the TIMESTAMPTZ cast at :43-44 exactly with residual_rows 0, which is why the comparator tiered this gap_shaped rather than contested. The loss is ancillary, not essential: nsaid applies no temporal filter, has no carry-forward, and its grain (subject_id, hadm_id, drug) survives intact. Three concepts hit the identical ETL statement in the identical columns and were judge-accepted -- acei 91.91% identical with 9,059 null-only, arb 91.95% with 3,179, antibiotic 94.08% with 43,453. nsaid is 95.63% identical with 10,276 (4.4%): the highest fidelity and the lowest null fraction of the four, and the only one blocked. antibiotic's start times genuinely drive downstream suspicion-of-infection windows and were accepted with four times the missing rows, so the essential/ancillary line was not drawn where the ruling put it.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 3,
+  "started_at": "2026-08-20T04:06:19.629913+00:00",
+  "status": "BLOCKED_REPRESENTATION",
+  "updated_at": "2026-08-20T04:22:50.223662+00:00"
 }

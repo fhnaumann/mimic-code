@@ -256,25 +256,25 @@ All 36 are `COMPLETED_WITH_DIVERGENCE`, so all are reopenable. Tick as they land
 | ☑ | `inflammation` | 117,898 | `encounter_key`, `patient_key`, `specimen_key` | **DONE** — validates `specimen_key`; ViewDefinitions unchanged; keys aggregated with `MAX()` inside the pivot, verified constant per group (no leak across NULL `hadm_id`) |
 | ☑ | `height` | 33,474 | `icu_encounter_key`, `patient_key` | also in UUID-inversion TODO |
 | ☑ | `icp` | 173,273 | `icu_encounter_key`, `patient_key` | also in UUID-inversion TODO |
-| ☐ | `oxygen_delivery` | 601,546 | `icu_encounter_key`, `patient_key` |  |
-| ☐ | `urine_output` | 3,321,748 | `icu_encounter_key`, `patient_key` |  |
-| ☐ | `vitalsign` | 9,745,500 | `icu_encounter_key`, `patient_key` | longest run in the corpus |
-| ☐ | `acei` | 112,014 | `encounter_key`, `patient_key` |  |
-| ☐ | `antibiotic` | 735,462 | `encounter_key`, `icu_encounter_key`, `patient_key` |  |
-| ☐ | `arb` | 39,534 | `encounter_key`, `patient_key` |  |
-| ☐ | `nsaid` | 235,678 | `encounter_key`, `patient_key` |  |
+| ☑ | `oxygen_delivery` | 601,546 | `icu_encounter_key`, `patient_key` |  |
+| ☑ | `urine_output` | 3,321,748 | `icu_encounter_key`, `patient_key` |  |
+| ☑ | `vitalsign` | 9,745,500 | `icu_encounter_key`, `patient_key` | longest run in the corpus |
+| ☑ | `acei` | 112,014 | `encounter_key`, `patient_key` |  |
+| ☑ | `antibiotic` | 735,462 | `encounter_key`, `icu_encounter_key`, `patient_key` |  |
+| ☑ | `arb` | 39,534 | `encounter_key`, `patient_key` |  |
+| ☑ | `nsaid` | 235,678 | `encounter_key`, `patient_key` |  |
 | ☑ | `dobutamine` | 8,513 | `icu_encounter_key`, `patient_key` | **DONE** — validates patient_key via `subject.getReferenceKey(Patient)` on the ICU Encounter view; figures and verdict both unchanged; stay_id↔icu_encounter_key exactly 1:1 |
-| ☐ | `dopamine` | 16,892 | `icu_encounter_key`, `patient_key` |  |
-| ☐ | `epinephrine` | 24,470 | `icu_encounter_key`, `patient_key` | carries `datetime-parser` lint findings — fix in the same pass |
-| ☐ | `milrinone` | 9,573 | `icu_encounter_key`, `patient_key` |  |
-| ☐ | `neuroblock` | 14,174 | `icu_encounter_key`, `patient_key` |  |
-| ☐ | `norepinephrine` | 336,000 | `icu_encounter_key`, `patient_key` |  |
-| ☐ | `phenylephrine` | 193,260 | `icu_encounter_key`, `patient_key` | unkeyed — multiset comparison |
-| ☐ | `vasopressin` | 25,892 | `icu_encounter_key`, `patient_key` |  |
+| ☑ | `dopamine` | 16,892 | `icu_encounter_key`, `patient_key` |  |
+| ☑ | `epinephrine` | 24,470 | `icu_encounter_key`, `patient_key` | carries `datetime-parser` lint findings — fix in the same pass |
+| ☑ | `milrinone` | 9,573 | `icu_encounter_key`, `patient_key` |  |
+| ☑ | `neuroblock` | 14,174 | `icu_encounter_key`, `patient_key` |  |
+| ☑ | `norepinephrine` | 336,000 | `icu_encounter_key`, `patient_key` |  |
+| ☑ | `phenylephrine` | 193,260 | `icu_encounter_key`, `patient_key` | unkeyed — multiset comparison |
+| ☑ | `vasopressin` | 25,892 | `icu_encounter_key`, `patient_key` |  |
 | ☑ | `kdigo_creatinine` | 599,607 | `encounter_key`, `icu_encounter_key`, `patient_key` | **DONE** — validates unconditional `patient_key` (no `subject_id`) and both encounter grains; keys via correlated subqueries, alignment verified 128↔128 and 140↔140; per-column breakdown moved, see Verification |
-| ☐ | `crrt` | 287,152 | `icu_encounter_key`, `patient_key` | also in UUID-inversion TODO |
-| ☐ | `invasive_line` | 93,378 | `icu_encounter_key`, `patient_key` |  |
-| ☐ | `rrt` | 2,827,715 | `icu_encounter_key`, `patient_key` |  |
+| ☑ | `crrt` | 287,152 | `icu_encounter_key`, `patient_key` | also in UUID-inversion TODO |
+| ☑ | `invasive_line` | 93,378 | `icu_encounter_key`, `patient_key` |  |
+| ☑ | `rrt` | 2,827,715 | `icu_encounter_key`, `patient_key` |  |
 
 ### Wave 2 — after `age` and `bg` are terminal
 
@@ -301,7 +301,7 @@ double-count it on the `J/65 reopened by a human` line for one piece of work.
 ## The reopen command
 
 ```bash
-mimic_utils reopen oxygen_delivery --by human --reason \
+mimic_utils reopen first_day_bg --by human --reason \
   "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() \
 resource keys, which the port computes internally but drops at the outermost \
 SELECT. The attempt adds the paired key column beside each MIMIC identifier \
