@@ -1,0 +1,23 @@
+{
+  "attempt": 1,
+  "category": "firstday",
+  "completed_at": "2026-08-20T23:48:22.836803+00:00",
+  "concept_name": "first_day_lab",
+  "dependencies": [
+    "blood_differential",
+    "chemistry",
+    "coagulation",
+    "complete_blood_count",
+    "enzyme"
+  ],
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 2,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 0,
+  "started_at": "2026-08-20T22:48:51.021574+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-20T23:48:22.837832+00:00"
+}
