@@ -1,0 +1,19 @@
+{
+  "attempt": 1,
+  "category": "firstday",
+  "completed_at": "2026-08-20T23:36:45.651110+00:00",
+  "concept_name": "first_day_urine_output",
+  "dependencies": [
+    "urine_output"
+  ],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accepted the contested review: mimic-fhir/sql/fhir_observation_outputevents.sql:9 casts outputevents charttime through TIMESTAMPTZ, line 60 writes the normalized value to Observation.effectiveDateTime, and lines 12,62-65 preserve the source value in Observation.valueQuantity.value; mimic-fhir/sql/fhir_encounter_icu.sql:31 casts icustays.intime through TIMESTAMPTZ and lines 97-99 write it to Encounter.period.start. Full-oracle replay exhaustively explains all 10 urineoutput conflicts with zero residual: five propagate through the judge-accepted divergent urine_output dependency and five arise from the shifted ICU first-day window anchor. The original 02:xx wall times are absent from FHIR and resource IDs are opaque. Candidate and oracle each have 73,181 rows, 73,171 are identical (99.9863%), and the 395/3,335,985 shifted selected outputevents rows (0.01184%) are consistent with DST-gap rarity. The current port preserves the dependency boundary, opaque key joins, LEFT JOIN, inclusive bounds, grouping, and SUM/NULL semantics; proven DST second-order damage is accepted under the contract as COMPLETED_WITH_DIVERGENCE.",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 1,
+  "started_at": "2026-08-20T22:49:19.947016+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-20T23:36:45.652291+00:00"
+}

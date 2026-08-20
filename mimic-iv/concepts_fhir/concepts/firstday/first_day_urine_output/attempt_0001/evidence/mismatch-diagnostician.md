@@ -1,0 +1,7 @@
+## Mismatch diagnostician evidence
+
+The contested review is an upstream transformation loss, not a fixable port bug. Full-oracle replay accounted for all 10 `urineoutput` conflicts with zero residual: five were inherited from outputevents `charttime` normalization through the completed `urine_output` dependency, and five arose from ICU Encounter `intime` normalization affecting the target's inclusive first-day window. The ETL citations are `mimic-fhir/sql/fhir_observation_outputevents.sql:9,60` for the normalized `Observation.effectiveDateTime`, `:12,62-65` for unchanged `valueQuantity.value`, and `mimic-fhir/sql/fhir_encounter_icu.sql:31,97-99` for normalized `Encounter.period.start`.
+
+The current port was checked for the dependency boundary, opaque key join, LEFT JOIN, inclusive bounds, grouping, and SUM/NULL semantics; no bug was found. The replay found 395 shifted selected outputevents rows out of 3,335,985 (0.01184%), matching DST rarity, and candidate-versus-replay residuals were zero. The original 02:xx wall times are not retained in FHIR and resource IDs are opaque, so they cannot be recovered by any valid query. No carryover stage should be invalidated, no implementation retry is recommended, and no new dataset-wide quirk was appended.
+
+The diagnostician's read-only replay script was `/var/folders/yd/6k5p31n965n7pv46hvlw5sm40000gq/T/opencode/first_day_urine_output_replay.py`; no repository artifact or state was modified.
