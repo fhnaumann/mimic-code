@@ -1,0 +1,5 @@
+Evidence block — concept `first_day_bg_art`.
+
+Read `mimic-iv/concepts/firstday/first_day_bg_art.sql`, DAG metadata, `mimic-iv/concepts/measurement/bg.sql`, shared `MIMIC_NOTES.md`, and the provisional `first_day_bg` fragment. The source uses `mimiciv_icu.icustays` plus the completed `mimiciv_derived.bg` dependency. It preserves each ICU stay and left-joins `bg` by `subject_id`, filters `specimen = 'ART.'`, and applies the inclusive window `charttime >= intime - 6 hours` through `charttime <= intime + 1 day`. It groups by `subject_id, stay_id` and emits 21 blood-gas measures as MIN/MAX extrema (44 output columns including identifiers). There are no additional filters or codes. The candidate must consume the dependency as the unqualified Spark view `bg`.
+
+DAG membership and dependency readiness passed. Reusable analysis was written to and recorded from `mimic-iv/concepts_fhir/carryover/first_day_bg_art/source-analyst.md`. No dataset-wide quirk was newly established by this stage; no `MIMIC_NOTES.d/first_day_bg_art.md` entry was appended.

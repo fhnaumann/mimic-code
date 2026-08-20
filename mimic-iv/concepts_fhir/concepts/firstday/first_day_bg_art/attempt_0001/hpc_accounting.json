@@ -1,0 +1,10 @@
+{
+  "elapsed_seconds": 224,
+  "ended_at": "2026-08-20T16:17:21",
+  "format_version": "1.0",
+  "job_id": "30241548",
+  "recorded_at": "2026-08-20T06:19:25.180615+00:00",
+  "source": "slurm_sacct",
+  "started_at": "2026-08-20T16:13:37",
+  "state": "COMPLETED"
+}

@@ -1,0 +1,19 @@
+{
+  "attempt": 1,
+  "category": "firstday",
+  "completed_at": "2026-08-20T06:20:20.219678+00:00",
+  "concept_name": "first_day_bg_art",
+  "dependencies": [
+    "bg"
+  ],
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 2,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 0,
+  "started_at": "2026-08-20T05:51:42.358891+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-20T06:20:20.219970+00:00"
+}
