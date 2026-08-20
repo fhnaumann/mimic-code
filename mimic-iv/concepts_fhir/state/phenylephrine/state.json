@@ -1,17 +1,33 @@
 {
-  "attempt": 2,
+  "attempt": 3,
   "category": "medication",
-  "completed_at": "2026-08-13T23:21:05.157347+00:00",
+  "completed_at": "2026-08-20T05:08:31.143622+00:00",
   "concept_name": "phenylephrine",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "Phenylephrine attempt 0002 faithfully maps the exact ICU MedicationAdministration code, preserves all 193,260 source-event rows and multiplicity, and uses every available FHIR path. ICU ETL irreversibly casts start/end times through TIMESTAMPTZ (mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69) and writes amount into six-decimal dosage.dose.value (:12,85-90), while omitting linkorderid and patientweight (:7-23,38-100). Rate unit survives in dosage.rateQuantity.unit (:91-98), so the one uncomputable mcg/min rate is correctly NULL rather than estimated. The reported residual conflicts are amplified by unkeyed stay-only pairing, not evidence of another mapping defect. These losses are intrinsic and ancillary: they do not change row inclusion, grain, grouping, carry-forward, or other clinically meaningful outputs.",
-  "engineering_counter": 2,
+  "divergence_justification": "Judge accept: full schema and row counts match (193260 each); all 193260 events close under stay_id plus replayed effective endpoints, with 191421/193260 representable rows identical and zero unexplained residual after full-source replay. The 46 direct timestamp conflicts are the upstream America/New_York DST TIMESTAMPTZ transformation in mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69; the remaining apparent timing/amount conflicts are unkeyed stay-only pairing amplification from that timing loss and six-decimal Quantity serialization at mimic-fhir/sql/fhir_medication_administration_icu.sql:12,85-90 and :14,91-99, whose original values are unrecoverable by FHIR query. linkorderid is declared all-NULL because the ICU ETL omits it at :7-23,38-100 and resource identity is opaque; it is ancillary administrative linkage. The single mcg/min vaso_rate NULL is the honest row-level consequence of omitted patientweight while rate unit survives at :91-99; it does not alter inclusion, grain, grouping, or carry-forward. Proven DST loss is not essential-loss blocking under the contract.",
+  "engineering_counter": 3,
   "error_message": null,
-  "hpc_counter": 2,
-  "reopen_history": [],
-  "semantic_counter": 2,
-  "started_at": "2026-08-13T12:26:27.492572+00:00",
+  "hpc_counter": 3,
+  "reopen_history": [
+    {
+      "at": "2026-08-20T04:42:10.510294+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 2,
+        "hpc": 2,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Phenylephrine attempt 0002 faithfully maps the exact ICU MedicationAdministration code, preserves all 193,260 source-event rows and multiplicity, and uses every available FHIR path. ICU ETL irreversibly casts start/end times through TIMESTAMPTZ (mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69) and writes amount into six-decimal dosage.dose.value (:12,85-90), while omitting linkorderid and patientweight (:7-23,38-100). Rate unit survives in dosage.rateQuantity.unit (:91-98), so the one uncomputable mcg/min rate is correctly NULL rather than estimated. The reported residual conflicts are amplified by unkeyed stay-only pairing, not evidence of another mapping defect. These losses are intrinsic and ancillary: they do not change row inclusion, grain, grouping, carry-forward, or other clinically meaningful outputs.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 3,
+  "started_at": "2026-08-20T04:42:10.512274+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-13T23:21:05.157636+00:00"
+  "updated_at": "2026-08-20T05:08:31.144902+00:00"
 }

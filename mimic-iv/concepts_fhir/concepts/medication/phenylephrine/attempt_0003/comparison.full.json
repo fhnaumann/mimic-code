@@ -1,0 +1,1276 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/medication/phenylephrine/attempt_0003/candidate.full.parquet/*.parquet",
+  "comparison": "full_tuple_multiset",
+  "concept": "phenylephrine",
+  "dataset": "full",
+  "diagnostics": [
+    "RESIDUAL PAIRED \u2014 178,536 rows matched 1:1 on (stay_id), differing only in (endtime, starttime, vaso_amount, vaso_rate). The multiset `only_oracle`/`only_candidate` counts of 193,260 are the two halves of these substitutions; they are classified per column below.",
+    "CONTESTED \u2014 a value conflict. Either a port bug or upstream ETL transformation loss; the data cannot tell you which:",
+    "  1,838 \u00d7 differing_conflict (0.951% of oracle rows) \u2014 matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone",
+    "    column 'starttime' conflicts on 1,821 row(s) (0.942% of oracle rows)",
+    "    column 'endtime' conflicts on 1,820 row(s) (0.942% of oracle rows)",
+    "    column 'vaso_amount' conflicts on 1,748 row(s) (0.904% of oracle rows)",
+    "  bar for an accept: A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "GAP-SHAPED \u2014 consistent with a MIMIC-on-FHIR coverage gap:",
+    "  191,422 \u00d7 differing_null_only \u2014 matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing",
+    "    column 'vaso_rate' is NULL in the candidate on 1 row(s)",
+    "    column 'linkorderid' is NULL in the candidate on 193,260 row(s) [declared unrepresentable]",
+    "    declared 'linkorderid': No FHIR element. ICU MedicationAdministration.identifier is absent across the served ICU MedicationAdministration resources, and the ICU ETL writes no linkorderid, orderid, or inputevent identifier; the opaque resource UUID cannot be inverted to the source linkorderid. The candidate therefore emits CAST(NULL AS INTEGER).",
+    "0 of 193,260 oracle rows reproduced identically (0.00%)",
+    "191,421 of 193,260 identical on the representable columns (99.05%), excluding the declared-and-confirmed all-NULL column(s): linkorderid",
+    "note: 46 of 1,838 conflicting rows replay the upstream upstream_timestamptz_dst_shift; 1,792 do not and are unexplained. The tier stays `contested` on those residual rows: diagnose them, not the attributed ones.",
+    "note: No unique key, but the residual paired 1:1 on stay_id (anchored by stay_id), differing only in endtime, starttime, vaso_amount, vaso_rate. The 193,260 multiset `only_candidate` rows are therefore the candidate half of those substitutions, not invented rows, and the classes below are classified per column as for a keyed concept."
+  ],
+  "diff": {
+    "classification": "paired_residual",
+    "columns_candidate_null": {
+      "linkorderid": 193260,
+      "vaso_rate": 1
+    },
+    "columns_conflicting": {
+      "endtime": 1820,
+      "starttime": 1821,
+      "vaso_amount": 1748
+    },
+    "conflict_attribution": {
+      "attempted": true,
+      "attributed_rows": 46,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "columns": {
+        "endtime": 28,
+        "starttime": 29
+      },
+      "columns_considered": [
+        "endtime",
+        "starttime"
+      ],
+      "complete": false,
+      "conflict_rows": 1838,
+      "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+      "residual_rows": 1792,
+      "samples": [
+        {
+          "endtime__candidate": "2186-03-12T03:12:00",
+          "endtime__oracle": "2186-03-12T02:12:00",
+          "endtime__replayed": "2186-03-12T03:12:00",
+          "starttime__candidate": "2186-03-12T01:15:00",
+          "starttime__oracle": "2186-03-12T01:15:00",
+          "starttime__replayed": "2186-03-12T01:15:00",
+          "stay_id": 38690182,
+          "vaso_amount__candidate": 1.6964290142059326,
+          "vaso_amount__oracle": 1.696428656578064,
+          "vaso_rate__candidate": 0.5001999735832214,
+          "vaso_rate__oracle": 0.500200092792511
+        },
+        {
+          "endtime__candidate": "2186-03-12T04:09:00",
+          "endtime__oracle": "2186-03-12T04:09:00",
+          "endtime__replayed": "2186-03-12T04:09:00",
+          "starttime__candidate": "2186-03-12T03:12:00",
+          "starttime__oracle": "2186-03-12T02:12:00",
+          "starttime__replayed": "2186-03-12T03:12:00",
+          "stay_id": 38690182,
+          "vaso_amount__candidate": 6.9608330726623535,
+          "vaso_amount__oracle": 6.9608330726623535,
+          "vaso_rate__candidate": 0.9999039769172668,
+          "vaso_rate__oracle": 0.999904215335846
+        },
+        {
+          "endtime__candidate": "2154-03-10T03:57:00",
+          "endtime__oracle": "2154-03-10T02:57:00",
+          "endtime__replayed": "2154-03-10T03:57:00",
+          "starttime__candidate": "2154-03-10T03:01:00",
+          "starttime__oracle": "2154-03-10T02:01:00",
+          "starttime__replayed": "2154-03-10T03:01:00",
+          "stay_id": 32021363,
+          "vaso_amount__candidate": 1.7828619480133057,
+          "vaso_amount__oracle": 1.782861590385437,
+          "vaso_rate__candidate": 0.3003470003604889,
+          "vaso_rate__oracle": 0.30034729838371277
+        },
+        {
+          "endtime__candidate": "2154-03-10T03:01:00",
+          "endtime__oracle": "2154-03-10T02:01:00",
+          "endtime__replayed": "2154-03-10T03:01:00",
+          "starttime__candidate": "2154-03-10T00:45:00",
+          "starttime__oracle": "2154-03-10T00:45:00",
+          "starttime__replayed": "2154-03-10T00:45:00",
+          "stay_id": 32021363,
+          "vaso_amount__candidate": 4.031861782073975,
+          "vaso_amount__oracle": 4.031861782073975,
+          "vaso_rate__candidate": 0.500478982925415,
+          "vaso_rate__oracle": 0.5004793405532837
+        },
+        {
+          "endtime__candidate": "2154-03-10T03:30:00",
+          "endtime__oracle": "2154-03-10T03:30:00",
+          "endtime__replayed": "2154-03-10T03:30:00",
+          "starttime__candidate": "2154-03-10T03:57:00",
+          "starttime__oracle": "2154-03-10T02:57:00",
+          "starttime__replayed": "2154-03-10T03:57:00",
+          "stay_id": 32021363,
+          "vaso_amount__candidate": 1.751384973526001,
+          "vaso_amount__oracle": 1.7513847351074219,
+          "vaso_rate__candidate": 0.50068199634552,
+          "vaso_rate__oracle": 0.5006817579269409
+        },
+        {
+          "endtime__candidate": "2184-03-14T05:08:00",
+          "endtime__oracle": "2184-03-14T05:08:00",
+          "endtime__replayed": "2184-03-14T05:08:00",
+          "starttime__candidate": "2184-03-14T03:08:00",
+          "starttime__oracle": "2184-03-14T02:08:00",
+          "starttime__replayed": "2184-03-14T03:08:00",
+          "stay_id": 36755903,
+          "vaso_amount__candidate": 15.783183097839355,
+          "vaso_amount__oracle": 15.783182144165039,
+          "vaso_rate__candidate": 1.1057289838790894,
+          "vaso_rate__oracle": 1.1057294607162476
+        },
+        {
+          "endtime__candidate": "2184-03-14T03:08:00",
+          "endtime__oracle": "2184-03-14T02:08:00",
+          "endtime__replayed": "2184-03-14T03:08:00",
+          "starttime__candidate": "2184-03-14T00:33:00",
+          "starttime__oracle": "2184-03-14T00:33:00",
+          "starttime__replayed": "2184-03-14T00:33:00",
+          "stay_id": 36755903,
+          "vaso_amount__candidate": 9.829495429992676,
+          "vaso_amount__oracle": 9.82949447631836,
+          "vaso_rate__candidate": 1.3047709465026855,
+          "vaso_rate__oracle": 1.3047714233398438
+        },
+        {
+          "endtime__candidate": "2114-03-11T03:00:00",
+          "endtime__oracle": "2114-03-11T03:00:00",
+          "endtime__replayed": "2114-03-11T03:00:00",
+          "starttime__candidate": "2114-03-11T03:18:00",
+          "starttime__oracle": "2114-03-11T02:18:00",
+          "starttime__replayed": "2114-03-11T03:18:00",
+          "stay_id": 31039347,
+          "vaso_amount__candidate": 2.8546969890594482,
+          "vaso_amount__oracle": 2.8546969890594482,
+          "vaso_rate__candidate": 0.9995440244674683,
+          "vaso_rate__oracle": 0.9995437860488892
+        },
+        {
+          "endtime__candidate": "2114-03-11T03:18:00",
+          "endtime__oracle": "2114-03-11T02:18:00",
+          "endtime__replayed": "2114-03-11T03:18:00",
+          "starttime__candidate": "2114-03-11T03:10:00",
+          "starttime__oracle": "2114-03-11T02:10:00",
+          "starttime__replayed": "2114-03-11T03:10:00",
+          "stay_id": 31039347,
+          "vaso_amount__candidate": 0.8156279921531677,
+          "vaso_amount__oracle": 0.8156277537345886,
+          "vaso_rate__candidate": 1.4993159770965576,
+          "vaso_rate__oracle": 1.4993157386779785
+        },
+        {
+          "endtime__candidate": "2114-03-11T03:10:00",
+          "endtime__oracle": "2114-03-11T02:10:00",
+          "endtime__replayed": "2114-03-11T03:10:00",
+          "starttime__candidate": "2114-03-10T23:16:00",
+          "starttime__oracle": "2114-03-10T23:16:00",
+          "starttime__replayed": "2114-03-10T23:16:00",
+          "stay_id": 31039347,
+          "vaso_amount__candidate": 21.260799407958984,
+          "vaso_amount__oracle": 21.260799407958984,
+          "vaso_rate__candidate": 1.7968900203704834,
+          "vaso_rate__oracle": 1.7968897819519043
+        },
+        {
+          "endtime__candidate": "2127-03-09T08:34:00",
+          "endtime__oracle": "2127-03-09T08:34:00",
+          "endtime__replayed": "2127-03-09T08:34:00",
+          "starttime__candidate": "2127-03-09T03:43:00",
+          "starttime__oracle": "2127-03-09T02:43:00",
+          "starttime__replayed": "2127-03-09T03:43:00",
+          "stay_id": 38801217,
+          "vaso_amount__candidate": 8.804054260253906,
+          "vaso_amount__oracle": 8.804054260253906,
+          "vaso_rate__candidate": 0.4000439941883087,
+          "vaso_rate__oracle": 0.4000442922115326
+        },
+        {
+          "endtime__candidate": "2127-03-09T03:43:00",
+          "endtime__oracle": "2127-03-09T02:43:00",
+          "endtime__replayed": "2127-03-09T03:43:00",
+          "starttime__candidate": "2127-03-08T23:58:00",
+          "starttime__oracle": "2127-03-08T23:58:00",
+          "starttime__replayed": "2127-03-08T23:58:00",
+          "stay_id": 38801217,
+          "vaso_amount__candidate": 5.1733222007751465,
+          "vaso_amount__oracle": 5.1733222007751465,
+          "vaso_rate__candidate": 0.5000550150871277,
+          "vaso_rate__oracle": 0.5000553131103516
+        },
+        {
+          "endtime__candidate": "2155-03-09T03:28:00",
+          "endtime__oracle": "2155-03-09T02:28:00",
+          "endtime__replayed": "2155-03-09T03:28:00",
+          "starttime__candidate": "2155-03-09T00:44:00",
+          "starttime__oracle": "2155-03-09T00:44:00",
+          "starttime__replayed": "2155-03-09T00:44:00",
+          "stay_id": 31470584,
+          "vaso_amount__candidate": 4.120790004730225,
+          "vaso_amount__oracle": 4.120790481567383,
+          "vaso_rate__candidate": 0.7000529766082764,
+          "vaso_rate__oracle": 0.700052797794342
+        },
+        {
+          "endtime__candidate": "2119-03-12T03:53:00",
+          "endtime__oracle": "2119-03-12T02:53:00",
+          "endtime__replayed": "2119-03-12T03:53:00",
+          "starttime__candidate": "2119-03-11T22:34:00",
+          "starttime__oracle": "2119-03-11T22:34:00",
+          "starttime__replayed": "2119-03-11T22:34:00",
+          "stay_id": 32474353,
+          "vaso_amount__candidate": 17.679182052612305,
+          "vaso_amount__oracle": 17.679182052612305,
+          "vaso_rate__candidate": 0.7501029968261719,
+          "vaso_rate__oracle": 0.750103235244751
+        },
+        {
+          "endtime__candidate": "2119-03-12T03:30:00",
+          "endtime__oracle": "2119-03-12T03:30:00",
+          "endtime__replayed": "2119-03-12T03:30:00",
+          "starttime__candidate": "2119-03-12T03:53:00",
+          "starttime__oracle": "2119-03-12T02:53:00",
+          "starttime__replayed": "2119-03-12T03:53:00",
+          "stay_id": 32474353,
+          "vaso_amount__candidate": 3.3674631118774414,
+          "vaso_amount__oracle": 3.3674631118774414,
+          "vaso_rate__candidate": 1.0001380443572998,
+          "vaso_rate__oracle": 1.0001375675201416
+        },
+        {
+          "endtime__candidate": "2176-03-10T03:04:00",
+          "endtime__oracle": "2176-03-10T02:04:00",
+          "endtime__replayed": "2176-03-10T03:04:00",
+          "starttime__candidate": "2176-03-10T01:42:00",
+          "starttime__oracle": "2176-03-10T01:42:00",
+          "starttime__replayed": "2176-03-10T01:42:00",
+          "stay_id": 36903237,
+          "vaso_amount__candidate": 1.3898940086364746,
+          "vaso_amount__oracle": 1.3898943662643433,
+          "vaso_rate__candidate": 0.7019670009613037,
+          "vaso_rate__oracle": 0.7019668817520142
+        },
+        {
+          "endtime__candidate": "2176-03-10T03:39:00",
+          "endtime__oracle": "2176-03-10T03:39:00",
+          "endtime__replayed": "2176-03-10T03:39:00",
+          "starttime__candidate": "2176-03-10T03:29:00",
+          "starttime__oracle": "2176-03-10T02:29:00",
+          "starttime__replayed": "2176-03-10T03:29:00",
+          "stay_id": 36903237,
+          "vaso_amount__candidate": 6.315155982971191,
+          "vaso_amount__oracle": 6.31515645980835,
+          "vaso_rate__candidate": 1.0024060010910034,
+          "vaso_rate__oracle": 1.0024057626724243
+        },
+        {
+          "endtime__candidate": "2168-03-13T03:24:00",
+          "endtime__oracle": "2168-03-13T03:24:00",
+          "endtime__replayed": "2168-03-13T03:24:00",
+          "starttime__candidate": "2168-03-13T03:50:00",
+          "starttime__oracle": "2168-03-13T02:50:00",
+          "starttime__replayed": "2168-03-13T03:50:00",
+          "stay_id": 36509209,
+          "vaso_amount__candidate": 12.991369247436523,
+          "vaso_amount__oracle": 12.991369247436523,
+          "vaso_rate__candidate": 3.505496025085449,
+          "vaso_rate__oracle": 3.5054962635040283
+        },
+        {
+          "endtime__candidate": "2159-03-11T04:01:00",
+          "endtime__oracle": "2159-03-11T04:01:00",
+          "endtime__replayed": "2159-03-11T04:01:00",
+          "starttime__candidate": "2159-03-11T03:22:00",
+          "starttime__oracle": "2159-03-11T02:22:00",
+          "starttime__replayed": "2159-03-11T03:22:00",
+          "stay_id": 37056020,
+          "vaso_amount__candidate": 5.3437700271606445,
+          "vaso_amount__oracle": 5.343769550323486,
+          "vaso_rate__candidate": 0.787992000579834,
+          "vaso_rate__oracle": 0.7879922389984131
+        },
+        {
+          "endtime__candidate": "2159-03-11T03:22:00",
+          "endtime__oracle": "2159-03-11T02:22:00",
+          "endtime__replayed": "2159-03-11T03:22:00",
+          "starttime__candidate": "2159-03-10T23:57:00",
+          "starttime__oracle": "2159-03-10T23:57:00",
+          "starttime__replayed": "2159-03-10T23:57:00",
+          "stay_id": 37056020,
+          "vaso_amount__candidate": 9.783416748046875,
+          "vaso_amount__oracle": 9.783416748046875,
+          "vaso_rate__candidate": 0.9849900007247925,
+          "vaso_rate__oracle": 0.9849903583526611
+        }
+      ],
+      "timezone": "America/New_York"
+    },
+    "differing": 193260,
+    "differing_conflict": 1838,
+    "differing_null_only": 191422,
+    "excluded_as_alignment": [
+      "linkorderid"
+    ],
+    "excluded_as_unrepresentable": [
+      "linkorderid"
+    ],
+    "identical": 0,
+    "identical_representable": 191421,
+    "key": null,
+    "multiset_only_candidate": 193260,
+    "multiset_only_oracle": 193260,
+    "only_candidate": 0,
+    "only_oracle": 0,
+    "residual_pairing": {
+      "anchor_columns": [
+        "stay_id"
+      ],
+      "anchored": true,
+      "attempted": true,
+      "column_drift": {
+        "endtime": 58,
+        "starttime": 60,
+        "stay_id": 0,
+        "vaso_amount": 236484,
+        "vaso_rate": 330118
+      },
+      "columns_candidate_null": {
+        "vaso_rate": 1
+      },
+      "columns_conflicting": {
+        "endtime": 1820,
+        "starttime": 1821,
+        "vaso_amount": 1748
+      },
+      "conflict_attribution": {
+        "attempted": true,
+        "attributed_rows": 46,
+        "cause": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "columns": {
+          "endtime": 28,
+          "starttime": 29
+        },
+        "columns_considered": [
+          "endtime",
+          "starttime"
+        ],
+        "complete": false,
+        "conflict_rows": 1838,
+        "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+        "residual_rows": 1792,
+        "samples": [
+          {
+            "endtime__candidate": "2186-03-12T03:12:00",
+            "endtime__oracle": "2186-03-12T02:12:00",
+            "endtime__replayed": "2186-03-12T03:12:00",
+            "starttime__candidate": "2186-03-12T01:15:00",
+            "starttime__oracle": "2186-03-12T01:15:00",
+            "starttime__replayed": "2186-03-12T01:15:00",
+            "stay_id": 38690182,
+            "vaso_amount__candidate": 1.6964290142059326,
+            "vaso_amount__oracle": 1.696428656578064,
+            "vaso_rate__candidate": 0.5001999735832214,
+            "vaso_rate__oracle": 0.500200092792511
+          },
+          {
+            "endtime__candidate": "2186-03-12T04:09:00",
+            "endtime__oracle": "2186-03-12T04:09:00",
+            "endtime__replayed": "2186-03-12T04:09:00",
+            "starttime__candidate": "2186-03-12T03:12:00",
+            "starttime__oracle": "2186-03-12T02:12:00",
+            "starttime__replayed": "2186-03-12T03:12:00",
+            "stay_id": 38690182,
+            "vaso_amount__candidate": 6.9608330726623535,
+            "vaso_amount__oracle": 6.9608330726623535,
+            "vaso_rate__candidate": 0.9999039769172668,
+            "vaso_rate__oracle": 0.999904215335846
+          },
+          {
+            "endtime__candidate": "2154-03-10T03:57:00",
+            "endtime__oracle": "2154-03-10T02:57:00",
+            "endtime__replayed": "2154-03-10T03:57:00",
+            "starttime__candidate": "2154-03-10T03:01:00",
+            "starttime__oracle": "2154-03-10T02:01:00",
+            "starttime__replayed": "2154-03-10T03:01:00",
+            "stay_id": 32021363,
+            "vaso_amount__candidate": 1.7828619480133057,
+            "vaso_amount__oracle": 1.782861590385437,
+            "vaso_rate__candidate": 0.3003470003604889,
+            "vaso_rate__oracle": 0.30034729838371277
+          },
+          {
+            "endtime__candidate": "2154-03-10T03:01:00",
+            "endtime__oracle": "2154-03-10T02:01:00",
+            "endtime__replayed": "2154-03-10T03:01:00",
+            "starttime__candidate": "2154-03-10T00:45:00",
+            "starttime__oracle": "2154-03-10T00:45:00",
+            "starttime__replayed": "2154-03-10T00:45:00",
+            "stay_id": 32021363,
+            "vaso_amount__candidate": 4.031861782073975,
+            "vaso_amount__oracle": 4.031861782073975,
+            "vaso_rate__candidate": 0.500478982925415,
+            "vaso_rate__oracle": 0.5004793405532837
+          },
+          {
+            "endtime__candidate": "2154-03-10T03:30:00",
+            "endtime__oracle": "2154-03-10T03:30:00",
+            "endtime__replayed": "2154-03-10T03:30:00",
+            "starttime__candidate": "2154-03-10T03:57:00",
+            "starttime__oracle": "2154-03-10T02:57:00",
+            "starttime__replayed": "2154-03-10T03:57:00",
+            "stay_id": 32021363,
+            "vaso_amount__candidate": 1.751384973526001,
+            "vaso_amount__oracle": 1.7513847351074219,
+            "vaso_rate__candidate": 0.50068199634552,
+            "vaso_rate__oracle": 0.5006817579269409
+          },
+          {
+            "endtime__candidate": "2184-03-14T05:08:00",
+            "endtime__oracle": "2184-03-14T05:08:00",
+            "endtime__replayed": "2184-03-14T05:08:00",
+            "starttime__candidate": "2184-03-14T03:08:00",
+            "starttime__oracle": "2184-03-14T02:08:00",
+            "starttime__replayed": "2184-03-14T03:08:00",
+            "stay_id": 36755903,
+            "vaso_amount__candidate": 15.783183097839355,
+            "vaso_amount__oracle": 15.783182144165039,
+            "vaso_rate__candidate": 1.1057289838790894,
+            "vaso_rate__oracle": 1.1057294607162476
+          },
+          {
+            "endtime__candidate": "2184-03-14T03:08:00",
+            "endtime__oracle": "2184-03-14T02:08:00",
+            "endtime__replayed": "2184-03-14T03:08:00",
+            "starttime__candidate": "2184-03-14T00:33:00",
+            "starttime__oracle": "2184-03-14T00:33:00",
+            "starttime__replayed": "2184-03-14T00:33:00",
+            "stay_id": 36755903,
+            "vaso_amount__candidate": 9.829495429992676,
+            "vaso_amount__oracle": 9.82949447631836,
+            "vaso_rate__candidate": 1.3047709465026855,
+            "vaso_rate__oracle": 1.3047714233398438
+          },
+          {
+            "endtime__candidate": "2114-03-11T03:00:00",
+            "endtime__oracle": "2114-03-11T03:00:00",
+            "endtime__replayed": "2114-03-11T03:00:00",
+            "starttime__candidate": "2114-03-11T03:18:00",
+            "starttime__oracle": "2114-03-11T02:18:00",
+            "starttime__replayed": "2114-03-11T03:18:00",
+            "stay_id": 31039347,
+            "vaso_amount__candidate": 2.8546969890594482,
+            "vaso_amount__oracle": 2.8546969890594482,
+            "vaso_rate__candidate": 0.9995440244674683,
+            "vaso_rate__oracle": 0.9995437860488892
+          },
+          {
+            "endtime__candidate": "2114-03-11T03:18:00",
+            "endtime__oracle": "2114-03-11T02:18:00",
+            "endtime__replayed": "2114-03-11T03:18:00",
+            "starttime__candidate": "2114-03-11T03:10:00",
+            "starttime__oracle": "2114-03-11T02:10:00",
+            "starttime__replayed": "2114-03-11T03:10:00",
+            "stay_id": 31039347,
+            "vaso_amount__candidate": 0.8156279921531677,
+            "vaso_amount__oracle": 0.8156277537345886,
+            "vaso_rate__candidate": 1.4993159770965576,
+            "vaso_rate__oracle": 1.4993157386779785
+          },
+          {
+            "endtime__candidate": "2114-03-11T03:10:00",
+            "endtime__oracle": "2114-03-11T02:10:00",
+            "endtime__replayed": "2114-03-11T03:10:00",
+            "starttime__candidate": "2114-03-10T23:16:00",
+            "starttime__oracle": "2114-03-10T23:16:00",
+            "starttime__replayed": "2114-03-10T23:16:00",
+            "stay_id": 31039347,
+            "vaso_amount__candidate": 21.260799407958984,
+            "vaso_amount__oracle": 21.260799407958984,
+            "vaso_rate__candidate": 1.7968900203704834,
+            "vaso_rate__oracle": 1.7968897819519043
+          },
+          {
+            "endtime__candidate": "2127-03-09T08:34:00",
+            "endtime__oracle": "2127-03-09T08:34:00",
+            "endtime__replayed": "2127-03-09T08:34:00",
+            "starttime__candidate": "2127-03-09T03:43:00",
+            "starttime__oracle": "2127-03-09T02:43:00",
+            "starttime__replayed": "2127-03-09T03:43:00",
+            "stay_id": 38801217,
+            "vaso_amount__candidate": 8.804054260253906,
+            "vaso_amount__oracle": 8.804054260253906,
+            "vaso_rate__candidate": 0.4000439941883087,
+            "vaso_rate__oracle": 0.4000442922115326
+          },
+          {
+            "endtime__candidate": "2127-03-09T03:43:00",
+            "endtime__oracle": "2127-03-09T02:43:00",
+            "endtime__replayed": "2127-03-09T03:43:00",
+            "starttime__candidate": "2127-03-08T23:58:00",
+            "starttime__oracle": "2127-03-08T23:58:00",
+            "starttime__replayed": "2127-03-08T23:58:00",
+            "stay_id": 38801217,
+            "vaso_amount__candidate": 5.1733222007751465,
+            "vaso_amount__oracle": 5.1733222007751465,
+            "vaso_rate__candidate": 0.5000550150871277,
+            "vaso_rate__oracle": 0.5000553131103516
+          },
+          {
+            "endtime__candidate": "2155-03-09T03:28:00",
+            "endtime__oracle": "2155-03-09T02:28:00",
+            "endtime__replayed": "2155-03-09T03:28:00",
+            "starttime__candidate": "2155-03-09T00:44:00",
+            "starttime__oracle": "2155-03-09T00:44:00",
+            "starttime__replayed": "2155-03-09T00:44:00",
+            "stay_id": 31470584,
+            "vaso_amount__candidate": 4.120790004730225,
+            "vaso_amount__oracle": 4.120790481567383,
+            "vaso_rate__candidate": 0.7000529766082764,
+            "vaso_rate__oracle": 0.700052797794342
+          },
+          {
+            "endtime__candidate": "2119-03-12T03:53:00",
+            "endtime__oracle": "2119-03-12T02:53:00",
+            "endtime__replayed": "2119-03-12T03:53:00",
+            "starttime__candidate": "2119-03-11T22:34:00",
+            "starttime__oracle": "2119-03-11T22:34:00",
+            "starttime__replayed": "2119-03-11T22:34:00",
+            "stay_id": 32474353,
+            "vaso_amount__candidate": 17.679182052612305,
+            "vaso_amount__oracle": 17.679182052612305,
+            "vaso_rate__candidate": 0.7501029968261719,
+            "vaso_rate__oracle": 0.750103235244751
+          },
+          {
+            "endtime__candidate": "2119-03-12T03:30:00",
+            "endtime__oracle": "2119-03-12T03:30:00",
+            "endtime__replayed": "2119-03-12T03:30:00",
+            "starttime__candidate": "2119-03-12T03:53:00",
+            "starttime__oracle": "2119-03-12T02:53:00",
+            "starttime__replayed": "2119-03-12T03:53:00",
+            "stay_id": 32474353,
+            "vaso_amount__candidate": 3.3674631118774414,
+            "vaso_amount__oracle": 3.3674631118774414,
+            "vaso_rate__candidate": 1.0001380443572998,
+            "vaso_rate__oracle": 1.0001375675201416
+          },
+          {
+            "endtime__candidate": "2176-03-10T03:04:00",
+            "endtime__oracle": "2176-03-10T02:04:00",
+            "endtime__replayed": "2176-03-10T03:04:00",
+            "starttime__candidate": "2176-03-10T01:42:00",
+            "starttime__oracle": "2176-03-10T01:42:00",
+            "starttime__replayed": "2176-03-10T01:42:00",
+            "stay_id": 36903237,
+            "vaso_amount__candidate": 1.3898940086364746,
+            "vaso_amount__oracle": 1.3898943662643433,
+            "vaso_rate__candidate": 0.7019670009613037,
+            "vaso_rate__oracle": 0.7019668817520142
+          },
+          {
+            "endtime__candidate": "2176-03-10T03:39:00",
+            "endtime__oracle": "2176-03-10T03:39:00",
+            "endtime__replayed": "2176-03-10T03:39:00",
+            "starttime__candidate": "2176-03-10T03:29:00",
+            "starttime__oracle": "2176-03-10T02:29:00",
+            "starttime__replayed": "2176-03-10T03:29:00",
+            "stay_id": 36903237,
+            "vaso_amount__candidate": 6.315155982971191,
+            "vaso_amount__oracle": 6.31515645980835,
+            "vaso_rate__candidate": 1.0024060010910034,
+            "vaso_rate__oracle": 1.0024057626724243
+          },
+          {
+            "endtime__candidate": "2168-03-13T03:24:00",
+            "endtime__oracle": "2168-03-13T03:24:00",
+            "endtime__replayed": "2168-03-13T03:24:00",
+            "starttime__candidate": "2168-03-13T03:50:00",
+            "starttime__oracle": "2168-03-13T02:50:00",
+            "starttime__replayed": "2168-03-13T03:50:00",
+            "stay_id": 36509209,
+            "vaso_amount__candidate": 12.991369247436523,
+            "vaso_amount__oracle": 12.991369247436523,
+            "vaso_rate__candidate": 3.505496025085449,
+            "vaso_rate__oracle": 3.5054962635040283
+          },
+          {
+            "endtime__candidate": "2159-03-11T04:01:00",
+            "endtime__oracle": "2159-03-11T04:01:00",
+            "endtime__replayed": "2159-03-11T04:01:00",
+            "starttime__candidate": "2159-03-11T03:22:00",
+            "starttime__oracle": "2159-03-11T02:22:00",
+            "starttime__replayed": "2159-03-11T03:22:00",
+            "stay_id": 37056020,
+            "vaso_amount__candidate": 5.3437700271606445,
+            "vaso_amount__oracle": 5.343769550323486,
+            "vaso_rate__candidate": 0.787992000579834,
+            "vaso_rate__oracle": 0.7879922389984131
+          },
+          {
+            "endtime__candidate": "2159-03-11T03:22:00",
+            "endtime__oracle": "2159-03-11T02:22:00",
+            "endtime__replayed": "2159-03-11T03:22:00",
+            "starttime__candidate": "2159-03-10T23:57:00",
+            "starttime__oracle": "2159-03-10T23:57:00",
+            "starttime__replayed": "2159-03-10T23:57:00",
+            "stay_id": 37056020,
+            "vaso_amount__candidate": 9.783416748046875,
+            "vaso_amount__oracle": 9.783416748046875,
+            "vaso_rate__candidate": 0.9849900007247925,
+            "vaso_rate__oracle": 0.9849903583526611
+          }
+        ],
+        "timezone": "America/New_York"
+      },
+      "paired": 178536,
+      "paired_conflict": 1838,
+      "paired_equal": 176697,
+      "paired_null_only": 1,
+      "pairing_columns": [
+        "stay_id"
+      ],
+      "residual_candidate": 178536,
+      "residual_oracle": 178536,
+      "samples": [
+        {
+          "endtime__candidate": "2180-02-26T21:13:00",
+          "endtime__oracle": "2180-02-26T21:13:00",
+          "starttime__candidate": "2180-02-26T21:02:00",
+          "starttime__oracle": "2180-02-26T21:02:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 0.37736499309539795,
+          "vaso_amount__oracle": 0.3773646652698517,
+          "vaso_rate__candidate": 0.39890599250793457,
+          "vaso_rate__oracle": 0.39890554547309875
+        },
+        {
+          "endtime__candidate": "2180-02-27T14:22:00",
+          "endtime__oracle": "2180-02-27T14:22:00",
+          "starttime__candidate": "2180-02-27T13:50:00",
+          "starttime__oracle": "2180-02-27T13:50:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 1.1010639667510986,
+          "vaso_amount__oracle": 1.1010642051696777,
+          "vaso_rate__candidate": 0.40009599924087524,
+          "vaso_rate__oracle": 0.40009599924087524
+        },
+        {
+          "endtime__candidate": "2180-02-27T12:14:00",
+          "endtime__oracle": "2180-02-27T12:14:00",
+          "starttime__candidate": "2180-02-27T09:33:00",
+          "starttime__oracle": "2180-02-27T09:33:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 5.546402931213379,
+          "vaso_amount__oracle": 5.546402454376221,
+          "vaso_rate__candidate": 0.40057799220085144,
+          "vaso_rate__oracle": 0.40057799220085144
+        },
+        {
+          "endtime__candidate": "2180-02-27T18:29:00",
+          "endtime__oracle": "2180-02-27T18:29:00",
+          "starttime__candidate": "2180-02-27T16:21:00",
+          "starttime__oracle": "2180-02-27T16:21:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 5.423730850219727,
+          "vaso_amount__oracle": 5.423730850219727,
+          "vaso_rate__candidate": 0.4927079975605011,
+          "vaso_rate__oracle": 0.49270811676979065
+        },
+        {
+          "endtime__candidate": "2180-02-28T01:05:00",
+          "endtime__oracle": "2180-02-28T01:05:00",
+          "starttime__candidate": "2180-02-27T23:16:00",
+          "starttime__oracle": "2180-02-27T23:16:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 4.621241092681885,
+          "vaso_amount__oracle": 4.621241569519043,
+          "vaso_rate__candidate": 0.4929850101470947,
+          "vaso_rate__oracle": 0.4929850101470947
+        },
+        {
+          "endtime__candidate": "2180-02-28T05:21:00",
+          "endtime__oracle": "2180-02-28T05:21:00",
+          "starttime__candidate": "2180-02-28T02:01:00",
+          "starttime__oracle": "2180-02-28T02:01:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 8.481728553771973,
+          "vaso_amount__oracle": 8.481728553771973,
+          "vaso_rate__candidate": 0.49312400817871094,
+          "vaso_rate__oracle": 0.49312371015548706
+        },
+        {
+          "endtime__candidate": "2180-02-27T14:40:00",
+          "endtime__oracle": "2180-02-27T14:40:00",
+          "starttime__candidate": "2180-02-27T14:22:00",
+          "starttime__oracle": "2180-02-27T14:22:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 0.7691910266876221,
+          "vaso_amount__oracle": 0.7691910266876221,
+          "vaso_rate__candidate": 0.4968929886817932,
+          "vaso_rate__oracle": 0.49689343571662903
+        },
+        {
+          "endtime__candidate": "2180-02-25T03:29:00",
+          "endtime__oracle": "2180-02-25T03:29:00",
+          "starttime__candidate": "2180-02-25T01:38:00",
+          "starttime__oracle": "2180-02-25T01:38:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 4.77419376373291,
+          "vaso_amount__oracle": 4.77419376373291,
+          "vaso_rate__candidate": 0.500124990940094,
+          "vaso_rate__oracle": 0.5001250505447388
+        },
+        {
+          "endtime__candidate": "2180-02-25T11:01:00",
+          "endtime__oracle": "2180-02-25T11:01:00",
+          "starttime__candidate": "2180-02-25T10:39:00",
+          "starttime__oracle": "2180-02-25T10:39:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 0.9472479820251465,
+          "vaso_amount__oracle": 0.9472475647926331,
+          "vaso_rate__candidate": 0.5006589889526367,
+          "vaso_rate__oracle": 0.5006594061851501
+        },
+        {
+          "endtime__candidate": "2180-02-27T03:10:00",
+          "endtime__oracle": "2180-02-27T03:10:00",
+          "starttime__candidate": "2180-02-27T02:25:00",
+          "starttime__oracle": "2180-02-27T02:25:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 1.9376729726791382,
+          "vaso_amount__oracle": 1.9376732110977173,
+          "vaso_rate__candidate": 0.5006909966468811,
+          "vaso_rate__oracle": 0.500690758228302
+        },
+        {
+          "endtime__candidate": "2180-02-27T05:07:00",
+          "endtime__oracle": "2180-02-27T05:07:00",
+          "starttime__candidate": "2180-02-27T04:14:00",
+          "starttime__oracle": "2180-02-27T04:14:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 2.284717082977295,
+          "vaso_amount__oracle": 2.2847166061401367,
+          "vaso_rate__candidate": 0.5012540221214294,
+          "vaso_rate__oracle": 0.5012542009353638
+        },
+        {
+          "endtime__candidate": "2180-02-27T13:50:00",
+          "endtime__oracle": "2180-02-27T13:50:00",
+          "starttime__candidate": "2180-02-27T12:14:00",
+          "starttime__oracle": "2180-02-27T12:14:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 4.138483047485352,
+          "vaso_amount__oracle": 4.138482570648193,
+          "vaso_rate__candidate": 0.5012699961662292,
+          "vaso_rate__oracle": 0.5012696981430054
+        },
+        {
+          "endtime__candidate": "2180-02-27T16:21:00",
+          "endtime__oracle": "2180-02-27T16:21:00",
+          "starttime__candidate": "2180-02-27T15:16:00",
+          "starttime__oracle": "2180-02-27T15:16:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 3.303133010864258,
+          "vaso_amount__oracle": 3.3031325340270996,
+          "vaso_rate__candidate": 0.5909000039100647,
+          "vaso_rate__oracle": 0.5909003019332886
+        },
+        {
+          "endtime__candidate": "2180-02-28T11:00:00",
+          "endtime__oracle": "2180-02-28T11:00:00",
+          "starttime__candidate": "2180-02-28T10:00:00",
+          "starttime__oracle": "2180-02-28T10:00:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 3.0508739948272705,
+          "vaso_amount__oracle": 3.0508744716644287,
+          "vaso_rate__candidate": 0.5912550091743469,
+          "vaso_rate__oracle": 0.591254711151123
+        },
+        {
+          "endtime__candidate": "2180-02-27T23:16:00",
+          "endtime__oracle": "2180-02-27T23:16:00",
+          "starttime__candidate": "2180-02-27T18:29:00",
+          "starttime__oracle": "2180-02-27T18:29:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 14.598052024841309,
+          "vaso_amount__oracle": 14.598052024841309,
+          "vaso_rate__candidate": 0.5914450287818909,
+          "vaso_rate__oracle": 0.59144526720047
+        },
+        {
+          "endtime__candidate": "2180-02-28T07:12:00",
+          "endtime__oracle": "2180-02-28T07:12:00",
+          "starttime__candidate": "2180-02-28T06:45:00",
+          "starttime__oracle": "2180-02-28T06:45:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 1.3735020160675049,
+          "vaso_amount__oracle": 1.373502492904663,
+          "vaso_rate__candidate": 0.5915169715881348,
+          "vaso_rate__oracle": 0.5915169715881348
+        },
+        {
+          "endtime__candidate": "2180-02-26T21:02:00",
+          "endtime__oracle": "2180-02-26T21:02:00",
+          "starttime__candidate": "2180-02-26T20:38:00",
+          "starttime__oracle": "2180-02-26T20:38:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 1.2350120544433594,
+          "vaso_amount__oracle": 1.2350115776062012,
+          "vaso_rate__candidate": 0.5983579754829407,
+          "vaso_rate__oracle": 0.5983583331108093
+        },
+        {
+          "endtime__candidate": "2180-02-27T15:16:00",
+          "endtime__oracle": "2180-02-27T15:16:00",
+          "starttime__candidate": "2180-02-27T14:40:00",
+          "starttime__oracle": "2180-02-27T14:40:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 1.86899995803833,
+          "vaso_amount__oracle": 1.86899995803833,
+          "vaso_rate__candidate": 0.6036819815635681,
+          "vaso_rate__oracle": 0.6036821007728577
+        },
+        {
+          "endtime__candidate": "2180-02-26T17:56:00",
+          "endtime__oracle": "2180-02-26T17:56:00",
+          "starttime__candidate": "2180-02-26T15:02:00",
+          "starttime__oracle": "2180-02-26T15:02:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 10.434027671813965,
+          "vaso_amount__oracle": 10.434027671813965,
+          "vaso_rate__candidate": 0.6972749829292297,
+          "vaso_rate__oracle": 0.6972753405570984
+        },
+        {
+          "endtime__candidate": "2180-02-26T10:47:00",
+          "endtime__oracle": "2180-02-26T10:47:00",
+          "starttime__candidate": "2180-02-26T10:30:00",
+          "starttime__oracle": "2180-02-26T10:30:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 1.026818037033081,
+          "vaso_amount__oracle": 1.0268179178237915,
+          "vaso_rate__candidate": 0.7023379802703857,
+          "vaso_rate__oracle": 0.7023378014564514
+        }
+      ],
+      "substituted_columns": [
+        "endtime",
+        "starttime",
+        "vaso_amount",
+        "vaso_rate"
+      ],
+      "unpaired_candidate": 0,
+      "unpaired_oracle": 0
+    },
+    "samples": {
+      "substitutions": [
+        {
+          "endtime__candidate": "2180-02-26T21:13:00",
+          "endtime__oracle": "2180-02-26T21:13:00",
+          "starttime__candidate": "2180-02-26T21:02:00",
+          "starttime__oracle": "2180-02-26T21:02:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 0.37736499309539795,
+          "vaso_amount__oracle": 0.3773646652698517,
+          "vaso_rate__candidate": 0.39890599250793457,
+          "vaso_rate__oracle": 0.39890554547309875
+        },
+        {
+          "endtime__candidate": "2180-02-27T14:22:00",
+          "endtime__oracle": "2180-02-27T14:22:00",
+          "starttime__candidate": "2180-02-27T13:50:00",
+          "starttime__oracle": "2180-02-27T13:50:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 1.1010639667510986,
+          "vaso_amount__oracle": 1.1010642051696777,
+          "vaso_rate__candidate": 0.40009599924087524,
+          "vaso_rate__oracle": 0.40009599924087524
+        },
+        {
+          "endtime__candidate": "2180-02-27T12:14:00",
+          "endtime__oracle": "2180-02-27T12:14:00",
+          "starttime__candidate": "2180-02-27T09:33:00",
+          "starttime__oracle": "2180-02-27T09:33:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 5.546402931213379,
+          "vaso_amount__oracle": 5.546402454376221,
+          "vaso_rate__candidate": 0.40057799220085144,
+          "vaso_rate__oracle": 0.40057799220085144
+        },
+        {
+          "endtime__candidate": "2180-02-27T18:29:00",
+          "endtime__oracle": "2180-02-27T18:29:00",
+          "starttime__candidate": "2180-02-27T16:21:00",
+          "starttime__oracle": "2180-02-27T16:21:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 5.423730850219727,
+          "vaso_amount__oracle": 5.423730850219727,
+          "vaso_rate__candidate": 0.4927079975605011,
+          "vaso_rate__oracle": 0.49270811676979065
+        },
+        {
+          "endtime__candidate": "2180-02-28T01:05:00",
+          "endtime__oracle": "2180-02-28T01:05:00",
+          "starttime__candidate": "2180-02-27T23:16:00",
+          "starttime__oracle": "2180-02-27T23:16:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 4.621241092681885,
+          "vaso_amount__oracle": 4.621241569519043,
+          "vaso_rate__candidate": 0.4929850101470947,
+          "vaso_rate__oracle": 0.4929850101470947
+        },
+        {
+          "endtime__candidate": "2180-02-28T05:21:00",
+          "endtime__oracle": "2180-02-28T05:21:00",
+          "starttime__candidate": "2180-02-28T02:01:00",
+          "starttime__oracle": "2180-02-28T02:01:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 8.481728553771973,
+          "vaso_amount__oracle": 8.481728553771973,
+          "vaso_rate__candidate": 0.49312400817871094,
+          "vaso_rate__oracle": 0.49312371015548706
+        },
+        {
+          "endtime__candidate": "2180-02-27T14:40:00",
+          "endtime__oracle": "2180-02-27T14:40:00",
+          "starttime__candidate": "2180-02-27T14:22:00",
+          "starttime__oracle": "2180-02-27T14:22:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 0.7691910266876221,
+          "vaso_amount__oracle": 0.7691910266876221,
+          "vaso_rate__candidate": 0.4968929886817932,
+          "vaso_rate__oracle": 0.49689343571662903
+        },
+        {
+          "endtime__candidate": "2180-02-25T03:29:00",
+          "endtime__oracle": "2180-02-25T03:29:00",
+          "starttime__candidate": "2180-02-25T01:38:00",
+          "starttime__oracle": "2180-02-25T01:38:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 4.77419376373291,
+          "vaso_amount__oracle": 4.77419376373291,
+          "vaso_rate__candidate": 0.500124990940094,
+          "vaso_rate__oracle": 0.5001250505447388
+        },
+        {
+          "endtime__candidate": "2180-02-25T11:01:00",
+          "endtime__oracle": "2180-02-25T11:01:00",
+          "starttime__candidate": "2180-02-25T10:39:00",
+          "starttime__oracle": "2180-02-25T10:39:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 0.9472479820251465,
+          "vaso_amount__oracle": 0.9472475647926331,
+          "vaso_rate__candidate": 0.5006589889526367,
+          "vaso_rate__oracle": 0.5006594061851501
+        },
+        {
+          "endtime__candidate": "2180-02-27T03:10:00",
+          "endtime__oracle": "2180-02-27T03:10:00",
+          "starttime__candidate": "2180-02-27T02:25:00",
+          "starttime__oracle": "2180-02-27T02:25:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 1.9376729726791382,
+          "vaso_amount__oracle": 1.9376732110977173,
+          "vaso_rate__candidate": 0.5006909966468811,
+          "vaso_rate__oracle": 0.500690758228302
+        },
+        {
+          "endtime__candidate": "2180-02-27T05:07:00",
+          "endtime__oracle": "2180-02-27T05:07:00",
+          "starttime__candidate": "2180-02-27T04:14:00",
+          "starttime__oracle": "2180-02-27T04:14:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 2.284717082977295,
+          "vaso_amount__oracle": 2.2847166061401367,
+          "vaso_rate__candidate": 0.5012540221214294,
+          "vaso_rate__oracle": 0.5012542009353638
+        },
+        {
+          "endtime__candidate": "2180-02-27T13:50:00",
+          "endtime__oracle": "2180-02-27T13:50:00",
+          "starttime__candidate": "2180-02-27T12:14:00",
+          "starttime__oracle": "2180-02-27T12:14:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 4.138483047485352,
+          "vaso_amount__oracle": 4.138482570648193,
+          "vaso_rate__candidate": 0.5012699961662292,
+          "vaso_rate__oracle": 0.5012696981430054
+        },
+        {
+          "endtime__candidate": "2180-02-27T16:21:00",
+          "endtime__oracle": "2180-02-27T16:21:00",
+          "starttime__candidate": "2180-02-27T15:16:00",
+          "starttime__oracle": "2180-02-27T15:16:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 3.303133010864258,
+          "vaso_amount__oracle": 3.3031325340270996,
+          "vaso_rate__candidate": 0.5909000039100647,
+          "vaso_rate__oracle": 0.5909003019332886
+        },
+        {
+          "endtime__candidate": "2180-02-28T11:00:00",
+          "endtime__oracle": "2180-02-28T11:00:00",
+          "starttime__candidate": "2180-02-28T10:00:00",
+          "starttime__oracle": "2180-02-28T10:00:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 3.0508739948272705,
+          "vaso_amount__oracle": 3.0508744716644287,
+          "vaso_rate__candidate": 0.5912550091743469,
+          "vaso_rate__oracle": 0.591254711151123
+        },
+        {
+          "endtime__candidate": "2180-02-27T23:16:00",
+          "endtime__oracle": "2180-02-27T23:16:00",
+          "starttime__candidate": "2180-02-27T18:29:00",
+          "starttime__oracle": "2180-02-27T18:29:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 14.598052024841309,
+          "vaso_amount__oracle": 14.598052024841309,
+          "vaso_rate__candidate": 0.5914450287818909,
+          "vaso_rate__oracle": 0.59144526720047
+        },
+        {
+          "endtime__candidate": "2180-02-28T07:12:00",
+          "endtime__oracle": "2180-02-28T07:12:00",
+          "starttime__candidate": "2180-02-28T06:45:00",
+          "starttime__oracle": "2180-02-28T06:45:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 1.3735020160675049,
+          "vaso_amount__oracle": 1.373502492904663,
+          "vaso_rate__candidate": 0.5915169715881348,
+          "vaso_rate__oracle": 0.5915169715881348
+        },
+        {
+          "endtime__candidate": "2180-02-26T21:02:00",
+          "endtime__oracle": "2180-02-26T21:02:00",
+          "starttime__candidate": "2180-02-26T20:38:00",
+          "starttime__oracle": "2180-02-26T20:38:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 1.2350120544433594,
+          "vaso_amount__oracle": 1.2350115776062012,
+          "vaso_rate__candidate": 0.5983579754829407,
+          "vaso_rate__oracle": 0.5983583331108093
+        },
+        {
+          "endtime__candidate": "2180-02-27T15:16:00",
+          "endtime__oracle": "2180-02-27T15:16:00",
+          "starttime__candidate": "2180-02-27T14:40:00",
+          "starttime__oracle": "2180-02-27T14:40:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 1.86899995803833,
+          "vaso_amount__oracle": 1.86899995803833,
+          "vaso_rate__candidate": 0.6036819815635681,
+          "vaso_rate__oracle": 0.6036821007728577
+        },
+        {
+          "endtime__candidate": "2180-02-26T17:56:00",
+          "endtime__oracle": "2180-02-26T17:56:00",
+          "starttime__candidate": "2180-02-26T15:02:00",
+          "starttime__oracle": "2180-02-26T15:02:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 10.434027671813965,
+          "vaso_amount__oracle": 10.434027671813965,
+          "vaso_rate__candidate": 0.6972749829292297,
+          "vaso_rate__oracle": 0.6972753405570984
+        },
+        {
+          "endtime__candidate": "2180-02-26T10:47:00",
+          "endtime__oracle": "2180-02-26T10:47:00",
+          "starttime__candidate": "2180-02-26T10:30:00",
+          "starttime__oracle": "2180-02-26T10:30:00",
+          "stay_id": 39047596,
+          "vaso_amount__candidate": 1.026818037033081,
+          "vaso_amount__oracle": 1.0268179178237915,
+          "vaso_rate__candidate": 0.7023379802703857,
+          "vaso_rate__oracle": 0.7023378014564514
+        }
+      ]
+    }
+  },
+  "divergence": {
+    "attributed": [],
+    "blocking": [
+      {
+        "class": "differing_conflict",
+        "count": 1838,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "classification": "paired_residual",
+    "conflict_attribution": {
+      "attempted": true,
+      "attributed_rows": 46,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "columns": {
+        "endtime": 28,
+        "starttime": 29
+      },
+      "columns_considered": [
+        "endtime",
+        "starttime"
+      ],
+      "complete": false,
+      "conflict_rows": 1838,
+      "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+      "residual_rows": 1792,
+      "timezone": "America/New_York"
+    },
+    "contested": [
+      {
+        "class": "differing_conflict",
+        "count": 1838,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "declared_unrepresentable": {
+      "linkorderid": "No FHIR element. ICU MedicationAdministration.identifier is absent across the served ICU MedicationAdministration resources, and the ICU ETL writes no linkorderid, orderid, or inputevent identifier; the opaque resource UUID cannot be inverted to the source linkorderid. The candidate therefore emits CAST(NULL AS INTEGER)."
+    },
+    "diagnostician_required": true,
+    "gap_shaped": [
+      {
+        "class": "differing_null_only",
+        "count": 191422,
+        "declared_unrepresentable": {
+          "linkorderid": "No FHIR element. ICU MedicationAdministration.identifier is absent across the served ICU MedicationAdministration resources, and the ICU ETL writes no linkorderid, orderid, or inputevent identifier; the opaque resource UUID cannot be inverted to the source linkorderid. The candidate therefore emits CAST(NULL AS INTEGER)."
+        },
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      }
+    ],
+    "identical_fraction": 0.0,
+    "identical_representable_rows": 191421,
+    "identical_rows": 0,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "key_attribution": null,
+    "notes": [
+      "46 of 1,838 conflicting rows replay the upstream upstream_timestamptz_dst_shift; 1,792 do not and are unexplained. The tier stays `contested` on those residual rows: diagnose them, not the attributed ones.",
+      "No unique key, but the residual paired 1:1 on stay_id (anchored by stay_id), differing only in endtime, starttime, vaso_amount, vaso_rate. The 193,260 multiset `only_candidate` rows are therefore the candidate half of those substitutions, not invented rows, and the classes below are classified per column as for a keyed concept."
+    ],
+    "oracle_rows": 193260,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "representable_excludes": [
+      "linkorderid"
+    ],
+    "representable_fraction": 0.990484,
+    "reviewable": [
+      {
+        "class": "differing_conflict",
+        "count": 1838,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      },
+      {
+        "class": "differing_null_only",
+        "count": 191422,
+        "declared_unrepresentable": {
+          "linkorderid": "No FHIR element. ICU MedicationAdministration.identifier is absent across the served ICU MedicationAdministration resources, and the ICU ETL writes no linkorderid, orderid, or inputevent identifier; the opaque resource UUID cannot be inverted to the source linkorderid. The candidate therefore emits CAST(NULL AS INTEGER)."
+        },
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "1779069417892779903290598",
+    "manifest_row_count": 193260,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.phenylephrine"
+  },
+  "row_count": {
+    "candidate": 193260,
+    "delta": 0,
+    "gated": false,
+    "match": true,
+    "oracle": 193260
+  },
+  "schema": {
+    "actual_columns": [
+      "stay_id",
+      "linkorderid",
+      "vaso_rate",
+      "vaso_amount",
+      "starttime",
+      "endtime",
+      "patient_key",
+      "icu_encounter_key"
+    ],
+    "expected_columns": [
+      "stay_id",
+      "linkorderid",
+      "vaso_rate",
+      "vaso_amount",
+      "starttime",
+      "endtime"
+    ],
+    "extra_columns": [
+      "patient_key",
+      "icu_encounter_key"
+    ],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": [],
+    "missing_key_columns": [],
+    "required_key_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "unexpected_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "unrepresentable": {
+    "confirmed": {
+      "linkorderid": "No FHIR element. ICU MedicationAdministration.identifier is absent across the served ICU MedicationAdministration resources, and the ICU ETL writes no linkorderid, orderid, or inputevent identifier; the opaque resource UUID cannot be inverted to the source linkorderid. The candidate therefore emits CAST(NULL AS INTEGER)."
+    },
+    "declared": {
+      "linkorderid": "No FHIR element. ICU MedicationAdministration.identifier is absent across the served ICU MedicationAdministration resources, and the ICU ETL writes no linkorderid, orderid, or inputevent identifier; the opaque resource UUID cannot be inverted to the source linkorderid. The candidate therefore emits CAST(NULL AS INTEGER)."
+    },
+    "policy": "A declared column must be 100% NULL in the candidate. Declaring a column and then emitting an estimate for it is blocking: it converts a reviewable coverage gap into a value conflict.",
+    "undeclared_fully_null_columns": [],
+    "violations": []
+  },
+  "verdict": "review"
+}

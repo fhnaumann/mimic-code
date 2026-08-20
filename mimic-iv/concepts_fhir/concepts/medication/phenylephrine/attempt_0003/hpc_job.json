@@ -1,0 +1,8 @@
+{
+  "concept": "phenylephrine",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "30235403",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/medication/phenylephrine/attempt_0003",
+  "submitted_at": "2026-08-20T04:50:36.349389+00:00",
+  "walltime": "2:00:00"
+}
