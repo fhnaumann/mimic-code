@@ -1,0 +1,21 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/arb-0004-medication_mix",
+  "name": "medication_mix",
+  "resource": "Medication",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "mix_key" }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/medication-mix')",
+      "column": [
+        { "path": "system", "name": "mix_system" },
+        { "path": "value", "name": "mix_identifier" }
+      ]
+    }
+  ]
+}

@@ -1,14 +1,14 @@
 {
-  "attempt": 3,
+  "attempt": 4,
   "category": "medication",
-  "completed_at": "2026-08-11T07:21:52.953123+00:00",
+  "completed_at": "2026-08-20T03:59:53.881558+00:00",
   "concept_name": "arb",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "Attempt 0003 faithfully reproduces ARB from transformed FHIR data. The 3,179 differing_null_only rows are explained by the absent MedicationRequest.dispenseRequest.validityPeriod.start/end representation: mimic-fhir/sql/fhir_medication_request.sql:172-177 emits the period only for complete, non-reversed intervals. The two differing_conflict rows are exhaustively replay-attributed to the upstream TIMESTAMPTZ cast at mimic-fhir/sql/fhir_medication_request.sql:43-44, which irreversibly rewrites DST-gap 02:00 wall times to 03:00; no FHIR element or alternate query preserves the original endpoints. The port uses direct TRY_CAST(... AS TIMESTAMP_NTZ), covers direct and mix branches, and has no divergent dependencies. Full schema and row count match; 36,353/39,534 rows are identical.",
-  "engineering_counter": 4,
+  "divergence_justification": "Attempt 0004 faithfully reproduces the ARB medication table as far as served FHIR permits. MedicationRequest.dispenseRequest.validityPeriod.start/end is absent for 3,179 invalid/incomplete intervals because mimic-fhir/sql/fhir_medication_request.sql:172-177 emits the period only for complete, non-reversed times; no alternate FHIR element, including authoredOn, preserves those endpoints. Both direct and medication-mix ingredient paths and multiplicity are retained, and timestamps use TIMESTAMP_NTZ. The remaining 2/39,534 conflicts were exhaustively attributed to the endpoint TIMESTAMPTZ cast at mimic-fhir/sql/fhir_medication_request.sql:43-44, with zero residual. No divergent dependencies exist and the gap does not alter row inclusion, medication grain, grouping, carry-forward, or a derived clinical output.",
+  "engineering_counter": 5,
   "error_message": null,
-  "hpc_counter": 3,
+  "hpc_counter": 4,
   "reopen_history": [
     {
       "at": "2026-08-11T06:12:15.819717+00:00",
@@ -23,10 +23,25 @@
       "superseded_decided_by": "judge",
       "superseded_justification": "Judge accepted intrinsic upstream ETL loss: for 3,182 of 39,534 ARB rows (8.049%), fhir_medication_request.sql:43-44 obtains prescription endpoints but :172-177 omits MedicationRequest.dispenseRequest.validityPeriod for incomplete or reversed intervals, yielding unrecoverable NULL start/stop values. authoredOn at :55,124 is pharmacy entry time, and medication_prescriptions.sql:19-58 plus medication_mix.sql:27-53,64-85 preserve no endpoints. The candidate's direct and mix branches, multiplicity, exact filters, identifier joins, and TIMESTAMP_NTZ parsing are correct; no alternate FHIR path can recover the oracle timestamps. Unkeyed comparison had paired 3,182 only_candidate NULL tuples and 3,182 only_oracle timestamp tuples, with matching schema and row count. divergent_dependencies(arb)=[]; no retry warranted.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-20T03:46:40.094072+00:00",
+      "baseline": {
+        "attempt": 3,
+        "engineering": 4,
+        "hpc": 3,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Attempt 0003 faithfully reproduces ARB from transformed FHIR data. The 3,179 differing_null_only rows are explained by the absent MedicationRequest.dispenseRequest.validityPeriod.start/end representation: mimic-fhir/sql/fhir_medication_request.sql:172-177 emits the period only for complete, non-reversed intervals. The two differing_conflict rows are exhaustively replay-attributed to the upstream TIMESTAMPTZ cast at mimic-fhir/sql/fhir_medication_request.sql:43-44, which irreversibly rewrites DST-gap 02:00 wall times to 03:00; no FHIR element or alternate query preserves the original endpoints. The port uses direct TRY_CAST(... AS TIMESTAMP_NTZ), covers direct and mix branches, and has no divergent dependencies. Full schema and row count match; 36,353/39,534 rows are identical.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
-  "semantic_counter": 2,
-  "started_at": "2026-08-11T06:12:15.821980+00:00",
+  "semantic_counter": 3,
+  "started_at": "2026-08-20T03:46:40.095653+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-11T07:21:52.953805+00:00"
+  "updated_at": "2026-08-20T03:59:53.881848+00:00"
 }
