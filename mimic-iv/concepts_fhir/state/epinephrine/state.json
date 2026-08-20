@@ -1,17 +1,33 @@
 {
-  "attempt": 2,
+  "attempt": 3,
   "category": "medication",
-  "completed_at": "2026-08-13T05:41:11.715805+00:00",
+  "completed_at": "2026-08-20T04:40:03.482022+00:00",
   "concept_name": "epinephrine",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "MIMIC-on-FHIR's ICU MedicationAdministration ETL never selects or serializes inputevents.linkorderid: mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,40-100 omits it and MedicationAdministration.identifier.value, while line 20 creates only an opaque UUID from stay_id/orderid/itemid. The candidate correctly emits typed NULL. Because linkorderid belongs to the manifest key, the reported only-candidate and only-oracle counts are VOID DIFF artifacts, not fidelity evidence. The field is ancillary and every defensible FHIR mapping was implemented.",
-  "engineering_counter": 2,
+  "divergence_justification": "MIMIC-on-FHIR's ICU MedicationAdministration ETL omits inputevents.linkorderid: mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,38-100 retains and serializes no MedicationAdministration.identifier.value or order-link reference, while line 20 creates only an opaque UUID from stay_id/orderid/itemid. Attempt 0003 correctly emits typed NULL. Because linkorderid is in the empirically selected manifest key (linkorderid,starttime), the only-side rows are VOID DIFF alignment artifacts, not fidelity evidence. The field is output-only in canonical epinephrine.sql:3-10, and representable (stay_id,starttime,endtime) uniquely preserves all 24,470 clinical rows; all defensible FHIR mappings were implemented and there are no divergent dependencies. Judge verdict: accept.",
+  "engineering_counter": 3,
   "error_message": null,
-  "hpc_counter": 2,
-  "reopen_history": [],
-  "semantic_counter": 2,
-  "started_at": "2026-08-13T05:21:53.255330+00:00",
+  "hpc_counter": 3,
+  "reopen_history": [
+    {
+      "at": "2026-08-20T04:20:10.694174+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 2,
+        "hpc": 2,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "MIMIC-on-FHIR's ICU MedicationAdministration ETL never selects or serializes inputevents.linkorderid: mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,40-100 omits it and MedicationAdministration.identifier.value, while line 20 creates only an opaque UUID from stay_id/orderid/itemid. The candidate correctly emits typed NULL. Because linkorderid belongs to the manifest key, the reported only-candidate and only-oracle counts are VOID DIFF artifacts, not fidelity evidence. The field is ancillary and every defensible FHIR mapping was implemented.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 3,
+  "started_at": "2026-08-20T04:20:10.697197+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-13T05:41:11.716170+00:00"
+  "updated_at": "2026-08-20T04:40:03.483653+00:00"
 }
