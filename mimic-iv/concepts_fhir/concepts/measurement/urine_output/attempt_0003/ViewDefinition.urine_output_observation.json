@@ -1,0 +1,25 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/urine_output-0003-urine_output_observation",
+  "name": "urine_output_observation",
+  "resource": "Observation",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "observation_key" },
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
+        { "path": "encounter.getReferenceKey(Encounter)", "name": "encounter_key" },
+        { "path": "(value).ofType(Quantity).value", "name": "value_quantity" },
+        { "path": "(effective).ofType(dateTime)", "name": "effective_datetime" }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-d-items' and (code='226559' or code='226560' or code='226561' or code='226584' or code='226563' or code='226564' or code='226565' or code='226567' or code='226557' or code='226558' or code='227488' or code='227489'))",
+      "column": [
+        { "path": "code", "name": "item_code" },
+        { "path": "system", "name": "item_system" }
+      ]
+    }
+  ]
+}

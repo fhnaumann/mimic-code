@@ -1,17 +1,33 @@
 {
-  "attempt": 2,
+  "attempt": 3,
   "category": "measurement",
-  "completed_at": "2026-08-14T02:44:09.268169+00:00",
+  "completed_at": "2026-08-20T01:29:18.157300+00:00",
   "concept_name": "urine_output",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "Judge accepted the attributed review: mimic-fhir/sql/fhir_observation_outputevents.sql:9 casts outputevents.charttime through TIMESTAMPTZ, line 60 writes it to Observation.effectiveDateTime, and lines 62-65 write value to Observation.valueQuantity.value. The candidate reads those paths and applies the canonical item filters, 227488 negation, and SUM grouped by (stay_id, charttime). The comparator exhaustively attributes 393 only_oracle, 157 only_candidate, and 232 differing_conflict rows, including 236 key collisions, to the America/New_York DST-gap shift with zero residual; 393 shifted keys are 0.0118%, consistent with DST rarity. The original wall time is unrecoverable, no resource-id reconstruction is used, and identical fidelity is 3,321,123/3,321,748 (99.9812%) with no excluded columns.",
-  "engineering_counter": 3,
+  "divergence_justification": "Judge accepted the attributed review: mimic-fhir/sql/fhir_observation_outputevents.sql:9 casts outputevents.charttime through TIMESTAMPTZ, line 60 writes the normalized value to Observation.effectiveDateTime, and lines 62-65 write valueQuantity.value. Attempt 0003 reads those paths with TIMESTAMP_NTZ, preserves all twelve item filters, applies the positive 227488 negation, and sums by stay_id and charttime. The comparator exhaustively attributes 393 only_oracle, 157 only_candidate, and 232 differing_conflict rows, including 236 occupied-key collisions, to the America/New_York DST-gap shift with zero residual; 393 shifted keys are 0.0118% of oracle rows, consistent with DST rarity. The original wall time is unrecoverable, resource IDs are opaque and were not inverted, and the contract accepts proven DST divergence including aggregation effects. Identical fidelity is 3,321,123/3,321,748 (99.9812%), with no excluded columns.",
+  "engineering_counter": 4,
   "error_message": null,
-  "hpc_counter": 2,
-  "reopen_history": [],
-  "semantic_counter": 1,
-  "started_at": "2026-08-14T02:30:05.853621+00:00",
+  "hpc_counter": 3,
+  "reopen_history": [
+    {
+      "at": "2026-08-20T01:13:03.224064+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 3,
+        "hpc": 2,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Judge accepted the attributed review: mimic-fhir/sql/fhir_observation_outputevents.sql:9 casts outputevents.charttime through TIMESTAMPTZ, line 60 writes it to Observation.effectiveDateTime, and lines 62-65 write value to Observation.valueQuantity.value. The candidate reads those paths and applies the canonical item filters, 227488 negation, and SUM grouped by (stay_id, charttime). The comparator exhaustively attributes 393 only_oracle, 157 only_candidate, and 232 differing_conflict rows, including 236 key collisions, to the America/New_York DST-gap shift with zero residual; 393 shifted keys are 0.0118%, consistent with DST rarity. The original wall time is unrecoverable, no resource-id reconstruction is used, and identical fidelity is 3,321,123/3,321,748 (99.9812%) with no excluded columns.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 2,
+  "started_at": "2026-08-20T01:13:03.230513+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-14T02:44:09.268481+00:00"
+  "updated_at": "2026-08-20T01:29:18.157536+00:00"
 }
