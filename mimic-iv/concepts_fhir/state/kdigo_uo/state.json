@@ -1,0 +1,20 @@
+{
+  "attempt": 3,
+  "category": "organfailure",
+  "completed_at": "2026-08-21T01:33:00.098436+00:00",
+  "concept_name": "kdigo_uo",
+  "dependencies": [
+    "urine_output",
+    "weight_durations"
+  ],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Accept attempt 0003: mimic-fhir/sql/fhir_observation_outputevents.sql:9 irreversibly normalizes source charttime through TIMESTAMPTZ, and line 60 writes only the normalized value to Observation.effectiveDateTime. Full-source replay found 395 moved rows forming 393 urine_output groups across 391 stays; through kdigo_uo.sql:6-9,25-67, their effects account for all 393 only-oracle, 157 only-candidate, and 1,062 conflict rows, including 236 occupied-key collisions and 1,060 second-order LAG/RANGE-window conflicts, with zero unpaired residual. The 393 affected groups are 0.0118% of oracle rows, consistent with DST-gap rarity. Attempt 0003 fixed the prior Spark decimal bug, removed all 384 null-only rows, uses no resource-id inversion, and has no remaining mapping or dependency defect. The original wall time is absent from allowed FHIR paths, and the contract requires acceptance\u2014not blocking\u2014for proven upstream DST defects and their inherited effects.",
+  "engineering_counter": 4,
+  "error_message": null,
+  "hpc_counter": 2,
+  "reopen_history": [],
+  "semantic_counter": 2,
+  "started_at": "2026-08-21T01:11:04.857869+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-21T01:33:00.098900+00:00"
+}

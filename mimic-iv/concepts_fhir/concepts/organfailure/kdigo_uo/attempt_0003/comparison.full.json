@@ -1,0 +1,1195 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/organfailure/kdigo_uo/attempt_0003/candidate.full.parquet/*.parquet",
+  "comparison": "keyed_join",
+  "concept": "kdigo_uo",
+  "dataset": "full",
+  "diagnostics": [
+    "row count (not gated): oracle 3,321,748 vs candidate 3,321,512 (delta -236)",
+    "CONTESTED \u2014 a value conflict. Either a port bug or upstream ETL transformation loss; the data cannot tell you which:",
+    "  1,062 \u00d7 differing_conflict (0.032% of oracle rows) \u2014 matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone",
+    "    column 'uo_tm_6hr' conflicts on 415 row(s) (0.012% of oracle rows)",
+    "    column 'uo_rt_6hr' conflicts on 400 row(s) (0.012% of oracle rows)",
+    "    column 'uo_tm_12hr' conflicts on 370 row(s) (0.011% of oracle rows)",
+    "    column 'uo_rt_12hr' conflicts on 337 row(s) (0.010% of oracle rows)",
+    "    column 'uo_tm_24hr' conflicts on 322 row(s) (0.010% of oracle rows)",
+    "    column 'urineoutput_6hr' conflicts on 299 row(s) (0.009% of oracle rows)",
+    "    column 'uo_rt_24hr' conflicts on 276 row(s) (0.008% of oracle rows)",
+    "    column 'urineoutput_12hr' conflicts on 252 row(s) (0.008% of oracle rows)",
+    "    column 'urineoutput_24hr' conflicts on 207 row(s) (0.006% of oracle rows)",
+    "    column 'weight' conflicts on 1 row(s) (0.000% of oracle rows)",
+    "  bar for an accept: A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "ATTRIBUTED \u2014 a value conflict the comparator replayed to an upstream mimic-fhir transformation over every conflicting row. No port can invert it, so there is nothing to diagnose; the judge still rules:",
+    "  393 \u00d7 only_oracle (0.012% of oracle rows) \u2014 all 393 replay upstream_timestamptz_dst_shift",
+    "    citations: mimic-fhir/sql/fhir_observation_chartevents.sql:9,67, mimic-fhir/sql/fhir_observation_labevents.sql:15,121, mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65, mimic-fhir/sql/fhir_specimen_lab.sql:18,58, mimic-fhir/sql/fhir_encounter.sql:65, mimic-fhir/sql/fhir_medication_request.sql:43-44, mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69",
+    "  157 \u00d7 only_candidate (0.005% of oracle rows) \u2014 all 157 replay upstream_timestamptz_dst_shift",
+    "    citations: mimic-fhir/sql/fhir_observation_chartevents.sql:9,67, mimic-fhir/sql/fhir_observation_labevents.sql:15,121, mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65, mimic-fhir/sql/fhir_specimen_lab.sql:18,58, mimic-fhir/sql/fhir_encounter.sql:65, mimic-fhir/sql/fhir_medication_request.sql:43-44, mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69",
+    "    example row: {'stay_id': 31327779, 'charttime': datetime.datetime(2133, 3, 8, 3, 0), 'weight__oracle': Decimal('73.200'), 'weight__candidate': Decimal('73.200'), 'urineoutput_6hr__oracle': 530.0, 'urineoutput_6hr__candidate': 455.0, 'urineoutput_12hr__oracle': 530.0, 'urineoutput_12hr__candidate': 455.0, 'urineoutput_24hr__oracle': 530.0, 'urineoutput_24hr__candidate': 455.0, 'uo_rt_6hr__oracle': None, 'uo_rt_6hr__candidate': None, 'uo_rt_12hr__oracle': None, 'uo_rt_12hr__candidate': None, 'uo_rt_24hr__oracle': None, 'uo_rt_24hr__candidate': None, 'uo_tm_6hr__oracle': Decimal('2.566667'), 'uo_tm_6hr__candidate': Decimal('2.566667'), 'uo_tm_12hr__oracle': Decimal('2.566667'), 'uo_tm_12hr__candidate': Decimal('2.566667'), 'uo_tm_24hr__oracle': Decimal('2.566667'), 'uo_tm_24hr__candidate': Decimal('2.566667')}",
+    "  the judge must still confirm: Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element the shifted *key* column is sourced from, (b) that the attributed fraction is consistent with DST-gap rarity, and (c) that both unpaired sets are fully accounted for -- a residual `only_candidate` row is still a row the port invented. Any failing makes this `bug`. Do NOT accept a port that recovers the pre-shift value by reconstructing a resource id: the shift is intrinsic, and inverting the ETL's id-generation is not a mapping.",
+    "3,320,293 of 3,321,748 oracle rows reproduced identically (99.96%)",
+    "note: 2 of 1,062 conflicting rows replay the upstream upstream_timestamptz_dst_shift; 1,060 do not and are unexplained. The tier stays `contested` on those residual rows: diagnose them, not the attributed ones.",
+    "note: 393 `only_oracle` and 157 `only_candidate` rows -- all of them -- are the same rows, re-paired once the oracle key is replayed through the upstream upstream_timestamptz_dst_shift over key column(s) charttime. The port did not lose a row or invent one; the shift moved the row out of its key. Both classes moved to `attributed`, so the diagnostician can be skipped. The judge cannot -- and must not accept a port that recovers the pre-shift key by reconstructing a resource id, which is an inversion of the ETL, not a mapping.",
+    "note: 236 of those rows did not move into an empty key: the replayed key was one the candidate already held, so the row was absorbed into an existing one rather than re-appearing beside it. The conflict at each of those keys is the other half of the same event and is attributed with it -- do not count them as two findings. What the comparator has NOT shown is that the merged value is what this concept's own aggregation would produce from the two source rows; confirm that from the concept SQL."
+  ],
+  "diff": {
+    "classification": "keyed",
+    "columns_candidate_null": {
+      "uo_rt_12hr": 4,
+      "uo_rt_6hr": 4
+    },
+    "columns_conflicting": {
+      "uo_rt_12hr": 337,
+      "uo_rt_24hr": 276,
+      "uo_rt_6hr": 400,
+      "uo_tm_12hr": 370,
+      "uo_tm_24hr": 322,
+      "uo_tm_6hr": 415,
+      "urineoutput_12hr": 252,
+      "urineoutput_24hr": 207,
+      "urineoutput_6hr": 299,
+      "weight": 1
+    },
+    "columns_differing": {
+      "uo_rt_12hr": 341,
+      "uo_rt_24hr": 276,
+      "uo_rt_6hr": 404,
+      "uo_tm_12hr": 370,
+      "uo_tm_24hr": 322,
+      "uo_tm_6hr": 415,
+      "urineoutput_12hr": 252,
+      "urineoutput_24hr": 207,
+      "urineoutput_6hr": 299,
+      "weight": 1
+    },
+    "conflict_attribution": {
+      "attempted": true,
+      "attributed_by_key_collision": 2,
+      "attributed_rows": 2,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "collision_operation": "The oracle row is unpaired and its key, replayed through the upstream America/New_York TIMESTAMPTZ cast, is a key the candidate already holds and already paired with a different oracle row. The shift did not move this row out of its key into an empty one -- it moved it on top of an existing one, so the candidate has one row where the oracle has two and whatever the concept does at that key (a GROUP BY aggregate, a ROW_NUMBER pick) saw one extra source row. The unpaired oracle row and the conflict at the collided key are therefore the same event counted twice, and both are attributed. Checked by semi-join over the unpaired set in full, not sampled. What this does NOT establish is that the candidate's merged value is what the concept would have produced from the two source rows: that depends on the concept's own aggregation, which the comparator does not model. The judge confirms it.",
+      "columns": {},
+      "columns_considered": [],
+      "complete": false,
+      "conflict_rows": 1062,
+      "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+      "residual_rows": 1060,
+      "samples": [
+        {
+          "charttime": "2133-03-08T03:00:00",
+          "stay_id": 31327779,
+          "uo_rt_12hr__candidate": null,
+          "uo_rt_12hr__oracle": null,
+          "uo_rt_24hr__candidate": null,
+          "uo_rt_24hr__oracle": null,
+          "uo_rt_6hr__candidate": null,
+          "uo_rt_6hr__oracle": null,
+          "uo_tm_12hr__candidate": "2.566667",
+          "uo_tm_12hr__oracle": "2.566667",
+          "uo_tm_24hr__candidate": "2.566667",
+          "uo_tm_24hr__oracle": "2.566667",
+          "uo_tm_6hr__candidate": "2.566667",
+          "uo_tm_6hr__oracle": "2.566667",
+          "urineoutput_12hr__candidate": 455.0,
+          "urineoutput_12hr__oracle": 530.0,
+          "urineoutput_24hr__candidate": 455.0,
+          "urineoutput_24hr__oracle": 530.0,
+          "urineoutput_6hr__candidate": 455.0,
+          "urineoutput_6hr__oracle": 530.0,
+          "weight__candidate": "73.200",
+          "weight__oracle": "73.200"
+        },
+        {
+          "charttime": "2198-03-11T03:00:00",
+          "stay_id": 37523171,
+          "uo_rt_12hr__candidate": "0.0887",
+          "uo_rt_12hr__oracle": "0.0900",
+          "uo_rt_24hr__candidate": "0.0946",
+          "uo_rt_24hr__oracle": "0.0960",
+          "uo_rt_6hr__candidate": "0.1017",
+          "uo_rt_6hr__oracle": "0.1032",
+          "uo_tm_12hr__candidate": "13.000000",
+          "uo_tm_12hr__oracle": "13.000000",
+          "uo_tm_24hr__candidate": "25.000000",
+          "uo_tm_24hr__oracle": "25.000000",
+          "uo_tm_6hr__candidate": "7.000000",
+          "uo_tm_6hr__oracle": "7.000000",
+          "urineoutput_12hr__candidate": 136.0,
+          "urineoutput_12hr__oracle": 136.0,
+          "urineoutput_24hr__candidate": 279.0,
+          "urineoutput_24hr__oracle": 279.0,
+          "urineoutput_6hr__candidate": 84.0,
+          "urineoutput_6hr__oracle": 84.0,
+          "weight__candidate": "118.000",
+          "weight__oracle": "116.300"
+        }
+      ],
+      "timezone": "America/New_York"
+    },
+    "differing": 1062,
+    "differing_conflict": 1062,
+    "differing_null_only": 0,
+    "excluded_as_unrepresentable": [],
+    "identical": 3320293,
+    "identical_representable": 3320293,
+    "key": [
+      "stay_id",
+      "charttime"
+    ],
+    "key_attribution": {
+      "attempted": true,
+      "attributed_only_candidate": 157,
+      "attributed_only_oracle": 393,
+      "attributed_only_oracle_collided": 236,
+      "attributed_only_oracle_repaired": 157,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "collision_operation": "The oracle row is unpaired and its key, replayed through the upstream America/New_York TIMESTAMPTZ cast, is a key the candidate already holds and already paired with a different oracle row. The shift did not move this row out of its key into an empty one -- it moved it on top of an existing one, so the candidate has one row where the oracle has two and whatever the concept does at that key (a GROUP BY aggregate, a ROW_NUMBER pick) saw one extra source row. The unpaired oracle row and the conflict at the collided key are therefore the same event counted twice, and both are attributed. Checked by semi-join over the unpaired set in full, not sampled. What this does NOT establish is that the candidate's merged value is what the concept would have produced from the two source rows: that depends on the concept's own aggregation, which the comparator does not model. The judge confirms it.",
+      "complete": true,
+      "keys_considered": [
+        "charttime"
+      ],
+      "only_candidate": 157,
+      "only_oracle": 393,
+      "operation": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+      "residual_only_candidate": 0,
+      "residual_only_oracle": 0,
+      "samples": [
+        {
+          "_route": "key_collision",
+          "charttime": "2180-03-12T02:00:00",
+          "charttime__replayed": "2180-03-12T03:00:00",
+          "stay_id": 31592274
+        },
+        {
+          "_route": "repaired",
+          "charttime": "2147-03-12T02:34:00",
+          "charttime__replayed": "2147-03-12T03:34:00",
+          "stay_id": 36404931
+        },
+        {
+          "_route": "key_collision",
+          "charttime": "2181-03-11T02:00:00",
+          "charttime__replayed": "2181-03-11T03:00:00",
+          "stay_id": 30470702
+        },
+        {
+          "_route": "repaired",
+          "charttime": "2122-03-08T02:00:00",
+          "charttime__replayed": "2122-03-08T03:00:00",
+          "stay_id": 36518555
+        },
+        {
+          "_route": "repaired",
+          "charttime": "2129-03-13T02:00:00",
+          "charttime__replayed": "2129-03-13T03:00:00",
+          "stay_id": 31172373
+        },
+        {
+          "_route": "repaired",
+          "charttime": "2122-03-08T02:12:00",
+          "charttime__replayed": "2122-03-08T03:12:00",
+          "stay_id": 32409601
+        },
+        {
+          "_route": "repaired",
+          "charttime": "2172-03-08T02:00:00",
+          "charttime__replayed": "2172-03-08T03:00:00",
+          "stay_id": 39699274
+        },
+        {
+          "_route": "key_collision",
+          "charttime": "2169-03-12T02:00:00",
+          "charttime__replayed": "2169-03-12T03:00:00",
+          "stay_id": 38848667
+        },
+        {
+          "_route": "key_collision",
+          "charttime": "2137-03-10T02:00:00",
+          "charttime__replayed": "2137-03-10T03:00:00",
+          "stay_id": 34245461
+        },
+        {
+          "_route": "key_collision",
+          "charttime": "2167-03-08T02:00:00",
+          "charttime__replayed": "2167-03-08T03:00:00",
+          "stay_id": 30181957
+        },
+        {
+          "_route": "key_collision",
+          "charttime": "2163-03-13T02:00:00",
+          "charttime__replayed": "2163-03-13T03:00:00",
+          "stay_id": 38018615
+        },
+        {
+          "_route": "key_collision",
+          "charttime": "2117-03-14T02:00:00",
+          "charttime__replayed": "2117-03-14T03:00:00",
+          "stay_id": 32016379
+        },
+        {
+          "_route": "repaired",
+          "charttime": "2138-03-09T02:00:00",
+          "charttime__replayed": "2138-03-09T03:00:00",
+          "stay_id": 35425086
+        },
+        {
+          "_route": "repaired",
+          "charttime": "2123-03-14T02:00:00",
+          "charttime__replayed": "2123-03-14T03:00:00",
+          "stay_id": 37193328
+        },
+        {
+          "_route": "key_collision",
+          "charttime": "2144-03-08T02:00:00",
+          "charttime__replayed": "2144-03-08T03:00:00",
+          "stay_id": 31790383
+        },
+        {
+          "_route": "key_collision",
+          "charttime": "2129-03-13T02:00:00",
+          "charttime__replayed": "2129-03-13T03:00:00",
+          "stay_id": 39926013
+        },
+        {
+          "_route": "repaired",
+          "charttime": "2133-03-08T02:41:00",
+          "charttime__replayed": "2133-03-08T03:41:00",
+          "stay_id": 31327779
+        },
+        {
+          "_route": "repaired",
+          "charttime": "2178-03-08T02:00:00",
+          "charttime__replayed": "2178-03-08T03:00:00",
+          "stay_id": 36203676
+        },
+        {
+          "_route": "key_collision",
+          "charttime": "2178-03-08T02:00:00",
+          "charttime__replayed": "2178-03-08T03:00:00",
+          "stay_id": 36201281
+        },
+        {
+          "_route": "repaired",
+          "charttime": "2135-03-13T02:00:00",
+          "charttime__replayed": "2135-03-13T03:00:00",
+          "stay_id": 34789595
+        }
+      ],
+      "timezone": "America/New_York"
+    },
+    "only_candidate": 157,
+    "only_oracle": 393,
+    "samples": {
+      "differing_conflict": [
+        {
+          "charttime": "2144-03-08T09:00:00",
+          "stay_id": 36558687,
+          "uo_rt_12hr__candidate": "0.5324",
+          "uo_rt_12hr__oracle": "0.5324",
+          "uo_rt_24hr__candidate": "0.5364",
+          "uo_rt_24hr__oracle": "0.5364",
+          "uo_rt_6hr__candidate": "0.4211",
+          "uo_rt_6hr__oracle": "0.3609",
+          "uo_tm_12hr__candidate": "13.000000",
+          "uo_tm_12hr__oracle": "13.000000",
+          "uo_tm_24hr__candidate": "26.000000",
+          "uo_tm_24hr__oracle": "26.000000",
+          "uo_tm_6hr__candidate": "8.000000",
+          "uo_tm_6hr__oracle": "7.000000",
+          "urineoutput_12hr__candidate": 1315.0,
+          "urineoutput_12hr__oracle": 1315.0,
+          "urineoutput_24hr__candidate": 2650.0,
+          "urineoutput_24hr__oracle": 2650.0,
+          "urineoutput_6hr__candidate": 640.0,
+          "urineoutput_6hr__oracle": 480.0,
+          "weight__candidate": "190.000",
+          "weight__oracle": "190.000"
+        },
+        {
+          "charttime": "2144-03-08T15:00:00",
+          "stay_id": 36558687,
+          "uo_rt_12hr__candidate": "0.7293",
+          "uo_rt_12hr__oracle": "0.7206",
+          "uo_rt_24hr__candidate": "0.7053",
+          "uo_rt_24hr__oracle": "0.7053",
+          "uo_rt_6hr__candidate": "1.0075",
+          "uo_rt_6hr__oracle": "1.0075",
+          "uo_tm_12hr__candidate": "14.000000",
+          "uo_tm_12hr__oracle": "13.000000",
+          "uo_tm_24hr__candidate": "25.000000",
+          "uo_tm_24hr__oracle": "25.000000",
+          "uo_tm_6hr__candidate": "7.000000",
+          "uo_tm_6hr__oracle": "7.000000",
+          "urineoutput_12hr__candidate": 1940.0,
+          "urineoutput_12hr__oracle": 1780.0,
+          "urineoutput_24hr__candidate": 3350.0,
+          "urineoutput_24hr__oracle": 3350.0,
+          "urineoutput_6hr__candidate": 1340.0,
+          "urineoutput_6hr__oracle": 1340.0,
+          "weight__candidate": "190.000",
+          "weight__oracle": "190.000"
+        },
+        {
+          "charttime": "2144-03-09T03:00:00",
+          "stay_id": 36558687,
+          "uo_rt_12hr__candidate": "1.6032",
+          "uo_rt_12hr__oracle": "1.6032",
+          "uo_rt_24hr__candidate": "1.1437",
+          "uo_rt_24hr__oracle": "1.1558",
+          "uo_rt_6hr__candidate": "1.6165",
+          "uo_rt_6hr__oracle": "1.6165",
+          "uo_tm_12hr__candidate": "13.000000",
+          "uo_tm_12hr__oracle": "13.000000",
+          "uo_tm_24hr__candidate": "26.000000",
+          "uo_tm_24hr__oracle": "25.000000",
+          "uo_tm_6hr__candidate": "7.000000",
+          "uo_tm_6hr__oracle": "7.000000",
+          "urineoutput_12hr__candidate": 3960.0,
+          "urineoutput_12hr__oracle": 3960.0,
+          "urineoutput_24hr__candidate": 5650.0,
+          "urineoutput_24hr__oracle": 5490.0,
+          "urineoutput_6hr__candidate": 2150.0,
+          "urineoutput_6hr__oracle": 2150.0,
+          "weight__candidate": "190.000",
+          "weight__oracle": "190.000"
+        },
+        {
+          "charttime": "2120-03-10T09:00:00",
+          "stay_id": 35880048,
+          "uo_rt_12hr__candidate": "0.6718",
+          "uo_rt_12hr__oracle": "0.6718",
+          "uo_rt_24hr__candidate": null,
+          "uo_rt_24hr__oracle": null,
+          "uo_rt_6hr__candidate": "0.4944",
+          "uo_rt_6hr__oracle": "0.5448",
+          "uo_tm_12hr__candidate": "12.300000",
+          "uo_tm_12hr__oracle": "12.300000",
+          "uo_tm_24hr__candidate": "12.300000",
+          "uo_tm_24hr__oracle": "12.300000",
+          "uo_tm_6hr__candidate": "8.000000",
+          "uo_tm_6hr__oracle": "7.000000",
+          "urineoutput_12hr__candidate": 585.0,
+          "urineoutput_12hr__oracle": 585.0,
+          "urineoutput_24hr__candidate": 585.0,
+          "urineoutput_24hr__oracle": 585.0,
+          "urineoutput_6hr__candidate": 280.0,
+          "urineoutput_6hr__oracle": 270.0,
+          "weight__candidate": "70.800",
+          "weight__oracle": "70.800"
+        },
+        {
+          "charttime": "2120-03-10T15:00:00",
+          "stay_id": 35880048,
+          "uo_rt_12hr__candidate": "0.4389",
+          "uo_rt_12hr__oracle": "0.4618",
+          "uo_rt_24hr__candidate": null,
+          "uo_rt_24hr__oracle": null,
+          "uo_rt_6hr__candidate": "0.3733",
+          "uo_rt_6hr__oracle": "0.3733",
+          "uo_tm_12hr__candidate": "14.000000",
+          "uo_tm_12hr__oracle": "13.000000",
+          "uo_tm_24hr__candidate": "18.300000",
+          "uo_tm_24hr__oracle": "18.300000",
+          "uo_tm_6hr__candidate": "7.000000",
+          "uo_tm_6hr__oracle": "7.000000",
+          "urineoutput_12hr__candidate": 435.0,
+          "urineoutput_12hr__oracle": 425.0,
+          "urineoutput_24hr__candidate": 740.0,
+          "urineoutput_24hr__oracle": 740.0,
+          "urineoutput_6hr__candidate": 185.0,
+          "urineoutput_6hr__oracle": 185.0,
+          "weight__candidate": "70.800",
+          "weight__oracle": "70.800"
+        },
+        {
+          "charttime": "2150-03-08T08:18:00",
+          "stay_id": 30245448,
+          "uo_rt_12hr__candidate": "0.9020",
+          "uo_rt_12hr__oracle": "0.9020",
+          "uo_rt_24hr__candidate": "0.9224",
+          "uo_rt_24hr__oracle": "0.9224",
+          "uo_rt_6hr__candidate": "1.1476",
+          "uo_rt_6hr__oracle": "1.2698",
+          "uo_tm_12hr__candidate": "12.300000",
+          "uo_tm_12hr__oracle": "12.300000",
+          "uo_tm_24hr__candidate": "24.300000",
+          "uo_tm_24hr__oracle": "24.300000",
+          "uo_tm_6hr__candidate": "7.300000",
+          "uo_tm_6hr__oracle": "6.300000",
+          "urineoutput_12hr__candidate": 1470.0,
+          "urineoutput_12hr__oracle": 1470.0,
+          "urineoutput_24hr__candidate": 2970.0,
+          "urineoutput_24hr__oracle": 2970.0,
+          "urineoutput_6hr__candidate": 1110.0,
+          "urineoutput_6hr__oracle": 1060.0,
+          "weight__candidate": "132.500",
+          "weight__oracle": "132.500"
+        },
+        {
+          "charttime": "2150-03-08T14:13:00",
+          "stay_id": 30245448,
+          "uo_rt_12hr__candidate": "1.2106",
+          "uo_rt_12hr__oracle": "1.2788",
+          "uo_rt_24hr__candidate": "1.0385",
+          "uo_rt_24hr__oracle": "1.0385",
+          "uo_rt_6hr__candidate": "1.2951",
+          "uo_rt_6hr__oracle": "1.2951",
+          "uo_tm_12hr__candidate": "13.216667",
+          "uo_tm_12hr__oracle": "12.216667",
+          "uo_tm_24hr__candidate": "25.216667",
+          "uo_tm_24hr__oracle": "25.216667",
+          "uo_tm_6hr__candidate": "8.216667",
+          "uo_tm_6hr__oracle": "8.216667",
+          "urineoutput_12hr__candidate": 2120.0,
+          "urineoutput_12hr__oracle": 2070.0,
+          "urineoutput_24hr__candidate": 3470.0,
+          "urineoutput_24hr__oracle": 3470.0,
+          "urineoutput_6hr__candidate": 1410.0,
+          "urineoutput_6hr__oracle": 1410.0,
+          "weight__candidate": "132.500",
+          "weight__oracle": "132.500"
+        },
+        {
+          "charttime": "2150-03-08T15:00:00",
+          "stay_id": 30245448,
+          "uo_rt_12hr__candidate": "1.2075",
+          "uo_rt_12hr__oracle": "1.2714",
+          "uo_rt_24hr__candidate": "1.0421",
+          "uo_rt_24hr__oracle": "1.0421",
+          "uo_rt_6hr__candidate": "1.2729",
+          "uo_rt_6hr__oracle": "1.2729",
+          "uo_tm_12hr__candidate": "14.000000",
+          "uo_tm_12hr__oracle": "13.000000",
+          "uo_tm_24hr__candidate": "26.000000",
+          "uo_tm_24hr__oracle": "26.000000",
+          "uo_tm_6hr__candidate": "6.700000",
+          "uo_tm_6hr__oracle": "6.700000",
+          "urineoutput_12hr__candidate": 2240.0,
+          "urineoutput_12hr__oracle": 2190.0,
+          "urineoutput_24hr__candidate": 3590.0,
+          "urineoutput_24hr__oracle": 3590.0,
+          "urineoutput_6hr__candidate": 1130.0,
+          "urineoutput_6hr__oracle": 1130.0,
+          "weight__candidate": "132.500",
+          "weight__oracle": "132.500"
+        },
+        {
+          "charttime": "2150-03-09T03:00:00",
+          "stay_id": 30245448,
+          "uo_rt_12hr__candidate": "1.4518",
+          "uo_rt_12hr__oracle": "1.4518",
+          "uo_rt_24hr__candidate": "1.3523",
+          "uo_rt_24hr__oracle": "1.3908",
+          "uo_rt_6hr__candidate": "1.6221",
+          "uo_rt_6hr__oracle": "1.6221",
+          "uo_tm_12hr__candidate": "12.783333",
+          "uo_tm_12hr__oracle": "12.783333",
+          "uo_tm_24hr__candidate": "26.000000",
+          "uo_tm_24hr__oracle": "25.000000",
+          "uo_tm_6hr__candidate": "7.000000",
+          "uo_tm_6hr__oracle": "7.000000",
+          "urineoutput_12hr__candidate": 2370.0,
+          "urineoutput_12hr__oracle": 2370.0,
+          "urineoutput_24hr__candidate": 4490.0,
+          "urineoutput_24hr__oracle": 4440.0,
+          "urineoutput_6hr__candidate": 1450.0,
+          "urineoutput_6hr__oracle": 1450.0,
+          "weight__candidate": "127.700",
+          "weight__oracle": "127.700"
+        },
+        {
+          "charttime": "2184-03-14T09:00:00",
+          "stay_id": 36755903,
+          "uo_rt_12hr__candidate": "1.5799",
+          "uo_rt_12hr__oracle": "1.5799",
+          "uo_rt_24hr__candidate": null,
+          "uo_rt_24hr__oracle": null,
+          "uo_rt_6hr__candidate": "0.7385",
+          "uo_rt_6hr__oracle": "0.7159",
+          "uo_tm_12hr__candidate": "13.000000",
+          "uo_tm_12hr__oracle": "13.000000",
+          "uo_tm_24hr__candidate": "19.000000",
+          "uo_tm_24hr__oracle": "19.000000",
+          "uo_tm_6hr__candidate": "8.000000",
+          "uo_tm_6hr__oracle": "7.000000",
+          "urineoutput_12hr__candidate": 1832.0,
+          "urineoutput_12hr__oracle": 1832.0,
+          "urineoutput_24hr__candidate": 2372.0,
+          "urineoutput_24hr__oracle": 2372.0,
+          "urineoutput_6hr__candidate": 527.0,
+          "urineoutput_6hr__oracle": 447.0,
+          "weight__candidate": "89.200",
+          "weight__oracle": "89.200"
+        },
+        {
+          "charttime": "2184-03-14T15:00:00",
+          "stay_id": 36755903,
+          "uo_rt_12hr__candidate": "1.1988",
+          "uo_rt_12hr__oracle": "1.2220",
+          "uo_rt_24hr__candidate": "1.4987",
+          "uo_rt_24hr__oracle": "1.4987",
+          "uo_rt_6hr__candidate": "1.8177",
+          "uo_rt_6hr__oracle": "1.8177",
+          "uo_tm_12hr__candidate": "14.000000",
+          "uo_tm_12hr__oracle": "13.000000",
+          "uo_tm_24hr__candidate": "25.000000",
+          "uo_tm_24hr__oracle": "25.000000",
+          "uo_tm_6hr__candidate": "7.000000",
+          "uo_tm_6hr__oracle": "7.000000",
+          "urineoutput_12hr__candidate": 1497.0,
+          "urineoutput_12hr__oracle": 1417.0,
+          "urineoutput_24hr__candidate": 3342.0,
+          "urineoutput_24hr__oracle": 3342.0,
+          "urineoutput_6hr__candidate": 1135.0,
+          "urineoutput_6hr__oracle": 1135.0,
+          "weight__candidate": "89.200",
+          "weight__oracle": "89.200"
+        },
+        {
+          "charttime": "2184-03-15T03:00:00",
+          "stay_id": 36755903,
+          "uo_rt_12hr__candidate": "0.7503",
+          "uo_rt_12hr__oracle": "0.7503",
+          "uo_rt_24hr__candidate": "0.9775",
+          "uo_rt_24hr__oracle": "0.9807",
+          "uo_rt_6hr__candidate": "0.8088",
+          "uo_rt_6hr__oracle": "0.8088",
+          "uo_tm_12hr__candidate": "13.000000",
+          "uo_tm_12hr__oracle": "13.000000",
+          "uo_tm_24hr__candidate": "26.000000",
+          "uo_tm_24hr__oracle": "25.000000",
+          "uo_tm_6hr__candidate": "7.000000",
+          "uo_tm_6hr__oracle": "7.000000",
+          "urineoutput_12hr__candidate": 870.0,
+          "urineoutput_12hr__oracle": 870.0,
+          "urineoutput_24hr__candidate": 2267.0,
+          "urineoutput_24hr__oracle": 2187.0,
+          "urineoutput_6hr__candidate": 505.0,
+          "urineoutput_6hr__oracle": 505.0,
+          "weight__candidate": "89.200",
+          "weight__oracle": "89.200"
+        },
+        {
+          "charttime": "2145-03-14T09:00:00",
+          "stay_id": 34056334,
+          "uo_rt_12hr__candidate": "1.6141",
+          "uo_rt_12hr__oracle": "1.6141",
+          "uo_rt_24hr__candidate": "1.5449",
+          "uo_rt_24hr__oracle": "1.5449",
+          "uo_rt_6hr__candidate": "1.6187",
+          "uo_rt_6hr__oracle": "1.7986",
+          "uo_tm_12hr__candidate": "13.000000",
+          "uo_tm_12hr__oracle": "13.000000",
+          "uo_tm_24hr__candidate": "26.000000",
+          "uo_tm_24hr__oracle": "26.000000",
+          "uo_tm_6hr__candidate": "10.000000",
+          "uo_tm_6hr__oracle": "7.000000",
+          "urineoutput_12hr__candidate": 875.0,
+          "urineoutput_12hr__oracle": 875.0,
+          "urineoutput_24hr__candidate": 1675.0,
+          "urineoutput_24hr__oracle": 1675.0,
+          "urineoutput_6hr__candidate": 675.0,
+          "urineoutput_6hr__oracle": 525.0,
+          "weight__candidate": "41.700",
+          "weight__oracle": "41.700"
+        },
+        {
+          "charttime": "2145-03-14T10:00:00",
+          "stay_id": 34056334,
+          "uo_rt_12hr__candidate": "1.8414",
+          "uo_rt_12hr__oracle": "1.8414",
+          "uo_rt_24hr__candidate": "1.6653",
+          "uo_rt_24hr__oracle": "1.6653",
+          "uo_rt_6hr__candidate": "2.4837",
+          "uo_rt_6hr__oracle": "2.1733",
+          "uo_tm_12hr__candidate": "14.000000",
+          "uo_tm_12hr__oracle": "14.000000",
+          "uo_tm_24hr__candidate": "27.000000",
+          "uo_tm_24hr__oracle": "27.000000",
+          "uo_tm_6hr__candidate": "7.000000",
+          "uo_tm_6hr__oracle": "8.000000",
+          "urineoutput_12hr__candidate": 1075.0,
+          "urineoutput_12hr__oracle": 1075.0,
+          "urineoutput_24hr__candidate": 1875.0,
+          "urineoutput_24hr__oracle": 1875.0,
+          "urineoutput_6hr__candidate": 725.0,
+          "urineoutput_6hr__oracle": 725.0,
+          "weight__candidate": "41.700",
+          "weight__oracle": "41.700"
+        },
+        {
+          "charttime": "2145-03-14T16:00:00",
+          "stay_id": 34056334,
+          "uo_rt_12hr__candidate": "2.2136",
+          "uo_rt_12hr__oracle": "2.0555",
+          "uo_rt_24hr__candidate": "1.7063",
+          "uo_rt_24hr__oracle": "1.7063",
+          "uo_rt_6hr__candidate": "2.3124",
+          "uo_rt_6hr__oracle": "2.3124",
+          "uo_tm_12hr__candidate": "13.000000",
+          "uo_tm_12hr__oracle": "14.000000",
+          "uo_tm_24hr__candidate": "26.000000",
+          "uo_tm_24hr__oracle": "26.000000",
+          "uo_tm_6hr__candidate": "7.000000",
+          "uo_tm_6hr__oracle": "7.000000",
+          "urineoutput_12hr__candidate": 1200.0,
+          "urineoutput_12hr__oracle": 1200.0,
+          "urineoutput_24hr__candidate": 1850.0,
+          "urineoutput_24hr__oracle": 1850.0,
+          "urineoutput_6hr__candidate": 675.0,
+          "urineoutput_6hr__oracle": 675.0,
+          "weight__candidate": "41.700",
+          "weight__oracle": "41.700"
+        },
+        {
+          "charttime": "2145-03-15T03:00:00",
+          "stay_id": 34056334,
+          "uo_rt_12hr__candidate": "2.0753",
+          "uo_rt_12hr__oracle": "2.0753",
+          "uo_rt_24hr__candidate": "1.9484",
+          "uo_rt_24hr__oracle": "2.0384",
+          "uo_rt_6hr__candidate": "1.9484",
+          "uo_rt_6hr__oracle": "1.9484",
+          "uo_tm_12hr__candidate": "13.000000",
+          "uo_tm_12hr__oracle": "13.000000",
+          "uo_tm_24hr__candidate": "28.000000",
+          "uo_tm_24hr__oracle": "25.000000",
+          "uo_tm_6hr__candidate": "8.000000",
+          "uo_tm_6hr__oracle": "8.000000",
+          "urineoutput_12hr__candidate": 1125.0,
+          "urineoutput_12hr__oracle": 1125.0,
+          "urineoutput_24hr__candidate": 2275.0,
+          "urineoutput_24hr__oracle": 2125.0,
+          "urineoutput_6hr__candidate": 650.0,
+          "urineoutput_6hr__oracle": 650.0,
+          "weight__candidate": "41.700",
+          "weight__oracle": "41.700"
+        },
+        {
+          "charttime": "2171-03-10T09:00:00",
+          "stay_id": 36572050,
+          "uo_rt_12hr__candidate": "0.8400",
+          "uo_rt_12hr__oracle": "0.8400",
+          "uo_rt_24hr__candidate": "1.1566",
+          "uo_rt_24hr__oracle": "1.1566",
+          "uo_rt_6hr__candidate": "0.9692",
+          "uo_rt_6hr__oracle": "1.0302",
+          "uo_tm_12hr__candidate": "13.000000",
+          "uo_tm_12hr__oracle": "13.000000",
+          "uo_tm_24hr__candidate": "25.000000",
+          "uo_tm_24hr__oracle": "25.000000",
+          "uo_tm_6hr__candidate": "9.000000",
+          "uo_tm_6hr__oracle": "7.000000",
+          "urineoutput_12hr__candidate": 795.0,
+          "urineoutput_12hr__oracle": 795.0,
+          "urineoutput_24hr__candidate": 2105.0,
+          "urineoutput_24hr__oracle": 2105.0,
+          "urineoutput_6hr__candidate": 635.0,
+          "urineoutput_6hr__oracle": 525.0,
+          "weight__candidate": "72.800",
+          "weight__oracle": "72.800"
+        },
+        {
+          "charttime": "2171-03-10T09:28:00",
+          "stay_id": 36572050,
+          "uo_rt_12hr__candidate": "0.8874",
+          "uo_rt_12hr__oracle": "0.8874",
+          "uo_rt_24hr__candidate": "1.1818",
+          "uo_rt_24hr__oracle": "1.1818",
+          "uo_rt_6hr__candidate": "1.2745",
+          "uo_rt_6hr__oracle": "1.1038",
+          "uo_tm_12hr__candidate": "13.466667",
+          "uo_tm_12hr__oracle": "13.466667",
+          "uo_tm_24hr__candidate": "24.466667",
+          "uo_tm_24hr__oracle": "24.466667",
+          "uo_tm_6hr__candidate": "6.466667",
+          "uo_tm_6hr__oracle": "7.466667",
+          "urineoutput_12hr__candidate": 870.0,
+          "urineoutput_12hr__oracle": 870.0,
+          "urineoutput_24hr__candidate": 2105.0,
+          "urineoutput_24hr__oracle": 2105.0,
+          "urineoutput_6hr__candidate": 600.0,
+          "urineoutput_6hr__oracle": 600.0,
+          "weight__candidate": "72.800",
+          "weight__oracle": "72.800"
+        },
+        {
+          "charttime": "2132-03-09T09:00:00",
+          "stay_id": 39378580,
+          "uo_rt_12hr__candidate": "1.2309",
+          "uo_rt_12hr__oracle": "1.2309",
+          "uo_rt_24hr__candidate": "1.2150",
+          "uo_rt_24hr__oracle": "1.2150",
+          "uo_rt_6hr__candidate": "1.3487",
+          "uo_rt_6hr__oracle": "1.0761",
+          "uo_tm_12hr__candidate": "13.000000",
+          "uo_tm_12hr__oracle": "13.000000",
+          "uo_tm_24hr__candidate": "25.000000",
+          "uo_tm_24hr__oracle": "25.000000",
+          "uo_tm_6hr__candidate": "8.000000",
+          "uo_tm_6hr__oracle": "7.000000",
+          "urineoutput_12hr__candidate": 1965.0,
+          "urineoutput_12hr__oracle": 1965.0,
+          "urineoutput_24hr__candidate": 3730.0,
+          "urineoutput_24hr__oracle": 3730.0,
+          "urineoutput_6hr__candidate": 1325.0,
+          "urineoutput_6hr__oracle": 925.0,
+          "weight__candidate": "122.800",
+          "weight__oracle": "122.800"
+        },
+        {
+          "charttime": "2132-03-09T15:00:00",
+          "stay_id": 39378580,
+          "uo_rt_12hr__candidate": "1.1139",
+          "uo_rt_12hr__oracle": "0.9490",
+          "uo_rt_24hr__candidate": "0.9121",
+          "uo_rt_24hr__oracle": "0.9121",
+          "uo_rt_6hr__candidate": "1.0819",
+          "uo_rt_6hr__oracle": "1.0819",
+          "uo_tm_12hr__candidate": "14.000000",
+          "uo_tm_12hr__oracle": "13.000000",
+          "uo_tm_24hr__candidate": "25.000000",
+          "uo_tm_24hr__oracle": "25.000000",
+          "uo_tm_6hr__candidate": "7.000000",
+          "uo_tm_6hr__oracle": "7.000000",
+          "urineoutput_12hr__candidate": 1915.0,
+          "urineoutput_12hr__oracle": 1515.0,
+          "urineoutput_24hr__candidate": 2800.0,
+          "urineoutput_24hr__oracle": 2800.0,
+          "urineoutput_6hr__candidate": 930.0,
+          "urineoutput_6hr__oracle": 930.0,
+          "weight__candidate": "122.800",
+          "weight__oracle": "122.800"
+        }
+      ],
+      "differing_null_only": [],
+      "only_candidate": [
+        {
+          "charttime": "2164-03-11T03:13:00",
+          "stay_id": 32404280
+        },
+        {
+          "charttime": "2175-03-12T03:00:00",
+          "stay_id": 30531473
+        },
+        {
+          "charttime": "2187-03-11T03:10:00",
+          "stay_id": 33443524
+        },
+        {
+          "charttime": "2143-03-10T03:00:00",
+          "stay_id": 34623389
+        },
+        {
+          "charttime": "2143-03-10T03:00:00",
+          "stay_id": 33273388
+        },
+        {
+          "charttime": "2186-03-12T03:00:00",
+          "stay_id": 38150916
+        },
+        {
+          "charttime": "2136-03-11T03:00:00",
+          "stay_id": 31195694
+        },
+        {
+          "charttime": "2144-03-08T03:00:00",
+          "stay_id": 37579482
+        },
+        {
+          "charttime": "2181-03-11T03:00:00",
+          "stay_id": 33904641
+        },
+        {
+          "charttime": "2176-03-10T03:15:00",
+          "stay_id": 33223904
+        },
+        {
+          "charttime": "2122-03-08T03:00:00",
+          "stay_id": 36518555
+        },
+        {
+          "charttime": "2130-03-12T03:08:00",
+          "stay_id": 33250164
+        },
+        {
+          "charttime": "2184-03-14T03:00:00",
+          "stay_id": 31476847
+        },
+        {
+          "charttime": "2128-03-14T03:00:00",
+          "stay_id": 34840954
+        },
+        {
+          "charttime": "2178-03-08T03:00:00",
+          "stay_id": 37466981
+        },
+        {
+          "charttime": "2138-03-09T03:00:00",
+          "stay_id": 35425086
+        },
+        {
+          "charttime": "2205-03-10T03:46:00",
+          "stay_id": 33139342
+        },
+        {
+          "charttime": "2170-03-11T03:04:00",
+          "stay_id": 30352770
+        },
+        {
+          "charttime": "2148-03-10T03:10:00",
+          "stay_id": 35951426
+        },
+        {
+          "charttime": "2141-03-12T03:00:00",
+          "stay_id": 39655034
+        }
+      ],
+      "only_oracle": [
+        {
+          "charttime": "2198-03-11T02:00:00",
+          "stay_id": 37523171
+        },
+        {
+          "charttime": "2159-03-11T02:00:00",
+          "stay_id": 32074674
+        },
+        {
+          "charttime": "2123-03-14T02:00:00",
+          "stay_id": 31413218
+        },
+        {
+          "charttime": "2150-03-08T02:00:00",
+          "stay_id": 32116793
+        },
+        {
+          "charttime": "2148-03-10T02:00:00",
+          "stay_id": 39481148
+        },
+        {
+          "charttime": "2150-03-08T02:00:00",
+          "stay_id": 38824235
+        },
+        {
+          "charttime": "2165-03-10T02:00:00",
+          "stay_id": 34291164
+        },
+        {
+          "charttime": "2144-03-08T02:00:00",
+          "stay_id": 36558687
+        },
+        {
+          "charttime": "2115-03-10T02:00:00",
+          "stay_id": 34276548
+        },
+        {
+          "charttime": "2194-03-09T02:00:00",
+          "stay_id": 35700773
+        },
+        {
+          "charttime": "2205-03-10T02:46:00",
+          "stay_id": 33139342
+        },
+        {
+          "charttime": "2141-03-12T02:00:00",
+          "stay_id": 36952026
+        },
+        {
+          "charttime": "2116-03-08T02:00:00",
+          "stay_id": 32926220
+        },
+        {
+          "charttime": "2116-03-08T02:00:00",
+          "stay_id": 39390511
+        },
+        {
+          "charttime": "2199-03-10T02:00:00",
+          "stay_id": 31586591
+        },
+        {
+          "charttime": "2136-03-11T02:00:00",
+          "stay_id": 31186320
+        },
+        {
+          "charttime": "2148-03-10T02:00:00",
+          "stay_id": 33553741
+        },
+        {
+          "charttime": "2138-03-09T02:00:00",
+          "stay_id": 31647315
+        },
+        {
+          "charttime": "2145-03-14T02:00:00",
+          "stay_id": 35446322
+        },
+        {
+          "charttime": "2166-03-09T02:00:00",
+          "stay_id": 35579300
+        }
+      ]
+    }
+  },
+  "divergence": {
+    "attributed": [
+      {
+        "attributed_rows": 393,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "class": "only_oracle",
+        "count": 393,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element the shifted *key* column is sourced from, (b) that the attributed fraction is consistent with DST-gap rarity, and (c) that both unpaired sets are fully accounted for -- a residual `only_candidate` row is still a row the port invented. Any failing makes this `bug`. Do NOT accept a port that recovers the pre-shift value by reconstructing a resource id: the shift is intrinsic, and inverting the ETL's id-generation is not a mapping.",
+        "keys": [
+          "charttime"
+        ],
+        "proof": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      },
+      {
+        "attributed_rows": 157,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "class": "only_candidate",
+        "count": 157,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element the shifted *key* column is sourced from, (b) that the attributed fraction is consistent with DST-gap rarity, and (c) that both unpaired sets are fully accounted for -- a residual `only_candidate` row is still a row the port invented. Any failing makes this `bug`. Do NOT accept a port that recovers the pre-shift value by reconstructing a resource id: the shift is intrinsic, and inverting the ETL's id-generation is not a mapping.",
+        "keys": [
+          "charttime"
+        ],
+        "proof": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      }
+    ],
+    "blocking": [
+      {
+        "class": "differing_conflict",
+        "count": 1062,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "classification": "keyed",
+    "conflict_attribution": {
+      "attempted": true,
+      "attributed_by_key_collision": 2,
+      "attributed_rows": 2,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "collision_operation": "The oracle row is unpaired and its key, replayed through the upstream America/New_York TIMESTAMPTZ cast, is a key the candidate already holds and already paired with a different oracle row. The shift did not move this row out of its key into an empty one -- it moved it on top of an existing one, so the candidate has one row where the oracle has two and whatever the concept does at that key (a GROUP BY aggregate, a ROW_NUMBER pick) saw one extra source row. The unpaired oracle row and the conflict at the collided key are therefore the same event counted twice, and both are attributed. Checked by semi-join over the unpaired set in full, not sampled. What this does NOT establish is that the candidate's merged value is what the concept would have produced from the two source rows: that depends on the concept's own aggregation, which the comparator does not model. The judge confirms it.",
+      "columns": {},
+      "columns_considered": [],
+      "complete": false,
+      "conflict_rows": 1062,
+      "operation": "For every conflicting row, the candidate value equals the oracle value round-tripped through a America/New_York TIMESTAMPTZ cast (`timezone(tz, timezone(tz, oracle))`), and differs from the oracle only where that round-trip is not the identity -- i.e. the oracle wall time falls in the DST spring-forward gap. This is the operation the upstream mimic-fhir ETL performs before writing the FHIR element, replayed and checked row by row over the whole conflict set, not sampled.",
+      "residual_rows": 1060,
+      "timezone": "America/New_York"
+    },
+    "contested": [
+      {
+        "class": "differing_conflict",
+        "count": 1062,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "declared_unrepresentable": {},
+    "diagnostician_required": true,
+    "gap_shaped": [],
+    "identical_fraction": 0.999562,
+    "identical_rows": 3320293,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "key_attribution": {
+      "attempted": true,
+      "attributed_only_candidate": 157,
+      "attributed_only_oracle": 393,
+      "attributed_only_oracle_collided": 236,
+      "attributed_only_oracle_repaired": 157,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "collision_operation": "The oracle row is unpaired and its key, replayed through the upstream America/New_York TIMESTAMPTZ cast, is a key the candidate already holds and already paired with a different oracle row. The shift did not move this row out of its key into an empty one -- it moved it on top of an existing one, so the candidate has one row where the oracle has two and whatever the concept does at that key (a GROUP BY aggregate, a ROW_NUMBER pick) saw one extra source row. The unpaired oracle row and the conflict at the collided key are therefore the same event counted twice, and both are attributed. Checked by semi-join over the unpaired set in full, not sampled. What this does NOT establish is that the candidate's merged value is what the concept would have produced from the two source rows: that depends on the concept's own aggregation, which the comparator does not model. The judge confirms it.",
+      "complete": true,
+      "keys_considered": [
+        "charttime"
+      ],
+      "only_candidate": 157,
+      "only_oracle": 393,
+      "operation": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+      "residual_only_candidate": 0,
+      "residual_only_oracle": 0,
+      "timezone": "America/New_York"
+    },
+    "notes": [
+      "2 of 1,062 conflicting rows replay the upstream upstream_timestamptz_dst_shift; 1,060 do not and are unexplained. The tier stays `contested` on those residual rows: diagnose them, not the attributed ones.",
+      "393 `only_oracle` and 157 `only_candidate` rows -- all of them -- are the same rows, re-paired once the oracle key is replayed through the upstream upstream_timestamptz_dst_shift over key column(s) charttime. The port did not lose a row or invent one; the shift moved the row out of its key. Both classes moved to `attributed`, so the diagnostician can be skipped. The judge cannot -- and must not accept a port that recovers the pre-shift key by reconstructing a resource id, which is an inversion of the ETL, not a mapping.",
+      "236 of those rows did not move into an empty key: the replayed key was one the candidate already held, so the row was absorbed into an existing one rather than re-appearing beside it. The conflict at each of those keys is the other half of the same event and is attributed with it -- do not count them as two findings. What the comparator has NOT shown is that the merged value is what this concept's own aggregation would produce from the two source rows; confirm that from the concept SQL."
+    ],
+    "oracle_rows": 3321748,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [
+      {
+        "class": "differing_conflict",
+        "count": 1062,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      },
+      {
+        "attributed_rows": 393,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "class": "only_oracle",
+        "count": 393,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element the shifted *key* column is sourced from, (b) that the attributed fraction is consistent with DST-gap rarity, and (c) that both unpaired sets are fully accounted for -- a residual `only_candidate` row is still a row the port invented. Any failing makes this `bug`. Do NOT accept a port that recovers the pre-shift value by reconstructing a resource id: the shift is intrinsic, and inverting the ETL's id-generation is not a mapping.",
+        "keys": [
+          "charttime"
+        ],
+        "proof": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      },
+      {
+        "attributed_rows": 157,
+        "attributed_to": "upstream_timestamptz_dst_shift",
+        "citations": [
+          "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+          "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+          "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+          "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+          "mimic-fhir/sql/fhir_encounter.sql:65",
+          "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+          "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+        ],
+        "class": "only_candidate",
+        "count": 157,
+        "judge_must_confirm": "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR element the shifted *key* column is sourced from, (b) that the attributed fraction is consistent with DST-gap rarity, and (c) that both unpaired sets are fully accounted for -- a residual `only_candidate` row is still a row the port invented. Any failing makes this `bug`. Do NOT accept a port that recovers the pre-shift value by reconstructing a resource id: the shift is intrinsic, and inverting the ETL's id-generation is not a mapping.",
+        "keys": [
+          "charttime"
+        ],
+        "proof": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "30628518195287439154136560",
+    "manifest_row_count": 3321748,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.kdigo_uo"
+  },
+  "row_count": {
+    "candidate": 3321512,
+    "delta": -236,
+    "gated": false,
+    "match": false,
+    "oracle": 3321748
+  },
+  "schema": {
+    "actual_columns": [
+      "stay_id",
+      "charttime",
+      "weight",
+      "urineoutput_6hr",
+      "urineoutput_12hr",
+      "urineoutput_24hr",
+      "uo_rt_6hr",
+      "uo_rt_12hr",
+      "uo_rt_24hr",
+      "uo_tm_6hr",
+      "uo_tm_12hr",
+      "uo_tm_24hr",
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "expected_columns": [
+      "stay_id",
+      "charttime",
+      "weight",
+      "urineoutput_6hr",
+      "urineoutput_12hr",
+      "urineoutput_24hr",
+      "uo_rt_6hr",
+      "uo_rt_12hr",
+      "uo_rt_24hr",
+      "uo_tm_6hr",
+      "uo_tm_12hr",
+      "uo_tm_24hr"
+    ],
+    "extra_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": [],
+    "missing_key_columns": [],
+    "required_key_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "unexpected_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "verdict": "review"
+}

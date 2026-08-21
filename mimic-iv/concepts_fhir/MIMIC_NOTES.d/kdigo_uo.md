@@ -1,0 +1,4 @@
+## Outputevents DST normalization propagates through rolling urine-output windows
+
+- Affected: `Observation.effectiveDateTime` generated from `mimiciv_icu.outputevents.charttime`, and dependent `LAG`/time-`RANGE` aggregates.
+- Verified: `kdigo_uo` attempt 0001 full-data comparison and source-side replay. `mimic-fhir/sql/fhir_observation_outputevents.sql:9,60` casts the source wall time through `TIMESTAMPTZ` and writes only the normalized value. The cast moved 395 selected source rows, collapsing to 393 `urine_output` groups across 391 stays; replay through `kdigo_uo` reproduced 393 `only_oracle`, 157 `only_candidate`, and 1,061 matched conflict rows, of which 1,060 are second-order residual conflicts after excluding the one direct collided-key conflict reached by this replay. Resource identity was not inverted.

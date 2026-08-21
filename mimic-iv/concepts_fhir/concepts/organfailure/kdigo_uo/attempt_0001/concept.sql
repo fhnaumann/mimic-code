@@ -1,0 +1,161 @@
+WITH icu_stays AS (
+    SELECT
+        e.icu_encounter_key,
+        e.patient_key,
+        e.stay_id_str,
+        TRY_CAST(e.intime_datetime AS TIMESTAMP_NTZ) AS intime
+    FROM icu_encounter e
+    WHERE e.stay_id_str IS NOT NULL
+), urine_rows AS (
+    SELECT
+        u.icu_encounter_key,
+        u.patient_key,
+        CAST(u.charttime AS TIMESTAMP_NTZ) AS charttime,
+        CAST(u.urineoutput AS DOUBLE) AS urineoutput
+    FROM urine_output u
+), urine_ordered AS (
+    SELECT
+        i.icu_encounter_key,
+        i.patient_key,
+        i.stay_id_str,
+        i.intime,
+        u.charttime,
+        u.urineoutput,
+        LAG(u.charttime) OVER (
+            PARTITION BY i.stay_id_str
+            ORDER BY u.charttime
+        ) AS previous_charttime
+    FROM icu_stays i
+    INNER JOIN urine_rows u
+        ON i.icu_encounter_key = u.icu_encounter_key
+), uo_stg1 AS (
+    SELECT
+        icu_encounter_key,
+        patient_key,
+        stay_id_str,
+        charttime,
+        CAST(TIMESTAMPDIFF(SECOND, intime, charttime) AS INTEGER)
+            AS seconds_since_admit,
+        COALESCE(
+            TIMESTAMPDIFF(SECOND, previous_charttime, charttime) / 3600.0,
+            1
+        ) AS hours_since_previous_row,
+        urineoutput
+    FROM urine_ordered
+), uo_stg2 AS (
+    SELECT
+        icu_encounter_key,
+        patient_key,
+        stay_id_str,
+        charttime,
+        hours_since_previous_row,
+        urineoutput,
+        SUM(urineoutput) OVER (
+            PARTITION BY stay_id_str
+            ORDER BY seconds_since_admit
+            RANGE BETWEEN 21600 PRECEDING AND CURRENT ROW
+        ) AS urineoutput_6hr,
+        SUM(urineoutput) OVER (
+            PARTITION BY stay_id_str
+            ORDER BY seconds_since_admit
+            RANGE BETWEEN 43200 PRECEDING AND CURRENT ROW
+        ) AS urineoutput_12hr,
+        SUM(urineoutput) OVER (
+            PARTITION BY stay_id_str
+            ORDER BY seconds_since_admit
+            RANGE BETWEEN 86400 PRECEDING AND CURRENT ROW
+        ) AS urineoutput_24hr,
+        ROUND(
+            CAST(SUM(hours_since_previous_row) OVER (
+                PARTITION BY stay_id_str
+                ORDER BY seconds_since_admit
+                RANGE BETWEEN 21600 PRECEDING AND CURRENT ROW
+            ) AS DECIMAL(38,12)),
+            6
+        ) AS uo_tm_6hr,
+        ROUND(
+            CAST(SUM(hours_since_previous_row) OVER (
+                PARTITION BY stay_id_str
+                ORDER BY seconds_since_admit
+                RANGE BETWEEN 43200 PRECEDING AND CURRENT ROW
+            ) AS DECIMAL(38,12)),
+            6
+        ) AS uo_tm_12hr,
+        ROUND(
+            CAST(SUM(hours_since_previous_row) OVER (
+                PARTITION BY stay_id_str
+                ORDER BY seconds_since_admit
+                RANGE BETWEEN 86400 PRECEDING AND CURRENT ROW
+            ) AS DECIMAL(38,12)),
+            6
+        ) AS uo_tm_24hr
+    FROM uo_stg1
+), final_values AS (
+    SELECT
+        ur.stay_id_str,
+        ur.charttime,
+        wd.weight,
+        ur.urineoutput_6hr,
+        ur.urineoutput_12hr,
+        ur.urineoutput_24hr,
+        CASE
+            WHEN ur.uo_tm_6hr >= 6 AND ur.uo_tm_6hr < 12
+                THEN ROUND(
+                    CAST(
+                        ur.urineoutput_6hr / wd.weight / ur.uo_tm_6hr
+                        AS DECIMAL(38,12)
+                    ),
+                    4
+                )
+            ELSE CAST(NULL AS DECIMAL(38,4))
+        END AS uo_rt_6hr,
+        CASE
+            WHEN ur.uo_tm_12hr >= 12
+                THEN ROUND(
+                    CAST(
+                        ur.urineoutput_12hr / wd.weight / ur.uo_tm_12hr
+                        AS DECIMAL(38,12)
+                    ),
+                    4
+                )
+            ELSE CAST(NULL AS DECIMAL(38,4))
+        END AS uo_rt_12hr,
+        CASE
+            WHEN ur.uo_tm_24hr >= 24
+                THEN ROUND(
+                    CAST(
+                        ur.urineoutput_24hr / wd.weight / ur.uo_tm_24hr
+                        AS DECIMAL(38,12)
+                    ),
+                    4
+                )
+            ELSE CAST(NULL AS DECIMAL(38,4))
+        END AS uo_rt_24hr,
+        ur.uo_tm_6hr,
+        ur.uo_tm_12hr,
+        ur.uo_tm_24hr,
+        ur.icu_encounter_key,
+        ur.patient_key
+    FROM uo_stg2 ur
+    LEFT JOIN weight_durations wd
+        ON ur.icu_encounter_key = wd.icu_encounter_key
+        AND ur.charttime >= wd.starttime
+        AND ur.charttime < wd.endtime
+)
+SELECT
+    CAST(f.stay_id_str AS INTEGER) AS stay_id,
+    CAST(f.charttime AS TIMESTAMP_NTZ) AS charttime,
+    CAST(f.weight AS DECIMAL(38,3)) AS weight,
+    CAST(f.urineoutput_6hr AS DOUBLE) AS urineoutput_6hr,
+    CAST(f.urineoutput_12hr AS DOUBLE) AS urineoutput_12hr,
+    CAST(f.urineoutput_24hr AS DOUBLE) AS urineoutput_24hr,
+    CAST(f.uo_rt_6hr AS DECIMAL(38,4)) AS uo_rt_6hr,
+    CAST(f.uo_rt_12hr AS DECIMAL(38,4)) AS uo_rt_12hr,
+    CAST(f.uo_rt_24hr AS DECIMAL(38,4)) AS uo_rt_24hr,
+    CAST(f.uo_tm_6hr AS DECIMAL(38,6)) AS uo_tm_6hr,
+    CAST(f.uo_tm_12hr AS DECIMAL(38,6)) AS uo_tm_12hr,
+    CAST(f.uo_tm_24hr AS DECIMAL(38,6)) AS uo_tm_24hr,
+    f.icu_encounter_key AS icu_encounter_key,
+    f.patient_key AS patient_key
+FROM final_values f
+;
