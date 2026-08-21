@@ -1,0 +1,25 @@
+{
+  "attempt": 1,
+  "category": "medication",
+  "completed_at": "2026-08-21T03:02:01.341136+00:00",
+  "concept_name": "vasoactive_agent",
+  "dependencies": [
+    "dobutamine",
+    "dopamine",
+    "epinephrine",
+    "milrinone",
+    "norepinephrine",
+    "phenylephrine",
+    "vasopressin"
+  ],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "vasoactive_agent faithfully reproduces canonical interval construction. All substantive divergence is inherited from seven judge-accepted dependencies: rare endpoint normalization caused by TIMESTAMPTZ casts at mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9, serialized exclusively to MedicationAdministration.effectivePeriod.start/end at lines 61-69, six-decimal Quantity representation, and one ancillary phenylephrine patientweight NULL. The original wall times, low-order precision, and patientweight are absent from semantic FHIR elements and cannot be recovered through opaque resource IDs. The target introduces no independent mapping or SQL loss.",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 1,
+  "started_at": "2026-08-21T01:50:57.996801+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-21T03:02:01.341617+00:00"
+}

@@ -1,0 +1,178 @@
+WITH icu_support AS (
+    SELECT
+        CAST(stay_id_str AS INTEGER) AS stay_id,
+        encounter_key AS icu_encounter_key,
+        patient_key
+    FROM encounter_icu
+    WHERE stay_system = 'http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu'
+), dobutamine_rows AS (
+    SELECT
+        s.stay_id,
+        d.starttime,
+        d.endtime,
+        d.vaso_rate
+    FROM dobutamine AS d
+    LEFT JOIN icu_support AS s
+        ON d.icu_encounter_key = s.icu_encounter_key
+), dopamine_rows AS (
+    SELECT
+        s.stay_id,
+        d.starttime,
+        d.endtime,
+        d.vaso_rate
+    FROM dopamine AS d
+    LEFT JOIN icu_support AS s
+        ON d.icu_encounter_key = s.icu_encounter_key
+), epinephrine_rows AS (
+    SELECT
+        s.stay_id,
+        e.starttime,
+        e.endtime,
+        e.vaso_rate
+    FROM epinephrine AS e
+    LEFT JOIN icu_support AS s
+        ON e.icu_encounter_key = s.icu_encounter_key
+), norepinephrine_rows AS (
+    SELECT
+        s.stay_id,
+        n.starttime,
+        n.endtime,
+        n.vaso_rate
+    FROM norepinephrine AS n
+    LEFT JOIN icu_support AS s
+        ON n.icu_encounter_key = s.icu_encounter_key
+), phenylephrine_rows AS (
+    SELECT
+        s.stay_id,
+        p.starttime,
+        p.endtime,
+        p.vaso_rate
+    FROM phenylephrine AS p
+    LEFT JOIN icu_support AS s
+        ON p.icu_encounter_key = s.icu_encounter_key
+), vasopressin_rows AS (
+    SELECT
+        s.stay_id,
+        v.starttime,
+        v.endtime,
+        v.vaso_rate
+    FROM vasopressin AS v
+    LEFT JOIN icu_support AS s
+        ON v.icu_encounter_key = s.icu_encounter_key
+), milrinone_rows AS (
+    SELECT
+        m.stay_id,
+        m.starttime,
+        m.endtime,
+        m.vaso_rate
+    FROM milrinone AS m
+), tm AS (
+    SELECT stay_id, starttime AS vasotime
+    FROM dobutamine_rows
+    UNION DISTINCT
+    SELECT stay_id, starttime AS vasotime
+    FROM dopamine_rows
+    UNION DISTINCT
+    SELECT stay_id, starttime AS vasotime
+    FROM epinephrine_rows
+    UNION DISTINCT
+    SELECT stay_id, starttime AS vasotime
+    FROM norepinephrine_rows
+    UNION DISTINCT
+    SELECT stay_id, starttime AS vasotime
+    FROM phenylephrine_rows
+    UNION DISTINCT
+    SELECT stay_id, starttime AS vasotime
+    FROM vasopressin_rows
+    UNION DISTINCT
+    SELECT stay_id, starttime AS vasotime
+    FROM milrinone_rows
+    UNION DISTINCT
+    SELECT stay_id, endtime AS vasotime
+    FROM dobutamine_rows
+    UNION DISTINCT
+    SELECT stay_id, endtime AS vasotime
+    FROM dopamine_rows
+    UNION DISTINCT
+    SELECT stay_id, endtime AS vasotime
+    FROM epinephrine_rows
+    UNION DISTINCT
+    SELECT stay_id, endtime AS vasotime
+    FROM norepinephrine_rows
+    UNION DISTINCT
+    SELECT stay_id, endtime AS vasotime
+    FROM phenylephrine_rows
+    UNION DISTINCT
+    SELECT stay_id, endtime AS vasotime
+    FROM vasopressin_rows
+    UNION DISTINCT
+    SELECT stay_id, endtime AS vasotime
+    FROM milrinone_rows
+), tm_lag AS (
+    SELECT
+        stay_id,
+        vasotime AS starttime,
+        LEAD(vasotime, 1) OVER (
+            PARTITION BY stay_id
+            ORDER BY vasotime
+        ) AS endtime
+    FROM tm
+), interval_rows AS (
+    SELECT
+        t.stay_id,
+        t.starttime,
+        t.endtime,
+        dop.vaso_rate AS dopamine,
+        epi.vaso_rate AS epinephrine,
+        nor.vaso_rate AS norepinephrine,
+        phe.vaso_rate AS phenylephrine,
+        vas.vaso_rate AS vasopressin,
+        dob.vaso_rate AS dobutamine,
+        mil.vaso_rate AS milrinone
+    FROM tm_lag AS t
+    LEFT JOIN dobutamine_rows AS dob
+        ON t.stay_id = dob.stay_id
+        AND t.starttime >= dob.starttime
+        AND t.endtime <= dob.endtime
+    LEFT JOIN dopamine_rows AS dop
+        ON t.stay_id = dop.stay_id
+        AND t.starttime >= dop.starttime
+        AND t.endtime <= dop.endtime
+    LEFT JOIN epinephrine_rows AS epi
+        ON t.stay_id = epi.stay_id
+        AND t.starttime >= epi.starttime
+        AND t.endtime <= epi.endtime
+    LEFT JOIN norepinephrine_rows AS nor
+        ON t.stay_id = nor.stay_id
+        AND t.starttime >= nor.starttime
+        AND t.endtime <= nor.endtime
+    LEFT JOIN phenylephrine_rows AS phe
+        ON t.stay_id = phe.stay_id
+        AND t.starttime >= phe.starttime
+        AND t.endtime <= phe.endtime
+    LEFT JOIN vasopressin_rows AS vas
+        ON t.stay_id = vas.stay_id
+        AND t.starttime >= vas.starttime
+        AND t.endtime <= vas.endtime
+    LEFT JOIN milrinone_rows AS mil
+        ON t.stay_id = mil.stay_id
+        AND t.starttime >= mil.starttime
+        AND t.endtime <= mil.endtime
+    WHERE t.endtime IS NOT NULL
+)
+SELECT
+    CAST(i.stay_id AS INTEGER) AS stay_id,
+    CAST(i.starttime AS TIMESTAMP_NTZ) AS starttime,
+    CAST(i.endtime AS TIMESTAMP_NTZ) AS endtime,
+    CAST(i.dopamine AS FLOAT) AS dopamine,
+    CAST(i.epinephrine AS FLOAT) AS epinephrine,
+    CAST(i.norepinephrine AS FLOAT) AS norepinephrine,
+    CAST(i.phenylephrine AS FLOAT) AS phenylephrine,
+    CAST(i.vasopressin AS FLOAT) AS vasopressin,
+    CAST(i.dobutamine AS FLOAT) AS dobutamine,
+    CAST(i.milrinone AS FLOAT) AS milrinone,
+    s.icu_encounter_key,
+    s.patient_key
+FROM interval_rows AS i
+LEFT JOIN icu_support AS s
+    ON i.stay_id = s.stay_id;

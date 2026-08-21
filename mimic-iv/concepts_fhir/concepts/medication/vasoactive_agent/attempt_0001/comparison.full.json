@@ -1,0 +1,667 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/medication/vasoactive_agent/attempt_0001/candidate.full.parquet/*.parquet",
+  "comparison": "full_tuple_multiset",
+  "concept": "vasoactive_agent",
+  "dataset": "full",
+  "diagnostics": [
+    "row count (not gated): oracle 665,529 vs candidate 665,550 (delta +21)",
+    "RESIDUAL DID NOT PAIR \u2014 594,266 oracle and 594,287 candidate residual rows do not correspond. Their counts being equal proves nothing: it follows from the row counts being equal.",
+    "CONTESTED \u2014 a value conflict. Either a port bug or upstream ETL transformation loss; the data cannot tell you which:",
+    "  594,287 \u00d7 only_candidate (89.295% of oracle rows) \u2014 rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise",
+    "  bar for an accept: A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "GAP-SHAPED \u2014 consistent with a MIMIC-on-FHIR coverage gap:",
+    "  594,266 \u00d7 only_oracle \u2014 oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes",
+    "note: No unique key for this concept, and the residual did not pair: divergence classes cannot be separated. The judge is reasoning with strictly less evidence than a keyed concept would provide.",
+    "note: residual pairing: every column differs between the residuals; there is nothing left to align rows on, so the residual cannot be shown to be substitutions rather than invented and missing rows"
+  ],
+  "diff": {
+    "classification": "unavailable_no_key",
+    "differing": null,
+    "differing_conflict": null,
+    "differing_null_only": null,
+    "identical": null,
+    "key": null,
+    "only_candidate": 594287,
+    "only_oracle": 594266,
+    "residual_pairing": {
+      "anchored": false,
+      "attempted": true,
+      "column_drift": {
+        "dobutamine": 24919,
+        "dopamine": 24143,
+        "endtime": 167,
+        "epinephrine": 127335,
+        "milrinone": 73929,
+        "norepinephrine": 787797,
+        "phenylephrine": 381911,
+        "starttime": 169,
+        "stay_id": 23,
+        "vasopressin": 259379
+      },
+      "paired": 0,
+      "pairing_columns": [],
+      "residual_candidate": 594287,
+      "residual_oracle": 594266,
+      "substituted_columns": [
+        "dobutamine",
+        "dopamine",
+        "endtime",
+        "epinephrine",
+        "milrinone",
+        "norepinephrine",
+        "phenylephrine",
+        "starttime",
+        "stay_id",
+        "vasopressin"
+      ],
+      "unpaired_candidate": 594287,
+      "unpaired_oracle": 594266,
+      "why": "every column differs between the residuals; there is nothing left to align rows on, so the residual cannot be shown to be substitutions rather than invented and missing rows"
+    },
+    "samples": {
+      "only_candidate": [
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2131-07-10T12:47:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": null,
+          "phenylephrine": 3.553483009338379,
+          "starttime": "2131-07-10T12:46:00",
+          "stay_id": 37870474,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2131-07-12T09:56:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": null,
+          "phenylephrine": 1.4161909818649292,
+          "starttime": "2131-07-12T09:35:00",
+          "stay_id": 37870474,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2131-07-14T06:56:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": null,
+          "phenylephrine": 2.2406349182128906,
+          "starttime": "2131-07-14T06:24:00",
+          "stay_id": 37870474,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2142-02-21T12:24:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": 0.16079500317573547,
+          "phenylephrine": null,
+          "starttime": "2142-02-21T12:05:00",
+          "stay_id": 37870786,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2142-02-22T19:00:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": 0.0889350026845932,
+          "phenylephrine": null,
+          "starttime": "2142-02-22T18:06:00",
+          "stay_id": 37870786,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2142-02-23T09:03:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": 0.029492000117897987,
+          "phenylephrine": null,
+          "starttime": "2142-02-23T06:42:00",
+          "stay_id": 37870786,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2177-08-21T06:36:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": 0.020015999674797058,
+          "phenylephrine": null,
+          "starttime": "2177-08-21T04:31:00",
+          "stay_id": 37871807,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2183-03-15T15:36:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": null,
+          "phenylephrine": 1.0008089542388916,
+          "starttime": "2183-03-15T15:34:00",
+          "stay_id": 37872843,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2183-03-15T22:49:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": null,
+          "phenylephrine": 0.25008198618888855,
+          "starttime": "2183-03-15T22:41:00",
+          "stay_id": 37872843,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2146-09-25T22:38:00",
+          "epinephrine": null,
+          "milrinone": 0.3756389915943146,
+          "norepinephrine": null,
+          "phenylephrine": null,
+          "starttime": "2146-09-25T11:45:00",
+          "stay_id": 37873590,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2175-11-05T00:49:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": 0.0699089989066124,
+          "phenylephrine": null,
+          "starttime": "2175-11-04T23:54:00",
+          "stay_id": 37873993,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2175-11-05T01:47:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": 0.04997500032186508,
+          "phenylephrine": null,
+          "starttime": "2175-11-05T01:21:00",
+          "stay_id": 37873993,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2175-11-05T18:18:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": 0.0501209981739521,
+          "phenylephrine": null,
+          "starttime": "2175-11-05T17:28:00",
+          "stay_id": 37873993,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2166-12-30T12:13:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": 0.16999900341033936,
+          "phenylephrine": null,
+          "starttime": "2166-12-30T10:45:00",
+          "stay_id": 37874018,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2175-02-23T07:31:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": 0.799347996711731,
+          "phenylephrine": null,
+          "starttime": "2175-02-23T07:20:00",
+          "stay_id": 37874625,
+          "vasopressin": 2.4000000953674316
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2121-10-27T20:01:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": null,
+          "phenylephrine": 0.30000001192092896,
+          "starttime": "2121-10-27T18:55:00",
+          "stay_id": 37875654,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2189-10-14T04:08:00",
+          "epinephrine": 0.030036000534892082,
+          "milrinone": null,
+          "norepinephrine": null,
+          "phenylephrine": null,
+          "starttime": "2189-10-13T18:00:00",
+          "stay_id": 37876320,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2189-10-14T09:13:00",
+          "epinephrine": 0.030045000836253166,
+          "milrinone": null,
+          "norepinephrine": null,
+          "phenylephrine": null,
+          "starttime": "2189-10-14T06:35:00",
+          "stay_id": 37876320,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2189-10-15T09:00:00",
+          "epinephrine": 0.01994599960744381,
+          "milrinone": null,
+          "norepinephrine": null,
+          "phenylephrine": null,
+          "starttime": "2189-10-15T04:19:00",
+          "stay_id": 37876320,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2189-10-16T00:33:00",
+          "epinephrine": null,
+          "milrinone": 0.3792159855365753,
+          "norepinephrine": 0.020004000514745712,
+          "phenylephrine": null,
+          "starttime": "2189-10-16T00:29:00",
+          "stay_id": 37876320,
+          "vasopressin": null
+        }
+      ],
+      "only_oracle": [
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2185-09-17T19:51:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": 0.14989392459392548,
+          "phenylephrine": null,
+          "starttime": "2185-09-17T19:23:00",
+          "stay_id": 33467361,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2185-09-17T22:53:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": 0.29952630400657654,
+          "phenylephrine": null,
+          "starttime": "2185-09-17T22:48:00",
+          "stay_id": 33467361,
+          "vasopressin": 2.3999998569488525
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2185-09-18T00:07:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": 0.24568255245685577,
+          "phenylephrine": null,
+          "starttime": "2185-09-17T23:48:00",
+          "stay_id": 33467361,
+          "vasopressin": 2.3999998569488525
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2185-09-18T02:55:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": 0.275284081697464,
+          "phenylephrine": null,
+          "starttime": "2185-09-18T02:52:00",
+          "stay_id": 33467361,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2185-09-18T04:12:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": 0.49054378271102905,
+          "phenylephrine": null,
+          "starttime": "2185-09-18T03:37:00",
+          "stay_id": 33467361,
+          "vasopressin": 2.3999998569488525
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2185-09-18T05:35:00",
+          "epinephrine": 0.07006339728832245,
+          "milrinone": null,
+          "norepinephrine": 0.24746902287006378,
+          "phenylephrine": null,
+          "starttime": "2185-09-18T05:15:00",
+          "stay_id": 33467361,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2185-09-18T14:00:00",
+          "epinephrine": 0.11960724741220474,
+          "milrinone": null,
+          "norepinephrine": 0.3265889585018158,
+          "phenylephrine": null,
+          "starttime": "2185-09-18T13:58:00",
+          "stay_id": 33467361,
+          "vasopressin": 1.2012572288513184
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2142-07-17T00:17:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": null,
+          "phenylephrine": 0.7009495496749878,
+          "starttime": "2142-07-16T23:12:00",
+          "stay_id": 33467653,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2142-07-17T10:47:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": null,
+          "phenylephrine": 0.8039870858192444,
+          "starttime": "2142-07-17T10:45:00",
+          "stay_id": 33467653,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2142-07-18T06:19:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": null,
+          "phenylephrine": 0.2000020146369934,
+          "starttime": "2142-07-18T05:51:00",
+          "stay_id": 33467653,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2152-09-04T08:48:00",
+          "epinephrine": 0.010004202835261822,
+          "milrinone": null,
+          "norepinephrine": null,
+          "phenylephrine": null,
+          "starttime": "2152-09-04T06:55:00",
+          "stay_id": 33467921,
+          "vasopressin": 2.4000000953674316
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2155-03-29T13:29:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": 0.05997765436768532,
+          "phenylephrine": null,
+          "starttime": "2155-03-29T12:40:00",
+          "stay_id": 33468118,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2155-03-29T17:59:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": 0.03996128961443901,
+          "phenylephrine": null,
+          "starttime": "2155-03-29T17:45:00",
+          "stay_id": 33468118,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2186-01-06T06:02:00",
+          "epinephrine": null,
+          "milrinone": null,
+          "norepinephrine": 0.02024889923632145,
+          "phenylephrine": null,
+          "starttime": "2186-01-06T05:22:00",
+          "stay_id": 33468525,
+          "vasopressin": null
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2125-05-20T15:30:00",
+          "epinephrine": 0.06021413579583168,
+          "milrinone": null,
+          "norepinephrine": 0.0500200130045414,
+          "phenylephrine": 3.0012006759643555,
+          "starttime": "2125-05-20T15:08:00",
+          "stay_id": 33468603,
+          "vasopressin": 3.7990429401397705
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2125-05-21T09:38:00",
+          "epinephrine": 0.03004535287618637,
+          "milrinone": null,
+          "norepinephrine": 0.08006646484136581,
+          "phenylephrine": 1.997809648513794,
+          "starttime": "2125-05-21T08:32:00",
+          "stay_id": 33468603,
+          "vasopressin": 3.601804494857788
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2125-05-21T20:58:00",
+          "epinephrine": 0.03004913404583931,
+          "milrinone": null,
+          "norepinephrine": 0.06002838537096977,
+          "phenylephrine": 0.9990942478179932,
+          "starttime": "2125-05-21T18:07:00",
+          "stay_id": 33468603,
+          "vasopressin": 3.6019012928009033
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2125-05-21T21:38:00",
+          "epinephrine": 0.03004913404583931,
+          "milrinone": null,
+          "norepinephrine": 0.07008553296327591,
+          "phenylephrine": 0.4995471239089966,
+          "starttime": "2125-05-21T21:37:00",
+          "stay_id": 33468603,
+          "vasopressin": 3.6019012928009033
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2125-05-22T02:29:00",
+          "epinephrine": 0.040078043937683105,
+          "milrinone": null,
+          "norepinephrine": 0.030040165409445763,
+          "phenylephrine": null,
+          "starttime": "2125-05-22T01:40:00",
+          "stay_id": 33468603,
+          "vasopressin": 1.8002855777740479
+        },
+        {
+          "dobutamine": null,
+          "dopamine": null,
+          "endtime": "2125-05-23T00:32:00",
+          "epinephrine": null,
+          "milrinone": 0.25009024143218994,
+          "norepinephrine": 0.06003604456782341,
+          "phenylephrine": null,
+          "starttime": "2125-05-23T00:03:00",
+          "stay_id": 33468603,
+          "vasopressin": 2.4025533199310303
+        }
+      ]
+    }
+  },
+  "divergence": {
+    "attributed": [],
+    "blocking": [
+      {
+        "class": "only_candidate",
+        "count": 594287,
+        "why": "rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise"
+      }
+    ],
+    "classification": "unavailable_no_key",
+    "conflict_attribution": null,
+    "contested": [
+      {
+        "class": "only_candidate",
+        "count": 594287,
+        "why": "rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise"
+      }
+    ],
+    "declared_unrepresentable": {},
+    "diagnostician_required": true,
+    "gap_shaped": [
+      {
+        "class": "only_oracle",
+        "count": 594266,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "identical_fraction": null,
+    "identical_rows": null,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "key_attribution": null,
+    "notes": [
+      "No unique key for this concept, and the residual did not pair: divergence classes cannot be separated. The judge is reasoning with strictly less evidence than a keyed concept would provide.",
+      "residual pairing: every column differs between the residuals; there is nothing left to align rows on, so the residual cannot be shown to be substitutions rather than invented and missing rows"
+    ],
+    "oracle_rows": 665529,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [
+      {
+        "class": "only_candidate",
+        "count": 594287,
+        "why": "rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise"
+      },
+      {
+        "class": "only_oracle",
+        "count": 594266,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "6128790236506024926632458",
+    "manifest_row_count": 665529,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.vasoactive_agent"
+  },
+  "row_count": {
+    "candidate": 665550,
+    "delta": 21,
+    "gated": false,
+    "match": false,
+    "oracle": 665529
+  },
+  "schema": {
+    "actual_columns": [
+      "stay_id",
+      "starttime",
+      "endtime",
+      "dopamine",
+      "epinephrine",
+      "norepinephrine",
+      "phenylephrine",
+      "vasopressin",
+      "dobutamine",
+      "milrinone",
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "expected_columns": [
+      "stay_id",
+      "starttime",
+      "endtime",
+      "dopamine",
+      "epinephrine",
+      "norepinephrine",
+      "phenylephrine",
+      "vasopressin",
+      "dobutamine",
+      "milrinone"
+    ],
+    "extra_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": [],
+    "missing_key_columns": [],
+    "required_key_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "unexpected_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "verdict": "review"
+}
