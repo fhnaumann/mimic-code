@@ -1,0 +1,21 @@
+{
+  "attempt": 1,
+  "category": "score",
+  "completed_at": "2026-08-21T04:29:48.199772+00:00",
+  "concept_name": "sirs",
+  "dependencies": [
+    "first_day_bg_art",
+    "first_day_lab",
+    "first_day_vitalsign"
+  ],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accept: the 4 differing_conflict rows (sirs 4, heart_rate_score 2, resp_score 2; 4/73,181 output rows) are wholly inherited from first_day_vitalsign's upstream spring-forward normalization. mimic-fhir/sql/fhir_observation_chartevents.sql:9 casts chartevents.charttime through TIMESTAMPTZ and :67 writes normalized Observation.effectiveDateTime; four occupied 02:00-to-03:00 collision groups comprising eight shifted raw rows close all conflicts with zero residual. The original wall time is absent from semantic FHIR, issued is storetime, and opaque resource IDs cannot be inverted. The candidate faithfully consumes the published dependency via opaque icu_encounter_key LEFT JOINs and preserves canonical SIRS CASE thresholds/NULL semantics. first_day_vitalsign is judge-accepted with divergence; first_day_bg_art and first_day_lab are exact. The contract's mandatory DST-transformation exemption applies, so this is COMPLETED_WITH_DIVERGENCE rather than blocked.",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 1,
+  "started_at": "2026-08-21T03:26:13.337245+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-21T04:29:48.200087+00:00"
+}
