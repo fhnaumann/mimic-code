@@ -1,0 +1,20 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/kdigo_stages-0001-kdigo_stages_patient",
+  "name": "kdigo_stages_patient",
+  "resource": "Patient",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "patient_key" }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/patient')",
+      "column": [
+        { "path": "value", "name": "subject_id_str" }
+      ]
+    }
+  ]
+}

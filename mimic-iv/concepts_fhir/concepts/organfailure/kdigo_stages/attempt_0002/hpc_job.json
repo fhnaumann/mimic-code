@@ -1,0 +1,8 @@
+{
+  "concept": "kdigo_stages",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "30319339",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/organfailure/kdigo_stages/attempt_0002",
+  "submitted_at": "2026-08-21T04:10:54.185094+00:00",
+  "walltime": "2:00:00"
+}

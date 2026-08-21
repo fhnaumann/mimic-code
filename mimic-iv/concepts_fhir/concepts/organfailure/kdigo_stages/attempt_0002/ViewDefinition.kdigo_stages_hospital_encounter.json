@@ -1,0 +1,15 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/kdigo_stages-0002-kdigo_stages_hospital_encounter",
+  "name": "kdigo_stages_hospital_encounter",
+  "resource": "Encounter",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "encounter_key" },
+        { "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-hosp').value", "name": "hadm_id_str" }
+      ]
+    }
+  ]
+}
