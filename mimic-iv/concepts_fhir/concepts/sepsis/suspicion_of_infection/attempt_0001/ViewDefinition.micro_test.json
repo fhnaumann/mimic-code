@@ -1,0 +1,30 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/suspicion_of_infection-0001-micro_test",
+  "name": "micro_test",
+  "resource": "Observation",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "micro_test_key" },
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
+        { "path": "specimen.getReferenceKey(Specimen)", "name": "specimen_key" },
+        { "path": "(effective).ofType(dateTime)", "name": "effective_datetime" }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-microbiology-test')",
+      "column": [
+        { "path": "code", "name": "test_code" },
+        { "path": "system", "name": "test_system" }
+      ]
+    },
+    {
+      "forEachOrNull": "hasMember",
+      "column": [
+        { "path": "getReferenceKey(Observation)", "name": "micro_org_key" }
+      ]
+    }
+  ]
+}

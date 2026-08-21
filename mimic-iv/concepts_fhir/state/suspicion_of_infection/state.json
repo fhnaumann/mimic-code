@@ -1,0 +1,19 @@
+{
+  "attempt": 1,
+  "category": "sepsis",
+  "completed_at": "2026-08-21T01:33:25.408776+00:00",
+  "concept_name": "suspicion_of_infection",
+  "dependencies": [
+    "antibiotic"
+  ],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Attempt 0001's 269,943 residual conflicts and 2,983 null-only rows are fully inherited from the human-accepted antibiotic dependency: mimic-fhir/sql/fhir_medication_request.sql:172-177 omits MedicationRequest.dispenseRequest.validityPeriod.start/end for invalid or incomplete intervals, and no served element recovers those endpoints or the resulting ICU assignment. Canonical suspicion_of_infection.sql:15-19,84-97,139-148 propagates that loss through ab_id ordering and culture windows, explaining the ordinal permutation and derived-output changes; the target faithfully preserves this logic and introduces no residual of its own. The remaining 54 conflicts are proven rare DST transformations from the cited endpoint and microbiology timestamp ETL sites. Under LOOP_CONTRACT.md:929-965, accepted inherited divergence and its amplification are accepted rather than subjected again to essential-loss adjudication. Fidelity is 462482/735462 identical (62.8832%), with zero only_oracle and zero only_candidate.",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 1,
+  "started_at": "2026-08-21T00:31:24.460981+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-21T01:33:25.409187+00:00"
+}

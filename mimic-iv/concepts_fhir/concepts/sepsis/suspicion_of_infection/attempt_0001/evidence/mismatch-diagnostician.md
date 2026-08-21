@@ -1,0 +1,11 @@
+Concept `suspicion_of_infection`, attempt `0001`; mismatch-diagnostician evidence.
+
+Diagnosis: the target recomputes `ab_id` from the accepted-with-divergence `antibiotic` dependency, but that dependency has lost original `starttime`/`stoptime` and some `stay_id` values for 43,453 rows. Recomputing `ROW_NUMBER()` with those lossy values permutes `(subject_id, ab_id)` keys; this changes culture attachment and all derived suspicion outputs. The target implementation follows the source ordering and preserves the dependency boundary, so this is not a fixable target SQL/ViewDefinition bug.
+
+The dependency full comparison independently reports exact row-count preservation, one-to-one residual pairing on `(subject_id, hadm_id, antibiotic, route)`, and endpoint/stay NULL substitutions: 43,369 candidate-null starttimes, 43,422 stoptimes, and 13,494 stay IDs. The target comparison reports 462,482 identical rows, 269,997 conflicts, 2,983 candidate-null divergences, and zero only-oracle/candidate rows. Only 54 target conflicts were DST-attributed; 269,943 remained unexplained because the dependency ordinal is no longer the oracle ordinal.
+
+Upstream citation: `mimic-fhir/sql/fhir_medication_request.sql:172-177` writes `dispenseRequest.validityPeriod` only for non-NULL, non-reversed coalesced intervals, removing invalid/incomplete prescription endpoints. `authoredOn` at `:55,124`, MedicationDispense, EMAR MedicationAdministration, Encounter periods, and identifiers do not carry the original prescription endpoints or the required source ordering. Resource IDs are opaque and cannot repair this.
+
+Essentiality: the loss changes the target's natural key component `ab_id`, 72-hour/24-hour culture-window inclusion and selection, and clinically meaningful outputs (`suspected_infection`, times, specimen, positivity). No candidate-only remedy exists; upstream preservation/rebuild of `antibiotic` is required before this concept can be rerun. No carryover stage should be invalidated. The 54-row DST subset is separate upstream transformation loss and is not the blocking basis.
+
+No dataset-wide note was appended. Artifacts read include the target attempt/comparison and implementation, canonical/analysis files, the completed dependency attempt 0003 and comparison, curated notes, LOOP_CONTRACT, and cited mimic-fhir ETL SQL.

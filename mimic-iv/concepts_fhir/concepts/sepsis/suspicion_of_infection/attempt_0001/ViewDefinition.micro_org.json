@@ -1,0 +1,23 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/suspicion_of_infection-0001-micro_org",
+  "name": "micro_org",
+  "resource": "Observation",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "micro_org_key" },
+        { "path": "(effective).ofType(dateTime)", "name": "org_effective_datetime" }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-microbiology-organism')",
+      "column": [
+        { "path": "code", "name": "org_code" },
+        { "path": "system", "name": "org_system" },
+        { "path": "display", "name": "org_display" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+Concept `suspicion_of_infection`, attempt `0001`; hpc-launcher evidence.
+
+Command `uv run mimic_utils hpc-launch suspicion_of_infection` completed through repository staging, login-node smoke test, and Slurm submission. Smoke checks passed: warehouse, oracle, staged manifest, and imports. Submitted job id: `30310841`. The remote attempt is `/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/sepsis/suspicion_of_infection/attempt_0001`. Write-once local artifacts `submit.slurm` and `hpc_job.json` were recorded; full comparison artifacts were pending poll. No duplicate job was launched and no commit was made.
