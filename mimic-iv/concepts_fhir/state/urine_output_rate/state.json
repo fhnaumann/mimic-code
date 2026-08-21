@@ -1,0 +1,20 @@
+{
+  "attempt": 2,
+  "category": "measurement",
+  "completed_at": "2026-08-21T02:02:33.992708+00:00",
+  "concept_name": "urine_output_rate",
+  "dependencies": [
+    "urine_output",
+    "weight_durations"
+  ],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accept: the contested divergence is fully attributable to accepted upstream DST-normalization defects and inherited second-order effects. mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65 writes Observation.effectiveDateTime after TIMESTAMPTZ normalization; fhir_observation_chartevents.sql:9,67 and fhir_encounter_icu.sql:31-32,97-100 similarly normalize source times. The original wall times are not serialized elsewhere and cannot be recovered by any valid FHIR query; resource ids are opaque. All 393 only_oracle and 157 only_candidate rows close under key replay with zero residual, and 232 collision conflicts plus 1,185 downstream conflicts propagate through the corrected concept's LAG/windows/rates and inherited weight interval timing. The shifted set is 393/3,321,747 (0.0118%), consistent with DST-gap rarity. LOOP_CONTRACT.md:256-315 expressly accepts proven DST normalization and second-order effects, even when they affect keys, inclusion, grouping, or clinical rates; no candidate-specific residual remains.",
+  "engineering_counter": 2,
+  "error_message": null,
+  "hpc_counter": 2,
+  "reopen_history": [],
+  "semantic_counter": 2,
+  "started_at": "2026-08-21T01:42:10.028003+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-21T02:02:33.994147+00:00"
+}
