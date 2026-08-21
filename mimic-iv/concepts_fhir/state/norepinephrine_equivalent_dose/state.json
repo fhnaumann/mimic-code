@@ -1,19 +1,19 @@
 {
   "attempt": 2,
   "category": "medication",
-  "completed_at": null,
+  "completed_at": "2026-08-21T05:41:56.557886+00:00",
   "concept_name": "norepinephrine_equivalent_dose",
   "dependencies": [
     "vasoactive_agent"
   ],
-  "divergence_decided_by": null,
-  "divergence_justification": null,
-  "engineering_counter": 2,
+  "divergence_decided_by": "judge",
+  "divergence_justification": "norepinephrine_equivalent_dose faithfully implements its completed vasoactive_agent dependency using the canonical five-rate predicate and four-place formula. All divergence is inherited from judge-accepted vasoactive_agent: mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69 irreversibly normalizes administration endpoints through TIMESTAMPTZ; lines 12-15,85-99 serialize Quantity values served at six-decimal precision; and lines 7-23,38-100 omit patientweight. The original wall times, discarded low-order precision, and patientweight are unrecoverable by any permissible FHIR query or opaque resource identity. There are 112 shifted administrations among 614,600 source rows (0.0182%), producing a target row delta of +20/619,330 (0.00323%); the target introduces no independent mapping, filter, formula, join, or fan-out defect.",
+  "engineering_counter": 3,
   "error_message": null,
-  "hpc_counter": 0,
+  "hpc_counter": 1,
   "reopen_history": [],
-  "semantic_counter": 0,
+  "semantic_counter": 1,
   "started_at": "2026-08-21T05:09:17.209233+00:00",
-  "status": "RUNNING",
-  "updated_at": "2026-08-21T05:09:17.209772+00:00"
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-21T05:41:56.558288+00:00"
 }

@@ -1,0 +1,8 @@
+{
+  "concept": "norepinephrine_equivalent_dose",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "30324549",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/medication/norepinephrine_equivalent_dose/attempt_0002",
+  "submitted_at": "2026-08-21T05:25:19.538651+00:00",
+  "walltime": "2:00:00"
+}
