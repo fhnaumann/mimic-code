@@ -1,0 +1,19 @@
+{
+  "attempt": 1,
+  "category": "firstday",
+  "completed_at": "2026-08-21T00:28:36.569024+00:00",
+  "concept_name": "first_day_vitalsign",
+  "dependencies": [
+    "vitalsign"
+  ],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accept: 183 differing_conflict rows (72,998/73,181 identical; 0.2501%) are fully explained by irreversible spring-forward TIMESTAMPTZ normalization, with 176 inherited from vitalsign via mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 and 7 ICU-anchor effects via mimic-fhir/sql/fhir_encounter_icu.sql:31,98. The candidate reads the normalized Observation.effectiveDateTime and Encounter.period.start paths and preserves the canonical closed [intime-6h, intime+1d] aggregate. Original wall times are absent from FHIR and resource IDs are opaque, so no query can recover them; the separate hard-coded chartevents omission is outside this target window. The affected fraction is consistent with rare DST events amplified by downstream grouping/window aggregation, and the contract explicitly exempts proven DST transformation loss from essential-loss blocking.",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 1,
+  "started_at": "2026-08-20T23:30:22.614673+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-21T00:28:36.569584+00:00"
+}

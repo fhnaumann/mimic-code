@@ -1,0 +1,93 @@
+{
+  "candidate": "/Users/nau025/Documents/mimic-code/mimic-iv/concepts_fhir/concepts/firstday/first_day_vitalsign/attempt_0001/candidate.demo.parquet/*.parquet",
+  "candidate_row_count": 140,
+  "concept": "first_day_vitalsign",
+  "dataset": "demo",
+  "executed": true,
+  "format_version": "2.0",
+  "gated": [
+    "execution",
+    "column_names",
+    "column_types"
+  ],
+  "mode": "shape",
+  "not_gated": [
+    "row_count"
+  ],
+  "note": "Shape is correct. This earns permission to spend an HPC run; it is not evidence of correctness.",
+  "oracle_full_row_count": 73181,
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "stay_id",
+      "heart_rate_min",
+      "heart_rate_max",
+      "heart_rate_mean",
+      "sbp_min",
+      "sbp_max",
+      "sbp_mean",
+      "dbp_min",
+      "dbp_max",
+      "dbp_mean",
+      "mbp_min",
+      "mbp_max",
+      "mbp_mean",
+      "resp_rate_min",
+      "resp_rate_max",
+      "resp_rate_mean",
+      "temperature_min",
+      "temperature_max",
+      "temperature_mean",
+      "spo2_min",
+      "spo2_max",
+      "spo2_mean",
+      "glucose_min",
+      "glucose_max",
+      "glucose_mean",
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "stay_id",
+      "heart_rate_min",
+      "heart_rate_max",
+      "heart_rate_mean",
+      "sbp_min",
+      "sbp_max",
+      "sbp_mean",
+      "dbp_min",
+      "dbp_max",
+      "dbp_mean",
+      "mbp_min",
+      "mbp_max",
+      "mbp_mean",
+      "resp_rate_min",
+      "resp_rate_max",
+      "resp_rate_mean",
+      "temperature_min",
+      "temperature_max",
+      "temperature_mean",
+      "spo2_min",
+      "spo2_max",
+      "spo2_mean",
+      "glucose_min",
+      "glucose_max",
+      "glucose_mean"
+    ],
+    "extra_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": [],
+    "missing_key_columns": [],
+    "required_key_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "unexpected_columns": []
+  },
+  "verdict": "shape_ok"
+}
