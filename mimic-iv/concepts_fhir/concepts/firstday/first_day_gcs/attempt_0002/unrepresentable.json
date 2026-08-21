@@ -1,0 +1,3 @@
+{
+  "gcs_unable": "No FHIR element. Numeric chartevents with itemid 223900 are served as Quantity, while the source No Response-ETT discriminator is discarded and Quantity 1 also represents No Response; no served element carries an exact ventilation-status flag, so this column is emitted as a typed NULL for every row."
+}

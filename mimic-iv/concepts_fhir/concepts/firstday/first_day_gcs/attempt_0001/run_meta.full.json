@@ -1,0 +1,114 @@
+{
+  "attempt_dir": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/firstday/first_day_gcs/attempt_0001",
+  "column_types": {
+    "gcs_eyes": "float",
+    "gcs_min": "float",
+    "gcs_motor": "float",
+    "gcs_unable": "int",
+    "gcs_verbal": "float",
+    "icu_encounter_key": "string",
+    "patient_key": "string",
+    "stay_id": "int",
+    "subject_id": "int"
+  },
+  "columns": [
+    "subject_id",
+    "stay_id",
+    "gcs_min",
+    "gcs_motor",
+    "gcs_verbal",
+    "gcs_eyes",
+    "gcs_unable",
+    "patient_key",
+    "icu_encounter_key"
+  ],
+  "concept": "first_day_gcs",
+  "dataset": "full",
+  "divergence": {
+    "attributed": [],
+    "blocking": [
+      {
+        "class": "differing_conflict",
+        "count": 7726,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "classification": "keyed",
+    "conflict_attribution": {
+      "attempted": false,
+      "complete": false,
+      "why": "no datetime column in this concept; the DST cast cannot apply"
+    },
+    "contested": [
+      {
+        "class": "differing_conflict",
+        "count": 7726,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "declared_unrepresentable": {
+      "gcs_unable": "No FHIR element. Numeric chartevents with itemid 223900 are served as Quantity, while the source No Response-ETT discriminator is discarded and Quantity 1 also represents No Response; no served element carries an exact ventilation-status flag, so this column is emitted as a typed NULL for every row."
+    },
+    "diagnostician_required": true,
+    "gap_shaped": [
+      {
+        "class": "differing_null_only",
+        "count": 64925,
+        "declared_unrepresentable": {
+          "gcs_unable": "No FHIR element. Numeric chartevents with itemid 223900 are served as Quantity, while the source No Response-ETT discriminator is discarded and Quantity 1 also represents No Response; no served element carries an exact ventilation-status flag, so this column is emitted as a typed NULL for every row."
+        },
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      }
+    ],
+    "identical_fraction": 0.007242,
+    "identical_representable_rows": 53927,
+    "identical_rows": 530,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "key_attribution": null,
+    "notes": [
+      "upstream conflict attribution not attempted: no datetime column in this concept; the DST cast cannot apply"
+    ],
+    "oracle_rows": 73181,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "representable_excludes": [
+      "gcs_unable"
+    ],
+    "representable_fraction": 0.736899,
+    "reviewable": [
+      {
+        "class": "differing_conflict",
+        "count": 7726,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      },
+      {
+        "class": "differing_null_only",
+        "count": 64925,
+        "declared_unrepresentable": {
+          "gcs_unable": "No FHIR element. Numeric chartevents with itemid 223900 are served as Quantity, while the source No Response-ETT discriminator is discarded and Quantity 1 also represents No Response; no served element carries an exact ventilation-status flag, so this column is emitted as a typed NULL for every row."
+        },
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "engine": "pathling-embedded",
+  "format_version": "1.0",
+  "generated_at": "2026-08-21T02:32:28.534631+00:00",
+  "oracle": "/scratch3/nau025/oracle/mimic4-full.db",
+  "oracle_row_count": 73181,
+  "row_count": 73181,
+  "timings_seconds": {
+    "compare": 1.16,
+    "execute": 125.073
+  },
+  "verdict": "review",
+  "view_labels": [
+    "gcs",
+    "icu_encounter",
+    "patient"
+  ],
+  "warehouse": "/scratch3/nau025/mimic-on-fhir-delta/spark_warehouse"
+}

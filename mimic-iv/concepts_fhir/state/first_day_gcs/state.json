@@ -1,0 +1,19 @@
+{
+  "attempt": 2,
+  "category": "firstday",
+  "completed_at": "2026-08-21T03:07:52.085429+00:00",
+  "concept_name": "first_day_gcs",
+  "dependencies": [
+    "gcs"
+  ],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "first_day_gcs attempt_0002 faithfully propagates the human-accepted gcs dependency gap. For numeric chartevents item 223900, Observation.valueString/value.ofType(string) is absent and Observation.component or an equivalent discriminator is not emitted; mimic-fhir/sql/fhir_observation_chartevents.sql:69-80 therefore collapses No Response and No Response-ETT to Quantity 1. The candidate retains all 73,181 ICU stays and produces only 72,651 differing_null_only rows, with zero conflicts or unpaired rows. It emits typed NULL for gcs_unable and, on the 28,837 affected first-day windows, propagates dependency ambiguity to gcs_min and components rather than selecting a known survivor. Attempt_0001's survivor strategy produced 7,726 conflicts and was corrected. All valid paths and substitutions were exhausted, resource identity remained opaque, and no target-specific residual remains. Because the divergence is wholly inherited from accepted dependency gcs and its required NULL-propagation condition is met, accept as COMPLETED_WITH_DIVERGENCE.",
+  "engineering_counter": 2,
+  "error_message": null,
+  "hpc_counter": 2,
+  "reopen_history": [],
+  "semantic_counter": 2,
+  "started_at": "2026-08-21T02:49:39.612582+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-21T03:07:52.085786+00:00"
+}

@@ -1,0 +1,473 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/firstday/first_day_gcs/attempt_0002/candidate.full.parquet/*.parquet",
+  "comparison": "keyed_join",
+  "concept": "first_day_gcs",
+  "dataset": "full",
+  "diagnostics": [
+    "GAP-SHAPED \u2014 consistent with a MIMIC-on-FHIR coverage gap:",
+    "  72,651 \u00d7 differing_null_only \u2014 matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing",
+    "    column 'gcs_unable' is NULL in the candidate on 72,651 row(s) [declared unrepresentable]",
+    "    column 'gcs_min' is NULL in the candidate on 28,837 row(s)",
+    "    column 'gcs_eyes' is NULL in the candidate on 28,742 row(s)",
+    "    column 'gcs_verbal' is NULL in the candidate on 28,651 row(s)",
+    "    column 'gcs_motor' is NULL in the candidate on 28,622 row(s)",
+    "    declared 'gcs_unable': No FHIR element. Numeric chartevents with itemid 223900 are served as Quantity, while the source No Response-ETT discriminator is discarded and Quantity 1 also represents No Response; no served element carries an exact ventilation-status flag, so this column is emitted as a typed NULL for every row.",
+    "530 of 73,181 oracle rows reproduced identically (0.72%)",
+    "44,344 of 73,181 identical on the representable columns (60.59%), excluding the declared-and-confirmed all-NULL column(s): gcs_unable"
+  ],
+  "diff": {
+    "classification": "keyed",
+    "columns_candidate_null": {
+      "gcs_eyes": 28742,
+      "gcs_min": 28837,
+      "gcs_motor": 28622,
+      "gcs_unable": 72651,
+      "gcs_verbal": 28651
+    },
+    "columns_conflicting": {},
+    "columns_differing": {
+      "gcs_eyes": 28742,
+      "gcs_min": 28837,
+      "gcs_motor": 28622,
+      "gcs_unable": 72651,
+      "gcs_verbal": 28651
+    },
+    "differing": 72651,
+    "differing_conflict": 0,
+    "differing_null_only": 72651,
+    "excluded_as_unrepresentable": [
+      "gcs_unable"
+    ],
+    "identical": 530,
+    "identical_representable": 44344,
+    "key": [
+      "stay_id"
+    ],
+    "only_candidate": 0,
+    "only_oracle": 0,
+    "samples": {
+      "differing_conflict": [],
+      "differing_null_only": [
+        {
+          "gcs_eyes__candidate": 4.0,
+          "gcs_eyes__oracle": 4.0,
+          "gcs_min__candidate": 15.0,
+          "gcs_min__oracle": 15.0,
+          "gcs_motor__candidate": 6.0,
+          "gcs_motor__oracle": 6.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 0,
+          "gcs_verbal__candidate": 5.0,
+          "gcs_verbal__oracle": 5.0,
+          "stay_id": 37820841,
+          "subject_id__candidate": 16972873,
+          "subject_id__oracle": 16972873
+        },
+        {
+          "gcs_eyes__candidate": null,
+          "gcs_eyes__oracle": 4.0,
+          "gcs_min__candidate": null,
+          "gcs_min__oracle": 14.0,
+          "gcs_motor__candidate": null,
+          "gcs_motor__oracle": 6.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 0,
+          "gcs_verbal__candidate": null,
+          "gcs_verbal__oracle": 4.0,
+          "stay_id": 31209355,
+          "subject_id__candidate": 17462189,
+          "subject_id__oracle": 17462189
+        },
+        {
+          "gcs_eyes__candidate": 4.0,
+          "gcs_eyes__oracle": 4.0,
+          "gcs_min__candidate": 15.0,
+          "gcs_min__oracle": 15.0,
+          "gcs_motor__candidate": 6.0,
+          "gcs_motor__oracle": 6.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 0,
+          "gcs_verbal__candidate": 5.0,
+          "gcs_verbal__oracle": 5.0,
+          "stay_id": 35644817,
+          "subject_id__candidate": 15118778,
+          "subject_id__oracle": 15118778
+        },
+        {
+          "gcs_eyes__candidate": null,
+          "gcs_eyes__oracle": 2.0,
+          "gcs_min__candidate": null,
+          "gcs_min__oracle": 15.0,
+          "gcs_motor__candidate": null,
+          "gcs_motor__oracle": 4.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 1,
+          "gcs_verbal__candidate": null,
+          "gcs_verbal__oracle": 0.0,
+          "stay_id": 34566815,
+          "subject_id__candidate": 12967352,
+          "subject_id__oracle": 12967352
+        },
+        {
+          "gcs_eyes__candidate": 3.0,
+          "gcs_eyes__oracle": 3.0,
+          "gcs_min__candidate": 10.0,
+          "gcs_min__oracle": 10.0,
+          "gcs_motor__candidate": 5.0,
+          "gcs_motor__oracle": 5.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 0,
+          "gcs_verbal__candidate": 2.0,
+          "gcs_verbal__oracle": 2.0,
+          "stay_id": 31556366,
+          "subject_id__candidate": 15939762,
+          "subject_id__oracle": 15939762
+        },
+        {
+          "gcs_eyes__candidate": 3.0,
+          "gcs_eyes__oracle": 3.0,
+          "gcs_min__candidate": 14.0,
+          "gcs_min__oracle": 14.0,
+          "gcs_motor__candidate": 6.0,
+          "gcs_motor__oracle": 6.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 0,
+          "gcs_verbal__candidate": 5.0,
+          "gcs_verbal__oracle": 5.0,
+          "stay_id": 30686870,
+          "subject_id__candidate": 14932599,
+          "subject_id__oracle": 14932599
+        },
+        {
+          "gcs_eyes__candidate": null,
+          "gcs_eyes__oracle": 4.0,
+          "gcs_min__candidate": null,
+          "gcs_min__oracle": 15.0,
+          "gcs_motor__candidate": null,
+          "gcs_motor__oracle": 5.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 1,
+          "gcs_verbal__candidate": null,
+          "gcs_verbal__oracle": 0.0,
+          "stay_id": 31500619,
+          "subject_id__candidate": 17672254,
+          "subject_id__oracle": 17672254
+        },
+        {
+          "gcs_eyes__candidate": 4.0,
+          "gcs_eyes__oracle": 4.0,
+          "gcs_min__candidate": 15.0,
+          "gcs_min__oracle": 15.0,
+          "gcs_motor__candidate": 6.0,
+          "gcs_motor__oracle": 6.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 0,
+          "gcs_verbal__candidate": 5.0,
+          "gcs_verbal__oracle": 5.0,
+          "stay_id": 39773028,
+          "subject_id__candidate": 18273628,
+          "subject_id__oracle": 18273628
+        },
+        {
+          "gcs_eyes__candidate": null,
+          "gcs_eyes__oracle": 1.0,
+          "gcs_min__candidate": null,
+          "gcs_min__oracle": 15.0,
+          "gcs_motor__candidate": null,
+          "gcs_motor__oracle": 1.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 1,
+          "gcs_verbal__candidate": null,
+          "gcs_verbal__oracle": 0.0,
+          "stay_id": 32118180,
+          "subject_id__candidate": 17218341,
+          "subject_id__oracle": 17218341
+        },
+        {
+          "gcs_eyes__candidate": 4.0,
+          "gcs_eyes__oracle": 4.0,
+          "gcs_min__candidate": 15.0,
+          "gcs_min__oracle": 15.0,
+          "gcs_motor__candidate": 6.0,
+          "gcs_motor__oracle": 6.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 0,
+          "gcs_verbal__candidate": 5.0,
+          "gcs_verbal__oracle": 5.0,
+          "stay_id": 32008435,
+          "subject_id__candidate": 11119303,
+          "subject_id__oracle": 11119303
+        },
+        {
+          "gcs_eyes__candidate": 4.0,
+          "gcs_eyes__oracle": 4.0,
+          "gcs_min__candidate": 14.0,
+          "gcs_min__oracle": 14.0,
+          "gcs_motor__candidate": 6.0,
+          "gcs_motor__oracle": 6.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 0,
+          "gcs_verbal__candidate": 4.0,
+          "gcs_verbal__oracle": 4.0,
+          "stay_id": 36551258,
+          "subject_id__candidate": 11299992,
+          "subject_id__oracle": 11299992
+        },
+        {
+          "gcs_eyes__candidate": null,
+          "gcs_eyes__oracle": 3.0,
+          "gcs_min__candidate": null,
+          "gcs_min__oracle": 10.0,
+          "gcs_motor__candidate": null,
+          "gcs_motor__oracle": 6.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 0,
+          "gcs_verbal__candidate": null,
+          "gcs_verbal__oracle": 1.0,
+          "stay_id": 32740404,
+          "subject_id__candidate": 16281507,
+          "subject_id__oracle": 16281507
+        },
+        {
+          "gcs_eyes__candidate": 4.0,
+          "gcs_eyes__oracle": 4.0,
+          "gcs_min__candidate": 14.0,
+          "gcs_min__oracle": 14.0,
+          "gcs_motor__candidate": 6.0,
+          "gcs_motor__oracle": 6.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 0,
+          "gcs_verbal__candidate": 4.0,
+          "gcs_verbal__oracle": 4.0,
+          "stay_id": 33407183,
+          "subject_id__candidate": 17414351,
+          "subject_id__oracle": 17414351
+        },
+        {
+          "gcs_eyes__candidate": 4.0,
+          "gcs_eyes__oracle": 4.0,
+          "gcs_min__candidate": 15.0,
+          "gcs_min__oracle": 15.0,
+          "gcs_motor__candidate": 6.0,
+          "gcs_motor__oracle": 6.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 0,
+          "gcs_verbal__candidate": 5.0,
+          "gcs_verbal__oracle": 5.0,
+          "stay_id": 33410221,
+          "subject_id__candidate": 10734159,
+          "subject_id__oracle": 10734159
+        },
+        {
+          "gcs_eyes__candidate": 3.0,
+          "gcs_eyes__oracle": 3.0,
+          "gcs_min__candidate": 13.0,
+          "gcs_min__oracle": 13.0,
+          "gcs_motor__candidate": 6.0,
+          "gcs_motor__oracle": 6.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 0,
+          "gcs_verbal__candidate": 4.0,
+          "gcs_verbal__oracle": 4.0,
+          "stay_id": 35245117,
+          "subject_id__candidate": 15835317,
+          "subject_id__oracle": 15835317
+        },
+        {
+          "gcs_eyes__candidate": 4.0,
+          "gcs_eyes__oracle": 4.0,
+          "gcs_min__candidate": 15.0,
+          "gcs_min__oracle": 15.0,
+          "gcs_motor__candidate": 6.0,
+          "gcs_motor__oracle": 6.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 0,
+          "gcs_verbal__candidate": 5.0,
+          "gcs_verbal__oracle": 5.0,
+          "stay_id": 36409003,
+          "subject_id__candidate": 19306731,
+          "subject_id__oracle": 19306731
+        },
+        {
+          "gcs_eyes__candidate": 3.0,
+          "gcs_eyes__oracle": 3.0,
+          "gcs_min__candidate": 14.0,
+          "gcs_min__oracle": 14.0,
+          "gcs_motor__candidate": 6.0,
+          "gcs_motor__oracle": 6.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 0,
+          "gcs_verbal__candidate": 5.0,
+          "gcs_verbal__oracle": 5.0,
+          "stay_id": 32041152,
+          "subject_id__candidate": 17845095,
+          "subject_id__oracle": 17845095
+        },
+        {
+          "gcs_eyes__candidate": 4.0,
+          "gcs_eyes__oracle": 4.0,
+          "gcs_min__candidate": 15.0,
+          "gcs_min__oracle": 15.0,
+          "gcs_motor__candidate": 6.0,
+          "gcs_motor__oracle": 6.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 0,
+          "gcs_verbal__candidate": 5.0,
+          "gcs_verbal__oracle": 5.0,
+          "stay_id": 32748004,
+          "subject_id__candidate": 11551024,
+          "subject_id__oracle": 11551024
+        },
+        {
+          "gcs_eyes__candidate": 3.0,
+          "gcs_eyes__oracle": 3.0,
+          "gcs_min__candidate": 14.0,
+          "gcs_min__oracle": 14.0,
+          "gcs_motor__candidate": 6.0,
+          "gcs_motor__oracle": 6.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 0,
+          "gcs_verbal__candidate": 5.0,
+          "gcs_verbal__oracle": 5.0,
+          "stay_id": 38103244,
+          "subject_id__candidate": 11313297,
+          "subject_id__oracle": 11313297
+        },
+        {
+          "gcs_eyes__candidate": 4.0,
+          "gcs_eyes__oracle": 4.0,
+          "gcs_min__candidate": 14.0,
+          "gcs_min__oracle": 14.0,
+          "gcs_motor__candidate": 6.0,
+          "gcs_motor__oracle": 6.0,
+          "gcs_unable__candidate": null,
+          "gcs_unable__oracle": 0,
+          "gcs_verbal__candidate": 4.0,
+          "gcs_verbal__oracle": 4.0,
+          "stay_id": 30677277,
+          "subject_id__candidate": 11757284,
+          "subject_id__oracle": 11757284
+        }
+      ],
+      "only_candidate": [],
+      "only_oracle": []
+    }
+  },
+  "divergence": {
+    "attributed": [],
+    "blocking": [],
+    "classification": "keyed",
+    "conflict_attribution": null,
+    "contested": [],
+    "declared_unrepresentable": {
+      "gcs_unable": "No FHIR element. Numeric chartevents with itemid 223900 are served as Quantity, while the source No Response-ETT discriminator is discarded and Quantity 1 also represents No Response; no served element carries an exact ventilation-status flag, so this column is emitted as a typed NULL for every row."
+    },
+    "diagnostician_required": false,
+    "gap_shaped": [
+      {
+        "class": "differing_null_only",
+        "count": 72651,
+        "declared_unrepresentable": {
+          "gcs_unable": "No FHIR element. Numeric chartevents with itemid 223900 are served as Quantity, while the source No Response-ETT discriminator is discarded and Quantity 1 also represents No Response; no served element carries an exact ventilation-status flag, so this column is emitted as a typed NULL for every row."
+        },
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      }
+    ],
+    "identical_fraction": 0.007242,
+    "identical_representable_rows": 44344,
+    "identical_rows": 530,
+    "judge_bar": "Cite the FHIR element or path that does not exist in the MIMIC-on-FHIR IG, show it explains the magnitude and shape of the divergence, and confirm every defensible mapping was tried.",
+    "judge_required": true,
+    "key_attribution": null,
+    "notes": [],
+    "oracle_rows": 73181,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "representable_excludes": [
+      "gcs_unable"
+    ],
+    "representable_fraction": 0.60595,
+    "reviewable": [
+      {
+        "class": "differing_null_only",
+        "count": 72651,
+        "declared_unrepresentable": {
+          "gcs_unable": "No FHIR element. Numeric chartevents with itemid 223900 are served as Quantity, while the source No Response-ETT discriminator is discarded and Quantity 1 also represents No Response; no served element carries an exact ventilation-status flag, so this column is emitted as a typed NULL for every row."
+        },
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      }
+    ],
+    "tier": "gap_shaped",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "676309535374199663921171",
+    "manifest_row_count": 73181,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.first_day_gcs"
+  },
+  "row_count": {
+    "candidate": 73181,
+    "delta": 0,
+    "gated": false,
+    "match": true,
+    "oracle": 73181
+  },
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "stay_id",
+      "gcs_min",
+      "gcs_motor",
+      "gcs_verbal",
+      "gcs_eyes",
+      "gcs_unable",
+      "patient_key",
+      "icu_encounter_key"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "stay_id",
+      "gcs_min",
+      "gcs_motor",
+      "gcs_verbal",
+      "gcs_eyes",
+      "gcs_unable"
+    ],
+    "extra_columns": [
+      "patient_key",
+      "icu_encounter_key"
+    ],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": [],
+    "missing_key_columns": [],
+    "required_key_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "unexpected_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "unrepresentable": {
+    "confirmed": {
+      "gcs_unable": "No FHIR element. Numeric chartevents with itemid 223900 are served as Quantity, while the source No Response-ETT discriminator is discarded and Quantity 1 also represents No Response; no served element carries an exact ventilation-status flag, so this column is emitted as a typed NULL for every row."
+    },
+    "declared": {
+      "gcs_unable": "No FHIR element. Numeric chartevents with itemid 223900 are served as Quantity, while the source No Response-ETT discriminator is discarded and Quantity 1 also represents No Response; no served element carries an exact ventilation-status flag, so this column is emitted as a typed NULL for every row."
+    },
+    "policy": "A declared column must be 100% NULL in the candidate. Declaring a column and then emitting an estimate for it is blocking: it converts a reviewable coverage gap into a value conflict.",
+    "undeclared_fully_null_columns": [],
+    "violations": []
+  },
+  "verdict": "review"
+}
