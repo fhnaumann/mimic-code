@@ -1,0 +1,7 @@
+## Chartevents Observation ETL omissions are global but unexercised for the weight items in demo
+- Affected: `Observation` resources generated from `mimiciv_icu.chartevents`, including itemids `226512` and `224639`
+- Verified: `first_day_weight` attempt 0001 embedded Pathling probe and DuckDB query checked `mimic-fhir/sql/fhir_observation_chartevents.sql:34-38`; the target source had 570/570 non-NULL `value` and 570/570 positive, `<1500` `valuenum` rows, the hard-coded tuple `(34934165, 2151-10-03 05:14:00)` had 0 rows, and the FHIR projection retained 570/570 resources. The predicates remain a coverage boundary for other chartevents streams.
+
+## ICU Encounter period endpoints can be DST-normalized before FHIR serialization
+- Affected: `Encounter.period.start` and `Encounter.period.end` on the ICU Encounter stream, and arithmetic derived from `period.start` such as first-admission weight intervals
+- Verified: `first_day_weight` attempt 0001 fresh Delta/DuckDB comparison matched ICU `intime` and `outtime` directly on 140/140 demo stays (the demo had no New York spring-forward-gap endpoint); ETL inspection at `mimic-fhir/sql/fhir_encounter_icu.sql:31-32,97-100` shows the `TIMESTAMPTZ` cast, and completed `weight_durations` attempt_0002 source-side replay independently found 9 ICU-intime-derived residual starttime effects. The original gap wall time is absent from the served period and resource identity is opaque.

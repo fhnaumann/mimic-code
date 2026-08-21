@@ -1,0 +1,19 @@
+{
+  "attempt": 1,
+  "category": "firstday",
+  "completed_at": "2026-08-21T00:15:13.721313+00:00",
+  "concept_name": "first_day_weight",
+  "dependencies": [
+    "weight_durations"
+  ],
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 2,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 0,
+  "started_at": "2026-08-20T23:40:28.091317+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-21T00:15:13.725420+00:00"
+}
