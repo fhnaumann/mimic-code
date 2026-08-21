@@ -1,0 +1,19 @@
+{
+  "attempt": 2,
+  "category": "medication",
+  "completed_at": null,
+  "concept_name": "norepinephrine_equivalent_dose",
+  "dependencies": [
+    "vasoactive_agent"
+  ],
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 2,
+  "error_message": null,
+  "hpc_counter": 0,
+  "reopen_history": [],
+  "semantic_counter": 0,
+  "started_at": "2026-08-21T05:09:17.209233+00:00",
+  "status": "RUNNING",
+  "updated_at": "2026-08-21T05:09:17.209772+00:00"
+}

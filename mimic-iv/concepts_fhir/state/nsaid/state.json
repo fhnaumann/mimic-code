@@ -1,13 +1,13 @@
 {
   "attempt": 2,
   "category": "medication",
-  "completed_at": "2026-08-20T04:22:50.223209+00:00",
+  "completed_at": "2026-08-21T00:02:07.563614+00:00",
   "concept_name": "nsaid",
   "dependencies": [],
-  "divergence_decided_by": null,
-  "divergence_justification": null,
+  "divergence_decided_by": "human",
+  "divergence_justification": "Human override of the attempt 0002 block; see mimic-iv/concepts_fhir/human_override/nsaid.md for the full argument. Same cause as antibiotic and the same statement: mimic-fhir/sql/fhir_medication_request.sql:172-177 emits MedicationRequest.dispenseRequest.validityPeriod only when 'ph_STARTTIME IS NOT NULL AND ph_STARTTIME <= ph_STOPTIME', dropping both endpoints together, and no other served element carries prescriptions.starttime/stoptime (authoredOn at :55,124 is pharmacy entertime; fhir_medication_dispense.sql carries none; fhir_medication_administration.sql:177 is emar charttime at another grain; identifiers carry identity only and resource-id inversion is refused per LOOP_CONTRACT.md:317-333). This explains all 10,276 differing_null_only rows (starttime NULL 10,276; stoptime NULL 10,249), decomposing into 10,249 reversed intervals that FHIR R4 Period invariant per-1 makes intrinsically unrepresentable and 27 one-sided-NULL-stoptime rows lost to a NULL-unsafe guard, a small fixable upstream defect. The 18 differing_conflict rows (starttime 12, stoptime 6) were replayed in full by the comparator as the exempt TIMESTAMPTZ DST cast at :43-44 (conflict_attribution.complete true) and the judge did not block on them. Not essential loss per LOOP_CONTRACT.md:481: row counts equal at 235,678 with delta 0, the residual paired 1:1 on (subject_id, hadm_id, nsaid) with matching multiplicity and zero only_oracle/only_candidate, nsaid.sql:30-35 is a filtered projection with no GROUP BY, window, carry-forward, derived column or stay_id, every gap is a typed NULL rather than an estimate, and concept_dag finds no consumer of mimiciv_derived.nsaid so nothing inherits the gap. Fidelity 225,384/235,678 identical (95.6317%). Consistency: acei (9,059/112,014 = 8.09%) and arb (3,179/39,534 = 8.04%) are the same query shape over prescriptions with the same gap at larger fractions and were judge-accepted; blocking nsaid at 4.36% turned on which judge invocation saw it, which LOOP_CONTRACT.md:512-516 rules against.",
   "engineering_counter": 2,
-  "error_message": "Equivalence judge blocked intrinsic essential loss: MedicationRequest.dispenseRequest.validityPeriod.start/end are absent for invalid or incomplete prescription intervals under mimic-fhir/sql/fhir_medication_request.sql:172-177; authoredOn and Medication/ingredient paths do not preserve the source endpoints. Canonical nsaid.sql:30-35 emits these clinically meaningful start/stop outputs. Full attempt_0002 reproduced 225384/235678 rows identically (95.63%); 10276 differing_null_only rows (starttime NULL 10276, stoptime NULL 10249) remain, plus 18 differing_conflict rows fully attributed to the upstream DST cast at mimic-fhir/sql/fhir_medication_request.sql:43-44,172-177. The DST subset is not the blocking cause.",
+  "error_message": null,
   "hpc_counter": 2,
   "reopen_history": [
     {
@@ -26,8 +26,8 @@
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
-  "semantic_counter": 3,
+  "semantic_counter": 4,
   "started_at": "2026-08-20T04:06:19.629913+00:00",
-  "status": "BLOCKED_REPRESENTATION",
-  "updated_at": "2026-08-20T04:22:50.223662+00:00"
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-21T00:02:07.564680+00:00"
 }
