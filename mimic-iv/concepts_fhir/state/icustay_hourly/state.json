@@ -1,0 +1,19 @@
+{
+  "attempt": 1,
+  "category": "demographics",
+  "completed_at": "2026-08-21T00:47:39.810642+00:00",
+  "concept_name": "icustay_hourly",
+  "dependencies": [
+    "icustay_times"
+  ],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "All 68 classified target divergences are exhaustively explained as second-order propagation of the accepted icustay_times DST defect at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67; the source wall time is absent from all semantic FHIR fields, every defensible legal mapping was applied, and zero target-local residual remains.",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 1,
+  "started_at": "2026-08-20T23:54:33.769702+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-21T00:47:39.813079+00:00"
+}

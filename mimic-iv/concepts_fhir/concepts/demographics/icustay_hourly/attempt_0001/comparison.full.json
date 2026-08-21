@@ -1,0 +1,382 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/demographics/icustay_hourly/attempt_0001/candidate.full.parquet/*.parquet",
+  "comparison": "keyed_join",
+  "concept": "icustay_hourly",
+  "dataset": "full",
+  "diagnostics": [
+    "row count (not gated): oracle 7,799,814 vs candidate 7,799,808 (delta -6)",
+    "CONTESTED \u2014 a value conflict. Either a port bug or upstream ETL transformation loss; the data cannot tell you which:",
+    "  1 \u00d7 only_candidate (0.000% of oracle rows) \u2014 rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it",
+    "  60 \u00d7 differing_conflict (0.001% of oracle rows) \u2014 matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone",
+    "    column 'hr' conflicts on 60 row(s) (0.001% of oracle rows)",
+    "  bar for an accept: A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "GAP-SHAPED \u2014 consistent with a MIMIC-on-FHIR coverage gap:",
+    "  7 \u00d7 only_oracle \u2014 oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes",
+    "7,799,747 of 7,799,814 oracle rows reproduced identically (100.00%)",
+    "note: upstream conflict attribution not attempted: no datetime column in this concept; the DST cast cannot apply"
+  ],
+  "diff": {
+    "classification": "keyed",
+    "columns_candidate_null": {},
+    "columns_conflicting": {
+      "hr": 60
+    },
+    "columns_differing": {
+      "hr": 60
+    },
+    "conflict_attribution": {
+      "attempted": false,
+      "complete": false,
+      "why": "no datetime column in this concept; the DST cast cannot apply"
+    },
+    "differing": 60,
+    "differing_conflict": 60,
+    "differing_null_only": 0,
+    "excluded_as_unrepresentable": [],
+    "identical": 7799747,
+    "identical_representable": 7799747,
+    "key": [
+      "stay_id",
+      "endtime"
+    ],
+    "key_attribution": {
+      "attempted": true,
+      "attributed_only_candidate": 0,
+      "attributed_only_oracle": 0,
+      "attributed_only_oracle_collided": 0,
+      "attributed_only_oracle_repaired": 0,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "complete": false,
+      "keys_considered": [
+        "endtime"
+      ],
+      "only_candidate": 1,
+      "only_oracle": 7,
+      "operation": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+      "residual_only_candidate": 1,
+      "residual_only_oracle": 7,
+      "timezone": "America/New_York"
+    },
+    "only_candidate": 1,
+    "only_oracle": 7,
+    "samples": {
+      "differing_conflict": [
+        {
+          "endtime": "2181-03-10T04:00:00",
+          "hr__candidate": -24,
+          "hr__oracle": -23,
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2181-03-10T05:00:00",
+          "hr__candidate": -23,
+          "hr__oracle": -22,
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2181-03-10T06:00:00",
+          "hr__candidate": -22,
+          "hr__oracle": -21,
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2181-03-10T07:00:00",
+          "hr__candidate": -21,
+          "hr__oracle": -20,
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2181-03-10T08:00:00",
+          "hr__candidate": -20,
+          "hr__oracle": -19,
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2181-03-10T09:00:00",
+          "hr__candidate": -19,
+          "hr__oracle": -18,
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2181-03-10T10:00:00",
+          "hr__candidate": -18,
+          "hr__oracle": -17,
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2181-03-10T11:00:00",
+          "hr__candidate": -17,
+          "hr__oracle": -16,
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2181-03-10T12:00:00",
+          "hr__candidate": -16,
+          "hr__oracle": -15,
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2181-03-10T13:00:00",
+          "hr__candidate": -15,
+          "hr__oracle": -14,
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2181-03-10T14:00:00",
+          "hr__candidate": -14,
+          "hr__oracle": -13,
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2181-03-10T15:00:00",
+          "hr__candidate": -13,
+          "hr__oracle": -12,
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2181-03-10T16:00:00",
+          "hr__candidate": -12,
+          "hr__oracle": -11,
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2181-03-10T17:00:00",
+          "hr__candidate": -11,
+          "hr__oracle": -10,
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2181-03-10T18:00:00",
+          "hr__candidate": -10,
+          "hr__oracle": -9,
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2181-03-10T19:00:00",
+          "hr__candidate": -9,
+          "hr__oracle": -8,
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2181-03-10T20:00:00",
+          "hr__candidate": -8,
+          "hr__oracle": -7,
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2181-03-10T21:00:00",
+          "hr__candidate": -7,
+          "hr__oracle": -6,
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2181-03-10T22:00:00",
+          "hr__candidate": -6,
+          "hr__oracle": -5,
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2181-03-10T23:00:00",
+          "hr__candidate": -5,
+          "hr__oracle": -4,
+          "stay_id": 36521920
+        }
+      ],
+      "differing_null_only": [],
+      "only_candidate": [
+        {
+          "endtime": "2129-03-13T04:00:00",
+          "stay_id": 32933486
+        }
+      ],
+      "only_oracle": [
+        {
+          "endtime": "2147-03-12T15:00:00",
+          "stay_id": 36404931
+        },
+        {
+          "endtime": "2166-03-21T14:00:00",
+          "stay_id": 34059206
+        },
+        {
+          "endtime": "2143-03-10T18:00:00",
+          "stay_id": 33230862
+        },
+        {
+          "endtime": "2187-03-28T17:00:00",
+          "stay_id": 30388989
+        },
+        {
+          "endtime": "2177-03-13T20:00:00",
+          "stay_id": 34048237
+        },
+        {
+          "endtime": "2181-03-10T03:00:00",
+          "stay_id": 36521920
+        },
+        {
+          "endtime": "2153-03-12T21:00:00",
+          "stay_id": 31742002
+        }
+      ]
+    }
+  },
+  "divergence": {
+    "attributed": [],
+    "blocking": [
+      {
+        "class": "only_candidate",
+        "count": 1,
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      },
+      {
+        "class": "differing_conflict",
+        "count": 60,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "classification": "keyed",
+    "conflict_attribution": {
+      "attempted": false,
+      "complete": false,
+      "why": "no datetime column in this concept; the DST cast cannot apply"
+    },
+    "contested": [
+      {
+        "class": "only_candidate",
+        "count": 1,
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      },
+      {
+        "class": "differing_conflict",
+        "count": 60,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "declared_unrepresentable": {},
+    "diagnostician_required": true,
+    "gap_shaped": [
+      {
+        "class": "only_oracle",
+        "count": 7,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "identical_fraction": 0.999991,
+    "identical_rows": 7799747,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "key_attribution": {
+      "attempted": true,
+      "attributed_only_candidate": 0,
+      "attributed_only_oracle": 0,
+      "attributed_only_oracle_collided": 0,
+      "attributed_only_oracle_repaired": 0,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "complete": false,
+      "keys_considered": [
+        "endtime"
+      ],
+      "only_candidate": 1,
+      "only_oracle": 7,
+      "operation": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+      "residual_only_candidate": 1,
+      "residual_only_oracle": 7,
+      "timezone": "America/New_York"
+    },
+    "notes": [
+      "upstream conflict attribution not attempted: no datetime column in this concept; the DST cast cannot apply"
+    ],
+    "oracle_rows": 7799814,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [
+      {
+        "class": "only_candidate",
+        "count": 1,
+        "why": "rows the candidate produced that the oracle does not have. Usually join fan-out or a filter the oracle SQL applies and the port does not; a coverage gap cannot cause it"
+      },
+      {
+        "class": "differing_conflict",
+        "count": 60,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      },
+      {
+        "class": "only_oracle",
+        "count": 7,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "71960026161320957752879246",
+    "manifest_row_count": 7799814,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.icustay_hourly"
+  },
+  "row_count": {
+    "candidate": 7799808,
+    "delta": -6,
+    "gated": false,
+    "match": false,
+    "oracle": 7799814
+  },
+  "schema": {
+    "actual_columns": [
+      "stay_id",
+      "hr",
+      "endtime",
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "expected_columns": [
+      "stay_id",
+      "hr",
+      "endtime"
+    ],
+    "extra_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": [],
+    "missing_key_columns": [],
+    "required_key_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "unexpected_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "verdict": "review"
+}
