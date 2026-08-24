@@ -1,0 +1,18 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/creatinine_baseline-0003-encounter",
+  "name": "encounter",
+  "resource": "Encounter",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "encounter_key" },
+        {
+          "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-hosp').value",
+          "name": "hadm_id_str"
+        }
+      ]
+    }
+  ]
+}
