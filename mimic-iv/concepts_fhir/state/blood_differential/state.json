@@ -1,14 +1,14 @@
 {
-  "attempt": 3,
+  "attempt": 4,
   "category": "measurement",
-  "completed_at": "2026-08-18T00:13:36.969569+00:00",
+  "completed_at": "2026-08-24T23:49:44.318230+00:00",
   "concept_name": "blood_differential",
   "dependencies": [],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "All 200 divergences are charttime conflicts caused by irreversible upstream DST normalization. mimic-fhir/sql/fhir_observation_labevents.sql:15 casts naive labevents.charttime through TIMESTAMPTZ, and line 121 writes the result to Observation.effectiveDateTime; no FHIR element retains the original wall time. The candidate sources (effective).ofType(dateTime) and casts it to TIMESTAMP_NTZ, faithfully preserving the served value. The comparator replayed every conflict through America/New_York with zero residual. The affected 200/3,171,906 rows (0.0063%) are consistent with DST-gap rarity. Resource IDs remain opaque and provide no permissible recovery path. Although charttime is output and aggregated with MAX by specimen, the proven upstream DST defect is expressly exempt from essential-loss blocking.",
-  "engineering_counter": 4,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 6,
   "error_message": null,
-  "hpc_counter": 3,
+  "hpc_counter": 4,
   "reopen_history": [
     {
       "at": "2026-08-17T23:49:09.117710+00:00",
@@ -24,10 +24,25 @@
       "superseded_error": null,
       "superseded_justification": "Judge accepted the contested residual: 200 charttime conflicts are intrinsic upstream ETL loss. mimic-fhir/sql/fhir_observation_labevents.sql:15 casts naive labevents.charttime through TIMESTAMPTZ and :121-122 writes the transformed effectiveDateTime; DST-gap 02:xx values become 03:xx. The original wall time is not retained, issued is separately sourced from storetime, and no FHIR query can invert the non-injective transformation. Attempt 0002 uses TIMESTAMP_NTZ and has no remaining only-candidate, only-oracle, or null-only rows; 3,171,706/3,171,906 rows are identical (99.9937%).",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-24T23:24:02.537110+00:00",
+      "baseline": {
+        "attempt": 3,
+        "engineering": 4,
+        "hpc": 3,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "All 200 divergences are charttime conflicts caused by irreversible upstream DST normalization. mimic-fhir/sql/fhir_observation_labevents.sql:15 casts naive labevents.charttime through TIMESTAMPTZ, and line 121 writes the result to Observation.effectiveDateTime; no FHIR element retains the original wall time. The candidate sources (effective).ofType(dateTime) and casts it to TIMESTAMP_NTZ, faithfully preserving the served value. The comparator replayed every conflict through America/New_York with zero residual. The affected 200/3,171,906 rows (0.0063%) are consistent with DST-gap rarity. Resource IDs remain opaque and provide no permissible recovery path. Although charttime is output and aggregated with MAX by specimen, the proven upstream DST defect is expressly exempt from essential-loss blocking.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
   "semantic_counter": 2,
-  "started_at": "2026-08-17T23:49:09.119731+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-18T00:13:36.970014+00:00"
+  "started_at": "2026-08-24T23:24:02.538835+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-24T23:49:44.318654+00:00"
 }

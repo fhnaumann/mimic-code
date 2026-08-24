@@ -1,0 +1,40 @@
+{
+  "authored_by": "mimic_utils replay",
+  "carried": [
+    {
+      "name": "concept.sql",
+      "sha256": "405d9c4c765b484d531f98bf2ec89eaec8354144fecfcf75a957c3ac969bf11d"
+    },
+    {
+      "name": "ViewDefinition.encounter.json",
+      "sha256": "455d32ef27383588670233ee9364253ac04174d96ee13f8aaffee4a2555e8eb5"
+    },
+    {
+      "name": "ViewDefinition.lab_observation.json",
+      "sha256": "1fab7668a7a54a170f4047f1a9b7f3b1de8f3f940eec7de5cc84a623c1185b8c"
+    },
+    {
+      "name": "ViewDefinition.patient.json",
+      "sha256": "76ffd728d2614fbe10fec2753bc35201e6829808b44783ef7dd76fef5c882472"
+    },
+    {
+      "name": "ViewDefinition.specimen.json",
+      "sha256": "0e80df24f9a93c253ebb8fe9178fe20e8b0a993a03ae7876847cdf252018e89c"
+    }
+  ],
+  "concept": "blood_differential",
+  "created_at": "2026-08-24T23:24:02+00:00",
+  "fixes_measured": [
+    {
+      "fixed_by": "mimic-fhir ade10fb (upstream #124), 2026-08-21",
+      "id": "dst-timestamptz-wall-clock",
+      "summary": "The ETL ran under a DST-observing zone, so casting naive MIMIC wall times through TIMESTAMPTZ normalised spring-forward gap times forward an hour irreversibly. The FHIR tables are now generated under UTC, which has no DST in any year, so the cast is an identity on the wall clock."
+    }
+  ],
+  "kind": "data_rebuild",
+  "note": "The SQL and ViewDefinitions in this attempt were NOT authored for it. They are the previous attempt's, carried forward byte-identical so that the only thing that changed between the superseded verdict and this one is the served data. No implementer ran, and none should: re-authoring would make this a comparison of two queries instead of a measurement of the upstream fix.",
+  "reason": "The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+  "source_attempt": "attempt_0003",
+  "superseded_status": "COMPLETED_WITH_DIVERGENCE",
+  "warnings": []
+}

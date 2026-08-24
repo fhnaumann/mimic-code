@@ -1,0 +1,84 @@
+{
+  "candidate": "/Users/nau025/Documents/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/blood_differential/attempt_0004/candidate.demo.parquet/*.parquet",
+  "candidate_row_count": 2763,
+  "concept": "blood_differential",
+  "dataset": "demo",
+  "executed": true,
+  "format_version": "2.0",
+  "gated": [
+    "execution",
+    "column_names",
+    "column_types"
+  ],
+  "mode": "shape",
+  "not_gated": [
+    "row_count"
+  ],
+  "note": "Shape is correct. This earns permission to spend an HPC run; it is not evidence of correctness.",
+  "oracle_full_row_count": 3171906,
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "hadm_id",
+      "charttime",
+      "specimen_id",
+      "wbc",
+      "basophils_abs",
+      "eosinophils_abs",
+      "lymphocytes_abs",
+      "monocytes_abs",
+      "neutrophils_abs",
+      "basophils",
+      "eosinophils",
+      "lymphocytes",
+      "monocytes",
+      "neutrophils",
+      "atypical_lymphocytes",
+      "bands",
+      "immature_granulocytes",
+      "metamyelocytes",
+      "nrbc",
+      "patient_key",
+      "encounter_key",
+      "specimen_key"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "hadm_id",
+      "charttime",
+      "specimen_id",
+      "wbc",
+      "basophils_abs",
+      "eosinophils_abs",
+      "lymphocytes_abs",
+      "monocytes_abs",
+      "neutrophils_abs",
+      "basophils",
+      "eosinophils",
+      "lymphocytes",
+      "monocytes",
+      "neutrophils",
+      "atypical_lymphocytes",
+      "bands",
+      "immature_granulocytes",
+      "metamyelocytes",
+      "nrbc"
+    ],
+    "extra_columns": [
+      "patient_key",
+      "encounter_key",
+      "specimen_key"
+    ],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": [],
+    "missing_key_columns": [],
+    "required_key_columns": [
+      "encounter_key",
+      "patient_key",
+      "specimen_key"
+    ],
+    "unexpected_columns": []
+  },
+  "verdict": "shape_ok"
+}
