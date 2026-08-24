@@ -1,0 +1,4 @@
+{
+  "anchor_age": "No FHIR element. Patient.birthDate is synthesized from MIN(transfers.intime) minus anchor_age and does not preserve the source anchor_age, so no exact FHIR equivalent exists; a typed NULL is emitted.",
+  "anchor_year": "No FHIR element. Patient.birthDate does not preserve the source anchor_year; deriving it from Encounter.period.start is only an approximation, so no exact FHIR equivalent exists; a typed NULL is emitted."
+}

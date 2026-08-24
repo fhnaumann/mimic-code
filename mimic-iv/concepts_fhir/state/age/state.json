@@ -1,14 +1,14 @@
 {
-  "attempt": 3,
+  "attempt": 4,
   "category": "demographics",
-  "completed_at": "2026-08-17T02:18:39.397059+00:00",
+  "completed_at": "2026-08-24T08:15:22.607768+00:00",
   "concept_name": "age",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "Intrinsic upstream transformation divergence. mimic-fhir/sql/fhir_patient.sql:15,108 synthesizes Patient.birthDate from MIN(transfers.intime)-anchor_age, while canonical mimic-iv/concepts/demographics/age.sql:30 requires the unrecoverable anchor_age/anchor_year pair, explaining all 460 age conflicts. mimic-fhir/sql/fhir_encounter.sql:65,149-151 irreversibly normalizes 44 DST-gap admission times, exhaustively replayed by the comparator. The anchor outputs are valid ancillary typed NULLs; all rows, keys, and grain are preserved. Under the contract's explicit birthDate and DST upstream-defect exemptions, these conflicts are accepted rather than blocked, including their clinically meaningful effect on age.",
-  "engineering_counter": 4,
+  "divergence_justification": "Judge accepted the gap-shaped review: MIMIC_NOTES.md:55-59 records no MIMIC-specific Patient anchor extension, and MIMIC_NOTES.md:128-147 records that Patient.birthDate collapses and does not exactly preserve anchor_age or anchor_year; minimum Encounter.period.start year is only an approximation. The current full comparison verified typed NULLs on anchor_age and anchor_year for all 431,231 rows, with 0 conflicts, 0 only-candidate, 0 only-oracle, and 431,231/431,231 representable rows exact. Every defensible mapping was tried. The loss is ancillary: admissions, hadm_id grain, subject, admittime, and derived age are exact and the missing anchor outputs do not alter inclusion, keys, grouping, carry-forward, or remaining clinical values.",
+  "engineering_counter": 5,
   "error_message": null,
-  "hpc_counter": 2,
+  "hpc_counter": 3,
   "reopen_history": [
     {
       "at": "2026-08-17T01:52:00.483731+00:00",
@@ -24,10 +24,25 @@
       "superseded_error": null,
       "superseded_justification": "Intrinsic representability gap, upstream-ETL-confirmed. 430,727/431,231 rows (99.883%) identical on all representable columns. age conflicts on 460 rows (0.107%): mimic-fhir/sql/fhir_patient.sql:15 synthesises Patient.birthDate as MIN(transfers.intime)-anchor_age, not anchor_year-anchor_age; canonical age needs anchor_year, which no FHIR element carries. admittime conflicts on 44 rows (0.010%): fhir_encounter.sql:65 casts through TIMESTAMPTZ, normalising DST-gap wall times irreversibly. anchor_age/anchor_year emitted as typed NULLs per contract. Divergence propagates to creatinine_baseline, oasis, charlson, sapsii, which all select age.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-24T07:54:52.988104+00:00",
+      "baseline": {
+        "attempt": 3,
+        "engineering": 4,
+        "hpc": 2,
+        "semantic": 3
+      },
+      "by": "human",
+      "reason": "Fixed the upstream TIMEZONE bug as well as other bugs. Rerun the last attempted sql against hpc and continue from there",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Intrinsic upstream transformation divergence. mimic-fhir/sql/fhir_patient.sql:15,108 synthesizes Patient.birthDate from MIN(transfers.intime)-anchor_age, while canonical mimic-iv/concepts/demographics/age.sql:30 requires the unrecoverable anchor_age/anchor_year pair, explaining all 460 age conflicts. mimic-fhir/sql/fhir_encounter.sql:65,149-151 irreversibly normalizes 44 DST-gap admission times, exhaustively replayed by the comparator. The anchor outputs are valid ancillary typed NULLs; all rows, keys, and grain are preserved. Under the contract's explicit birthDate and DST upstream-defect exemptions, these conflicts are accepted rather than blocked, including their clinically meaningful effect on age.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
-  "semantic_counter": 3,
-  "started_at": "2026-08-17T01:52:00.485513+00:00",
+  "semantic_counter": 4,
+  "started_at": "2026-08-24T07:54:52.989406+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-17T02:18:39.397477+00:00"
+  "updated_at": "2026-08-24T08:15:22.608158+00:00"
 }
