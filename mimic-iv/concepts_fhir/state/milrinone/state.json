@@ -1,17 +1,33 @@
 {
-  "attempt": 2,
+  "attempt": 3,
   "category": "medication",
-  "completed_at": "2026-08-13T06:15:10.148324+00:00",
+  "completed_at": "2026-08-24T10:08:18.820969+00:00",
   "concept_name": "milrinone",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "ICU MedicationAdministration carries no inputevents.linkorderid FHIR element or identifier, explaining the declared typed-NULL ancillary column and 9,569 differing_null_only rows; exact medication, Encounter identifier, both effective variants, TIMESTAMP_NTZ, numeric casts, and opaque equality joins were tried. The remaining 4 underlying affected administrations (2 endtime conflicts plus 2 shifted starttime key pairs) are fully and exactly attributed with zero residual to mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69, whose TIMESTAMPTZ DST-gap normalization is irreversible and affects 0.0418% of 9,573 rows. No resource-id inversion was used and no divergent dependencies exist.",
-  "engineering_counter": 3,
+  "divergence_justification": "ICU MedicationAdministration does not serialize mimiciv_icu.inputevents.linkorderid in MedicationAdministration.identifier, MedicationAdministration.supportingInformation, or any other FHIR path, as confirmed by MIMIC_NOTES.md and mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,38-100. This explains all 9,573 keyed differing_null_only rows on the declared typed-NULL linkorderid; all 9,573 rows are identical on representable columns, with no other divergence. Exact medication coding, ICU Encounter identifier mapping, both effective variants, TIMESTAMP_NTZ conversion, Quantity casts, and permitted opaque equality joins were exhausted. Resource-id inversion is forbidden. linkorderid is ancillary and affects neither inclusion, key (stay_id,starttime), grouping, windows, nor clinical values. No divergent dependencies exist.",
+  "engineering_counter": 4,
   "error_message": null,
-  "hpc_counter": 2,
-  "reopen_history": [],
-  "semantic_counter": 1,
-  "started_at": "2026-08-13T06:01:41.626394+00:00",
+  "hpc_counter": 3,
+  "reopen_history": [
+    {
+      "at": "2026-08-24T09:54:20.387888+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 3,
+        "hpc": 2,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "This port was completed before the resource-key lint that validate-demo now enforces, and it does not emit patient_key, so it cannot be carried forward unchanged. Add patient_key -- taken verbatim and uncast from the Patient view, or from a reference to it -- and change nothing else about the logic. The warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer, so expect previously accepted divergences to have shrunk or gone.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "ICU MedicationAdministration carries no inputevents.linkorderid FHIR element or identifier, explaining the declared typed-NULL ancillary column and 9,569 differing_null_only rows; exact medication, Encounter identifier, both effective variants, TIMESTAMP_NTZ, numeric casts, and opaque equality joins were tried. The remaining 4 underlying affected administrations (2 endtime conflicts plus 2 shifted starttime key pairs) are fully and exactly attributed with zero residual to mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69, whose TIMESTAMPTZ DST-gap normalization is irreversible and affects 0.0418% of 9,573 rows. No resource-id inversion was used and no divergent dependencies exist.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 2,
+  "started_at": "2026-08-24T09:54:20.390413+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-13T06:15:10.149191+00:00"
+  "updated_at": "2026-08-24T10:08:18.821489+00:00"
 }
