@@ -1,14 +1,14 @@
 {
-  "attempt": 7,
+  "attempt": 8,
   "category": "measurement",
-  "completed_at": "2026-08-17T04:34:44.209678+00:00",
+  "completed_at": "2026-08-24T23:48:56.726231+00:00",
   "concept_name": "bg",
   "dependencies": [],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "Accepted intrinsic upstream divergence: mimic-fhir/sql/fhir_observation_labevents.sql:15,121 irreversibly normalizes DST-gap charttime before writing Observation.effectiveDateTime. Comparator replay explains 64 conflicts, and six further conflicts are fully accounted for as second-order effects through bg's four-hour FiO2 window. Observation.issued is storetime and Specimen.collection.collectedDateTime repeats the same normalized timestamp (fhir_specimen_lab.sql:9,18,58), so the oracle wall time is unrecoverable from served FHIR without forbidden resource-ID inference.",
-  "engineering_counter": 12,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 14,
   "error_message": null,
-  "hpc_counter": 5,
+  "hpc_counter": 6,
   "reopen_history": [
     {
       "at": "2026-08-17T04:02:19.249701+00:00",
@@ -24,10 +24,25 @@
       "superseded_error": null,
       "superseded_justification": "Judge accepted the 70/511637 (0.014%) unkeyed full-tuple residual: mimic-fhir/sql/fhir_observation_labevents.sql:15,121, fhir_observation_chartevents.sql:9,67, and fhir_specimen_lab.sql:18,58 cast source chart times through TIMESTAMPTZ, irreversibly normalizing DST-gap wall times before writing Observation.effectiveDateTime and Specimen.collection.collectedDateTime. FHIR carries only the normalized time; Observation.issued is storetime, so the original wall time and exact chart-window ordering are unrecoverable by any FHIR query. The current port uses TIMESTAMP_NTZ, exact specimen grouping/itemids, and NULLIF(value_string, '___') for the separate fhir_observation_labevents.sql:133-136 comments fallback. No divergent dependencies; schema and row count match. Judge verdict: accept.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-24T23:24:02.544294+00:00",
+      "baseline": {
+        "attempt": 7,
+        "engineering": 12,
+        "hpc": 5,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Accepted intrinsic upstream divergence: mimic-fhir/sql/fhir_observation_labevents.sql:15,121 irreversibly normalizes DST-gap charttime before writing Observation.effectiveDateTime. Comparator replay explains 64 conflicts, and six further conflicts are fully accounted for as second-order effects through bg's four-hour FiO2 window. Observation.issued is storetime and Specimen.collection.collectedDateTime repeats the same normalized timestamp (fhir_specimen_lab.sql:9,18,58), so the oracle wall time is unrecoverable from served FHIR without forbidden resource-ID inference.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
   "semantic_counter": 2,
-  "started_at": "2026-08-17T04:02:19.251189+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-17T04:34:44.210111+00:00"
+  "started_at": "2026-08-24T23:24:02.546159+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-24T23:48:56.726535+00:00"
 }

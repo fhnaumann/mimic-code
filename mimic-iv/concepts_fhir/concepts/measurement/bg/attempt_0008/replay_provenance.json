@@ -1,0 +1,44 @@
+{
+  "authored_by": "mimic_utils replay",
+  "carried": [
+    {
+      "name": "concept.sql",
+      "sha256": "f64704a0560aae52fd2df5cd44075d79ccda52dc2b2c0166901635c0c868a2ac"
+    },
+    {
+      "name": "ViewDefinition.chart_observation.json",
+      "sha256": "341d59be22dcfb126bd665a9e92cf9706f642222f45cd66111022795869a6e5d"
+    },
+    {
+      "name": "ViewDefinition.encounter.json",
+      "sha256": "7cbce61f3826ba764c60b77eacf82cc9c61974c85667703ff1de1097a5ee1393"
+    },
+    {
+      "name": "ViewDefinition.lab_observation.json",
+      "sha256": "27c7d69642e82ce101aae8cd75938cada1fd08c698a3f989b7e373ac6a564c54"
+    },
+    {
+      "name": "ViewDefinition.patient.json",
+      "sha256": "8d6eff9b726e2eb720e09ce64cd4da81cb476a3af7557b187444708bfbb932ad"
+    },
+    {
+      "name": "ViewDefinition.specimen.json",
+      "sha256": "8069a41c8af4d553368dab74a9beb7620c6b982fccd350409e557fbeb1590118"
+    }
+  ],
+  "concept": "bg",
+  "created_at": "2026-08-24T23:24:02+00:00",
+  "fixes_measured": [
+    {
+      "fixed_by": "mimic-fhir ade10fb (upstream #124), 2026-08-21",
+      "id": "dst-timestamptz-wall-clock",
+      "summary": "The ETL ran under a DST-observing zone, so casting naive MIMIC wall times through TIMESTAMPTZ normalised spring-forward gap times forward an hour irreversibly. The FHIR tables are now generated under UTC, which has no DST in any year, so the cast is an identity on the wall clock."
+    }
+  ],
+  "kind": "data_rebuild",
+  "note": "The SQL and ViewDefinitions in this attempt were NOT authored for it. They are the previous attempt's, carried forward byte-identical so that the only thing that changed between the superseded verdict and this one is the served data. No implementer ran, and none should: re-authoring would make this a comparison of two queries instead of a measurement of the upstream fix.",
+  "reason": "The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+  "source_attempt": "attempt_0007",
+  "superseded_status": "COMPLETED_WITH_DIVERGENCE",
+  "warnings": []
+}
