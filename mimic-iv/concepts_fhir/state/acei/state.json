@@ -1,14 +1,14 @@
 {
-  "attempt": 6,
+  "attempt": 7,
   "category": "medication",
-  "completed_at": "2026-08-20T04:02:02.879207+00:00",
+  "completed_at": "2026-08-24T23:52:19.023865+00:00",
   "concept_name": "acei",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "MIMIC-on-FHIR omits MedicationRequest.dispenseRequest.validityPeriod.start/end for 9,050 reversed and 9 incomplete ACEI intervals, producing exactly 9,059 paired null-only rows, while seven additional endpoint conflicts are exhaustively attributable to the upstream TIMESTAMPTZ casts at mimic-fhir/sql/fhir_medication_request.sql:43-44 feeding the elements written at :172-177. The complete direct-plus-mix mapping preserves every row and uses no resource-id inversion; the missing endpoints affect no inclusion, grouping, grain, carry-forward, or derived output.",
-  "engineering_counter": 8,
+  "divergence_justification": "Judge accept, gap_shaped paired residual: MedicationRequest.dispenseRequest.validityPeriod.start and .end are absent for invalid, reversed, or incomplete prescription intervals because mimic-fhir/sql/fhir_medication_request.sql:172-177 emits the period only for complete non-reversed intervals; no FHIR path retains rejected endpoints and authoredOn is pharmacy entry time, not a substitute. Direct and medication-mix ingredient branches, UNION ALL multiplicity, exact validity paths, and TRY_CAST(... AS TIMESTAMP_NTZ) were exhausted; no resource-id inversion is used. All 112014 rows and multiplicity are retained, with 9059 paired differing_null_only rows (candidate NULL starttime on 9058 and stoptime on 9051), zero conflicts/unpaired rows, and 102955/112014 identical. The missing endpoints are ancillary because acei.sql performs no temporal filtering, grouping, carry-forward, or clinical derivation.",
+  "engineering_counter": 9,
   "error_message": null,
-  "hpc_counter": 4,
+  "hpc_counter": 5,
   "reopen_history": [
     {
       "at": "2026-08-11T06:12:14.145094+00:00",
@@ -38,10 +38,25 @@
       "superseded_error": null,
       "superseded_justification": "Judge accepted attempt 0005 at the contested bar: MedicationRequest.dispenseRequest.validityPeriod.start/end are omitted for invalid or incomplete source intervals by mimic-fhir/sql/fhir_medication_request.sql:172-177, explaining 9,059 differing_null_only rows; authoredOn is pharmacy entertime (lines 55 and 124), not either endpoint. Seven differing_conflict endpoints are exact +1-hour DST-gap rewrites from the TIMESTAMPTZ casts at mimic-fhir/sql/fhir_medication_request.sql:43-44; the non-injective normalization cannot be inverted by any FHIR query. The direct and medication-mix ingredient branches, UNION ALL multiplicity, and TIMESTAMP_NTZ handling exhaust all defensible mappings.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-24T23:24:02.535219+00:00",
+      "baseline": {
+        "attempt": 6,
+        "engineering": 8,
+        "hpc": 4,
+        "semantic": 3
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "MIMIC-on-FHIR omits MedicationRequest.dispenseRequest.validityPeriod.start/end for 9,050 reversed and 9 incomplete ACEI intervals, producing exactly 9,059 paired null-only rows, while seven additional endpoint conflicts are exhaustively attributable to the upstream TIMESTAMPTZ casts at mimic-fhir/sql/fhir_medication_request.sql:43-44 feeding the elements written at :172-177. The complete direct-plus-mix mapping preserves every row and uses no resource-id inversion; the missing endpoints affect no inclusion, grouping, grain, carry-forward, or derived output.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
-  "semantic_counter": 3,
-  "started_at": "2026-08-20T03:45:49.053300+00:00",
+  "semantic_counter": 4,
+  "started_at": "2026-08-24T23:24:02.536820+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-20T04:02:02.879593+00:00"
+  "updated_at": "2026-08-24T23:52:19.024372+00:00"
 }

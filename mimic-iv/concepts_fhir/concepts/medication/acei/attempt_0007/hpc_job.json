@@ -1,0 +1,8 @@
+{
+  "concept": "acei",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "30483991",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/medication/acei/attempt_0007",
+  "submitted_at": "2026-08-24T23:28:21.159664+00:00",
+  "walltime": "2:00:00"
+}
