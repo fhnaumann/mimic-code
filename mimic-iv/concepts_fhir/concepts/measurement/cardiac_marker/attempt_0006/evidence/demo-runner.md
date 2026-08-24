@@ -1,0 +1,3 @@
+# Demo runner evidence
+
+The cardiac_marker attempt_0006 replayed port executed successfully with embedded Pathling on Spark. `uv run mimic_utils run-demo cardiac_marker` produced `shape_ok`; the candidate had all seven oracle columns, no incompatible types, and all required resource key columns. The three extra columns (`patient_key`, `encounter_key`, `specimen_key`) are required manifest key columns. The demo candidate contained 283 rows; this row count was observed but not used as a gate. Artifacts written were `candidate.demo.parquet/` and `shape.demo.json` in this attempt directory. No carried implementation artifact was edited. No new dataset-wide quirk was found.

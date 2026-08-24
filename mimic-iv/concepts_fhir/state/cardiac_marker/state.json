@@ -1,14 +1,14 @@
 {
-  "attempt": 5,
+  "attempt": 6,
   "category": "measurement",
-  "completed_at": "2026-08-18T00:10:52.519248+00:00",
+  "completed_at": "2026-08-24T23:38:45.202877+00:00",
   "concept_name": "cardiac_marker",
   "dependencies": [],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "Judge accepted the attributed review: 18/295,246 differing_conflict rows on charttime (0.00610%) are exhaustively replayed as the America/New_York upstream TIMESTAMPTZ DST-gap shift. Provenance is confirmed by mimic-fhir/sql/fhir_observation_labevents.sql:15,121, which transforms lab.charttime and writes Observation.effectiveDateTime, with specimen timing likewise at mimic-fhir/sql/fhir_specimen_lab.sql:18,58. There are zero residual conflicts or other divergence classes; all identifiers, specimen grouping, analytes, row inclusion, and other values are exact, and the original 02:xx wall time is unrecoverable from FHIR. This is accepted upstream transformation loss, not essential representation loss.",
-  "engineering_counter": 6,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 8,
   "error_message": null,
-  "hpc_counter": 3,
+  "hpc_counter": 4,
   "reopen_history": [
     {
       "at": "2026-08-11T06:12:12.909288+00:00",
@@ -38,10 +38,25 @@
       "superseded_error": null,
       "superseded_justification": "Accepted by equivalence judge: 18 keyed charttime conflicts are uniformly candidate 03:xx versus oracle 02:xx, caused by mimic-fhir/sql/fhir_observation_labevents.sql:15 casting lab.charttime through TIMESTAMPTZ and :121 writing it to Observation.effectiveDateTime; the analogous specimen transform is fhir_specimen_lab.sql:9,18,58. The transformation is non-injective, and Observation.issued carries transformed storetime (fhir_observation_labevents.sql:16,122), so no FHIR query can recover original charttime without corrupting genuine 03:xx values. The port faithfully preserves the FHIR value with TRY_CAST(... AS TIMESTAMP_NTZ); all other values, keys, schema and rows agree.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-24T23:24:02.533937+00:00",
+      "baseline": {
+        "attempt": 5,
+        "engineering": 6,
+        "hpc": 3,
+        "semantic": 3
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Judge accepted the attributed review: 18/295,246 differing_conflict rows on charttime (0.00610%) are exhaustively replayed as the America/New_York upstream TIMESTAMPTZ DST-gap shift. Provenance is confirmed by mimic-fhir/sql/fhir_observation_labevents.sql:15,121, which transforms lab.charttime and writes Observation.effectiveDateTime, with specimen timing likewise at mimic-fhir/sql/fhir_specimen_lab.sql:18,58. There are zero residual conflicts or other divergence classes; all identifiers, specimen grouping, analytes, row inclusion, and other values are exact, and the original 02:xx wall time is unrecoverable from FHIR. This is accepted upstream transformation loss, not essential representation loss.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
   "semantic_counter": 3,
-  "started_at": "2026-08-17T23:49:37.751026+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-18T00:10:52.519704+00:00"
+  "started_at": "2026-08-24T23:24:02.536450+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-24T23:38:45.203227+00:00"
 }

@@ -1,0 +1,3 @@
+# HPC poller evidence
+
+Slurm job `30483910` completed cleanly. The full-data comparator returned `match` with schema identity and 295,246/295,246 candidate/oracle rows; all diff classes were zero (`only_oracle`, `only_candidate`, `differing_null_only`, and `differing_conflict`). The candidate reproduced 100.00% of oracle rows identically. The comparison used the manifest key `specimen_id`; the required resource key columns were present. Fetched artifacts were `comparison.full.json`, `run_meta.full.json`, and `hpc_accounting.json` in this attempt directory. No judge or diagnostician was required, and no implementation artifact was edited.

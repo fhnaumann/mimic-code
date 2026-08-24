@@ -1,0 +1,68 @@
+WITH filtered_rows AS (
+    SELECT
+        p.subject_id_str,
+        p.patient_key,
+        e.hadm_id_str,
+        e.encounter_key,
+        s.specimen_id_str,
+        s.specimen_key,
+        l.code,
+        l.system,
+        l.effective_datetime,
+        l.effective_period_start,
+        l.quantity_value,
+        l.quantity_comparator
+    FROM lab_observation l
+    INNER JOIN patient p
+        ON l.patient_key = p.patient_key
+    INNER JOIN specimen s
+        ON l.specimen_key = s.specimen_key
+    LEFT JOIN encounter e
+        ON l.encounter_key = e.encounter_key
+    WHERE l.system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-d-labitems'
+        AND l.code IN ('51003', '50911', '50963')
+        AND l.quantity_value IS NOT NULL
+        AND l.quantity_comparator IS NULL
+), typed_rows AS (
+    SELECT
+        CAST(subject_id_str AS INTEGER) AS subject_id,
+        CAST(hadm_id_str AS INTEGER) AS hadm_id,
+        CAST(specimen_id_str AS INTEGER) AS specimen_id,
+        patient_key,
+        encounter_key,
+        specimen_key,
+        code,
+        COALESCE(
+            TRY_CAST(effective_datetime AS TIMESTAMP_NTZ),
+            TRY_CAST(effective_period_start AS TIMESTAMP_NTZ)
+        ) AS charttime,
+        CAST(quantity_value AS DOUBLE) AS value_num
+    FROM filtered_rows
+), grouped AS (
+    SELECT
+        MAX(subject_id) AS subject_id,
+        MAX(hadm_id) AS hadm_id,
+        MAX(charttime) AS charttime,
+        specimen_id,
+        MAX(patient_key) AS patient_key,
+        MAX(encounter_key) AS encounter_key,
+        MAX(specimen_key) AS specimen_key,
+        MAX(CASE WHEN code = '51003' THEN value_num ELSE NULL END) AS troponin_t,
+        MAX(CASE WHEN code = '50911' THEN value_num ELSE NULL END) AS ck_mb,
+        MAX(CASE WHEN code = '50963' THEN value_num ELSE NULL END) AS ntprobnp
+    FROM typed_rows
+    GROUP BY specimen_id
+)
+SELECT
+    CAST(grouped.subject_id AS INTEGER) AS subject_id,
+    grouped.patient_key AS patient_key,
+    CAST(grouped.hadm_id AS INTEGER) AS hadm_id,
+    grouped.encounter_key AS encounter_key,
+    CAST(grouped.charttime AS TIMESTAMP_NTZ) AS charttime,
+    CAST(grouped.specimen_id AS INTEGER) AS specimen_id,
+    grouped.specimen_key AS specimen_key,
+    CAST(grouped.troponin_t AS DOUBLE) AS troponin_t,
+    CAST(grouped.ck_mb AS DOUBLE) AS ck_mb,
+    CAST(grouped.ntprobnp AS DOUBLE) AS ntprobnp
+FROM grouped
+;
