@@ -1,14 +1,14 @@
 {
-  "attempt": 6,
+  "attempt": 8,
   "category": "measurement",
-  "completed_at": "2026-08-21T01:55:32.139170+00:00",
+  "completed_at": "2026-08-25T07:32:03.149802+00:00",
   "concept_name": "gcs",
   "dependencies": [],
-  "divergence_decided_by": "human",
-  "divergence_justification": "attempt_0006 is gap_shaped with divergence.blocking empty and differing_conflict = 0: the port states no value it does not have, on any row. The absent element is Observation.component -- mimic-fhir/sql/fhir_observation_chartevents.sql:69-80 partitions valueQuantity and valueString on the same predicate, so chartevents.value is discarded wherever valuenum exists, and itemid 223900 has valuenum on 1,627,786 of 1,627,786 rows; 'No Response' and 'No Response-ETT' both arrive as Quantity 1. That absence explains the divergence exactly: gcs and gcs_verbal NULL on 678,714 rows (the ambiguous-or-previous predicate) and gcs_unable NULL on all rows, declared and comparator-confirmed. Every defensible mapping was tried and measured, not asserted: valueString never written for 223900, component/valueCodeableConcept/dataAbsentReason not written at all, resource-id inversion forbidden, oxygen_delivery 4.7% recall and the oracle ventilation table 80.1% accuracy (Slurm job 30309569), and ventilator_setting is BLOCKED_REPRESENTATION on this same statement. Fidelity 958,951/1,637,763 identical on representable columns (58.55%); the 98 only_oracle and 74 only_candidate rows are fully attributed to the upstream DST cast at fhir_observation_chartevents.sql:9,67 with zero residual. The judge's essential-loss finding is upheld; what is overridden is the remedy, since :481's harm -- ordinary values concealing ambiguity -- is not what this port does. Conditions and full argument in human_override/gcs.md. Upstream fix filed as kind-lab/mimic-fhir#125.",
-  "engineering_counter": 8,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 11,
   "error_message": null,
-  "hpc_counter": 5,
+  "hpc_counter": 6,
   "reopen_history": [
     {
       "at": "2026-08-12T02:41:42.975885+00:00",
@@ -52,10 +52,25 @@
       "superseded_error": "Equivalence judge blocked gcs: essential upstream representation loss at mimic-fhir/sql/fhir_observation_chartevents.sql:69-80 discards the No Response-ETT discriminator, conflating it with No Response as Quantity 1. This changes gcs, gcs_verbal, gcs_unable, total GCS and six-hour carry-forward; 576086 differing_conflict rows plus 74 only_candidate and 98 only_oracle were observed (64.82% identical). Resource IDs are opaque and cannot recover the label. Key replay attributes 74 paired key shifts to mimic-fhir/sql/fhir_observation_chartevents.sql:9,67, with 24 collision residuals.",
       "superseded_justification": null,
       "superseded_status": "BLOCKED_REPRESENTATION"
+    },
+    {
+      "at": "2026-08-25T06:59:30.767427+00:00",
+      "baseline": {
+        "attempt": 6,
+        "engineering": 8,
+        "hpc": 5,
+        "semantic": 5
+      },
+      "by": "human",
+      "reason": "Upstream e7c326b (#125) now carries chartevents.value in Observation.component[].valueString, coded with the same mimic-chartevents-d-items coding as Observation.code. itemid 223900 therefore distinguishes 'No Response' from 'No Response-ETT' again. The unrepresentability declaration for gcs_unable is now FALSE and must be removed: select the component text and derive gcs_unable from it, and drop the ambiguity-propagation logic that emitted NULL for gcs, gcs_motor, gcs_verbal and gcs_eyes on affected windows. Do not reconstruct any resource id.",
+      "superseded_decided_by": "human",
+      "superseded_error": null,
+      "superseded_justification": "attempt_0006 is gap_shaped with divergence.blocking empty and differing_conflict = 0: the port states no value it does not have, on any row. The absent element is Observation.component -- mimic-fhir/sql/fhir_observation_chartevents.sql:69-80 partitions valueQuantity and valueString on the same predicate, so chartevents.value is discarded wherever valuenum exists, and itemid 223900 has valuenum on 1,627,786 of 1,627,786 rows; 'No Response' and 'No Response-ETT' both arrive as Quantity 1. That absence explains the divergence exactly: gcs and gcs_verbal NULL on 678,714 rows (the ambiguous-or-previous predicate) and gcs_unable NULL on all rows, declared and comparator-confirmed. Every defensible mapping was tried and measured, not asserted: valueString never written for 223900, component/valueCodeableConcept/dataAbsentReason not written at all, resource-id inversion forbidden, oxygen_delivery 4.7% recall and the oracle ventilation table 80.1% accuracy (Slurm job 30309569), and ventilator_setting is BLOCKED_REPRESENTATION on this same statement. Fidelity 958,951/1,637,763 identical on representable columns (58.55%); the 98 only_oracle and 74 only_candidate rows are fully attributed to the upstream DST cast at fhir_observation_chartevents.sql:9,67 with zero residual. The judge's essential-loss finding is upheld; what is overridden is the remedy, since :481's harm -- ordinary values concealing ambiguity -- is not what this port does. Conditions and full argument in human_override/gcs.md. Upstream fix filed as kind-lab/mimic-fhir#125.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
   "semantic_counter": 5,
-  "started_at": "2026-08-21T01:02:54.044882+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-21T01:55:32.139740+00:00"
+  "started_at": "2026-08-25T07:19:14.653867+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-25T07:32:03.150195+00:00"
 }

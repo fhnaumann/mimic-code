@@ -1,0 +1,32 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/gcs-0007-gcs_observation",
+  "name": "gcs_observation",
+  "resource": "Observation",
+  "select": [
+    {
+      "column": [
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
+        { "path": "encounter.getReferenceKey(Encounter)", "name": "icu_encounter_key" },
+        { "path": "(effective).ofType(dateTime)", "name": "effective_datetime" },
+        { "path": "(value).ofType(Quantity).value", "name": "quantity_value" }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items' and (code='223900' or code='223901' or code='220739'))",
+      "column": [
+        { "path": "code", "name": "item_code" },
+        { "path": "system", "name": "item_system" }
+      ]
+    },
+    {
+      "forEachOrNull": "component.where(code.coding.system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items' and code.coding.code='223900')",
+      "column": [
+        { "path": "code.coding.code", "name": "component_code" },
+        { "path": "code.coding.system", "name": "component_system" },
+        { "path": "value.ofType(string)", "name": "component_text" }
+      ]
+    }
+  ]
+}
