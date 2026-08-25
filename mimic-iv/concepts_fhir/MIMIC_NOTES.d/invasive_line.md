@@ -16,3 +16,7 @@
 ## ICU Procedure performed Period endpoints lose DST-gap wall times
 - Affected: Procedure.performed.ofType(Period).start and Procedure.performed.ofType(Period).end for the ICU procedureevents-derived Procedure stream.
 - Verified: `invasive_line` attempt_0001 full-data comparison found 7 `starttime` and 1 `endtime` conflicts, each candidate value exactly one hour later than the oracle in an America/New_York spring-forward gap. The comparator replayed and attributed all 7 start conflicts; independent residual inspection identified the end conflict as oracle `2186-03-12 02:30:00` versus FHIR `03:30:00`. Upstream `mimic-fhir/sql/fhir_procedure_icu.sql:10-11` casts both naive source endpoints to `TIMESTAMPTZ`, and lines 73-76 write only the cast values to `performedPeriod`, so the original nonexistent wall time is unrecoverable.
+
+## ICU Procedure body-site whitespace loss persists in the rebuilt full warehouse
+- Affected: `Procedure.bodySite.coding.code` from `mimiciv_icu.procedureevents.location`.
+- Verified: `invasive_line` attempt_0003 (2026-08-25) paired all residuals 1:1 and found 657 `differing_conflict` rows, all on `line_site` (555 `Right Antecube ` and 102 `L Ventricular ` source values versus their trailing-space-free FHIR codes), with 0 `only_oracle`, 0 `only_candidate`, and 0 `differing_null_only`; `mimic-fhir/sql/fhir_procedure_icu.sql:12,62-69` normalizes the location and serializes only that transformed code.
