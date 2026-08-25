@@ -1,0 +1,58 @@
+{
+  "attempt_dir": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/firstday/first_day_urine_output/attempt_0002",
+  "column_types": {
+    "icu_encounter_key": "string",
+    "patient_key": "string",
+    "stay_id": "int",
+    "subject_id": "int",
+    "urineoutput": "double"
+  },
+  "columns": [
+    "subject_id",
+    "stay_id",
+    "urineoutput",
+    "patient_key",
+    "icu_encounter_key"
+  ],
+  "concept": "first_day_urine_output",
+  "dataset": "full",
+  "divergence": {
+    "attributed": [],
+    "blocking": [],
+    "classification": "keyed",
+    "conflict_attribution": null,
+    "contested": [],
+    "declared_unrepresentable": {},
+    "diagnostician_required": false,
+    "gap_shaped": [],
+    "identical_fraction": 1.0,
+    "identical_rows": 73181,
+    "judge_bar": null,
+    "judge_required": false,
+    "key_attribution": null,
+    "notes": [],
+    "oracle_rows": 73181,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [],
+    "tier": "none",
+    "unresolvable": [],
+    "verdict": "match"
+  },
+  "engine": "pathling-embedded",
+  "format_version": "1.0",
+  "generated_at": "2026-08-25T01:38:40.171444+00:00",
+  "oracle": "/scratch3/nau025/oracle/mimic4-full.db",
+  "oracle_row_count": 73181,
+  "row_count": 73181,
+  "timings_seconds": {
+    "compare": 1.204,
+    "execute": 80.153
+  },
+  "verdict": "match",
+  "view_labels": [
+    "urine_output",
+    "icu_encounter",
+    "patient"
+  ],
+  "warehouse": "/scratch3/nau025/mimic-on-fhir-delta/spark_warehouse"
+}

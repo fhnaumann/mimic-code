@@ -1,19 +1,35 @@
 {
-  "attempt": 1,
+  "attempt": 2,
   "category": "firstday",
-  "completed_at": "2026-08-20T23:36:45.651110+00:00",
+  "completed_at": "2026-08-25T01:43:29.754053+00:00",
   "concept_name": "first_day_urine_output",
   "dependencies": [
     "urine_output"
   ],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "Judge accepted the contested review: mimic-fhir/sql/fhir_observation_outputevents.sql:9 casts outputevents charttime through TIMESTAMPTZ, line 60 writes the normalized value to Observation.effectiveDateTime, and lines 12,62-65 preserve the source value in Observation.valueQuantity.value; mimic-fhir/sql/fhir_encounter_icu.sql:31 casts icustays.intime through TIMESTAMPTZ and lines 97-99 write it to Encounter.period.start. Full-oracle replay exhaustively explains all 10 urineoutput conflicts with zero residual: five propagate through the judge-accepted divergent urine_output dependency and five arise from the shifted ICU first-day window anchor. The original 02:xx wall times are absent from FHIR and resource IDs are opaque. Candidate and oracle each have 73,181 rows, 73,171 are identical (99.9863%), and the 395/3,335,985 shifted selected outputevents rows (0.01184%) are consistent with DST-gap rarity. The current port preserves the dependency boundary, opaque key joins, LEFT JOIN, inclusive bounds, grouping, and SUM/NULL semantics; proven DST second-order damage is accepted under the contract as COMPLETED_WITH_DIVERGENCE.",
-  "engineering_counter": 1,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 3,
   "error_message": null,
-  "hpc_counter": 1,
-  "reopen_history": [],
+  "hpc_counter": 2,
+  "reopen_history": [
+    {
+      "at": "2026-08-25T01:34:35.943586+00:00",
+      "baseline": {
+        "attempt": 1,
+        "engineering": 1,
+        "hpc": 1,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Judge accepted the contested review: mimic-fhir/sql/fhir_observation_outputevents.sql:9 casts outputevents charttime through TIMESTAMPTZ, line 60 writes the normalized value to Observation.effectiveDateTime, and lines 12,62-65 preserve the source value in Observation.valueQuantity.value; mimic-fhir/sql/fhir_encounter_icu.sql:31 casts icustays.intime through TIMESTAMPTZ and lines 97-99 write it to Encounter.period.start. Full-oracle replay exhaustively explains all 10 urineoutput conflicts with zero residual: five propagate through the judge-accepted divergent urine_output dependency and five arise from the shifted ICU first-day window anchor. The original 02:xx wall times are absent from FHIR and resource IDs are opaque. Candidate and oracle each have 73,181 rows, 73,171 are identical (99.9863%), and the 395/3,335,985 shifted selected outputevents rows (0.01184%) are consistent with DST-gap rarity. The current port preserves the dependency boundary, opaque key joins, LEFT JOIN, inclusive bounds, grouping, and SUM/NULL semantics; proven DST second-order damage is accepted under the contract as COMPLETED_WITH_DIVERGENCE.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
   "semantic_counter": 1,
-  "started_at": "2026-08-20T22:49:19.947016+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-20T23:36:45.652291+00:00"
+  "started_at": "2026-08-25T01:34:35.945334+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-25T01:43:29.754554+00:00"
 }

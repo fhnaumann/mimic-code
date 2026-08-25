@@ -1,0 +1,37 @@
+WITH icu AS (
+    SELECT
+        CAST(p.subject_id_str AS INTEGER) AS subject_id,
+        CAST(e.stay_id_str AS INTEGER) AS stay_id,
+        TRY_CAST(e.intime_datetime AS TIMESTAMP_NTZ) AS intime,
+        p.patient_key AS patient_key,
+        e.icu_encounter_key AS icu_encounter_key
+    FROM icu_encounter e
+    INNER JOIN patient p
+        ON e.patient_key = p.patient_key
+    WHERE e.stay_id_str IS NOT NULL
+), aggregated AS (
+    SELECT
+        i.subject_id,
+        i.stay_id,
+        i.patient_key,
+        i.icu_encounter_key,
+        SUM(uo.urineoutput) AS urineoutput
+    FROM icu i
+    LEFT JOIN urine_output uo
+        ON i.icu_encounter_key = uo.icu_encounter_key
+        AND uo.charttime >= i.intime
+        AND uo.charttime <= i.intime + INTERVAL 1 DAY
+    GROUP BY
+        i.subject_id,
+        i.stay_id,
+        i.patient_key,
+        i.icu_encounter_key
+)
+SELECT
+    CAST(a.subject_id AS INTEGER) AS subject_id,
+    CAST(a.stay_id AS INTEGER) AS stay_id,
+    CAST(a.urineoutput AS DOUBLE) AS urineoutput,
+    a.patient_key,
+    a.icu_encounter_key
+FROM aggregated a
+;
