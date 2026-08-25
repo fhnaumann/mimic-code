@@ -17,3 +17,7 @@
 ## ICU MedicationAdministration trims inputevent Quantity unit strings before serialization
 - Affected: `MedicationAdministration.dosage.rateQuantity.unit`, `MedicationAdministration.dosage.rateQuantity.code`, `MedicationAdministration.dosage.dose.unit`, `MedicationAdministration.dosage.dose.code`, and source `inputevents.rateuom`/`amountuom`
 - Verified: norepinephrine_equivalent_dose attempt_0001 checked `mimic-fhir/sql/fhir_medication_administration_icu.sql:13-15,85-99` and matched source/FHIR rate and amount units on all 1,750 selected rows; the Delta probe found the seven selected streams use `mcg/kg/min` or `units/hour` for rate and `mg` or `units` for amount.
+
+## ICU MedicationAdministration omits `inputevents.patientweight` needed for weight-normalized rates
+- Affected: `MedicationAdministration.dosage.rateQuantity` and canonical branches deriving `inputevents.rate / inputevents.patientweight`
+- Verified: norepinephrine_equivalent_dose attempt_0003 full-data judge review confirmed the exhaustive upstream projection/resource construction at `mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,38-100` carries no patientweight or exact equivalent; the downstream divergence included one missing phenylephrine-dependent interval, while `mimic-iv/concepts/medication/phenylephrine.sql:5-7` requires the denominator for `mcg/min` rows.

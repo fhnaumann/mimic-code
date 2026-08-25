@@ -1,19 +1,35 @@
 {
-  "attempt": 2,
+  "attempt": 3,
   "category": "medication",
-  "completed_at": "2026-08-21T05:41:56.557886+00:00",
+  "completed_at": "2026-08-25T04:45:37.201908+00:00",
   "concept_name": "norepinephrine_equivalent_dose",
   "dependencies": [
     "vasoactive_agent"
   ],
   "divergence_decided_by": "judge",
-  "divergence_justification": "norepinephrine_equivalent_dose faithfully implements its completed vasoactive_agent dependency using the canonical five-rate predicate and four-place formula. All divergence is inherited from judge-accepted vasoactive_agent: mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69 irreversibly normalizes administration endpoints through TIMESTAMPTZ; lines 12-15,85-99 serialize Quantity values served at six-decimal precision; and lines 7-23,38-100 omit patientweight. The original wall times, discarded low-order precision, and patientweight are unrecoverable by any permissible FHIR query or opaque resource identity. There are 112 shifted administrations among 614,600 source rows (0.0182%), producing a target row delta of +20/619,330 (0.00323%); the target introduces no independent mapping, filter, formula, join, or fan-out defect.",
-  "engineering_counter": 3,
+  "divergence_justification": "Judge accept: attempt_0003 is a byte-identical replay whose target SQL faithfully applies canonical norepinephrine_equivalent_dose through accepted vasoactive_agent. The review is unkeyed (oracle 619,330; candidate 619,329; only_oracle 1,707; only_candidate 1,706; residual pairing unanchored and paired 0), so those classes cannot be separated by counts. The dominant divergence is inherited ICU MedicationAdministration Quantity precision loss: mimic-fhir/sql/fhir_medication_administration_icu.sql:14,91-99 writes rateQuantity at six-decimal precision with discarded low-order digits unrecoverable by FHIR, propagated through vasoactive_agent and the target's four-place rounding. The one-row deficit is inherited omission of inputevents.patientweight from mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,38-100, while phenylephrine.sql:5-7 requires it for mcg/min normalization; no exact FHIR element or permissible opaque-id use recovers it. The UTC rebuild reached this path and no DST divergence remains. No target SQL bug or retry is warranted.",
+  "engineering_counter": 4,
   "error_message": null,
-  "hpc_counter": 1,
-  "reopen_history": [],
-  "semantic_counter": 1,
-  "started_at": "2026-08-21T05:09:17.209233+00:00",
+  "hpc_counter": 2,
+  "reopen_history": [
+    {
+      "at": "2026-08-25T04:25:21.602739+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 3,
+        "hpc": 1,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "norepinephrine_equivalent_dose faithfully implements its completed vasoactive_agent dependency using the canonical five-rate predicate and four-place formula. All divergence is inherited from judge-accepted vasoactive_agent: mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69 irreversibly normalizes administration endpoints through TIMESTAMPTZ; lines 12-15,85-99 serialize Quantity values served at six-decimal precision; and lines 7-23,38-100 omit patientweight. The original wall times, discarded low-order precision, and patientweight are unrecoverable by any permissible FHIR query or opaque resource identity. There are 112 shifted administrations among 614,600 source rows (0.0182%), producing a target row delta of +20/619,330 (0.00323%); the target introduces no independent mapping, filter, formula, join, or fan-out defect.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 2,
+  "started_at": "2026-08-25T04:25:21.604193+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-21T05:41:56.558288+00:00"
+  "updated_at": "2026-08-25T04:45:37.202318+00:00"
 }

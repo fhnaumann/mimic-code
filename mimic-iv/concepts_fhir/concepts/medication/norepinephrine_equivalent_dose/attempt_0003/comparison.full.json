@@ -1,0 +1,403 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/medication/norepinephrine_equivalent_dose/attempt_0003/candidate.full.parquet/*.parquet",
+  "comparison": "full_tuple_multiset",
+  "concept": "norepinephrine_equivalent_dose",
+  "dataset": "full",
+  "diagnostics": [
+    "row count (not gated): oracle 619,330 vs candidate 619,329 (delta -1)",
+    "RESIDUAL DID NOT PAIR \u2014 1,707 oracle and 1,706 candidate residual rows do not correspond. Their counts being equal proves nothing: it follows from the row counts being equal.",
+    "CONTESTED \u2014 a value conflict. Either a port bug or upstream ETL transformation loss; the data cannot tell you which:",
+    "  1,706 \u00d7 only_candidate (0.275% of oracle rows) \u2014 rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise",
+    "  bar for an accept: A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "GAP-SHAPED \u2014 consistent with a MIMIC-on-FHIR coverage gap:",
+    "  1,707 \u00d7 only_oracle \u2014 oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes",
+    "note: No unique key for this concept, and the residual did not pair: divergence classes cannot be separated. The judge is reasoning with strictly less evidence than a keyed concept would provide.",
+    "note: residual pairing: every column differs between the residuals; there is nothing left to align rows on, so the residual cannot be shown to be substitutions rather than invented and missing rows"
+  ],
+  "diff": {
+    "classification": "unavailable_no_key",
+    "differing": null,
+    "differing_conflict": null,
+    "differing_null_only": null,
+    "identical": null,
+    "key": null,
+    "only_candidate": 1706,
+    "only_oracle": 1707,
+    "residual_pairing": {
+      "anchored": false,
+      "attempted": true,
+      "column_drift": {
+        "endtime": 1,
+        "norepinephrine_equivalent_dose": 2417,
+        "starttime": 1,
+        "stay_id": 1
+      },
+      "paired": 0,
+      "pairing_columns": [],
+      "residual_candidate": 1706,
+      "residual_oracle": 1707,
+      "substituted_columns": [
+        "endtime",
+        "norepinephrine_equivalent_dose",
+        "starttime",
+        "stay_id"
+      ],
+      "unpaired_candidate": 1706,
+      "unpaired_oracle": 1707,
+      "why": "every column differs between the residuals; there is nothing left to align rows on, so the residual cannot be shown to be substitutions rather than invented and missing rows"
+    },
+    "samples": {
+      "only_candidate": [
+        {
+          "endtime": "2113-09-04T08:00:00",
+          "norepinephrine_equivalent_dose": "0.2788",
+          "starttime": "2113-09-04T07:19:00",
+          "stay_id": 36978508
+        },
+        {
+          "endtime": "2169-09-30T10:12:00",
+          "norepinephrine_equivalent_dose": "0.5226",
+          "starttime": "2169-09-30T06:01:00",
+          "stay_id": 37167709
+        },
+        {
+          "endtime": "2125-09-11T20:00:00",
+          "norepinephrine_equivalent_dose": "0.2001",
+          "starttime": "2125-09-11T13:00:00",
+          "stay_id": 37211828
+        },
+        {
+          "endtime": "2111-04-05T15:00:00",
+          "norepinephrine_equivalent_dose": "0.0601",
+          "starttime": "2111-04-05T13:13:00",
+          "stay_id": 37337883
+        },
+        {
+          "endtime": "2114-12-03T16:50:00",
+          "norepinephrine_equivalent_dose": "0.7027",
+          "starttime": "2114-12-03T16:00:00",
+          "stay_id": 34886673
+        },
+        {
+          "endtime": "2125-09-14T17:47:00",
+          "norepinephrine_equivalent_dose": "0.1998",
+          "starttime": "2125-09-14T17:36:00",
+          "stay_id": 35131634
+        },
+        {
+          "endtime": "2139-11-13T16:43:00",
+          "norepinephrine_equivalent_dose": "0.0600",
+          "starttime": "2139-11-13T16:10:00",
+          "stay_id": 35240504
+        },
+        {
+          "endtime": "2156-11-09T12:17:00",
+          "norepinephrine_equivalent_dose": "0.0595",
+          "starttime": "2156-11-09T12:10:00",
+          "stay_id": 35249103
+        },
+        {
+          "endtime": "2145-05-26T10:05:00",
+          "norepinephrine_equivalent_dose": "0.1023",
+          "starttime": "2145-05-26T07:59:00",
+          "stay_id": 35360813
+        },
+        {
+          "endtime": "2112-12-25T17:27:00",
+          "norepinephrine_equivalent_dose": "0.2959",
+          "starttime": "2112-12-25T13:23:00",
+          "stay_id": 35364994
+        },
+        {
+          "endtime": "2112-12-25T19:58:00",
+          "norepinephrine_equivalent_dose": "0.2959",
+          "starttime": "2112-12-25T17:27:00",
+          "stay_id": 35364994
+        },
+        {
+          "endtime": "2180-05-30T22:15:00",
+          "norepinephrine_equivalent_dose": "0.1200",
+          "starttime": "2180-05-30T22:06:00",
+          "stay_id": 30769044
+        },
+        {
+          "endtime": "2133-04-25T06:23:00",
+          "norepinephrine_equivalent_dose": "0.3998",
+          "starttime": "2133-04-25T06:18:00",
+          "stay_id": 30769633
+        },
+        {
+          "endtime": "2149-03-07T15:05:00",
+          "norepinephrine_equivalent_dose": "0.3223",
+          "starttime": "2149-03-07T15:03:00",
+          "stay_id": 30813888
+        },
+        {
+          "endtime": "2171-06-22T04:52:00",
+          "norepinephrine_equivalent_dose": "0.5201",
+          "starttime": "2171-06-22T04:43:00",
+          "stay_id": 31736067
+        },
+        {
+          "endtime": "2132-09-01T00:09:00",
+          "norepinephrine_equivalent_dose": "0.0800",
+          "starttime": "2132-08-31T23:22:00",
+          "stay_id": 31842847
+        },
+        {
+          "endtime": "2180-04-14T13:56:00",
+          "norepinephrine_equivalent_dose": "0.0375",
+          "starttime": "2180-04-14T09:19:00",
+          "stay_id": 31982192
+        },
+        {
+          "endtime": "2145-06-17T21:10:00",
+          "norepinephrine_equivalent_dose": "0.3434",
+          "starttime": "2145-06-17T20:47:00",
+          "stay_id": 32084143
+        },
+        {
+          "endtime": "2138-03-13T11:15:00",
+          "norepinephrine_equivalent_dose": "0.0606",
+          "starttime": "2138-03-13T08:48:00",
+          "stay_id": 31647315
+        },
+        {
+          "endtime": "2167-04-12T01:49:00",
+          "norepinephrine_equivalent_dose": "0.2386",
+          "starttime": "2167-04-12T01:24:00",
+          "stay_id": 31682246
+        }
+      ],
+      "only_oracle": [
+        {
+          "endtime": "2158-12-23T04:00:00",
+          "norepinephrine_equivalent_dose": "0.1971",
+          "starttime": "2158-12-23T01:30:00",
+          "stay_id": 37953488
+        },
+        {
+          "endtime": "2155-06-19T22:52:00",
+          "norepinephrine_equivalent_dose": "0.2000",
+          "starttime": "2155-06-19T21:14:00",
+          "stay_id": 37996602
+        },
+        {
+          "endtime": "2138-06-13T09:00:00",
+          "norepinephrine_equivalent_dose": "0.1939",
+          "starttime": "2138-06-13T00:26:00",
+          "stay_id": 38015705
+        },
+        {
+          "endtime": "2159-10-06T18:10:00",
+          "norepinephrine_equivalent_dose": "0.2001",
+          "starttime": "2159-10-06T17:00:00",
+          "stay_id": 38037861
+        },
+        {
+          "endtime": "2175-08-21T19:54:00",
+          "norepinephrine_equivalent_dose": "0.1499",
+          "starttime": "2175-08-21T19:37:00",
+          "stay_id": 38137162
+        },
+        {
+          "endtime": "2124-04-05T04:32:00",
+          "norepinephrine_equivalent_dose": "0.0999",
+          "starttime": "2124-04-05T04:02:00",
+          "stay_id": 38223578
+        },
+        {
+          "endtime": "2169-02-17T16:54:00",
+          "norepinephrine_equivalent_dose": "0.0798",
+          "starttime": "2169-02-17T14:44:00",
+          "stay_id": 38529336
+        },
+        {
+          "endtime": "2115-11-17T23:21:00",
+          "norepinephrine_equivalent_dose": "0.0499",
+          "starttime": "2115-11-17T23:02:00",
+          "stay_id": 38606468
+        },
+        {
+          "endtime": "2142-12-30T00:09:00",
+          "norepinephrine_equivalent_dose": "0.1802",
+          "starttime": "2142-12-29T22:47:00",
+          "stay_id": 38824535
+        },
+        {
+          "endtime": "2141-12-06T13:33:00",
+          "norepinephrine_equivalent_dose": "0.6632",
+          "starttime": "2141-12-06T12:46:00",
+          "stay_id": 38886396
+        },
+        {
+          "endtime": "2115-01-20T20:56:00",
+          "norepinephrine_equivalent_dose": "0.1439",
+          "starttime": "2115-01-20T20:37:00",
+          "stay_id": 38970482
+        },
+        {
+          "endtime": "2190-08-21T04:17:00",
+          "norepinephrine_equivalent_dose": "0.2638",
+          "starttime": "2190-08-21T03:46:00",
+          "stay_id": 35994154
+        },
+        {
+          "endtime": "2115-12-03T02:52:00",
+          "norepinephrine_equivalent_dose": "0.0801",
+          "starttime": "2115-12-02T23:30:00",
+          "stay_id": 36139732
+        },
+        {
+          "endtime": "2121-06-20T09:05:00",
+          "norepinephrine_equivalent_dose": "0.2002",
+          "starttime": "2121-06-20T07:20:00",
+          "stay_id": 36272397
+        },
+        {
+          "endtime": "2134-02-06T01:28:00",
+          "norepinephrine_equivalent_dose": "0.1811",
+          "starttime": "2134-02-06T00:20:00",
+          "stay_id": 35991676
+        },
+        {
+          "endtime": "2126-09-01T08:41:00",
+          "norepinephrine_equivalent_dose": "0.0306",
+          "starttime": "2126-09-01T06:45:00",
+          "stay_id": 36006454
+        },
+        {
+          "endtime": "2163-10-29T23:45:00",
+          "norepinephrine_equivalent_dose": "0.4206",
+          "starttime": "2163-10-29T19:16:00",
+          "stay_id": 36037735
+        },
+        {
+          "endtime": "2183-10-05T19:11:00",
+          "norepinephrine_equivalent_dose": "0.4812",
+          "starttime": "2183-10-05T13:37:00",
+          "stay_id": 36092324
+        },
+        {
+          "endtime": "2182-09-05T10:23:00",
+          "norepinephrine_equivalent_dose": "0.4678",
+          "starttime": "2182-09-05T06:39:00",
+          "stay_id": 36163085
+        },
+        {
+          "endtime": "2165-11-08T17:11:00",
+          "norepinephrine_equivalent_dose": "0.2868",
+          "starttime": "2165-11-08T17:00:00",
+          "stay_id": 36213838
+        }
+      ]
+    }
+  },
+  "divergence": {
+    "attributed": [],
+    "blocking": [
+      {
+        "class": "only_candidate",
+        "count": 1706,
+        "why": "rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise"
+      }
+    ],
+    "classification": "unavailable_no_key",
+    "conflict_attribution": null,
+    "contested": [
+      {
+        "class": "only_candidate",
+        "count": 1706,
+        "why": "rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise"
+      }
+    ],
+    "declared_unrepresentable": {},
+    "diagnostician_required": true,
+    "gap_shaped": [
+      {
+        "class": "only_oracle",
+        "count": 1707,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "identical_fraction": null,
+    "identical_rows": null,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "key_attribution": null,
+    "notes": [
+      "No unique key for this concept, and the residual did not pair: divergence classes cannot be separated. The judge is reasoning with strictly less evidence than a keyed concept would provide.",
+      "residual pairing: every column differs between the residuals; there is nothing left to align rows on, so the residual cannot be shown to be substitutions rather than invented and missing rows"
+    ],
+    "oracle_rows": 619330,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [
+      {
+        "class": "only_candidate",
+        "count": 1706,
+        "why": "rows in the candidate that are not in the oracle -- but this concept has no unique key, so a row whose only fault is a NULL appears here too. Invented rows and NULL divergence are INDISTINGUISHABLE for this concept; treat as a bug unless the evidence positively shows otherwise"
+      },
+      {
+        "class": "only_oracle",
+        "count": 1707,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "5711457597412574804359820",
+    "manifest_row_count": 619330,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.norepinephrine_equivalent_dose"
+  },
+  "row_count": {
+    "candidate": 619329,
+    "delta": -1,
+    "gated": false,
+    "match": false,
+    "oracle": 619330
+  },
+  "schema": {
+    "actual_columns": [
+      "stay_id",
+      "starttime",
+      "endtime",
+      "norepinephrine_equivalent_dose",
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "expected_columns": [
+      "stay_id",
+      "starttime",
+      "endtime",
+      "norepinephrine_equivalent_dose"
+    ],
+    "extra_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": [],
+    "missing_key_columns": [],
+    "required_key_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "unexpected_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "verdict": "review"
+}
