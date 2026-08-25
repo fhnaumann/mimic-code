@@ -1,14 +1,14 @@
 {
-  "attempt": 3,
+  "attempt": 4,
   "category": "measurement",
-  "completed_at": "2026-08-17T03:29:52.537688+00:00",
+  "completed_at": "2026-08-25T00:32:31.229219+00:00",
   "concept_name": "inflammation",
   "dependencies": [],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "Judge accepted the attributed divergence: the port reads Observation.effectiveDateTime via (effective).ofType(dateTime) and preserves the served wall value with TIMESTAMP_NTZ. mimic-fhir/sql/fhir_observation_labevents.sql:15 casts labevents.charttime through TIMESTAMPTZ and :121 serializes that transformed value as Observation.effectiveDateTime; the parallel specimen path is also transformed at mimic-fhir/sql/fhir_specimen_lab.sql:18,58. The comparator exhaustively replayed the sole charttime conflict as the America/New_York spring-forward normalization with zero residual. The affected fraction is 1/117,898 (0.000848%), consistent with DST-gap rarity, and the original wall time is unrecoverable from FHIR. All other 117,897 rows match and no essential representation loss remains.",
-  "engineering_counter": 4,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 6,
   "error_message": null,
-  "hpc_counter": 3,
+  "hpc_counter": 4,
   "reopen_history": [
     {
       "at": "2026-08-17T03:13:18.943726+00:00",
@@ -24,10 +24,25 @@
       "superseded_error": null,
       "superseded_justification": "Judge accepted the attributed divergence: mimic-fhir/sql/fhir_observation_labevents.sql:15,121 casts labevents.charttime through TIMESTAMPTZ before writing Observation.effectiveDateTime, exactly the FHIR path used by the port. The sole conflict (1/117,898; 0.00085%) replayed completely as the America/New_York DST spring-forward normalization, consistent with DST-gap rarity and unrecoverable from FHIR; 117,897 rows otherwise matched.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-25T00:23:16.745015+00:00",
+      "baseline": {
+        "attempt": 3,
+        "engineering": 4,
+        "hpc": 3,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Judge accepted the attributed divergence: the port reads Observation.effectiveDateTime via (effective).ofType(dateTime) and preserves the served wall value with TIMESTAMP_NTZ. mimic-fhir/sql/fhir_observation_labevents.sql:15 casts labevents.charttime through TIMESTAMPTZ and :121 serializes that transformed value as Observation.effectiveDateTime; the parallel specimen path is also transformed at mimic-fhir/sql/fhir_specimen_lab.sql:18,58. The comparator exhaustively replayed the sole charttime conflict as the America/New_York spring-forward normalization with zero residual. The affected fraction is 1/117,898 (0.000848%), consistent with DST-gap rarity, and the original wall time is unrecoverable from FHIR. All other 117,897 rows match and no essential representation loss remains.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
   "semantic_counter": 2,
-  "started_at": "2026-08-17T03:13:18.945738+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-17T03:29:52.538062+00:00"
+  "started_at": "2026-08-25T00:23:16.746647+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-25T00:32:31.229650+00:00"
 }
