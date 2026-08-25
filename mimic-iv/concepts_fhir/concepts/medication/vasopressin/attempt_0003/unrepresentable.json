@@ -1,0 +1,3 @@
+{
+  "linkorderid": "No FHIR element. Served ICU MedicationAdministration resources do not carry inputevents.linkorderid in an identifier; the resource key is opaque and cannot recover this source value. Emit typed NULL INTEGER."
+}
