@@ -1,0 +1,89 @@
+{
+  "candidate": "/Users/nau025/Documents/mimic-code/mimic-iv/concepts_fhir/concepts/treatment/crrt/attempt_0008/candidate.demo.parquet/*.parquet",
+  "candidate_row_count": 580,
+  "concept": "crrt",
+  "dataset": "demo",
+  "executed": true,
+  "format_version": "2.0",
+  "gated": [
+    "execution",
+    "column_names",
+    "column_types"
+  ],
+  "mode": "shape",
+  "not_gated": [
+    "row_count"
+  ],
+  "note": "Shape is correct. This earns permission to spend an HPC run; it is not evidence of correctness.",
+  "oracle_full_row_count": 287152,
+  "schema": {
+    "actual_columns": [
+      "stay_id",
+      "icu_encounter_key",
+      "charttime",
+      "crrt_mode",
+      "access_pressure",
+      "blood_flow",
+      "citrate",
+      "current_goal",
+      "dialysate_fluid",
+      "dialysate_rate",
+      "effluent_pressure",
+      "filter_pressure",
+      "heparin_concentration",
+      "heparin_dose",
+      "hourly_patient_fluid_removal",
+      "prefilter_replacement_rate",
+      "postfilter_replacement_rate",
+      "replacement_fluid",
+      "replacement_rate",
+      "return_pressure",
+      "ultrafiltrate_output",
+      "system_active",
+      "clots",
+      "clots_increasing",
+      "clotted",
+      "patient_key"
+    ],
+    "expected_columns": [
+      "stay_id",
+      "charttime",
+      "crrt_mode",
+      "access_pressure",
+      "blood_flow",
+      "citrate",
+      "current_goal",
+      "dialysate_fluid",
+      "dialysate_rate",
+      "effluent_pressure",
+      "filter_pressure",
+      "heparin_concentration",
+      "heparin_dose",
+      "hourly_patient_fluid_removal",
+      "prefilter_replacement_rate",
+      "postfilter_replacement_rate",
+      "replacement_fluid",
+      "replacement_rate",
+      "return_pressure",
+      "ultrafiltrate_output",
+      "system_active",
+      "clots",
+      "clots_increasing",
+      "clotted"
+    ],
+    "extra_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": [],
+    "missing_key_columns": [],
+    "required_key_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "unexpected_columns": []
+  },
+  "verdict": "shape_ok"
+}

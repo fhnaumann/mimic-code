@@ -1,14 +1,14 @@
 {
-  "attempt": 7,
+  "attempt": 8,
   "category": "treatment",
-  "completed_at": "2026-08-20T05:37:20.965864+00:00",
+  "completed_at": "2026-08-25T00:01:42.915538+00:00",
   "concept_name": "crrt",
   "dependencies": [],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "Judge accepted attempt_0007: exhaustive comparator attribution closes all 26 differing_conflict, 48 only_oracle, and 16 only_candidate rows to the upstream America/New_York DST TIMESTAMPTZ normalization at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67. The current port sources Observation.effectiveDateTime, preserves repeated chartevent rows, faithfully applies the canonical MAX pivot including 32 collision effects, uses opaque resource-key equality only, and has no essential loss or residual divergence. 287078/287152 rows are identical (99.9742%); the 26 conflicts are 0.0091% and the 64 key-side findings are consistent with DST-gap rarity.",
-  "engineering_counter": 10,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 12,
   "error_message": null,
-  "hpc_counter": 7,
+  "hpc_counter": 8,
   "reopen_history": [
     {
       "at": "2026-08-11T06:12:17.408546+00:00",
@@ -66,10 +66,25 @@
       "superseded_error": null,
       "superseded_justification": "Judge accepted attempt_0006: mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 irreversibly normalizes spring-forward chartevents charttime before writing Observation.effectiveDateTime. The comparator found 287078/287152 identical rows, with 16 key-shift pairs and 32 residual collision losses producing 26 conflicts; the original wall time is unrecoverable by permissible FHIR queries because it survives only in opaque Observation.id identity. All defensible mappings were exhausted and this is the contract's accepted New York DST transformation loss.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-24T23:51:40.293272+00:00",
+      "baseline": {
+        "attempt": 7,
+        "engineering": 10,
+        "hpc": 7,
+        "semantic": 4
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Judge accepted attempt_0007: exhaustive comparator attribution closes all 26 differing_conflict, 48 only_oracle, and 16 only_candidate rows to the upstream America/New_York DST TIMESTAMPTZ normalization at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67. The current port sources Observation.effectiveDateTime, preserves repeated chartevent rows, faithfully applies the canonical MAX pivot including 32 collision effects, uses opaque resource-key equality only, and has no essential loss or residual divergence. 287078/287152 rows are identical (99.9742%); the 26 conflicts are 0.0091% and the 64 key-side findings are consistent with DST-gap rarity.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
   "semantic_counter": 4,
-  "started_at": "2026-08-20T05:17:34.773047+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-20T05:37:20.966104+00:00"
+  "started_at": "2026-08-24T23:51:40.295025+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-25T00:01:42.915964+00:00"
 }
