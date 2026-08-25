@@ -1,0 +1,400 @@
+{
+  "candidate": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/medication/dobutamine/attempt_0004/candidate.full.parquet/*.parquet",
+  "comparison": "keyed_join",
+  "concept": "dobutamine",
+  "dataset": "full",
+  "diagnostics": [
+    "GAP-SHAPED \u2014 consistent with a MIMIC-on-FHIR coverage gap:",
+    "  8,513 \u00d7 differing_null_only \u2014 matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing",
+    "    column 'linkorderid' is NULL in the candidate on 8,513 row(s) [declared unrepresentable]",
+    "    declared 'linkorderid': No FHIR element. MedicationAdministration.identifier is absent across the served ICU MedicationAdministration resources, and the ICU ETL writes no linkorderid, orderid, or inputevent identifier; the opaque resource UUID cannot be inverted to the source linkorderid.",
+    "0 of 8,513 oracle rows reproduced identically (0.00%)",
+    "8,513 of 8,513 identical on the representable columns (100.00%), excluding the declared-and-confirmed all-NULL column(s): linkorderid"
+  ],
+  "diff": {
+    "classification": "keyed",
+    "columns_candidate_null": {
+      "linkorderid": 8513
+    },
+    "columns_conflicting": {},
+    "columns_differing": {
+      "linkorderid": 8513
+    },
+    "differing": 8513,
+    "differing_conflict": 0,
+    "differing_null_only": 8513,
+    "excluded_as_unrepresentable": [
+      "linkorderid"
+    ],
+    "identical": 0,
+    "identical_representable": 8513,
+    "key": [
+      "stay_id",
+      "starttime"
+    ],
+    "only_candidate": 0,
+    "only_oracle": 0,
+    "samples": {
+      "differing_conflict": [],
+      "differing_null_only": [
+        {
+          "endtime__candidate": "2140-01-30T06:57:00",
+          "endtime__oracle": "2140-01-30T06:57:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 1092220,
+          "starttime": "2140-01-30T02:06:00",
+          "stay_id": 33281088,
+          "vaso_amount__candidate": 88.59600067138672,
+          "vaso_amount__oracle": 88.59600067138672,
+          "vaso_rate__candidate": 6.113525867462158,
+          "vaso_rate__oracle": 6.113526344299316
+        },
+        {
+          "endtime__candidate": "2140-01-29T14:30:00",
+          "endtime__oracle": "2140-01-29T14:30:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 1092220,
+          "starttime": "2140-01-29T12:35:00",
+          "stay_id": 33281088,
+          "vaso_amount__candidate": 11.454182624816895,
+          "vaso_amount__oracle": 11.454183578491211,
+          "vaso_rate__candidate": 2.0000319480895996,
+          "vaso_rate__oracle": 2.0000319480895996
+        },
+        {
+          "endtime__candidate": "2140-01-29T15:17:00",
+          "endtime__oracle": "2140-01-29T15:17:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 1092220,
+          "starttime": "2140-01-29T14:30:00",
+          "stay_id": 33281088,
+          "vaso_amount__candidate": 5.851593971252441,
+          "vaso_amount__oracle": 5.851593971252441,
+          "vaso_rate__candidate": 2.500040054321289,
+          "vaso_rate__oracle": 2.500040292739868
+        },
+        {
+          "endtime__candidate": "2140-01-29T17:57:00",
+          "endtime__oracle": "2140-01-29T17:57:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 1092220,
+          "starttime": "2140-01-29T15:17:00",
+          "stay_id": 33281088,
+          "vaso_amount__candidate": 23.896713256835938,
+          "vaso_amount__oracle": 23.896713256835938,
+          "vaso_rate__candidate": 2.999084949493408,
+          "vaso_rate__oracle": 2.9990854263305664
+        },
+        {
+          "endtime__candidate": "2140-01-29T18:27:00",
+          "endtime__oracle": "2140-01-29T18:27:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 1092220,
+          "starttime": "2140-01-29T17:57:00",
+          "stay_id": 33281088,
+          "vaso_amount__candidate": 5.9713311195373535,
+          "vaso_amount__oracle": 5.971330642700195,
+          "vaso_rate__candidate": 3.996875047683716,
+          "vaso_rate__oracle": 3.9968745708465576
+        },
+        {
+          "endtime__candidate": "2140-01-30T02:06:00",
+          "endtime__oracle": "2140-01-30T02:06:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 1092220,
+          "starttime": "2140-01-29T18:27:00",
+          "stay_id": 33281088,
+          "vaso_amount__candidate": 114.22972869873047,
+          "vaso_amount__oracle": 114.22972869873047,
+          "vaso_rate__candidate": 4.997319221496582,
+          "vaso_rate__oracle": 4.997319221496582
+        },
+        {
+          "endtime__candidate": "2140-01-30T07:18:00",
+          "endtime__oracle": "2140-01-30T07:18:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 3925218,
+          "starttime": "2140-01-30T06:57:00",
+          "stay_id": 33281088,
+          "vaso_amount__candidate": 6.264397144317627,
+          "vaso_amount__oracle": 6.264397144317627,
+          "vaso_rate__candidate": 5.990053176879883,
+          "vaso_rate__oracle": 5.990052700042725
+        },
+        {
+          "endtime__candidate": "2140-01-30T08:44:00",
+          "endtime__oracle": "2140-01-30T08:44:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 3925218,
+          "starttime": "2140-01-30T07:18:00",
+          "stay_id": 33281088,
+          "vaso_amount__candidate": 29.944599151611328,
+          "vaso_amount__oracle": 29.944599151611328,
+          "vaso_rate__candidate": 6.991827964782715,
+          "vaso_rate__oracle": 6.991827964782715
+        },
+        {
+          "endtime__candidate": "2140-01-30T09:53:00",
+          "endtime__oracle": "2140-01-30T09:53:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 3925218,
+          "starttime": "2140-01-30T08:44:00",
+          "stay_id": 33281088,
+          "vaso_amount__candidate": 27.47028923034668,
+          "vaso_amount__oracle": 27.47028923034668,
+          "vaso_rate__candidate": 7.994380950927734,
+          "vaso_rate__oracle": 7.994380950927734
+        },
+        {
+          "endtime__candidate": "2140-01-30T10:25:00",
+          "endtime__oracle": "2140-01-30T10:25:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 3925218,
+          "starttime": "2140-01-30T09:53:00",
+          "stay_id": 33281088,
+          "vaso_amount__candidate": 14.332324981689453,
+          "vaso_amount__oracle": 14.332324981689453,
+          "vaso_rate__candidate": 8.993678092956543,
+          "vaso_rate__oracle": 8.993678092956543
+        },
+        {
+          "endtime__candidate": "2140-01-30T11:06:00",
+          "endtime__oracle": "2140-01-30T11:06:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 3925218,
+          "starttime": "2140-01-30T10:25:00",
+          "stay_id": 33281088,
+          "vaso_amount__candidate": 20.380069732666016,
+          "vaso_amount__oracle": 20.380069732666016,
+          "vaso_rate__candidate": 9.981423377990723,
+          "vaso_rate__oracle": 9.981422424316406
+        },
+        {
+          "endtime__candidate": "2140-01-30T11:43:00",
+          "endtime__oracle": "2140-01-30T11:43:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 3925218,
+          "starttime": "2140-01-30T11:06:00",
+          "stay_id": 33281088,
+          "vaso_amount__candidate": 22.084606170654297,
+          "vaso_amount__oracle": 22.084606170654297,
+          "vaso_rate__candidate": 11.985568046569824,
+          "vaso_rate__oracle": 11.985568046569824
+        },
+        {
+          "endtime__candidate": "2140-01-30T12:00:00",
+          "endtime__oracle": "2140-01-30T12:00:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 3925218,
+          "starttime": "2140-01-30T11:43:00",
+          "stay_id": 33281088,
+          "vaso_amount__candidate": 8.468827247619629,
+          "vaso_amount__oracle": 8.468827247619629,
+          "vaso_rate__candidate": 10.003338813781738,
+          "vaso_rate__oracle": 10.003339767456055
+        },
+        {
+          "endtime__candidate": "2140-01-30T12:17:00",
+          "endtime__oracle": "2140-01-30T12:17:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 3925218,
+          "starttime": "2140-01-30T12:00:00",
+          "stay_id": 33281088,
+          "vaso_amount__candidate": 6.769489765167236,
+          "vaso_amount__oracle": 6.769489765167236,
+          "vaso_rate__candidate": 7.996089935302734,
+          "vaso_rate__oracle": 7.996089935302734
+        },
+        {
+          "endtime__candidate": "2140-01-30T12:34:00",
+          "endtime__oracle": "2140-01-30T12:34:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 3925218,
+          "starttime": "2140-01-30T12:17:00",
+          "stay_id": 33281088,
+          "vaso_amount__candidate": 5.072699069976807,
+          "vaso_amount__oracle": 5.072698593139648,
+          "vaso_rate__candidate": 5.991847991943359,
+          "vaso_rate__oracle": 5.991847991943359
+        },
+        {
+          "endtime__candidate": "2140-01-30T12:49:00",
+          "endtime__oracle": "2140-01-30T12:49:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 3925218,
+          "starttime": "2140-01-30T12:34:00",
+          "stay_id": 33281088,
+          "vaso_amount__candidate": 2.983941078186035,
+          "vaso_amount__oracle": 2.983940601348877,
+          "vaso_rate__candidate": 3.994565010070801,
+          "vaso_rate__oracle": 3.994565486907959
+        },
+        {
+          "endtime__candidate": "2140-01-30T12:58:00",
+          "endtime__oracle": "2140-01-30T12:58:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 3925218,
+          "starttime": "2140-01-30T12:49:00",
+          "stay_id": 33281088,
+          "vaso_amount__candidate": 0.8951820135116577,
+          "vaso_amount__oracle": 0.8951821327209473,
+          "vaso_rate__candidate": 1.9972829818725586,
+          "vaso_rate__oracle": 1.9972827434539795
+        },
+        {
+          "endtime__candidate": "2171-11-02T06:08:00",
+          "endtime__oracle": "2171-11-02T06:08:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 1593201,
+          "starttime": "2171-11-02T02:15:00",
+          "stay_id": 35736966,
+          "vaso_amount__candidate": 44.87673568725586,
+          "vaso_amount__oracle": 44.87673568725586,
+          "vaso_rate__candidate": 2.5013511180877686,
+          "vaso_rate__oracle": 2.5013508796691895
+        },
+        {
+          "endtime__candidate": "2166-09-18T18:49:00",
+          "endtime__oracle": "2166-09-18T18:49:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 878626,
+          "starttime": "2166-09-18T12:45:00",
+          "stay_id": 37176427,
+          "vaso_amount__candidate": 250.0,
+          "vaso_amount__oracle": 250.0,
+          "vaso_rate__candidate": 7.514368057250977,
+          "vaso_rate__oracle": 7.514367580413818
+        },
+        {
+          "endtime__candidate": "2166-09-18T06:28:00",
+          "endtime__oracle": "2166-09-18T06:28:00",
+          "linkorderid__candidate": null,
+          "linkorderid__oracle": 6375883,
+          "starttime": "2166-09-17T05:00:00",
+          "stay_id": 37176427,
+          "vaso_amount__candidate": 700.0000610351562,
+          "vaso_amount__oracle": 700.0000610351562,
+          "vaso_rate__candidate": 5.012200832366943,
+          "vaso_rate__oracle": 5.012201309204102
+        }
+      ],
+      "only_candidate": [],
+      "only_oracle": []
+    }
+  },
+  "divergence": {
+    "attributed": [],
+    "blocking": [],
+    "classification": "keyed",
+    "conflict_attribution": null,
+    "contested": [],
+    "declared_unrepresentable": {
+      "linkorderid": "No FHIR element. MedicationAdministration.identifier is absent across the served ICU MedicationAdministration resources, and the ICU ETL writes no linkorderid, orderid, or inputevent identifier; the opaque resource UUID cannot be inverted to the source linkorderid."
+    },
+    "diagnostician_required": false,
+    "gap_shaped": [
+      {
+        "class": "differing_null_only",
+        "count": 8513,
+        "declared_unrepresentable": {
+          "linkorderid": "No FHIR element. MedicationAdministration.identifier is absent across the served ICU MedicationAdministration resources, and the ICU ETL writes no linkorderid, orderid, or inputevent identifier; the opaque resource UUID cannot be inverted to the source linkorderid."
+        },
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      }
+    ],
+    "identical_fraction": 0.0,
+    "identical_representable_rows": 8513,
+    "identical_rows": 0,
+    "judge_bar": "Cite the FHIR element or path that does not exist in the MIMIC-on-FHIR IG, show it explains the magnitude and shape of the divergence, and confirm every defensible mapping was tried.",
+    "judge_required": true,
+    "key_attribution": null,
+    "notes": [],
+    "oracle_rows": 8513,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "representable_excludes": [
+      "linkorderid"
+    ],
+    "representable_fraction": 1.0,
+    "reviewable": [
+      {
+        "class": "differing_null_only",
+        "count": 8513,
+        "declared_unrepresentable": {
+          "linkorderid": "No FHIR element. MedicationAdministration.identifier is absent across the served ICU MedicationAdministration resources, and the ICU ETL writes no linkorderid, orderid, or inputevent identifier; the opaque resource UUID cannot be inverted to the source linkorderid."
+        },
+        "why": "matched rows where the candidate is NULL and the oracle holds a value; consistent with the FHIR element for that column not existing"
+      }
+    ],
+    "tier": "gap_shaped",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "executed": true,
+  "format_version": "2.0",
+  "match": false,
+  "mode": "full",
+  "oracle": {
+    "manifest_content_hash": "78597150937471500660440",
+    "manifest_row_count": 8513,
+    "path": "/scratch3/nau025/oracle/mimic4-full.db",
+    "table": "mimiciv_derived.dobutamine"
+  },
+  "row_count": {
+    "candidate": 8513,
+    "delta": 0,
+    "gated": false,
+    "match": true,
+    "oracle": 8513
+  },
+  "schema": {
+    "actual_columns": [
+      "stay_id",
+      "linkorderid",
+      "vaso_rate",
+      "vaso_amount",
+      "starttime",
+      "endtime",
+      "patient_key",
+      "icu_encounter_key"
+    ],
+    "expected_columns": [
+      "stay_id",
+      "linkorderid",
+      "vaso_rate",
+      "vaso_amount",
+      "starttime",
+      "endtime"
+    ],
+    "extra_columns": [
+      "patient_key",
+      "icu_encounter_key"
+    ],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": [],
+    "missing_key_columns": [],
+    "required_key_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "unexpected_columns": []
+  },
+  "tolerances": {
+    "absolute": 1e-09,
+    "relative": 0.001,
+    "row_count": "none (exact)",
+    "timestamp_seconds": 1.0
+  },
+  "unrepresentable": {
+    "confirmed": {
+      "linkorderid": "No FHIR element. MedicationAdministration.identifier is absent across the served ICU MedicationAdministration resources, and the ICU ETL writes no linkorderid, orderid, or inputevent identifier; the opaque resource UUID cannot be inverted to the source linkorderid."
+    },
+    "declared": {
+      "linkorderid": "No FHIR element. MedicationAdministration.identifier is absent across the served ICU MedicationAdministration resources, and the ICU ETL writes no linkorderid, orderid, or inputevent identifier; the opaque resource UUID cannot be inverted to the source linkorderid."
+    },
+    "policy": "A declared column must be 100% NULL in the candidate. Declaring a column and then emitting an estimate for it is blocking: it converts a reviewable coverage gap into a value conflict.",
+    "undeclared_fully_null_columns": [],
+    "violations": []
+  },
+  "verdict": "review"
+}
