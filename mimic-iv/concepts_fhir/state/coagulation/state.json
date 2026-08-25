@@ -1,14 +1,14 @@
 {
-  "attempt": 5,
+  "attempt": 6,
   "category": "measurement",
-  "completed_at": "2026-08-18T00:34:02.308070+00:00",
+  "completed_at": "2026-08-24T23:58:51.428806+00:00",
   "concept_name": "coagulation",
   "dependencies": [],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "Coagulation attempt 0005 differs only on 115 charttime values because mimic-fhir/sql/fhir_observation_labevents.sql:15,121 casts source labevents charttime through TIMESTAMPTZ before writing Observation.effectiveDateTime; mimic-fhir/sql/fhir_specimen_lab.sql:18,58 performs the same irreversible normalization for specimen collection time. Exhaustive America/New_York replay explains 115/115 conflicts with zero residual (0.00745% of 1,543,003 rows). All other values, row membership, and schema match, and the original spring-gap wall time is absent from served FHIR, so the judge accepts this upstream transformation as COMPLETED_WITH_DIVERGENCE.",
-  "engineering_counter": 8,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 10,
   "error_message": null,
-  "hpc_counter": 4,
+  "hpc_counter": 5,
   "reopen_history": [
     {
       "at": "2026-08-18T00:14:48.675075+00:00",
@@ -24,10 +24,25 @@
       "superseded_error": null,
       "superseded_justification": "Coagulation attempt_0004 is a contested review with 115 differing_conflict rows, all confined to charttime, and zero only_oracle, only_candidate, or differing_null_only rows. Upstream mimic-fhir/sql/fhir_observation_labevents.sql:15 casts relational lab.charttime through TIMESTAMPTZ, and line 121 writes that transformed value to Observation.effectiveDateTime. For nonexistent spring-forward 02:xx wall times, this normalizes to 03:xx; genuine 03:xx values serialize identically, making the operation many-to-one with no FHIR marker from which any query could recover the original 02:xx. mimic-fhir/sql/fhir_specimen_lab.sql:9,18,58 independently aggregates charttime, repeats the destructive TIMESTAMPTZ cast, and writes it to Specimen.collection.collectedDateTime, so that path cannot recover the filtered source value either. Attempt_0004 applies direct TIMESTAMP_NTZ parsing and final TIMESTAMP_NTZ output; all defensible mappings were exhausted. The result reproduces 1,542,888/1,543,003 rows identically: 99.9925% overall and representable fidelity, with 115/1,543,003 affected (about 0.0075%). Coagulation has no divergent dependencies.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-24T23:50:25.357031+00:00",
+      "baseline": {
+        "attempt": 5,
+        "engineering": 8,
+        "hpc": 4,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Coagulation attempt 0005 differs only on 115 charttime values because mimic-fhir/sql/fhir_observation_labevents.sql:15,121 casts source labevents charttime through TIMESTAMPTZ before writing Observation.effectiveDateTime; mimic-fhir/sql/fhir_specimen_lab.sql:18,58 performs the same irreversible normalization for specimen collection time. Exhaustive America/New_York replay explains 115/115 conflicts with zero residual (0.00745% of 1,543,003 rows). All other values, row membership, and schema match, and the original spring-gap wall time is absent from served FHIR, so the judge accepts this upstream transformation as COMPLETED_WITH_DIVERGENCE.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
   "semantic_counter": 2,
-  "started_at": "2026-08-18T00:14:48.676984+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-18T00:34:02.308442+00:00"
+  "started_at": "2026-08-24T23:50:25.358950+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-24T23:58:51.429277+00:00"
 }
