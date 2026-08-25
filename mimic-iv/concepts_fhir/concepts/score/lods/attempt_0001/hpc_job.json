@@ -1,0 +1,8 @@
+{
+  "concept": "lods",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "30511719",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/score/lods/attempt_0001",
+  "submitted_at": "2026-08-25T09:56:06.454704+00:00",
+  "walltime": "2:00:00"
+}

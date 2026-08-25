@@ -1,0 +1,24 @@
+{
+  "attempt": 1,
+  "category": "score",
+  "completed_at": "2026-08-25T10:42:58.006799+00:00",
+  "concept_name": "lods",
+  "dependencies": [
+    "bg",
+    "first_day_gcs",
+    "first_day_lab",
+    "first_day_urine_output",
+    "first_day_vitalsign",
+    "ventilation"
+  ],
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 2,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 0,
+  "started_at": "2026-08-25T09:11:33.787390+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-25T10:42:58.007230+00:00"
+}
