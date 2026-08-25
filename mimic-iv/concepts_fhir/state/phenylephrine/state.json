@@ -1,14 +1,14 @@
 {
-  "attempt": 3,
+  "attempt": 4,
   "category": "medication",
-  "completed_at": "2026-08-20T05:08:31.143622+00:00",
+  "completed_at": "2026-08-25T00:59:06.636132+00:00",
   "concept_name": "phenylephrine",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "Judge accept: full schema and row counts match (193260 each); all 193260 events close under stay_id plus replayed effective endpoints, with 191421/193260 representable rows identical and zero unexplained residual after full-source replay. The 46 direct timestamp conflicts are the upstream America/New_York DST TIMESTAMPTZ transformation in mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69; the remaining apparent timing/amount conflicts are unkeyed stay-only pairing amplification from that timing loss and six-decimal Quantity serialization at mimic-fhir/sql/fhir_medication_administration_icu.sql:12,85-90 and :14,91-99, whose original values are unrecoverable by FHIR query. linkorderid is declared all-NULL because the ICU ETL omits it at :7-23,38-100 and resource identity is opaque; it is ancillary administrative linkage. The single mcg/min vaso_rate NULL is the honest row-level consequence of omitted patientweight while rate unit survives at :91-99; it does not alter inclusion, grain, grouping, or carry-forward. Proven DST loss is not essential-loss blocking under the contract.",
-  "engineering_counter": 3,
+  "divergence_justification": "MIMIC-on-FHIR ICU MedicationAdministration does not serialize inputevents.linkorderid: MedicationAdministration.identifier is absent and neither MedicationAdministration.supportingInformation nor another FHIR element carries linkorderid/orderid. The opaque resource UUID cannot be inverted. This explains linkorderid being typed NULL on all 193,260 rows. The source uses linkorderid only as an ancillary output; row count and clinical grain (stay_id,starttime,endtime) are preserved. One additional vaso_rate is correctly NULL because the canonical mcg/min branch requires inputevents.patientweight, which MedicationAdministration does not carry, while dosage.rateQuantity.unit identifies that exact row. The paired residual has zero conflicts and no missing or invented rows; 193,259/193,260 rows are identical on representable columns (0.999995, rounded 100.00%). No permissible FHIR mapping recovers either absent source value, and the loss changes no row inclusion, grouping, carry-forward, or representable clinical value.",
+  "engineering_counter": 4,
   "error_message": null,
-  "hpc_counter": 3,
+  "hpc_counter": 4,
   "reopen_history": [
     {
       "at": "2026-08-20T04:42:10.510294+00:00",
@@ -24,10 +24,25 @@
       "superseded_error": null,
       "superseded_justification": "Phenylephrine attempt 0002 faithfully maps the exact ICU MedicationAdministration code, preserves all 193,260 source-event rows and multiplicity, and uses every available FHIR path. ICU ETL irreversibly casts start/end times through TIMESTAMPTZ (mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69) and writes amount into six-decimal dosage.dose.value (:12,85-90), while omitting linkorderid and patientweight (:7-23,38-100). Rate unit survives in dosage.rateQuantity.unit (:91-98), so the one uncomputable mcg/min rate is correctly NULL rather than estimated. The reported residual conflicts are amplified by unkeyed stay-only pairing, not evidence of another mapping defect. These losses are intrinsic and ancillary: they do not change row inclusion, grain, grouping, carry-forward, or other clinically meaningful outputs.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-25T00:36:00.470439+00:00",
+      "baseline": {
+        "attempt": 3,
+        "engineering": 3,
+        "hpc": 3,
+        "semantic": 3
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Judge accept: full schema and row counts match (193260 each); all 193260 events close under stay_id plus replayed effective endpoints, with 191421/193260 representable rows identical and zero unexplained residual after full-source replay. The 46 direct timestamp conflicts are the upstream America/New_York DST TIMESTAMPTZ transformation in mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69; the remaining apparent timing/amount conflicts are unkeyed stay-only pairing amplification from that timing loss and six-decimal Quantity serialization at mimic-fhir/sql/fhir_medication_administration_icu.sql:12,85-90 and :14,91-99, whose original values are unrecoverable by FHIR query. linkorderid is declared all-NULL because the ICU ETL omits it at :7-23,38-100 and resource identity is opaque; it is ancillary administrative linkage. The single mcg/min vaso_rate NULL is the honest row-level consequence of omitted patientweight while rate unit survives at :91-99; it does not alter inclusion, grain, grouping, or carry-forward. Proven DST loss is not essential-loss blocking under the contract.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
-  "semantic_counter": 3,
-  "started_at": "2026-08-20T04:42:10.512274+00:00",
+  "semantic_counter": 4,
+  "started_at": "2026-08-25T00:36:00.472415+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-20T05:08:31.144902+00:00"
+  "updated_at": "2026-08-25T00:59:06.636405+00:00"
 }

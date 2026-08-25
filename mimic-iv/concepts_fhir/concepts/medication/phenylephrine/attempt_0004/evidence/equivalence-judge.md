@@ -1,0 +1,13 @@
+# Equivalence judge evidence
+
+Concept: phenylephrine  
+Attempt: 0004  
+Verdict: `accept`
+
+The judge accepted the `gap_shaped` / `paired_residual` review. `MedicationAdministration.identifier` and `MedicationAdministration.supportingInformation` carry no `inputevents.linkorderid`, and no other served FHIR element provides it; resource IDs are opaque and cannot be inverted. This explains the declared typed-NULL `linkorderid` on all 193,260 rows. The canonical `mcg/min` branch requires `patientweight`, which ICU MedicationAdministration does not carry; `dosage.rateQuantity.unit` preserves the discriminator, so the one affected `vaso_rate` is correctly typed NULL rather than estimated.
+
+The residual is anchored on `(endtime, starttime, stay_id)` with no unpaired rows, zero conflicts, zero only-oracle rows, and zero only-candidate rows. Overall identical fidelity is 0/193,260 solely because the declared column is NULL; representable fidelity is 193,259/193,260 (`0.999995`, rounded 100.00%). The missing `linkorderid` is ancillary: it does not change row inclusion, clinical grain, grouping, carry-forward, or representable clinical values. All defensible mappings were exhausted, with no resource-ID inversion or heuristic weight reconstruction.
+
+Judge justification to record: “MIMIC-on-FHIR ICU MedicationAdministration does not serialize inputevents.linkorderid: MedicationAdministration.identifier is absent and neither MedicationAdministration.supportingInformation nor another FHIR element carries linkorderid/orderid. The opaque resource UUID cannot be inverted. This explains linkorderid being typed NULL on all 193,260 rows. The source uses linkorderid only as an ancillary output; row count and the clinical grain (stay_id,starttime,endtime) are preserved. One additional vaso_rate is correctly NULL because the canonical mcg/min branch requires inputevents.patientweight, which MedicationAdministration does not carry, while dosage.rateQuantity.unit identifies that exact row. The paired residual has zero conflicts and no missing or invented rows; 193,259/193,260 rows are identical on representable columns (0.999995, rounded 100.00%), versus 0.00% including the declared linkorderid gap. No permissible FHIR mapping recovers either absent source value, and the loss changes no row inclusion, grouping, carry-forward, or representable clinical value.”
+
+Files read by the judge: `comparison.full.json`, `unrepresentable.json`, `run_meta.full.json`, canonical `mimic-iv/concepts/medication/phenylephrine.sql`, and curated `MIMIC_NOTES.md`. No divergent dependencies. No new dataset-wide quirk was appended; the relevant ICU linkorderid and patientweight omissions were already recorded in `MIMIC_NOTES.d/phenylephrine.md`.

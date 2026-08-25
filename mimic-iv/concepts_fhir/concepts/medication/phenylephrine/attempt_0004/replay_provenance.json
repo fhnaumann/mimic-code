@@ -1,0 +1,38 @@
+{
+  "authored_by": "mimic_utils replay",
+  "carried": [
+    {
+      "name": "concept.sql",
+      "sha256": "7bc2e73d223315238f49e06db01d33bd1ec726adcb8814e0c3a2943d01b15bc5"
+    },
+    {
+      "name": "ViewDefinition.encounter_icu.json",
+      "sha256": "b59e9b6c57fea41289821e2ff0bace2de876101f820b2db5934edeb8c4d48c30"
+    },
+    {
+      "name": "ViewDefinition.medication_administration.json",
+      "sha256": "f2f49009aded6c89d48a898b45b6004b3cc8eb981136d55337184e980dea65ed"
+    },
+    {
+      "name": "unrepresentable.json",
+      "sha256": "fefaa691f18247a8928e89c24ed6f764d11e71754c329f098eaf3d1ddd99c41c"
+    }
+  ],
+  "concept": "phenylephrine",
+  "created_at": "2026-08-25T00:36:00+00:00",
+  "fixes_measured": [
+    {
+      "fixed_by": "mimic-fhir ade10fb (upstream #124), 2026-08-21",
+      "id": "dst-timestamptz-wall-clock",
+      "summary": "The ETL ran under a DST-observing zone, so casting naive MIMIC wall times through TIMESTAMPTZ normalised spring-forward gap times forward an hour irreversibly. The FHIR tables are now generated under UTC, which has no DST in any year, so the cast is an identity on the wall clock."
+    }
+  ],
+  "kind": "data_rebuild",
+  "note": "The SQL and ViewDefinitions in this attempt were NOT authored for it. They are the previous attempt's, carried forward byte-identical so that the only thing that changed between the superseded verdict and this one is the served data. No implementer ran, and none should: re-authoring would make this a comparison of two queries instead of a measurement of the upstream fix.",
+  "reason": "The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+  "source_attempt": "attempt_0003",
+  "superseded_status": "COMPLETED_WITH_DIVERGENCE",
+  "warnings": [
+    "part of this concept's divergence is NOT fixed upstream (inputevents.orderid/linkorderid are still only inside the opaque MedicationAdministration UUID (fhir_medication_administration_icu.sql:20)), so expect the replay to return `review` again on that part rather than `match`. That is the correct outcome, not a regression."
+  ]
+}
