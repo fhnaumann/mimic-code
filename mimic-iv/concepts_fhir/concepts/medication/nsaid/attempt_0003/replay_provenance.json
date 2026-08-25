@@ -1,0 +1,48 @@
+{
+  "authored_by": "mimic_utils replay",
+  "carried": [
+    {
+      "name": "concept.sql",
+      "sha256": "1be19c05fe51f9986c6ced5e1c83f9dc765fe32709e873308ab604c943a09452"
+    },
+    {
+      "name": "ViewDefinition.encounter.json",
+      "sha256": "1115bf402f67a13806b65e56e21401563e2e698f9217a32d803730d21c9335d1"
+    },
+    {
+      "name": "ViewDefinition.medication.json",
+      "sha256": "8f34a685abe7226ce31b021c0327985b131819b569b90add9f800e9853e15833"
+    },
+    {
+      "name": "ViewDefinition.medication_mix.json",
+      "sha256": "2d15f093d844ab8d25dbaba8273bc6b024474f30e3964dab2876e32cf104c783"
+    },
+    {
+      "name": "ViewDefinition.medication_mix_ingredient.json",
+      "sha256": "82a506805dac89a71ccf1ff410266549e8a93056e761cfde2b8cdba7cdd9ac22"
+    },
+    {
+      "name": "ViewDefinition.medication_request.json",
+      "sha256": "41f5f4092048a10d5d29dd395db80c42d27b5deac65b6be67507849d96f05705"
+    },
+    {
+      "name": "ViewDefinition.patient.json",
+      "sha256": "02a67bb33e778176ce5f9e9a034092026616f57c4473eebb46298b9cfd859ac7"
+    }
+  ],
+  "concept": "nsaid",
+  "created_at": "2026-08-25T00:34:15+00:00",
+  "fixes_measured": [
+    {
+      "fixed_by": "mimic-fhir ade10fb (upstream #124), 2026-08-21",
+      "id": "dst-timestamptz-wall-clock",
+      "summary": "The ETL ran under a DST-observing zone, so casting naive MIMIC wall times through TIMESTAMPTZ normalised spring-forward gap times forward an hour irreversibly. The FHIR tables are now generated under UTC, which has no DST in any year, so the cast is an identity on the wall clock."
+    }
+  ],
+  "kind": "data_rebuild",
+  "note": "The SQL and ViewDefinitions in this attempt were NOT authored for it. They are the previous attempt's, carried forward byte-identical so that the only thing that changed between the superseded verdict and this one is the served data. No implementer ran, and none should: re-authoring would make this a comparison of two queries instead of a measurement of the upstream fix.",
+  "reason": "The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+  "source_attempt": "attempt_0002",
+  "superseded_status": "COMPLETED_WITH_DIVERGENCE",
+  "warnings": []
+}
