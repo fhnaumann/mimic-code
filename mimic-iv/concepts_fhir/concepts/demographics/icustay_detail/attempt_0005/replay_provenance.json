@@ -1,0 +1,45 @@
+{
+  "authored_by": "mimic_utils replay",
+  "carried": [
+    {
+      "name": "concept.sql",
+      "sha256": "1360e75e420c4db9b986a87f817d8c754df0d674f8971f0fee057c5611c5ab0e"
+    },
+    {
+      "name": "ViewDefinition.icustay_detail_hospital_encounter.json",
+      "sha256": "a92f4777b31e7926ab5763a81fc7bcc0073b653181b2c8b41f70419230ea755b"
+    },
+    {
+      "name": "ViewDefinition.icustay_detail_icu_encounter.json",
+      "sha256": "efa9190b81b752d426d2eb17af374c3b945a5769ecc449eb8078ed8348803940"
+    },
+    {
+      "name": "ViewDefinition.icustay_detail_patient.json",
+      "sha256": "3a345e90476b823acb59d7023f5091b2b875231a2dfafd94895a8cb753a58b08"
+    },
+    {
+      "name": "unrepresentable.json",
+      "sha256": "db87aa2dd2c75745be060d69cd9511765a2388c59f6f0632fa6bd89c6e9d95e3"
+    }
+  ],
+  "concept": "icustay_detail",
+  "created_at": "2026-08-25T00:07:20+00:00",
+  "fixes_measured": [
+    {
+      "fixed_by": "mimic-fhir ade10fb (upstream #124), 2026-08-21",
+      "id": "dst-timestamptz-wall-clock",
+      "summary": "The ETL ran under a DST-observing zone, so casting naive MIMIC wall times through TIMESTAMPTZ normalised spring-forward gap times forward an hour irreversibly. The FHIR tables are now generated under UTC, which has no DST in any year, so the cast is an identity on the wall clock."
+    },
+    {
+      "fixed_by": "mimic-fhir 3048c88 (upstream #126, #117), 2026-08-21",
+      "id": "patient-birthdate-anchor",
+      "summary": "Patient.birthDate was synthesised as MIN(transfers.intime) minus anchor_age, which is not the anchor pair the canonical age definition uses, and an INNER JOIN on transfers left patients with no transfer row without a birthDate at all. It is now MAKE_DATE(anchor_year, 1, 1) minus anchor_age, on the patients row itself. Same element, same path, corrected value and better coverage."
+    }
+  ],
+  "kind": "data_rebuild",
+  "note": "The SQL and ViewDefinitions in this attempt were NOT authored for it. They are the previous attempt's, carried forward byte-identical so that the only thing that changed between the superseded verdict and this one is the served data. No implementer ran, and none should: re-authoring would make this a comparison of two queries instead of a measurement of the upstream fix.",
+  "reason": "The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+  "source_attempt": "attempt_0004",
+  "superseded_status": "COMPLETED_WITH_DIVERGENCE",
+  "warnings": []
+}

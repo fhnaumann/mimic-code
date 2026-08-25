@@ -1,14 +1,14 @@
 {
-  "attempt": 4,
+  "attempt": 5,
   "category": "demographics",
-  "completed_at": "2026-08-17T06:48:58.498196+00:00",
+  "completed_at": "2026-08-25T03:52:39.182493+00:00",
   "concept_name": "icustay_detail",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "Accepted attempt 0004 contested divergence as intrinsic upstream MIMIC-on-FHIR transformation and omission. All 73,181 ICU-stay keys are preserved with no only-oracle or only-candidate rows. The 11,501 race conflicts arise because mimic-fhir/sql/fhir_patient.sql:10-33,59,110 selects one latest-admission race per patient and fn/fn_patient_extension.sql:11-47,60-63 serializes only many-to-one OMB values defined by fhir_etl/map_race_omb.sql:13-45 and fhir_etl/map_ethnicity.sql:13-47; current-admission detailed race is absent from Encounter and unrecoverable. The 86 admission_age conflicts arise from synthesized Patient.birthDate at fhir_patient.sql:14-15,108, with anchor_age and anchor_year absent. Seven admittime, one dischtime, and ten icu_intime conflicts are rare irreversible TIMESTAMPTZ normalizations at fhir_encounter.sql:65-66,149-152 and fhir_encounter_icu.sql:31-32,97-100; two admittime rows were comparator-replayed, and the residual endpoint cells occur in multi-conflict rows. Ten los_icu conflicts are secondary to the shifted ICU start; source LOS selected at fhir_encounter_icu.sql:33 is not serialized at lines 69-120. hospital_expire_flag is correctly emitted as typed NULL because fhir_encounter.sql:59-71,149-170 omits both the source flag and admission death time, while fhir_patient.sql:52,109 carries only patient-level deceasedDateTime. All defensible mappings were exhausted across attempts 0001-0004. Overall fidelity is 0/73,181 because the declared expiry column is NULL; representable fidelity is 61,587/73,181 (84.1571%). The gaps do not alter row inclusion or ICU-stay grain, and the proven birthDate and DST defects are exempt from essential-loss blocking.",
-  "engineering_counter": 4,
+  "divergence_justification": "Judge accepted the contested review. The canonical query uses admission-specific race (mimic-iv/concepts/demographics/icustay_detail.sql:14,43-47), while mimic-fhir selects one latest-admission patient race (mimic-fhir/sql/fhir_patient.sql:17,23-30,59,110), serializes only the mapped US Core extension (mimic-fhir/sql/fn/fn_patient_extension.sql:11-30,60-63), and applies the non-injective OMB mapping (mimic-fhir/sql/fhir_etl/map_race_omb.sql:13-45); Encounter preserves no admission race (mimic-fhir/sql/fhir_encounter.sql:59-71,149-169). Thus 11,501 race conflicts (15.716%) are unrecoverable upstream transformation loss. The declared typed NULL hospital_expire_flag has 61,680 differing_null_only rows and is an ancillary gap: no admission-scoped FHIR element carries it or admissions.deathtime, and it does not alter ICU-stay population, grain, joins, ranks, or remaining calculations. No age, datetime, or DST residual remains after the replayed upstream rebuild.",
+  "engineering_counter": 5,
   "error_message": null,
-  "hpc_counter": 4,
+  "hpc_counter": 5,
   "reopen_history": [
     {
       "at": "2026-08-17T06:25:03.855355+00:00",
@@ -24,10 +24,25 @@
       "superseded_error": null,
       "superseded_justification": "Judge accepted the contested divergence as intrinsic to upstream MIMIC-on-FHIR transformations: full keyed port preserves all 73,181 ICU stays with no missing or invented rows; 11,501 race conflicts are unrecoverable latest-admission and many-to-one OMB collapse (mimic-fhir/sql/fhir_patient.sql:17,23-30,59,110; fn/fn_patient_extension.sql:11-47,60-63; fhir_etl/map_race_omb.sql:13-45; fhir_etl/map_ethnicity.sql:13-47), 86 admission-age conflicts arise from synthesized Patient.birthDate (fhir_patient.sql:15,108), and endpoint/ICU LOS conflicts arise from irreversible TIMESTAMPTZ Encounter transforms (fhir_encounter.sql:65-66,149-152; fhir_encounter_icu.sql:31-32,44,97-100; source ICU LOS at line 33 is not serialized). The declared typed-NULL hospital_expire_flag is valid because the source flag and admission deathtime are absent from FHIR (fhir_patient.sql:52,109; fhir_encounter.sql:59-71,149-169). Representable fidelity is 61,587/73,181 (84.16%), and the judge found the divergence not severe enough to block.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-25T00:07:20.693925+00:00",
+      "baseline": {
+        "attempt": 4,
+        "engineering": 4,
+        "hpc": 4,
+        "semantic": 4
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Accepted attempt 0004 contested divergence as intrinsic upstream MIMIC-on-FHIR transformation and omission. All 73,181 ICU-stay keys are preserved with no only-oracle or only-candidate rows. The 11,501 race conflicts arise because mimic-fhir/sql/fhir_patient.sql:10-33,59,110 selects one latest-admission race per patient and fn/fn_patient_extension.sql:11-47,60-63 serializes only many-to-one OMB values defined by fhir_etl/map_race_omb.sql:13-45 and fhir_etl/map_ethnicity.sql:13-47; current-admission detailed race is absent from Encounter and unrecoverable. The 86 admission_age conflicts arise from synthesized Patient.birthDate at fhir_patient.sql:14-15,108, with anchor_age and anchor_year absent. Seven admittime, one dischtime, and ten icu_intime conflicts are rare irreversible TIMESTAMPTZ normalizations at fhir_encounter.sql:65-66,149-152 and fhir_encounter_icu.sql:31-32,97-100; two admittime rows were comparator-replayed, and the residual endpoint cells occur in multi-conflict rows. Ten los_icu conflicts are secondary to the shifted ICU start; source LOS selected at fhir_encounter_icu.sql:33 is not serialized at lines 69-120. hospital_expire_flag is correctly emitted as typed NULL because fhir_encounter.sql:59-71,149-170 omits both the source flag and admission death time, while fhir_patient.sql:52,109 carries only patient-level deceasedDateTime. All defensible mappings were exhausted across attempts 0001-0004. Overall fidelity is 0/73,181 because the declared expiry column is NULL; representable fidelity is 61,587/73,181 (84.1571%). The gaps do not alter row inclusion or ICU-stay grain, and the proven birthDate and DST defects are exempt from essential-loss blocking.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
-  "semantic_counter": 4,
-  "started_at": "2026-08-17T06:25:03.858729+00:00",
+  "semantic_counter": 5,
+  "started_at": "2026-08-25T00:07:20.695780+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-17T06:48:58.498634+00:00"
+  "updated_at": "2026-08-25T03:52:39.183193+00:00"
 }

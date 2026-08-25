@@ -1,0 +1,26 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/icustay_detail-0004-icustay_detail_patient",
+  "name": "icustay_detail_patient",
+  "resource": "Patient",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "patient_key" },
+        { "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/patient').value", "name": "subject_id_str" },
+        { "path": "gender", "name": "gender" },
+        { "path": "birthDate", "name": "birth_date" },
+        { "path": "(deceased).ofType(dateTime)", "name": "dod_datetime" },
+        { "path": "extension('http://hl7.org/fhir/us/core/StructureDefinition/us-core-race').extension.where(url='text').value.ofType(string).first()", "name": "race_text" },
+        { "path": "extension('http://hl7.org/fhir/us/core/StructureDefinition/us-core-race').extension.where(url='ombCategory').value.ofType(Coding).code.first()", "name": "race_omb_code" },
+        { "path": "extension('http://hl7.org/fhir/us/core/StructureDefinition/us-core-race').extension.where(url='ombCategory').value.ofType(Coding).display.first()", "name": "race_omb_display" },
+        { "path": "extension('http://hl7.org/fhir/us/core/StructureDefinition/us-core-race').extension.where(url='ombCategory').value.ofType(Coding).system.first()", "name": "race_omb_system" },
+        { "path": "extension('http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity').extension.where(url='text').value.ofType(string).first()", "name": "ethnicity_text" },
+        { "path": "extension('http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity').extension.where(url='ombCategory').value.ofType(Coding).code.first()", "name": "ethnicity_omb_code" },
+        { "path": "extension('http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity').extension.where(url='ombCategory').value.ofType(Coding).display.first()", "name": "ethnicity_omb_display" },
+        { "path": "extension('http://hl7.org/fhir/us/core/StructureDefinition/us-core-ethnicity').extension.where(url='ombCategory').value.ofType(Coding).system.first()", "name": "ethnicity_omb_system" }
+      ]
+    }
+  ]
+}
