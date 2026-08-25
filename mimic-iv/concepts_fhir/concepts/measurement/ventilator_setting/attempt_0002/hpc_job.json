@@ -1,0 +1,8 @@
+{
+  "concept": "ventilator_setting",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "30503202",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/ventilator_setting/attempt_0002",
+  "submitted_at": "2026-08-25T07:27:12.526724+00:00",
+  "walltime": "2:00:00"
+}

@@ -1,17 +1,33 @@
 {
-  "attempt": 1,
+  "attempt": 2,
   "category": "measurement",
-  "completed_at": "2026-08-14T03:43:15.311161+00:00",
+  "completed_at": "2026-08-25T07:33:24.219369+00:00",
   "concept_name": "ventilator_setting",
   "dependencies": [],
   "divergence_decided_by": null,
   "divergence_justification": null,
-  "engineering_counter": 1,
-  "error_message": "Equivalence judge blocked attempt 0001: 652,532 differing_null_only rows in ventilator_mode, ventilator_mode_hamilton, and ventilator_type arise because mimic-fhir/sql/fhir_observation_chartevents.sql:69-80 discards source chartevents.value on Quantity-backed rows; the missing ventilator mode/type text is essential to clinically meaningful ventilation classification and temporal carry-forward in mimic-iv/concepts/measurement/ventilation.sql:36,55-127,171-180. Fidelity was 353,556/1,006,127 identical (35.14%), with no unrepresentable exclusion. Separately, 2 conflicts, 37 only_oracle, and 29 only_candidate findings were completely attributed to the upstream DST cast at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67, with 8 key collisions and zero residuals; this accepted DST portion is not the blocking reason.",
-  "hpc_counter": 1,
-  "reopen_history": [],
+  "engineering_counter": 3,
+  "error_message": null,
+  "hpc_counter": 2,
+  "reopen_history": [
+    {
+      "at": "2026-08-25T06:55:51.135831+00:00",
+      "baseline": {
+        "attempt": 1,
+        "engineering": 1,
+        "hpc": 1,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "Upstream e7c326b (#125) now carries chartevents.value in Observation.component[].valueString, coded with the same mimic-chartevents-d-items coding as Observation.code. itemid 223849 (ventilator mode), 229314 (ventilator mode, Hamilton) and 223848 (ventilator type) therefore carry their mode/type text again instead of arriving as a bare Quantity, so the premise of the block -- 652,532 differing_null_only rows in ventilator_mode, ventilator_mode_hamilton and ventilator_type because the text was discarded on Quantity-backed rows -- is now FALSE against the warehouse rebuilt 2026-08-24. Select the component text and derive those three columns from it, and drop any unrepresentability declaration and NULL-propagation that stood on the discarded text. The component is emitted only where the source text is not the number restated (fhir_observation_chartevents.sql:97-113), so treat it as forEachOrNull and probe its coverage on the target itemids rather than assuming it is universal. The same rebuild fixed the DST cast (#124), so the previously attributed hour-wide shift should be gone -- if it still appears, that is a finding to explain, not an exemption to re-take. Do not reconstruct any resource id.",
+      "superseded_decided_by": null,
+      "superseded_error": "Equivalence judge blocked attempt 0001: 652,532 differing_null_only rows in ventilator_mode, ventilator_mode_hamilton, and ventilator_type arise because mimic-fhir/sql/fhir_observation_chartevents.sql:69-80 discards source chartevents.value on Quantity-backed rows; the missing ventilator mode/type text is essential to clinically meaningful ventilation classification and temporal carry-forward in mimic-iv/concepts/measurement/ventilation.sql:36,55-127,171-180. Fidelity was 353,556/1,006,127 identical (35.14%), with no unrepresentable exclusion. Separately, 2 conflicts, 37 only_oracle, and 29 only_candidate findings were completely attributed to the upstream DST cast at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67, with 8 key collisions and zero residuals; this accepted DST portion is not the blocking reason.",
+      "superseded_justification": null,
+      "superseded_status": "BLOCKED_REPRESENTATION"
+    }
+  ],
   "semantic_counter": 1,
-  "started_at": "2026-08-14T03:04:32.574436+00:00",
-  "status": "BLOCKED_REPRESENTATION",
-  "updated_at": "2026-08-14T03:43:15.311597+00:00"
+  "started_at": "2026-08-25T06:55:51.137450+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-25T07:33:24.219690+00:00"
 }
