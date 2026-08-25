@@ -1,14 +1,14 @@
 {
-  "attempt": 3,
+  "attempt": 4,
   "category": "demographics",
-  "completed_at": "2026-08-17T07:37:00.077939+00:00",
+  "completed_at": "2026-08-25T01:26:53.404742+00:00",
   "concept_name": "weight_durations",
   "dependencies": [],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "Judge accept: attempt 0003 reproduces every value obtainable from served FHIR. The 38 oracle-only, 32 candidate-only, and 56 conflict rows (39 direct/collision replayed; 17 closed by full source-side replay as nine ICU-intime arithmetic effects and eight chartevents/LEAD effects) are completely explained by upstream America/New_York TIMESTAMPTZ normalization at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 and mimic-fhir/sql/fhir_encounter_icu.sql:31-32,97-100, propagated through LEAD, two-hour ICU arithmetic, backfill, and UNION ALL. Fidelity is 272357/272445 identical (99.9677%); original wall times are unrecoverable from FHIR, opaque resource IDs were not inverted, and required resource-key columns are additive identity only. The contract's DST transformation exception applies; this is COMPLETED_WITH_DIVERGENCE, not essential-loss blocking.",
-  "engineering_counter": 3,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 5,
   "error_message": null,
-  "hpc_counter": 3,
+  "hpc_counter": 4,
   "reopen_history": [
     {
       "at": "2026-08-17T06:55:26.168080+00:00",
@@ -24,10 +24,25 @@
       "superseded_error": null,
       "superseded_justification": "Attempt 0002's complete divergence is caused by upstream America/New_York TIMESTAMPTZ normalization. fhir_observation_chartevents.sql:9,67 writes shifted charttime to Observation.effectiveDateTime, and fhir_encounter_icu.sql:31-32,97-100 writes shifted ICU times to Encounter.period. All 38 only-oracle and 32 only-candidate rows are key-attributed with no residual, including six collisions propagated through LEAD and UNION ALL. Of 56 conflicts, 39 replay directly and the remaining 17 close under full transformed-source replay as 9 ICU arithmetic and 8 chartevents window effects. Original wall times are absent from served FHIR and opaque resource IDs are not inverted. The rare 0.0206% conflict fraction is DST-consistent, and the contract's upstream-DST exemption applies.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-25T01:17:07.829461+00:00",
+      "baseline": {
+        "attempt": 3,
+        "engineering": 3,
+        "hpc": 3,
+        "semantic": 3
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Judge accept: attempt 0003 reproduces every value obtainable from served FHIR. The 38 oracle-only, 32 candidate-only, and 56 conflict rows (39 direct/collision replayed; 17 closed by full source-side replay as nine ICU-intime arithmetic effects and eight chartevents/LEAD effects) are completely explained by upstream America/New_York TIMESTAMPTZ normalization at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 and mimic-fhir/sql/fhir_encounter_icu.sql:31-32,97-100, propagated through LEAD, two-hour ICU arithmetic, backfill, and UNION ALL. Fidelity is 272357/272445 identical (99.9677%); original wall times are unrecoverable from FHIR, opaque resource IDs were not inverted, and required resource-key columns are additive identity only. The contract's DST transformation exception applies; this is COMPLETED_WITH_DIVERGENCE, not essential-loss blocking.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
   "semantic_counter": 3,
-  "started_at": "2026-08-17T06:55:26.169668+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-17T07:37:00.078359+00:00"
+  "started_at": "2026-08-25T01:17:07.831555+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-25T01:26:53.405247+00:00"
 }
