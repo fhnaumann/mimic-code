@@ -1,14 +1,14 @@
 {
-  "attempt": 2,
+  "attempt": 3,
   "category": "organfailure",
-  "completed_at": "2026-08-17T03:56:20.058157+00:00",
+  "completed_at": "2026-08-25T00:34:04.554509+00:00",
   "concept_name": "kdigo_creatinine",
   "dependencies": [],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "Accepted upstream DST transformation divergence. mimic-fhir/sql/fhir_observation_labevents.sql:15,121 irreversibly casts labevents.charttime through TIMESTAMPTZ before writing Observation.effectiveDateTime; mimic-fhir/sql/fhir_specimen_lab.sql:9,18,58 repeats the transformation for specimen timing. Attempt 0002 reads that element and preserves the canonical 48-hour and seven-day windows. Of 599607 rows, 599453 are identical and 154 conflict (0.0257%): 138 replay directly and 16 are downstream ordering/window effects of shifted source observations. FHIR contains no independent pre-normalization wall-time witness, so exact chronology and membership are unrecoverable.",
-  "engineering_counter": 2,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 4,
   "error_message": null,
-  "hpc_counter": 2,
+  "hpc_counter": 3,
   "reopen_history": [
     {
       "at": "2026-08-17T03:33:17.000965+00:00",
@@ -24,10 +24,25 @@
       "superseded_error": null,
       "superseded_justification": "Judge accepted the contested divergence: mimic-fhir/sql/fhir_observation_labevents.sql:15 casts labevents.charttime through TIMESTAMPTZ and line 121 writes the irreversibly DST-normalized value to Observation.effectiveDateTime; fhir_specimen_lab.sql:18,58 repeats the loss. FHIR retains only labevent_id, so normalized 03:xx cannot be distinguished from genuine 03:xx and exact source ordering and 48-hour/7-day window membership are unrecoverable. The full run reproduced 599447/599607 rows identically (99.9733%); 160 conflicts comprise charttime 145, creat 1, prior-48-hour 17, prior-seven-day 9, with 138 directly replay-attributed and 21 of the remaining 22 explained as downstream window effects; the final difference is within comparator tolerance.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-25T00:24:03.448478+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 2,
+        "hpc": 2,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Accepted upstream DST transformation divergence. mimic-fhir/sql/fhir_observation_labevents.sql:15,121 irreversibly casts labevents.charttime through TIMESTAMPTZ before writing Observation.effectiveDateTime; mimic-fhir/sql/fhir_specimen_lab.sql:9,18,58 repeats the transformation for specimen timing. Attempt 0002 reads that element and preserves the canonical 48-hour and seven-day windows. Of 599607 rows, 599453 are identical and 154 conflict (0.0257%): 138 replay directly and 16 are downstream ordering/window effects of shifted source observations. FHIR contains no independent pre-normalization wall-time witness, so exact chronology and membership are unrecoverable.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
   "semantic_counter": 2,
-  "started_at": "2026-08-17T03:33:17.002402+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-17T03:56:20.058446+00:00"
+  "started_at": "2026-08-25T00:24:03.449929+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-25T00:34:04.555166+00:00"
 }
