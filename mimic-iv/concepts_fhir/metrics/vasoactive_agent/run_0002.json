@@ -1,0 +1,252 @@
+{
+  "concept": "vasoactive_agent",
+  "convergence": {
+    "attempts_total": 1,
+    "divergence_decided_by": null,
+    "engineering_counter": 2,
+    "full_validation_rounds": 0,
+    "hpc_counter": 0,
+    "human_manual_override": false,
+    "judge_invocations": 0,
+    "semantic_counter": 0,
+    "semantic_rework_cycles": 0,
+    "semantic_rework_method": "max(0, semantic_counter - terminal semantic transition)",
+    "semantic_rework_source": "ConversionState.semantic_counter plus terminal status; semantic fixes use fail --counter semantic",
+    "semantic_terminal_transition_subtracted": 0,
+    "submitted_jobs": 0,
+    "terminal_outcome": "FAILED"
+  },
+  "final_comparator": null,
+  "format_version": "2.0",
+  "hpc_jobs": [],
+  "human_interventions": null,
+  "human_interventions_reason": "Stored OpenCode data cannot reliably distinguish human messages from plugin/orchestrator continuation messages.",
+  "per_attempt": {
+    "attempts": [
+      {
+        "artifacts": [
+          "ViewDefinition.encounter_icu.json",
+          "ViewDefinition.medication_administration.json",
+          "concept.sql",
+          "evidence",
+          "replay_provenance.json"
+        ],
+        "attempt": 2,
+        "convergence": {
+          "demo": null,
+          "full": null,
+          "hpc_job_submitted": false,
+          "judge_invoked": false
+        },
+        "usage_attribution": "unavailable"
+      }
+    ],
+    "attempts_total": 1,
+    "usage_attribution": "unavailable"
+  },
+  "per_stage": {
+    "concept-port-orchestrator": {
+      "completed_assistant_messages": 34,
+      "duration_seconds": 322.98,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 2496512,
+        "cache_write": 0,
+        "input": 150969,
+        "output": 4032,
+        "reasoning": 4190,
+        "total": 2655703
+      }
+    },
+    "demo-runner": {
+      "completed_assistant_messages": 7,
+      "duration_seconds": 89.881,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 111360,
+        "cache_write": 0,
+        "input": 130787,
+        "output": 1598,
+        "reasoning": 775,
+        "total": 244520
+      }
+    }
+  },
+  "provenance": {
+    "agent_model_list": [
+      {
+        "agent": "concept-port-orchestrator",
+        "model": "gpt-5.6-luna",
+        "provider": "openai",
+        "variant": "high"
+      },
+      {
+        "agent": "demo-runner",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider": "openrouter",
+        "variant": "default"
+      }
+    ],
+    "agents": [
+      "concept-port-orchestrator",
+      "demo-runner"
+    ],
+    "config_hashes": {
+      ".opencode/agents/concept-port-orchestrator.md": "e4be3da671082221ff0815fdc41c73da61033f5c9cfb188f84184abfd7a78e45",
+      ".opencode/skills/concept-orchestrator-loop/SKILL.md": "44899c7f5bb1e6137acd7ecdac3d9d60d2a99ad6af608d4be719a193a99e265b",
+      "mimic-iv/concepts_fhir/LOOP_CONTRACT.md": "78d17c69a502494c78399e859bda7862b241b0dac21c16f6bad6a37cddb3a7ef",
+      "opencode.json": "730b7b8153c502070b861ac80e1edb032fcad48eff3a4ef24cffb24fa259548b"
+    },
+    "dag_sha256": "7c8fd57ead83e4b8edf3867204b23fac3d06c141bc8ada8be8fa6513dab1b390",
+    "finalized_before_terminal_response": true,
+    "opencode_source": {
+      "filename": "opencode.db",
+      "kind": "sqlite",
+      "tables": [
+        "message",
+        "part",
+        "project",
+        "session"
+      ]
+    },
+    "opencode_versions": [
+      "1.18.19"
+    ],
+    "root_session_count": 1,
+    "semantic_rework_method": "max(0, semantic_counter - terminal semantic transition)",
+    "semantic_rework_source": "ConversionState.semantic_counter plus terminal status; semantic fixes use fail --counter semantic",
+    "source_sql_path": "mimic-iv/concepts/medication/vasoactive_agent.sql",
+    "tracker_schema_version": "1"
+  },
+  "run": 2,
+  "run_scope": {
+    "attempt_dirs_excluded": 1,
+    "attempt_window": {
+      "after": 1,
+      "through": 2
+    },
+    "attempts_all_runs": 2,
+    "attempts_this_run": 1,
+    "cumulative_counters": {
+      "engineering": 3,
+      "hpc": 1,
+      "semantic": 1
+    },
+    "reopen_count": 1,
+    "reopen_history": [
+      {
+        "at": "2026-08-25T03:50:58.469117+00:00",
+        "baseline": {
+          "attempt": 1,
+          "engineering": 1,
+          "hpc": 1,
+          "semantic": 1
+        },
+        "by": "human",
+        "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+        "superseded_decided_by": "judge",
+        "superseded_error": null,
+        "superseded_justification": "vasoactive_agent faithfully reproduces canonical interval construction. All substantive divergence is inherited from seven judge-accepted dependencies: rare endpoint normalization caused by TIMESTAMPTZ casts at mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9, serialized exclusively to MedicationAdministration.effectivePeriod.start/end at lines 61-69, six-decimal Quantity representation, and one ancillary phenylephrine patientweight NULL. The original wall times, low-order precision, and patientweight are absent from semantic FHIR elements and cannot be recovered through opaque resource IDs. The target introduces no independent mapping or SQL loss.",
+        "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+      }
+    ],
+    "run": 2
+  },
+  "runtime": {
+    "actual_elapsed_secondary": true,
+    "actual_elapsed_seconds": 245.442273,
+    "actual_elapsed_timestamp_source": "state.completed_at",
+    "assistant_messages": {
+      "assistant_messages": 42,
+      "completed_assistant_messages": 41,
+      "incomplete_assistant_messages": 1,
+      "invalid_assistant_intervals": 0
+    },
+    "busy_union_seconds": 322.98,
+    "hpc_accounted_seconds": 0,
+    "hpc_jobs_submitted": 0,
+    "hpc_jobs_with_run_meta_fallback": 0,
+    "hpc_jobs_with_slurm_accounting": 0,
+    "hpc_jobs_without_discoverable_poll_interval": 0,
+    "hpc_jobs_without_runtime": 0,
+    "hpc_poll_intervals_discovered": 0,
+    "hpc_poll_intervals_unmatched": 0,
+    "hpc_poll_overlap_seconds": 0.0,
+    "incomplete_messages_excluded": 1,
+    "invalid_message_intervals_excluded": 0,
+    "method": "union completed assistant-message intervals across all included sessions; subtract overlap from discovered hpc-poll tool intervals; add measured HPC runtime from Slurm accounting, falling back to run_meta execute+compare timings when accounting is unavailable",
+    "seconds": 322.98,
+    "time_updated_fallback_used": false
+  },
+  "schema_version": "conversion-metrics.v2",
+  "session_resumptions": 0,
+  "session_scope": {
+    "included_session_count": 2,
+    "root_session_count": 1,
+    "session_resumptions": 0
+  },
+  "terminal_outcome": "FAILED",
+  "terminal_status": "FAILED",
+  "tokens": {
+    "by_agent": {
+      "concept-port-orchestrator": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 2496512,
+          "cache_write": 0,
+          "input": 150969,
+          "output": 4032,
+          "reasoning": 4190,
+          "total": 2655703
+        }
+      },
+      "demo-runner": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 111360,
+          "cache_write": 0,
+          "input": 130787,
+          "output": 1598,
+          "reasoning": 775,
+          "total": 244520
+        }
+      }
+    },
+    "by_model": {
+      "openai/gpt-5.6-luna/high": {
+        "model": "gpt-5.6-luna",
+        "provider": "openai",
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 2496512,
+          "cache_write": 0,
+          "input": 150969,
+          "output": 4032,
+          "reasoning": 4190,
+          "total": 2655703
+        },
+        "variant": "high"
+      },
+      "openrouter/deepseek/deepseek-v4-flash-0731/default": {
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider": "openrouter",
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 111360,
+          "cache_write": 0,
+          "input": 130787,
+          "output": 1598,
+          "reasoning": 775,
+          "total": 244520
+        },
+        "variant": "default"
+      }
+    },
+    "cache_read": 2607872,
+    "cache_write": 0,
+    "input": 281756,
+    "output": 5630,
+    "reasoning": 4965,
+    "total": 2900223
+  }
+}

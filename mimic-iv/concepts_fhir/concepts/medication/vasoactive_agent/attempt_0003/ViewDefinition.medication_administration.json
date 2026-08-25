@@ -1,0 +1,35 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/vasoactive_agent-0003-medication_administration",
+  "name": "medication_administration",
+  "resource": "MedicationAdministration",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "medadmin_key" },
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
+        { "path": "context.getReferenceKey(Encounter)", "name": "encounter_key" },
+        { "path": "(effective).ofType(dateTime)", "name": "effective_datetime" },
+        { "path": "(effective).ofType(Period).start", "name": "effective_period_start" },
+        { "path": "(effective).ofType(Period).end", "name": "effective_period_end" },
+        { "path": "(dosage.rate).ofType(Quantity).value", "name": "rate_value" },
+        { "path": "(dosage.rate).ofType(Quantity).unit", "name": "rate_unit" },
+        { "path": "(dosage.rate).ofType(Quantity).system", "name": "rate_system" },
+        { "path": "(dosage.rate).ofType(Quantity).code", "name": "rate_code" },
+        { "path": "(dosage.dose).ofType(Quantity).value", "name": "amount_value" },
+        { "path": "(dosage.dose).ofType(Quantity).unit", "name": "amount_unit" },
+        { "path": "(dosage.dose).ofType(Quantity).system", "name": "amount_system" },
+        { "path": "(dosage.dose).ofType(Quantity).code", "name": "amount_code" }
+      ]
+    },
+    {
+      "forEach": "medication.ofType(CodeableConcept).coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-medication-icu' and (code='221653' or code='221662' or code='221289' or code='221906' or code='221749' or code='222315' or code='221986'))",
+      "column": [
+        { "path": "code", "name": "item_code" },
+        { "path": "system", "name": "code_system" },
+        { "path": "display", "name": "code_display" }
+      ]
+    }
+  ]
+}

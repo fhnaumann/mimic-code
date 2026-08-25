@@ -1,7 +1,7 @@
 {
-  "attempt": 1,
+  "attempt": 3,
   "category": "medication",
-  "completed_at": "2026-08-21T03:02:01.341136+00:00",
+  "completed_at": "2026-08-25T04:24:14.366942+00:00",
   "concept_name": "vasoactive_agent",
   "dependencies": [
     "dobutamine",
@@ -13,13 +13,29 @@
     "vasopressin"
   ],
   "divergence_decided_by": "judge",
-  "divergence_justification": "vasoactive_agent faithfully reproduces canonical interval construction. All substantive divergence is inherited from seven judge-accepted dependencies: rare endpoint normalization caused by TIMESTAMPTZ casts at mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9, serialized exclusively to MedicationAdministration.effectivePeriod.start/end at lines 61-69, six-decimal Quantity representation, and one ancillary phenylephrine patientweight NULL. The original wall times, low-order precision, and patientweight are absent from semantic FHIR elements and cannot be recovered through opaque resource IDs. The target introduces no independent mapping or SQL loss.",
-  "engineering_counter": 1,
+  "divergence_justification": "vasoactive_agent reproduces the canonical interval construction and all 665,529 rows. Its sole norepinephrine conflict is inherited six-decimal loss in MedicationAdministration.dosage.rateQuantity.value (mimic-fhir/sql/fhir_medication_administration_icu.sql:14,91-99), and its sole phenylephrine NULL is inherited from omitted inputevents.patientweight (mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,38-100), required by phenylephrine.sql:5-7. Neither original value exists elsewhere in FHIR or may be recovered through opaque identity. The phenylephrine gap changes only one output cell, not inclusion, grain, grouping, or boundaries. The target introduces no independent divergence.",
+  "engineering_counter": 4,
   "error_message": null,
-  "hpc_counter": 1,
-  "reopen_history": [],
-  "semantic_counter": 1,
-  "started_at": "2026-08-21T01:50:57.996801+00:00",
+  "hpc_counter": 2,
+  "reopen_history": [
+    {
+      "at": "2026-08-25T03:50:58.469117+00:00",
+      "baseline": {
+        "attempt": 1,
+        "engineering": 1,
+        "hpc": 1,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "vasoactive_agent faithfully reproduces canonical interval construction. All substantive divergence is inherited from seven judge-accepted dependencies: rare endpoint normalization caused by TIMESTAMPTZ casts at mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9, serialized exclusively to MedicationAdministration.effectivePeriod.start/end at lines 61-69, six-decimal Quantity representation, and one ancillary phenylephrine patientweight NULL. The original wall times, low-order precision, and patientweight are absent from semantic FHIR elements and cannot be recovered through opaque resource IDs. The target introduces no independent mapping or SQL loss.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
+  "semantic_counter": 2,
+  "started_at": "2026-08-25T03:57:16.473792+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-21T03:02:01.341617+00:00"
+  "updated_at": "2026-08-25T04:24:14.367414+00:00"
 }
