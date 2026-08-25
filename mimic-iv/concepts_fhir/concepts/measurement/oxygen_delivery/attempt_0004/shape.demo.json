@@ -1,0 +1,59 @@
+{
+  "candidate": "/Users/nau025/Documents/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/oxygen_delivery/attempt_0004/candidate.demo.parquet/*.parquet",
+  "candidate_row_count": 1154,
+  "concept": "oxygen_delivery",
+  "dataset": "demo",
+  "executed": true,
+  "format_version": "2.0",
+  "gated": [
+    "execution",
+    "column_names",
+    "column_types"
+  ],
+  "mode": "shape",
+  "not_gated": [
+    "row_count"
+  ],
+  "note": "Shape is correct. This earns permission to spend an HPC run; it is not evidence of correctness.",
+  "oracle_full_row_count": 601546,
+  "schema": {
+    "actual_columns": [
+      "subject_id",
+      "stay_id",
+      "charttime",
+      "o2_flow",
+      "o2_flow_additional",
+      "o2_delivery_device_1",
+      "o2_delivery_device_2",
+      "o2_delivery_device_3",
+      "o2_delivery_device_4",
+      "patient_key",
+      "icu_encounter_key"
+    ],
+    "expected_columns": [
+      "subject_id",
+      "stay_id",
+      "charttime",
+      "o2_flow",
+      "o2_flow_additional",
+      "o2_delivery_device_1",
+      "o2_delivery_device_2",
+      "o2_delivery_device_3",
+      "o2_delivery_device_4"
+    ],
+    "extra_columns": [
+      "patient_key",
+      "icu_encounter_key"
+    ],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": [],
+    "missing_key_columns": [],
+    "required_key_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "unexpected_columns": []
+  },
+  "verdict": "shape_ok"
+}
