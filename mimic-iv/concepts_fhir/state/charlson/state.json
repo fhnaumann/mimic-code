@@ -1,16 +1,16 @@
 {
-  "attempt": 6,
+  "attempt": 7,
   "category": "comorbidity",
-  "completed_at": "2026-08-17T06:09:47.985461+00:00",
+  "completed_at": "2026-08-25T01:25:43.339967+00:00",
   "concept_name": "charlson",
   "dependencies": [
     "age"
   ],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "All 61/431,231 contested conflicts are wholly inherited from the accepted age dependency. mimic-fhir/sql/fhir_patient.sql:15,108 synthesizes and writes Patient.birthDate from MIN(transfers.intime)-anchor_age, whereas canonical age.sql:30 requires the unrecoverable anchor_age/anchor_year pair. Attempt 0006 consumes FROM age, preserves the canonical thresholds and index arithmetic, and introduces no additional divergence. The 61 rows are exactly the threshold-crossing subset of 460 upstream age conflicts; all diagnosis flags, rows, keys, grouping, and grain match.",
-  "engineering_counter": 7,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 9,
   "error_message": null,
-  "hpc_counter": 5,
+  "hpc_counter": 6,
   "reopen_history": [
     {
       "at": "2026-08-14T05:09:59.576242+00:00",
@@ -56,10 +56,25 @@
       "superseded_error": null,
       "superseded_justification": "All 61/431,231 conflicts (0.0141%) are wholly inherited from the judge-accepted divergent age dependency. mimic-fhir/sql/fhir_patient.sql:15,108 synthesizes and writes Patient.birthDate from MIN(transfers.intime)-anchor_age, whereas canonical mimic-iv/concepts/demographics/age.sql:30 requires the unrecoverable anchor_age/anchor_year pair. Attempt 0004 consumes FROM age and exactly preserves Charlson thresholds and arithmetic; the 61 rows are the subset of 460 upstream age conflicts crossing 50/60/70/80. No defensible FHIR query or retry can recover the oracle ages. All diagnosis flags, rows, keys, grain, and grouping otherwise match.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-25T01:17:35.026817+00:00",
+      "baseline": {
+        "attempt": 6,
+        "engineering": 7,
+        "hpc": 5,
+        "semantic": 5
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "All 61/431,231 contested conflicts are wholly inherited from the accepted age dependency. mimic-fhir/sql/fhir_patient.sql:15,108 synthesizes and writes Patient.birthDate from MIN(transfers.intime)-anchor_age, whereas canonical age.sql:30 requires the unrecoverable anchor_age/anchor_year pair. Attempt 0006 consumes FROM age, preserves the canonical thresholds and index arithmetic, and introduces no additional divergence. The 61 rows are exactly the threshold-crossing subset of 460 upstream age conflicts; all diagnosis flags, rows, keys, grouping, and grain match.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
   "semantic_counter": 5,
-  "started_at": "2026-08-17T05:44:35.609028+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-17T06:09:47.986008+00:00"
+  "started_at": "2026-08-25T01:17:35.028867+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-25T01:25:43.340432+00:00"
 }

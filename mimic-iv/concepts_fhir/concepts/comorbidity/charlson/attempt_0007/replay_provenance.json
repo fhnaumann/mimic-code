@@ -1,0 +1,36 @@
+{
+  "authored_by": "mimic_utils replay",
+  "carried": [
+    {
+      "name": "concept.sql",
+      "sha256": "17075c9684f2a2c40ffb1536f25ccec6b43333538cfb87da82d3cacdde62fb44"
+    },
+    {
+      "name": "ViewDefinition.condition.json",
+      "sha256": "ee6b32a2dffb758a80f948d8634655fca774d4759af5eafc8aa2e1e6f74e5f0a"
+    },
+    {
+      "name": "ViewDefinition.encounter.json",
+      "sha256": "aa41acc26b02756974f3049eb787e60ae296b7e6ff27ade5e9af37b7a86b15d6"
+    },
+    {
+      "name": "ViewDefinition.patient.json",
+      "sha256": "ad554adb4f15af86ab3cb21b1b0d24b63791f13aae1005f14fe792d4cf215e46"
+    }
+  ],
+  "concept": "charlson",
+  "created_at": "2026-08-25T01:17:35+00:00",
+  "fixes_measured": [
+    {
+      "fixed_by": "mimic-fhir 3048c88 (upstream #126, #117), 2026-08-21",
+      "id": "patient-birthdate-anchor",
+      "summary": "Patient.birthDate was synthesised as MIN(transfers.intime) minus anchor_age, which is not the anchor pair the canonical age definition uses, and an INNER JOIN on transfers left patients with no transfer row without a birthDate at all. It is now MAKE_DATE(anchor_year, 1, 1) minus anchor_age, on the patients row itself. Same element, same path, corrected value and better coverage."
+    }
+  ],
+  "kind": "data_rebuild",
+  "note": "The SQL and ViewDefinitions in this attempt were NOT authored for it. They are the previous attempt's, carried forward byte-identical so that the only thing that changed between the superseded verdict and this one is the served data. No implementer ran, and none should: re-authoring would make this a comparison of two queries instead of a measurement of the upstream fix.",
+  "reason": "The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+  "source_attempt": "attempt_0006",
+  "superseded_status": "COMPLETED_WITH_DIVERGENCE",
+  "warnings": []
+}
