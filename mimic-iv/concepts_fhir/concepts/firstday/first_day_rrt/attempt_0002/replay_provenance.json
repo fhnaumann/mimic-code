@@ -1,0 +1,26 @@
+{
+  "authored_by": "mimic_utils replay",
+  "carried": [
+    {
+      "name": "concept.sql",
+      "sha256": "514193f91b63d87f13117977714ae5944d4a51ce5ec70308bc846d1e824570ee"
+    },
+    {
+      "name": "ViewDefinition.first_day_rrt_encounter.json",
+      "sha256": "9720c9deb7f6b7e9658426299818d9f52e5a0f7911c255031229b1e31bbee8f1"
+    },
+    {
+      "name": "ViewDefinition.first_day_rrt_patient.json",
+      "sha256": "6a57050f547c277091810b789ad56d8b6235dc233eee7497e9ee35d8256e373e"
+    }
+  ],
+  "concept": "first_day_rrt",
+  "created_at": "2026-08-25T01:31:27+00:00",
+  "fixes_measured": [],
+  "kind": "data_rebuild",
+  "note": "The SQL and ViewDefinitions in this attempt were NOT authored for it. They are the previous attempt's, carried forward byte-identical so that the only thing that changed between the superseded verdict and this one is the served data. No implementer ran, and none should: re-authoring would make this a comparison of two queries instead of a measurement of the upstream fix.",
+  "reason": "The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+  "source_attempt": "attempt_0001",
+  "superseded_status": "COMPLETED",
+  "warnings": []
+}
