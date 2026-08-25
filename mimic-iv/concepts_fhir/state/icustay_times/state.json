@@ -1,14 +1,14 @@
 {
-  "attempt": 3,
+  "attempt": 4,
   "category": "demographics",
-  "completed_at": "2026-08-17T07:20:36.750517+00:00",
+  "completed_at": "2026-08-25T00:33:55.963572+00:00",
   "concept_name": "icustay_times",
   "dependencies": [],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "Judge accepted the contested divergence: mimic-fhir/sql/fhir_observation_chartevents.sql:9 casts source charttime through TIMESTAMPTZ and line 67 writes the transformed value to Observation.effectiveDateTime. Thus MIN(transform(charttime)) differs from transform(MIN(charttime)) across spring-forward gaps, accounting for seven intime_hr aggregate conflicts; the one outtime_hr conflict is directly replay-attributed to the same cast. All 8/73,181 conflicts (0.011%) are accounted for, and the original 02:mm wall times are unrecoverable from FHIR because effectiveDateTime carries only the normalized value and issued carries storetime. Resource ids are opaque and cannot recover them. The loss changes no row inclusion, stay_id key, grouping, or temporal carry-forward, and is accepted under the contract's proven-DST upstream-defect exemption.",
-  "engineering_counter": 4,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 6,
   "error_message": null,
-  "hpc_counter": 3,
+  "hpc_counter": 4,
   "reopen_history": [
     {
       "at": "2026-08-13T04:05:14.700771+00:00",
@@ -38,10 +38,25 @@
       "superseded_error": null,
       "superseded_justification": "Equivalence judge accepted the contested 8-row divergence (7 intime_hr and 1 outtime_hr; 8/73,181 = 0.011%) as intrinsic upstream MIMIC-on-FHIR transformation loss. mimic-fhir/sql/fhir_observation_chartevents.sql:9 casts source chartevents.charttime through TIMESTAMPTZ and line 67 writes Observation.effectiveDateTime, so spring-forward-gap 02:mm values become 03:mm; MIN after this many-to-one transformation can select a genuine 03:00/03:02 row, and the original wall time is unrecoverable from FHIR. Observation.id is opaque and UUID reconstruction is forbidden. Schema and row identity matched, 73,173/73,181 rows were identical, and the localized endpoint loss is ancillary: it changes no row inclusion, key, grouping, carry-forward, or clinical branch.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-25T00:22:04.537647+00:00",
+      "baseline": {
+        "attempt": 3,
+        "engineering": 4,
+        "hpc": 3,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Judge accepted the contested divergence: mimic-fhir/sql/fhir_observation_chartevents.sql:9 casts source charttime through TIMESTAMPTZ and line 67 writes the transformed value to Observation.effectiveDateTime. Thus MIN(transform(charttime)) differs from transform(MIN(charttime)) across spring-forward gaps, accounting for seven intime_hr aggregate conflicts; the one outtime_hr conflict is directly replay-attributed to the same cast. All 8/73,181 conflicts (0.011%) are accounted for, and the original 02:mm wall times are unrecoverable from FHIR because effectiveDateTime carries only the normalized value and issued carries storetime. Resource ids are opaque and cannot recover them. The loss changes no row inclusion, stay_id key, grouping, or temporal carry-forward, and is accepted under the contract's proven-DST upstream-defect exemption.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
   "semantic_counter": 2,
-  "started_at": "2026-08-17T06:54:42.025484+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-17T07:20:36.907278+00:00"
+  "started_at": "2026-08-25T00:22:04.539288+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-25T00:33:55.963992+00:00"
 }
