@@ -1,19 +1,35 @@
 {
-  "attempt": 1,
+  "attempt": 2,
   "category": "demographics",
-  "completed_at": "2026-08-21T00:47:39.810642+00:00",
+  "completed_at": "2026-08-25T01:47:53.504688+00:00",
   "concept_name": "icustay_hourly",
   "dependencies": [
     "icustay_times"
   ],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "All 68 classified target divergences are exhaustively explained as second-order propagation of the accepted icustay_times DST defect at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67; the source wall time is absent from all semantic FHIR fields, every defensible legal mapping was applied, and zero target-local residual remains.",
-  "engineering_counter": 1,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 3,
   "error_message": null,
-  "hpc_counter": 1,
-  "reopen_history": [],
+  "hpc_counter": 2,
+  "reopen_history": [
+    {
+      "at": "2026-08-25T01:38:42.011119+00:00",
+      "baseline": {
+        "attempt": 1,
+        "engineering": 1,
+        "hpc": 1,
+        "semantic": 1
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "All 68 classified target divergences are exhaustively explained as second-order propagation of the accepted icustay_times DST defect at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67; the source wall time is absent from all semantic FHIR fields, every defensible legal mapping was applied, and zero target-local residual remains.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    }
+  ],
   "semantic_counter": 1,
-  "started_at": "2026-08-20T23:54:33.769702+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-21T00:47:39.813079+00:00"
+  "started_at": "2026-08-25T01:38:42.012830+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-25T01:47:53.504880+00:00"
 }
