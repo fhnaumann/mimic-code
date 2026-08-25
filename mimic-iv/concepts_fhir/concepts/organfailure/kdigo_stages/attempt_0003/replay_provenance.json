@@ -1,0 +1,36 @@
+{
+  "authored_by": "mimic_utils replay",
+  "carried": [
+    {
+      "name": "concept.sql",
+      "sha256": "2db3f62f01cacfa89ff9dc830e87f1d298f1256ce5827e047d45511142a2646a"
+    },
+    {
+      "name": "ViewDefinition.kdigo_stages_hospital_encounter.json",
+      "sha256": "779f74fcf226accd3e32e489c9178522b8b7c0a2a9971d56b8b0f58529bda0af"
+    },
+    {
+      "name": "ViewDefinition.kdigo_stages_icu_encounter.json",
+      "sha256": "526a070cd769668c6df076cb750f543568e93c295e0295c0b2334e9e395a5c77"
+    },
+    {
+      "name": "ViewDefinition.kdigo_stages_patient.json",
+      "sha256": "243127f06c6b5b4846ced320a17eb15710e1f0ff03100b6e2a3dd28c183ff25f"
+    }
+  ],
+  "concept": "kdigo_stages",
+  "created_at": "2026-08-25T01:52:47+00:00",
+  "fixes_measured": [
+    {
+      "fixed_by": "mimic-fhir ade10fb (upstream #124), 2026-08-21",
+      "id": "dst-timestamptz-wall-clock",
+      "summary": "The ETL ran under a DST-observing zone, so casting naive MIMIC wall times through TIMESTAMPTZ normalised spring-forward gap times forward an hour irreversibly. The FHIR tables are now generated under UTC, which has no DST in any year, so the cast is an identity on the wall clock."
+    }
+  ],
+  "kind": "data_rebuild",
+  "note": "The SQL and ViewDefinitions in this attempt were NOT authored for it. They are the previous attempt's, carried forward byte-identical so that the only thing that changed between the superseded verdict and this one is the served data. No implementer ran, and none should: re-authoring would make this a comparison of two queries instead of a measurement of the upstream fix.",
+  "reason": "The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+  "source_attempt": "attempt_0002",
+  "superseded_status": "COMPLETED_WITH_DIVERGENCE",
+  "warnings": []
+}
