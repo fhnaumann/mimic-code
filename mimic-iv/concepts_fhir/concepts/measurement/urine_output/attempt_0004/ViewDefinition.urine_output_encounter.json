@@ -1,0 +1,20 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/urine_output-0003-urine_output_encounter",
+  "name": "urine_output_encounter",
+  "resource": "Encounter",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "icu_encounter_key" }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu')",
+      "column": [
+        { "path": "value", "name": "stay_id_str" }
+      ]
+    }
+  ]
+}

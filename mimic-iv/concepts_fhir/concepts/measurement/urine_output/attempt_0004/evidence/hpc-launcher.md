@@ -1,0 +1,8 @@
+- Concept: `urine_output`
+- Attempt: `attempt_0004`
+- Remote attempt: `/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/urine_output/attempt_0004`
+- Job: `30485854`, submitted at `2026-08-25T01:05:50+00:00`, walltime `2:00:00`.
+- Smoke test: passed; warehouse, oracle, staged manifest, and imports (`duckdb`, `pathling`, `pyspark`, `mimic_utils.full_runner`) all resolved from the per-attempt staging.
+- Staging: `submit.slurm`, staged `src/mimic_utils/`, `oracle_manifest.full.json`, and the attempt; result artifacts were excluded from upload.
+- Submission: `sbatch` succeeded and `hpc_job.json` was written once. Poll with `uv run mimic_utils hpc-poll urine_output`.
+- The carried SQL and ViewDefinitions were not edited; pre-existing replay and demo artifacts were untouched. No unrelated concepts were modified.
