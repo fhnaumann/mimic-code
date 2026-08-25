@@ -1,16 +1,16 @@
 {
-  "attempt": 2,
+  "attempt": 3,
   "category": "firstday",
-  "completed_at": "2026-08-20T06:03:21.514111+00:00",
+  "completed_at": "2026-08-25T01:32:49.979388+00:00",
   "concept_name": "first_day_bg",
   "dependencies": [
     "bg"
   ],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "Accepted wholly inherited upstream DST divergence: mimic-fhir/sql/fhir_observation_labevents.sql:15,121 casts labevents.charttime through TIMESTAMPTZ and writes the normalized value to Observation.effectiveDateTime; bg exposes that value as bg.charttime. Six labevents for specimen 44663261 moved from 2151-03-14 02:02 to 03:02, so stay 33143532's inclusive 02:30 upper bound excludes the served dependency row and changes one output row's aggregates. mimic-fhir/sql/fhir_specimen_lab.sql:9,18,58 repeats the normalized time, while Observation.issued is storetime at fhir_observation_labevents.sql:16,122; the original wall time is unrecoverable by any FHIR query without forbidden resource-ID inference. All nine field incidences are explained with no residual; 73,180/73,181 rows are identical. The contract's DST-defect exemption applies, and the divergence is inherited from judge-accepted bg.",
-  "engineering_counter": 2,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 4,
   "error_message": null,
-  "hpc_counter": 2,
+  "hpc_counter": 3,
   "reopen_history": [
     {
       "at": "2026-08-20T05:37:38.767371+00:00",
@@ -26,10 +26,25 @@
       "superseded_error": null,
       "superseded_justification": "Judge accepted COMPLETED_WITH_DIVERGENCE: the sole 1/73,181 output-row divergence is wholly inherited from bg. Six labevents for specimen 44663261 were irreversibly normalized from 2151-03-14 02:02 to 03:02 by mimic-fhir/sql/fhir_observation_labevents.sql:15,121, with the same loss at mimic-fhir/sql/fhir_specimen_lab.sql:18,58; Observation.issued from fhir_observation_labevents.sql:16,122 is storetime and does not preserve charttime. For stay 33143532, the canonical 02:30 upper bound includes the oracle row but excludes the served 03:02 row, reproducing all five conflicts and four calculated NULLs. No FHIR field or opaque resource id can recover the original wall time; expanding the window or subtracting an hour would corrupt genuine rows. The proven upstream DST loss and its second-order aggregate/window effects are exempt from essential-loss blocking. 73,180/73,181 rows identical; 1/73,181 affected; dependency bg is judge-accepted COMPLETED_WITH_DIVERGENCE.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-25T01:24:04.321379+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 2,
+        "hpc": 2,
+        "semantic": 2
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Accepted wholly inherited upstream DST divergence: mimic-fhir/sql/fhir_observation_labevents.sql:15,121 casts labevents.charttime through TIMESTAMPTZ and writes the normalized value to Observation.effectiveDateTime; bg exposes that value as bg.charttime. Six labevents for specimen 44663261 moved from 2151-03-14 02:02 to 03:02, so stay 33143532's inclusive 02:30 upper bound excludes the served dependency row and changes one output row's aggregates. mimic-fhir/sql/fhir_specimen_lab.sql:9,18,58 repeats the normalized time, while Observation.issued is storetime at fhir_observation_labevents.sql:16,122; the original wall time is unrecoverable by any FHIR query without forbidden resource-ID inference. All nine field incidences are explained with no residual; 73,180/73,181 rows are identical. The contract's DST-defect exemption applies, and the divergence is inherited from judge-accepted bg.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
   "semantic_counter": 2,
-  "started_at": "2026-08-20T05:37:38.769754+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-20T06:03:21.514576+00:00"
+  "started_at": "2026-08-25T01:24:04.323329+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-25T01:32:49.980089+00:00"
 }
