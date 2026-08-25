@@ -1,0 +1,7 @@
+## Chartevents Observation.issued is not a wall-clock identity for oxygen ranking
+- Affected: `Observation.issued` for the chartevents inputs used by `oxygen_delivery`
+- Verified: embedded Pathling 9.6.0 over `/Users/nau025/warehouses/mimic-iv-demo/delta` with `MIMIC_SPARK_TIMEZONE=UTC`; for itemids `223834`, `227582`, `227287`, and `226732`, `issued` was populated on 4,393/4,393 resources, but duplicate-aware `(subject_id, stay_id, charttime, itemid)` source/FHIR `storetime` lists agreed on 2,639/4,262 groups and differed on 1,623. Using FHIR `issued` for the dependency's ranking still reproduced the source oxygen pivot 1,154/1,154 demo groups exactly. This supersedes the provisional exact wall-time claim in `MIMIC_NOTES.d/oxygen_delivery.md` for direct timestamp equality; `issued` remains the FHIR ordering input, not a value to recover from an opaque resource id.
+
+## Rebuilt numeric chartevents preserve distinct ventilator labels in component.valueString
+- Affected: `Observation.component.valueString` and `Observation.component.code.coding` for ventilator setting itemids `223848`, `223849`, and `229314`
+- Verified: `ventilation` attempt_0001 authoritative embedded Pathling probe found component text on 906/1,292, 1,011/1,048, and 402/402 target resources; all component codings matched the parent item code and the chartevents coding system, and source/FHIR text pivots agreed 2,742/2,742 exactly. This confirms the rebuilt warehouse's `e7c326b` component branch for ventilator settings.

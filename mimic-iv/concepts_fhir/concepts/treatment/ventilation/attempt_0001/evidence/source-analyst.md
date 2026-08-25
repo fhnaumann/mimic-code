@@ -1,0 +1,3 @@
+Evidence block from source-analyst:
+
+Concept `ventilation`; read `mimic-iv/concepts/treatment/ventilation.sql`, DAG metadata, `MIMIC_NOTES.md`, dependency SQL/carryover files, and relevant provisional fragments. The analysis found `mimiciv_derived.oxygen_delivery` and `mimiciv_derived.ventilator_setting`, their exact consumed columns, LEFT joins on `(stay_id, charttime)`, status filters and literal string sets, temporal windows, episode grouping, final columns/types, semantic grain, and the relevant chartevents coding system. DAG validation passed. Findings were written to `mimic-iv/concepts_fhir/carryover/ventilation/source-analyst.md` and recorded in `mimic-iv/concepts_fhir/carryover/ventilation/carryover.json`; no commit was made.

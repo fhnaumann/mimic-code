@@ -1,0 +1,20 @@
+{
+  "attempt": 1,
+  "category": "treatment",
+  "completed_at": "2026-08-25T08:32:39.090399+00:00",
+  "concept_name": "ventilation",
+  "dependencies": [
+    "oxygen_delivery",
+    "ventilator_setting"
+  ],
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 2,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 0,
+  "started_at": "2026-08-25T07:41:20.664525+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-25T08:32:39.090660+00:00"
+}
