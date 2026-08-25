@@ -1,0 +1,552 @@
+{
+  "concept": "urine_output_rate",
+  "convergence": {
+    "attempts_total": 2,
+    "divergence_decided_by": null,
+    "engineering_counter": 3,
+    "full_validation_rounds": 2,
+    "hpc_counter": 2,
+    "human_manual_override": false,
+    "judge_invocations": 0,
+    "semantic_counter": 1,
+    "semantic_rework_cycles": 1,
+    "semantic_rework_method": "max(0, semantic_counter - terminal semantic transition)",
+    "semantic_rework_source": "ConversionState.semantic_counter plus terminal status; semantic fixes use fail --counter semantic",
+    "semantic_terminal_transition_subtracted": 0,
+    "submitted_jobs": 2,
+    "terminal_outcome": "COMPLETED"
+  },
+  "final_comparator": {
+    "artifact_present": true,
+    "class_counts": {
+      "differing": 0,
+      "differing_conflict": 0,
+      "differing_null_only": 0,
+      "identical": 3321747,
+      "identical_representable": 3321747,
+      "only_candidate": 0,
+      "only_oracle": 0
+    },
+    "classification": "keyed",
+    "fidelity": {
+      "identical_fraction": 1.0,
+      "identical_rows": 3321747,
+      "oracle_rows": 3321747,
+      "representable_identical_rows": 3321747,
+      "row_count": {
+        "candidate": 3321747,
+        "delta": 0,
+        "gated": false,
+        "match": true,
+        "oracle": 3321747
+      },
+      "schema_match": true
+    },
+    "match": true,
+    "tier": "none",
+    "verdict": "match"
+  },
+  "format_version": "2.0",
+  "hpc_jobs": [
+    {
+      "accounting_present": true,
+      "actual_poll_interval_seconds": 0,
+      "attempt": 3,
+      "full_result_present": true,
+      "job_id_present": true,
+      "poll_interval_count": 0,
+      "poll_interval_discoverable": false,
+      "runtime_seconds": 187.0,
+      "runtime_source": "slurm_sacct_elapsed"
+    },
+    {
+      "accounting_present": true,
+      "actual_poll_interval_seconds": 0,
+      "attempt": 4,
+      "full_result_present": true,
+      "job_id_present": true,
+      "poll_interval_count": 0,
+      "poll_interval_discoverable": false,
+      "runtime_seconds": 186.0,
+      "runtime_source": "slurm_sacct_elapsed"
+    }
+  ],
+  "human_interventions": null,
+  "human_interventions_reason": "Stored OpenCode data cannot reliably distinguish human messages from plugin/orchestrator continuation messages.",
+  "per_attempt": {
+    "attempts": [
+      {
+        "artifacts": [
+          "ViewDefinition.urine_output_rate_icu_encounter.json",
+          "ViewDefinition.urine_output_rate_observation.json",
+          "candidate.demo.parquet",
+          "comparison.full.json",
+          "concept.sql",
+          "evidence",
+          "hpc_accounting.json",
+          "hpc_job.json",
+          "replay_provenance.json",
+          "run_meta.full.json",
+          "shape.demo.json",
+          "submit.slurm"
+        ],
+        "attempt": 3,
+        "convergence": {
+          "demo": {
+            "candidate_row_count": 7317,
+            "executed": true,
+            "verdict": "shape_ok"
+          },
+          "full": {
+            "artifact_present": true,
+            "class_counts": {
+              "differing": 1,
+              "differing_conflict": 1,
+              "differing_null_only": 0,
+              "identical": 3321746,
+              "identical_representable": 3321746,
+              "only_candidate": 0,
+              "only_oracle": 0
+            },
+            "classification": "keyed",
+            "fidelity": {
+              "identical_fraction": 1.0,
+              "identical_rows": 3321746,
+              "oracle_rows": 3321747,
+              "representable_identical_rows": 3321746,
+              "row_count": {
+                "candidate": 3321747,
+                "delta": 0,
+                "gated": false,
+                "match": true,
+                "oracle": 3321747
+              },
+              "schema_match": true
+            },
+            "match": false,
+            "tier": "contested",
+            "verdict": "review"
+          },
+          "hpc_job_submitted": true,
+          "judge_invoked": false
+        },
+        "usage_attribution": "unavailable"
+      },
+      {
+        "artifacts": [
+          "ViewDefinition.urine_output_rate_icu_encounter.json",
+          "ViewDefinition.urine_output_rate_observation.json",
+          "candidate.demo.parquet",
+          "comparison.full.json",
+          "concept.sql",
+          "evidence",
+          "hpc_accounting.json",
+          "hpc_job.json",
+          "run_meta.full.json",
+          "shape.demo.json",
+          "submit.slurm"
+        ],
+        "attempt": 4,
+        "convergence": {
+          "demo": {
+            "candidate_row_count": 7317,
+            "executed": true,
+            "verdict": "shape_ok"
+          },
+          "full": {
+            "artifact_present": true,
+            "class_counts": {
+              "differing": 0,
+              "differing_conflict": 0,
+              "differing_null_only": 0,
+              "identical": 3321747,
+              "identical_representable": 3321747,
+              "only_candidate": 0,
+              "only_oracle": 0
+            },
+            "classification": "keyed",
+            "fidelity": {
+              "identical_fraction": 1.0,
+              "identical_rows": 3321747,
+              "oracle_rows": 3321747,
+              "representable_identical_rows": 3321747,
+              "row_count": {
+                "candidate": 3321747,
+                "delta": 0,
+                "gated": false,
+                "match": true,
+                "oracle": 3321747
+              },
+              "schema_match": true
+            },
+            "match": true,
+            "tier": "none",
+            "verdict": "match"
+          },
+          "hpc_job_submitted": true,
+          "judge_invoked": false
+        },
+        "usage_attribution": "unavailable"
+      }
+    ],
+    "attempts_total": 2,
+    "usage_attribution": "unavailable"
+  },
+  "per_stage": {
+    "build": {
+      "completed_assistant_messages": 34,
+      "duration_seconds": 1654.03,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 2326528,
+        "cache_write": 0,
+        "input": 259276,
+        "output": 5485,
+        "reasoning": 1186,
+        "total": 2592475
+      }
+    },
+    "concept-implementer": {
+      "completed_assistant_messages": 15,
+      "duration_seconds": 246.695,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 1034240,
+        "cache_write": 0,
+        "input": 116169,
+        "output": 7187,
+        "reasoning": 4411,
+        "total": 1162007
+      }
+    },
+    "demo-runner": {
+      "completed_assistant_messages": 10,
+      "duration_seconds": 114.608,
+      "session_count": 2,
+      "tokens": {
+        "cache_read": 200192,
+        "cache_write": 0,
+        "input": 61727,
+        "output": 2631,
+        "reasoning": 644,
+        "total": 265194
+      }
+    },
+    "hpc-launcher": {
+      "completed_assistant_messages": 6,
+      "duration_seconds": 68.724,
+      "session_count": 2,
+      "tokens": {
+        "cache_read": 82688,
+        "cache_write": 0,
+        "input": 20666,
+        "output": 1317,
+        "reasoning": 178,
+        "total": 104849
+      }
+    },
+    "hpc-poller": {
+      "completed_assistant_messages": 6,
+      "duration_seconds": 663.128,
+      "session_count": 2,
+      "tokens": {
+        "cache_read": 33536,
+        "cache_write": 0,
+        "input": 74932,
+        "output": 2116,
+        "reasoning": 213,
+        "total": 110797
+      }
+    },
+    "mismatch-diagnostician": {
+      "completed_assistant_messages": 15,
+      "duration_seconds": 353.462,
+      "session_count": 2,
+      "tokens": {
+        "cache_read": 1691648,
+        "cache_write": 0,
+        "input": 199559,
+        "output": 5460,
+        "reasoning": 10412,
+        "total": 1907079
+      }
+    }
+  },
+  "provenance": {
+    "agent_model_list": [
+      {
+        "agent": "build",
+        "model": "gpt-5.6-luna",
+        "provider": "openai",
+        "variant": "default"
+      },
+      {
+        "agent": "concept-implementer",
+        "model": "gpt-5.6-luna",
+        "provider": "openai",
+        "variant": "xhigh"
+      },
+      {
+        "agent": "demo-runner",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider": "openrouter",
+        "variant": "default"
+      },
+      {
+        "agent": "hpc-launcher",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider": "openrouter",
+        "variant": "default"
+      },
+      {
+        "agent": "hpc-poller",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider": "openrouter",
+        "variant": "default"
+      },
+      {
+        "agent": "mismatch-diagnostician",
+        "model": "gpt-5.6-sol",
+        "provider": "openai",
+        "variant": "xhigh"
+      }
+    ],
+    "agents": [
+      "build",
+      "concept-implementer",
+      "demo-runner",
+      "hpc-launcher",
+      "hpc-poller",
+      "mismatch-diagnostician"
+    ],
+    "config_hashes": {
+      ".opencode/agents/concept-port-orchestrator.md": "e4be3da671082221ff0815fdc41c73da61033f5c9cfb188f84184abfd7a78e45",
+      ".opencode/skills/concept-orchestrator-loop/SKILL.md": "44899c7f5bb1e6137acd7ecdac3d9d60d2a99ad6af608d4be719a193a99e265b",
+      "mimic-iv/concepts_fhir/LOOP_CONTRACT.md": "78d17c69a502494c78399e859bda7862b241b0dac21c16f6bad6a37cddb3a7ef",
+      "opencode.json": "730b7b8153c502070b861ac80e1edb032fcad48eff3a4ef24cffb24fa259548b"
+    },
+    "dag_sha256": "2a94ace1b31094d311b32ae3256eeba0ed6ff000fb57fe30b9917de89db5d7ff",
+    "finalized_before_terminal_response": true,
+    "opencode_source": {
+      "filename": "opencode.db",
+      "kind": "sqlite",
+      "tables": [
+        "message",
+        "part",
+        "project",
+        "session"
+      ]
+    },
+    "opencode_versions": [
+      "1.18.19"
+    ],
+    "root_session_count": 1,
+    "semantic_rework_method": "max(0, semantic_counter - terminal semantic transition)",
+    "semantic_rework_source": "ConversionState.semantic_counter plus terminal status; semantic fixes use fail --counter semantic",
+    "source_sql_path": "mimic-iv/concepts/measurement/urine_output_rate.sql",
+    "tracker_schema_version": "1"
+  },
+  "run": 2,
+  "run_scope": {
+    "attempt_dirs_excluded": 2,
+    "attempt_window": {
+      "after": 2,
+      "through": 4
+    },
+    "attempts_all_runs": 4,
+    "attempts_this_run": 2,
+    "cumulative_counters": {
+      "engineering": 5,
+      "hpc": 4,
+      "semantic": 3
+    },
+    "reopen_count": 1,
+    "reopen_history": [
+      {
+        "at": "2026-08-25T01:45:23.968822+00:00",
+        "baseline": {
+          "attempt": 2,
+          "engineering": 2,
+          "hpc": 2,
+          "semantic": 2
+        },
+        "by": "human",
+        "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+        "superseded_decided_by": "judge",
+        "superseded_error": null,
+        "superseded_justification": "Judge accept: the contested divergence is fully attributable to accepted upstream DST-normalization defects and inherited second-order effects. mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65 writes Observation.effectiveDateTime after TIMESTAMPTZ normalization; fhir_observation_chartevents.sql:9,67 and fhir_encounter_icu.sql:31-32,97-100 similarly normalize source times. The original wall times are not serialized elsewhere and cannot be recovered by any valid FHIR query; resource ids are opaque. All 393 only_oracle and 157 only_candidate rows close under key replay with zero residual, and 232 collision conflicts plus 1,185 downstream conflicts propagate through the corrected concept's LAG/windows/rates and inherited weight interval timing. The shifted set is 393/3,321,747 (0.0118%), consistent with DST-gap rarity. LOOP_CONTRACT.md:256-315 expressly accepts proven DST normalization and second-order effects, even when they affect keys, inclusion, grouping, or clinical rates; no candidate-specific residual remains.",
+        "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+      }
+    ],
+    "run": 2
+  },
+  "runtime": {
+    "actual_elapsed_secondary": true,
+    "actual_elapsed_seconds": 8344.558013,
+    "actual_elapsed_timestamp_source": "state.completed_at",
+    "assistant_messages": {
+      "assistant_messages": 89,
+      "completed_assistant_messages": 86,
+      "incomplete_assistant_messages": 3,
+      "invalid_assistant_intervals": 0
+    },
+    "busy_union_seconds": 1668.381,
+    "hpc_accounted_seconds": 373.0,
+    "hpc_jobs_submitted": 2,
+    "hpc_jobs_with_run_meta_fallback": 0,
+    "hpc_jobs_with_slurm_accounting": 2,
+    "hpc_jobs_without_discoverable_poll_interval": 2,
+    "hpc_jobs_without_runtime": 0,
+    "hpc_poll_intervals_discovered": 0,
+    "hpc_poll_intervals_unmatched": 2,
+    "hpc_poll_overlap_seconds": 0.0,
+    "incomplete_messages_excluded": 3,
+    "invalid_message_intervals_excluded": 0,
+    "method": "union completed assistant-message intervals across all included sessions; subtract overlap from discovered hpc-poll tool intervals; add measured HPC runtime from Slurm accounting, falling back to run_meta execute+compare timings when accounting is unavailable",
+    "seconds": 2041.381,
+    "time_updated_fallback_used": false
+  },
+  "schema_version": "conversion-metrics.v2",
+  "session_resumptions": 0,
+  "session_scope": {
+    "included_session_count": 10,
+    "root_session_count": 1,
+    "session_resumptions": 0
+  },
+  "terminal_outcome": "COMPLETED",
+  "terminal_status": "COMPLETED",
+  "tokens": {
+    "by_agent": {
+      "build": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 2326528,
+          "cache_write": 0,
+          "input": 259276,
+          "output": 5485,
+          "reasoning": 1186,
+          "total": 2592475
+        }
+      },
+      "concept-implementer": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 1034240,
+          "cache_write": 0,
+          "input": 116169,
+          "output": 7187,
+          "reasoning": 4411,
+          "total": 1162007
+        }
+      },
+      "demo-runner": {
+        "session_count": 2,
+        "tokens": {
+          "cache_read": 200192,
+          "cache_write": 0,
+          "input": 61727,
+          "output": 2631,
+          "reasoning": 644,
+          "total": 265194
+        }
+      },
+      "hpc-launcher": {
+        "session_count": 2,
+        "tokens": {
+          "cache_read": 82688,
+          "cache_write": 0,
+          "input": 20666,
+          "output": 1317,
+          "reasoning": 178,
+          "total": 104849
+        }
+      },
+      "hpc-poller": {
+        "session_count": 2,
+        "tokens": {
+          "cache_read": 33536,
+          "cache_write": 0,
+          "input": 74932,
+          "output": 2116,
+          "reasoning": 213,
+          "total": 110797
+        }
+      },
+      "mismatch-diagnostician": {
+        "session_count": 2,
+        "tokens": {
+          "cache_read": 1691648,
+          "cache_write": 0,
+          "input": 199559,
+          "output": 5460,
+          "reasoning": 10412,
+          "total": 1907079
+        }
+      }
+    },
+    "by_model": {
+      "openai/gpt-5.6-luna/default": {
+        "model": "gpt-5.6-luna",
+        "provider": "openai",
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 2326528,
+          "cache_write": 0,
+          "input": 259276,
+          "output": 5485,
+          "reasoning": 1186,
+          "total": 2592475
+        },
+        "variant": "default"
+      },
+      "openai/gpt-5.6-luna/xhigh": {
+        "model": "gpt-5.6-luna",
+        "provider": "openai",
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 1034240,
+          "cache_write": 0,
+          "input": 116169,
+          "output": 7187,
+          "reasoning": 4411,
+          "total": 1162007
+        },
+        "variant": "xhigh"
+      },
+      "openai/gpt-5.6-sol/xhigh": {
+        "model": "gpt-5.6-sol",
+        "provider": "openai",
+        "session_count": 2,
+        "tokens": {
+          "cache_read": 1691648,
+          "cache_write": 0,
+          "input": 199559,
+          "output": 5460,
+          "reasoning": 10412,
+          "total": 1907079
+        },
+        "variant": "xhigh"
+      },
+      "openrouter/deepseek/deepseek-v4-flash-0731/default": {
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider": "openrouter",
+        "session_count": 6,
+        "tokens": {
+          "cache_read": 316416,
+          "cache_write": 0,
+          "input": 157325,
+          "output": 6064,
+          "reasoning": 1035,
+          "total": 480840
+        },
+        "variant": "default"
+      }
+    },
+    "cache_read": 5368832,
+    "cache_write": 0,
+    "input": 732329,
+    "output": 24196,
+    "reasoning": 17044,
+    "total": 6142401
+  }
+}
