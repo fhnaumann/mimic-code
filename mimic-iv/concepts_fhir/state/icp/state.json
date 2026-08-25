@@ -1,14 +1,14 @@
 {
-  "attempt": 4,
+  "attempt": 5,
   "category": "measurement",
-  "completed_at": "2026-08-18T01:33:23.085633+00:00",
+  "completed_at": "2026-08-25T00:24:39.254651+00:00",
   "concept_name": "icp",
   "dependencies": [],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "Judge-accepted attributed divergence: mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 casts chartevents.charttime through TIMESTAMPTZ before writing Observation.effectiveDateTime. The comparator exhaustively replayed that America/New_York DST-gap shift over all 4 differing_conflict rows and all 17 only_oracle/2 only_candidate key rows with zero residual; 15 occupied-key collisions and 2 repaired moves are the same 17 shifted events, and the 4 changed values follow the canonical grouped MAX. The affected fraction (17/173273 = 0.0098%; 4 conflicts = 0.0023%) is consistent with DST-gap rarity. The served wall time is unrecoverable and no Observation.id inversion is used; no divergent dependencies or essential source loss.",
-  "engineering_counter": 5,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 7,
   "error_message": null,
-  "hpc_counter": 4,
+  "hpc_counter": 5,
   "reopen_history": [
     {
       "at": "2026-08-13T03:01:30.119723+00:00",
@@ -38,10 +38,25 @@
       "superseded_error": null,
       "superseded_justification": "The chartevents ETL casts source charttime through TIMESTAMPTZ at fhir_observation_chartevents.sql:9 and writes the irreversibly normalized value to Observation.effectiveDateTime at line 67. All 17 shifted source rows are explained: two re-key to candidate rows and 15 collide at 03:00, causing four MAX conflicts. The original wall time is absent from admissible FHIR fields\u2014issued is storetime, and UUID inversion is forbidden\u2014so attempt 0003 is faithful to the served representation.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-25T00:03:44.037985+00:00",
+      "baseline": {
+        "attempt": 4,
+        "engineering": 5,
+        "hpc": 4,
+        "semantic": 3
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Judge-accepted attributed divergence: mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 casts chartevents.charttime through TIMESTAMPTZ before writing Observation.effectiveDateTime. The comparator exhaustively replayed that America/New_York DST-gap shift over all 4 differing_conflict rows and all 17 only_oracle/2 only_candidate key rows with zero residual; 15 occupied-key collisions and 2 repaired moves are the same 17 shifted events, and the 4 changed values follow the canonical grouped MAX. The affected fraction (17/173273 = 0.0098%; 4 conflicts = 0.0023%) is consistent with DST-gap rarity. The served wall time is unrecoverable and no Observation.id inversion is used; no divergent dependencies or essential source loss.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
   "semantic_counter": 3,
-  "started_at": "2026-08-18T01:13:11.983628+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-18T01:33:23.086157+00:00"
+  "started_at": "2026-08-25T00:03:44.039358+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-25T00:24:39.255150+00:00"
 }
