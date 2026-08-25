@@ -1,0 +1,51 @@
+{
+  "candidate": "/Users/nau025/Documents/mimic-code/mimic-iv/concepts_fhir/concepts/treatment/rrt/attempt_0005/candidate.demo.parquet/*.parquet",
+  "candidate_row_count": 5134,
+  "concept": "rrt",
+  "dataset": "demo",
+  "executed": true,
+  "format_version": "2.0",
+  "gated": [
+    "execution",
+    "column_names",
+    "column_types"
+  ],
+  "mode": "shape",
+  "not_gated": [
+    "row_count"
+  ],
+  "note": "Shape is correct. This earns permission to spend an HPC run; it is not evidence of correctness.",
+  "oracle_full_row_count": 2827715,
+  "schema": {
+    "actual_columns": [
+      "stay_id",
+      "charttime",
+      "dialysis_present",
+      "dialysis_active",
+      "dialysis_type",
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "expected_columns": [
+      "stay_id",
+      "charttime",
+      "dialysis_present",
+      "dialysis_active",
+      "dialysis_type"
+    ],
+    "extra_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "incompatible_types": [],
+    "match": true,
+    "missing_columns": [],
+    "missing_key_columns": [],
+    "required_key_columns": [
+      "icu_encounter_key",
+      "patient_key"
+    ],
+    "unexpected_columns": []
+  },
+  "verdict": "shape_ok"
+}

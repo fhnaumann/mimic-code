@@ -1,0 +1,415 @@
+{
+  "concept": "rrt",
+  "convergence": {
+    "attempts_total": 1,
+    "divergence_decided_by": null,
+    "engineering_counter": 2,
+    "full_validation_rounds": 1,
+    "hpc_counter": 1,
+    "human_manual_override": false,
+    "judge_invocations": 0,
+    "semantic_counter": 0,
+    "semantic_rework_cycles": 0,
+    "semantic_rework_method": "max(0, semantic_counter - terminal semantic transition)",
+    "semantic_rework_source": "ConversionState.semantic_counter plus terminal status; semantic fixes use fail --counter semantic",
+    "semantic_terminal_transition_subtracted": 0,
+    "submitted_jobs": 1,
+    "terminal_outcome": "COMPLETED"
+  },
+  "final_comparator": {
+    "artifact_present": true,
+    "class_counts": {
+      "only_candidate": 0,
+      "only_oracle": 0
+    },
+    "classification": "unavailable_no_key",
+    "fidelity": {
+      "identical_fraction": null,
+      "identical_rows": null,
+      "oracle_rows": 2827715,
+      "row_count": {
+        "candidate": 2827715,
+        "delta": 0,
+        "gated": false,
+        "match": true,
+        "oracle": 2827715
+      },
+      "schema_match": true
+    },
+    "match": true,
+    "tier": "none",
+    "verdict": "match"
+  },
+  "format_version": "2.0",
+  "hpc_jobs": [
+    {
+      "accounting_present": true,
+      "actual_poll_interval_seconds": 0.091,
+      "attempt": 5,
+      "full_result_present": true,
+      "job_id_present": true,
+      "poll_interval_count": 1,
+      "poll_interval_discoverable": true,
+      "runtime_seconds": 180.0,
+      "runtime_source": "slurm_sacct_elapsed"
+    }
+  ],
+  "human_interventions": null,
+  "human_interventions_reason": "Stored OpenCode data cannot reliably distinguish human messages from plugin/orchestrator continuation messages.",
+  "per_attempt": {
+    "attempts": [
+      {
+        "artifacts": [
+          "ViewDefinition.rrt_encounter.json",
+          "ViewDefinition.rrt_medication_administration.json",
+          "ViewDefinition.rrt_observation.json",
+          "ViewDefinition.rrt_procedure.json",
+          "candidate.demo.parquet",
+          "comparison.full.json",
+          "concept.sql",
+          "evidence",
+          "hpc_accounting.json",
+          "hpc_job.json",
+          "replay_provenance.json",
+          "run_meta.full.json",
+          "shape.demo.json",
+          "submit.slurm"
+        ],
+        "attempt": 5,
+        "convergence": {
+          "demo": {
+            "candidate_row_count": 5134,
+            "executed": true,
+            "verdict": "shape_ok"
+          },
+          "full": {
+            "artifact_present": true,
+            "class_counts": {
+              "only_candidate": 0,
+              "only_oracle": 0
+            },
+            "classification": "unavailable_no_key",
+            "fidelity": {
+              "identical_fraction": null,
+              "identical_rows": null,
+              "oracle_rows": 2827715,
+              "row_count": {
+                "candidate": 2827715,
+                "delta": 0,
+                "gated": false,
+                "match": true,
+                "oracle": 2827715
+              },
+              "schema_match": true
+            },
+            "match": true,
+            "tier": "none",
+            "verdict": "match"
+          },
+          "hpc_job_submitted": true,
+          "judge_invoked": false
+        },
+        "usage_attribution": "unavailable"
+      }
+    ],
+    "attempts_total": 1,
+    "usage_attribution": "unavailable"
+  },
+  "per_stage": {
+    "concept-port-orchestrator": {
+      "completed_assistant_messages": 30,
+      "duration_seconds": 1746.497,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 1816064,
+        "cache_write": 0,
+        "input": 223019,
+        "output": 3361,
+        "reasoning": 1714,
+        "total": 2044158
+      }
+    },
+    "demo-runner": {
+      "completed_assistant_messages": 3,
+      "duration_seconds": 86.209,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 17920,
+        "cache_write": 0,
+        "input": 35703,
+        "output": 1017,
+        "reasoning": 363,
+        "total": 55003
+      }
+    },
+    "hpc-launcher": {
+      "completed_assistant_messages": 6,
+      "duration_seconds": 148.216,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 64256,
+        "cache_write": 0,
+        "input": 68361,
+        "output": 1081,
+        "reasoning": 509,
+        "total": 134207
+      }
+    },
+    "hpc-poller": {
+      "completed_assistant_messages": 3,
+      "duration_seconds": 425.49,
+      "session_count": 1,
+      "tokens": {
+        "cache_read": 0,
+        "cache_write": 0,
+        "input": 52455,
+        "output": 1087,
+        "reasoning": 200,
+        "total": 53742
+      }
+    }
+  },
+  "provenance": {
+    "agent_model_list": [
+      {
+        "agent": "concept-port-orchestrator",
+        "model": "gpt-5.6-luna",
+        "provider": "openai",
+        "variant": "high"
+      },
+      {
+        "agent": "demo-runner",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider": "openrouter",
+        "variant": "default"
+      },
+      {
+        "agent": "hpc-launcher",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider": "openrouter",
+        "variant": "default"
+      },
+      {
+        "agent": "hpc-poller",
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider": "openrouter",
+        "variant": "default"
+      }
+    ],
+    "agents": [
+      "concept-port-orchestrator",
+      "demo-runner",
+      "hpc-launcher",
+      "hpc-poller"
+    ],
+    "config_hashes": {
+      ".opencode/agents/concept-port-orchestrator.md": "e4be3da671082221ff0815fdc41c73da61033f5c9cfb188f84184abfd7a78e45",
+      ".opencode/skills/concept-orchestrator-loop/SKILL.md": "44899c7f5bb1e6137acd7ecdac3d9d60d2a99ad6af608d4be719a193a99e265b",
+      "mimic-iv/concepts_fhir/LOOP_CONTRACT.md": "78d17c69a502494c78399e859bda7862b241b0dac21c16f6bad6a37cddb3a7ef",
+      "opencode.json": "80b57f9c6fb06940b6acf88b26a255a362a5cbd3728a85f1cd09966941873641"
+    },
+    "dag_sha256": "9b0b11a15f442b402701424a83229df0ee03a9225fc267d27faa4cc2d3089f8b",
+    "finalized_before_terminal_response": true,
+    "opencode_source": {
+      "filename": "opencode.db",
+      "kind": "sqlite",
+      "tables": [
+        "message",
+        "part",
+        "project",
+        "session"
+      ]
+    },
+    "opencode_versions": [
+      "1.18.19"
+    ],
+    "root_session_count": 1,
+    "semantic_rework_method": "max(0, semantic_counter - terminal semantic transition)",
+    "semantic_rework_source": "ConversionState.semantic_counter plus terminal status; semantic fixes use fail --counter semantic",
+    "source_sql_path": "mimic-iv/concepts/treatment/rrt.sql",
+    "tracker_schema_version": "1"
+  },
+  "run": 4,
+  "run_scope": {
+    "attempt_dirs_excluded": 4,
+    "attempt_window": {
+      "after": 4,
+      "through": 5
+    },
+    "attempts_all_runs": 5,
+    "attempts_this_run": 1,
+    "cumulative_counters": {
+      "engineering": 6,
+      "hpc": 5,
+      "semantic": 4
+    },
+    "reopen_count": 3,
+    "reopen_history": [
+      {
+        "at": "2026-08-14T02:23:02.480827+00:00",
+        "baseline": {
+          "attempt": 1,
+          "engineering": 1,
+          "hpc": 1,
+          "semantic": 1
+        },
+        "by": "human",
+        "reason": "The 2026-08-14 block applied the essential-loss test to the upstream DST TIMESTAMPTZ shift, which is a known mimic-fhir defect awaiting repair rather than information the IG cannot carry; the contract now exempts it and its second-order effects. Two further defects in the ruling: rrt is unkeyed with residual multisets of unequal size (821 vs 241), so residual pairing was structurally impossible and 'attributed: []' meant the comparator never looked, not that no shift was found; and the DST-explained and unexplained parts were not decomposed, so 372 unattributed only_oracle rows forced the whole concept to blocked. Those 372 must be diagnosed on their own merits -- the sampled ones are non-DST times (Oct, Jan, mid-afternoon March) and every one is dialysis_type='Peritoneal', which is a coverage-gap lead, not DST fallout.",
+        "superseded_decided_by": null,
+        "superseded_error": "Judge blocked: intrinsic essential loss. Full replay attributes 241 candidate-only and 449 oracle-only rows to irreversible TIMESTAMPTZ normalization at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67, fhir_medication_administration_icu.sql:8-9,61-69, and fhir_procedure_icu.sql:10-11,73-75; 372 oracle-only rows have no served FHIR resource. Timestamp shifts alter the RRT interval overlay and multiplicity at mimic-iv/concepts/treatment/rrt.sql:323-326, changing row inclusion and clinically meaningful timing/status outputs. Unkeyed residual cannot provide a representable fraction.",
+        "superseded_justification": null,
+        "superseded_status": "BLOCKED_REPRESENTATION"
+      },
+      {
+        "at": "2026-08-20T05:18:15.826277+00:00",
+        "baseline": {
+          "attempt": 3,
+          "engineering": 3,
+          "hpc": 3,
+          "semantic": 3
+        },
+        "by": "human",
+        "reason": "Downstream SQL-on-FHIR consumers join derived tables on getResourceKey() resource keys, which the port computes internally but drops at the outermost SELECT. The attempt adds the paired key column beside each MIMIC identifier column (subject_id->patient_key, hadm_id->encounter_key, stay_id->icu_encounter_key, specimen_id->specimen_key). Additive and shape-only: both comparison paths project manifest columns explicitly, so no compared value can change. The MIMIC integer columns are retained as the oracle join keys.",
+        "superseded_decided_by": "judge",
+        "superseded_error": null,
+        "superseded_justification": "Judge accepted: full-oracle replay with raw timestamps exactly reproduces 2,827,715 oracle rows, while replaying upstream TIMESTAMPTZ casts exactly reproduces the attempt-0003 candidate (2,827,507 rows; 449 only_oracle and 241 only_candidate; zero residual). The casts are cited at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 (608 shifted chartevent times) and mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69 (27 shifted input interval endpoints); the analogous procedure cast is mimic-fhir/sql/fhir_procedure_icu.sql:10-11,73-75. Through mimic-iv/concepts/treatment/rrt.sql:296-326, UNION DISTINCT and the inclusive interval overlay propagate the annual DST-gap shift. Original 02:xx wall times are absent from semantic FHIR paths and cannot be recovered by any query; opaque resource IDs were not used. The no-key unpaired residual is honestly characterized, the source-side replay closes it exactly, and the revised contract accepts this upstream defect and its second-order effects rather than blocking.",
+        "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+      },
+      {
+        "at": "2026-08-25T01:01:15.025897+00:00",
+        "baseline": {
+          "attempt": 4,
+          "engineering": 4,
+          "hpc": 4,
+          "semantic": 4
+        },
+        "by": "human",
+        "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+        "superseded_decided_by": "judge",
+        "superseded_error": null,
+        "superseded_justification": "Judge accepted: full-oracle raw-timestamp replay exactly reproduced all 2,827,715 oracle rows, while replaying the upstream New York TIMESTAMPTZ casts exactly reproduced attempt 0004's 2,827,507 candidate rows, including all 449 only_oracle and 241 only_candidate multiset entries, leaving zero residual. The casts are cited at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 and mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69, with analogous zero-hit procedure casting at mimic-fhir/sql/fhir_procedure_icu.sql:10-11,73-75. Through mimic-iv/concepts/treatment/rrt.sql:260,296-326, UNION DISTINCT and the inclusive interval overlay propagate the rare DST-gap shifts into second-order multiplicity and status differences. The original 02:xx wall times are absent from semantic FHIR paths and unrecoverable by any permitted query; opaque resource IDs were not used. The unkeyed source-side replay is weaker than keyed attribution but closes both complete multisets exactly, and the 0.01547% affected source fraction is consistent with the rare annual DST gap. Under LOOP_CONTRACT.md:256-315 this proven upstream defect is accepted, not essential-loss blocked.",
+        "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+      }
+    ],
+    "run": 4
+  },
+  "runtime": {
+    "actual_elapsed_secondary": true,
+    "actual_elapsed_seconds": 752.270538,
+    "actual_elapsed_timestamp_source": "state.completed_at",
+    "assistant_messages": {
+      "assistant_messages": 43,
+      "completed_assistant_messages": 42,
+      "incomplete_assistant_messages": 1,
+      "invalid_assistant_intervals": 0
+    },
+    "busy_union_seconds": 1746.497,
+    "hpc_accounted_seconds": 180.0,
+    "hpc_jobs_submitted": 1,
+    "hpc_jobs_with_run_meta_fallback": 0,
+    "hpc_jobs_with_slurm_accounting": 1,
+    "hpc_jobs_without_discoverable_poll_interval": 0,
+    "hpc_jobs_without_runtime": 0,
+    "hpc_poll_intervals_discovered": 1,
+    "hpc_poll_intervals_unmatched": 0,
+    "hpc_poll_overlap_seconds": 0.091,
+    "incomplete_messages_excluded": 1,
+    "invalid_message_intervals_excluded": 0,
+    "method": "union completed assistant-message intervals across all included sessions; subtract overlap from discovered hpc-poll tool intervals; add measured HPC runtime from Slurm accounting, falling back to run_meta execute+compare timings when accounting is unavailable",
+    "seconds": 1926.406,
+    "time_updated_fallback_used": false
+  },
+  "schema_version": "conversion-metrics.v2",
+  "session_resumptions": 0,
+  "session_scope": {
+    "included_session_count": 4,
+    "root_session_count": 1,
+    "session_resumptions": 0
+  },
+  "terminal_outcome": "COMPLETED",
+  "terminal_status": "COMPLETED",
+  "tokens": {
+    "by_agent": {
+      "concept-port-orchestrator": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 1816064,
+          "cache_write": 0,
+          "input": 223019,
+          "output": 3361,
+          "reasoning": 1714,
+          "total": 2044158
+        }
+      },
+      "demo-runner": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 17920,
+          "cache_write": 0,
+          "input": 35703,
+          "output": 1017,
+          "reasoning": 363,
+          "total": 55003
+        }
+      },
+      "hpc-launcher": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 64256,
+          "cache_write": 0,
+          "input": 68361,
+          "output": 1081,
+          "reasoning": 509,
+          "total": 134207
+        }
+      },
+      "hpc-poller": {
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 0,
+          "cache_write": 0,
+          "input": 52455,
+          "output": 1087,
+          "reasoning": 200,
+          "total": 53742
+        }
+      }
+    },
+    "by_model": {
+      "openai/gpt-5.6-luna/high": {
+        "model": "gpt-5.6-luna",
+        "provider": "openai",
+        "session_count": 1,
+        "tokens": {
+          "cache_read": 1816064,
+          "cache_write": 0,
+          "input": 223019,
+          "output": 3361,
+          "reasoning": 1714,
+          "total": 2044158
+        },
+        "variant": "high"
+      },
+      "openrouter/deepseek/deepseek-v4-flash-0731/default": {
+        "model": "deepseek/deepseek-v4-flash-0731",
+        "provider": "openrouter",
+        "session_count": 3,
+        "tokens": {
+          "cache_read": 82176,
+          "cache_write": 0,
+          "input": 156519,
+          "output": 3185,
+          "reasoning": 1072,
+          "total": 242952
+        },
+        "variant": "default"
+      }
+    },
+    "cache_read": 1898240,
+    "cache_write": 0,
+    "input": 379538,
+    "output": 6546,
+    "reasoning": 2786,
+    "total": 2287110
+  }
+}

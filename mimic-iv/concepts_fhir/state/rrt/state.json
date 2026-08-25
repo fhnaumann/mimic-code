@@ -1,14 +1,14 @@
 {
-  "attempt": 4,
+  "attempt": 5,
   "category": "treatment",
-  "completed_at": "2026-08-20T05:46:18.017296+00:00",
+  "completed_at": "2026-08-25T01:13:48.120538+00:00",
   "concept_name": "rrt",
   "dependencies": [],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "Judge accepted: full-oracle raw-timestamp replay exactly reproduced all 2,827,715 oracle rows, while replaying the upstream New York TIMESTAMPTZ casts exactly reproduced attempt 0004's 2,827,507 candidate rows, including all 449 only_oracle and 241 only_candidate multiset entries, leaving zero residual. The casts are cited at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 and mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69, with analogous zero-hit procedure casting at mimic-fhir/sql/fhir_procedure_icu.sql:10-11,73-75. Through mimic-iv/concepts/treatment/rrt.sql:260,296-326, UNION DISTINCT and the inclusive interval overlay propagate the rare DST-gap shifts into second-order multiplicity and status differences. The original 02:xx wall times are absent from semantic FHIR paths and unrecoverable by any permitted query; opaque resource IDs were not used. The unkeyed source-side replay is weaker than keyed attribution but closes both complete multisets exactly, and the 0.01547% affected source fraction is consistent with the rare annual DST gap. Under LOOP_CONTRACT.md:256-315 this proven upstream defect is accepted, not essential-loss blocked.",
-  "engineering_counter": 4,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 6,
   "error_message": null,
-  "hpc_counter": 4,
+  "hpc_counter": 5,
   "reopen_history": [
     {
       "at": "2026-08-14T02:23:02.480827+00:00",
@@ -39,10 +39,25 @@
       "superseded_error": null,
       "superseded_justification": "Judge accepted: full-oracle replay with raw timestamps exactly reproduces 2,827,715 oracle rows, while replaying upstream TIMESTAMPTZ casts exactly reproduces the attempt-0003 candidate (2,827,507 rows; 449 only_oracle and 241 only_candidate; zero residual). The casts are cited at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 (608 shifted chartevent times) and mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69 (27 shifted input interval endpoints); the analogous procedure cast is mimic-fhir/sql/fhir_procedure_icu.sql:10-11,73-75. Through mimic-iv/concepts/treatment/rrt.sql:296-326, UNION DISTINCT and the inclusive interval overlay propagate the annual DST-gap shift. Original 02:xx wall times are absent from semantic FHIR paths and cannot be recovered by any query; opaque resource IDs were not used. The no-key unpaired residual is honestly characterized, the source-side replay closes it exactly, and the revised contract accepts this upstream defect and its second-order effects rather than blocking.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-25T01:01:15.025897+00:00",
+      "baseline": {
+        "attempt": 4,
+        "engineering": 4,
+        "hpc": 4,
+        "semantic": 4
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Judge accepted: full-oracle raw-timestamp replay exactly reproduced all 2,827,715 oracle rows, while replaying the upstream New York TIMESTAMPTZ casts exactly reproduced attempt 0004's 2,827,507 candidate rows, including all 449 only_oracle and 241 only_candidate multiset entries, leaving zero residual. The casts are cited at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 and mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69, with analogous zero-hit procedure casting at mimic-fhir/sql/fhir_procedure_icu.sql:10-11,73-75. Through mimic-iv/concepts/treatment/rrt.sql:260,296-326, UNION DISTINCT and the inclusive interval overlay propagate the rare DST-gap shifts into second-order multiplicity and status differences. The original 02:xx wall times are absent from semantic FHIR paths and unrecoverable by any permitted query; opaque resource IDs were not used. The unkeyed source-side replay is weaker than keyed attribution but closes both complete multisets exactly, and the 0.01547% affected source fraction is consistent with the rare annual DST gap. Under LOOP_CONTRACT.md:256-315 this proven upstream defect is accepted, not essential-loss blocked.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
   "semantic_counter": 4,
-  "started_at": "2026-08-20T05:18:15.827927+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-20T05:46:18.017765+00:00"
+  "started_at": "2026-08-25T01:01:15.027808+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-25T01:13:48.121043+00:00"
 }
