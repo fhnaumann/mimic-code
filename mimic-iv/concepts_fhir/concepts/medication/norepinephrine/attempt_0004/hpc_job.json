@@ -1,0 +1,8 @@
+{
+  "concept": "norepinephrine",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "30484874",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/medication/norepinephrine/attempt_0004",
+  "submitted_at": "2026-08-25T00:29:54.692946+00:00",
+  "walltime": "2:00:00"
+}

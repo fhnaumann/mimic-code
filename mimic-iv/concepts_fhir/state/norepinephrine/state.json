@@ -1,14 +1,14 @@
 {
-  "attempt": 3,
+  "attempt": 4,
   "category": "medication",
-  "completed_at": "2026-08-20T05:09:25.940631+00:00",
+  "completed_at": "2026-08-25T03:49:40.470768+00:00",
   "concept_name": "norepinephrine",
   "dependencies": [],
   "divergence_decided_by": "judge",
-  "divergence_justification": "The full comparison is VOID DIFF because unrepresentable linkorderid is part of manifest key (linkorderid,starttime); its only-oracle/only-candidate findings do not measure fidelity. ICU MedicationAdministration.identifier is not written, and mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,38-100 carries neither linkorderid nor another semantic field from which it can be recovered; line 20's UUID is opaque and may not be inverted. Canonical norepinephrine.sql:4 only projects this administrative identifier, while all 336,000 source-event occurrences and their multiplicity are preserved, so the loss is ancillary. The remaining 58 timestamp rows are irreversibly normalized by upstream TIMESTAMPTZ casts at mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9 and Period writes at :61-66; candidate TIMESTAMP_NTZ faithfully preserves served values. All defensible mappings were applied, including corrected raw-rate mapping.",
-  "engineering_counter": 3,
+  "divergence_justification": "Accepted by the independent equivalence judge. The full diff is VOID DIFF because declared-unrepresentable linkorderid is part of manifest key (linkorderid,starttime); the symmetric 336,000 only-oracle and only-candidate counts are key-alignment artifacts, with 0 differing_conflict and 0 differing_null_only. The ICU ETL emits one MedicationAdministration per inputevent but does not serialize linkorderid or an identifier (mimic-fhir/sql/fhir_medication_administration_icu.sql:1,7-23,24-35,38-100); source orderid appears only inside the opaque UUID at line 20 and cannot be inverted. Canonical norepinephrine.sql:3-16 only projects linkorderid and uses no join, grouping, aggregation, or deduplication, so the missing administrative linkage is ancillary. A focused representable multiset comparison reproduced all 336,000 rows and multiplicities. The UTC rebuild cleared the prior 58 timing residuals, leaving no actual DST divergence.",
+  "engineering_counter": 4,
   "error_message": null,
-  "hpc_counter": 3,
+  "hpc_counter": 4,
   "reopen_history": [
     {
       "at": "2026-08-20T04:25:18.467897+00:00",
@@ -24,10 +24,25 @@
       "superseded_error": null,
       "superseded_justification": "The port faithfully reproduces all representable norepinephrine outputs. inputevents.linkorderid is irrecoverably absent because mimic-fhir/sql/fhir_medication_administration_icu.sql:8-23,38-100 neither selects nor writes it or MedicationAdministration.identifier; line 20 uses only orderid inside an opaque UUID, which cannot be inverted. Because linkorderid is declared unrepresentable and is in manifest key (linkorderid,starttime), the comparator's keyed diff is explicitly VOID DIFF and its only-candidate/only-oracle counts carry no fidelity information. The missing ancillary identifier is only projected by norepinephrine.sql:4 and does not affect inclusion or derivation. The small timing residual follows upstream TIMESTAMPTZ casts at mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-25T00:26:34.656793+00:00",
+      "baseline": {
+        "attempt": 3,
+        "engineering": 3,
+        "hpc": 3,
+        "semantic": 3
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "The full comparison is VOID DIFF because unrepresentable linkorderid is part of manifest key (linkorderid,starttime); its only-oracle/only-candidate findings do not measure fidelity. ICU MedicationAdministration.identifier is not written, and mimic-fhir/sql/fhir_medication_administration_icu.sql:7-23,38-100 carries neither linkorderid nor another semantic field from which it can be recovered; line 20's UUID is opaque and may not be inverted. Canonical norepinephrine.sql:4 only projects this administrative identifier, while all 336,000 source-event occurrences and their multiplicity are preserved, so the loss is ancillary. The remaining 58 timestamp rows are irreversibly normalized by upstream TIMESTAMPTZ casts at mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9 and Period writes at :61-66; candidate TIMESTAMP_NTZ faithfully preserves served values. All defensible mappings were applied, including corrected raw-rate mapping.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
-  "semantic_counter": 3,
-  "started_at": "2026-08-20T04:43:40.776701+00:00",
+  "semantic_counter": 4,
+  "started_at": "2026-08-25T00:26:34.658346+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-20T05:09:25.941005+00:00"
+  "updated_at": "2026-08-25T03:49:40.471105+00:00"
 }
