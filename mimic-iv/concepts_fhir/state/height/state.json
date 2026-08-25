@@ -1,14 +1,14 @@
 {
-  "attempt": 4,
+  "attempt": 5,
   "category": "measurement",
-  "completed_at": "2026-08-18T01:31:49.073261+00:00",
+  "completed_at": "2026-08-25T00:21:31.813923+00:00",
   "concept_name": "height",
   "dependencies": [],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "height attempt 0004 differs only on 2/33,474 charttime values (0.006%). mimic-fhir/sql/fhir_observation_chartevents.sql:9 casts source charttime through TIMESTAMPTZ, and line 67 writes it to Observation.effectiveDateTime, the element read by the port. The comparator replayed this America/New_York DST-gap transformation over every conflicting row with zero residual. Height values, row inclusion, grouping, subject/stay assignment, and natural grain remain equal. The port uses the required direct TIMESTAMP_NTZ mapping and does not infer values from opaque resource ids, so it is faithful to the served data.",
-  "engineering_counter": 5,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 7,
   "error_message": null,
-  "hpc_counter": 4,
+  "hpc_counter": 5,
   "reopen_history": [
     {
       "at": "2026-08-13T03:28:27.078382+00:00",
@@ -38,10 +38,25 @@
       "superseded_error": null,
       "superseded_justification": "Judge accepted the attributed review: mimic-fhir/sql/fhir_observation_chartevents.sql:9 casts chartevents.charttime through TIMESTAMPTZ and line 67 writes the transformed value to Observation.effectiveDateTime, which is the candidate charttime source. The comparator replayed the America/New_York DST-gap transformation over all 2 conflicting charttime rows with zero residual; 2/33,474 (0.006%) is consistent with DST-gap rarity. Height values, row inclusion, natural key, grouping, and subject/stay assignment remain unchanged, so this is ancillary intrinsic upstream loss and the port is faithful as the data allows.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-25T00:02:18.979959+00:00",
+      "baseline": {
+        "attempt": 4,
+        "engineering": 5,
+        "hpc": 4,
+        "semantic": 3
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "height attempt 0004 differs only on 2/33,474 charttime values (0.006%). mimic-fhir/sql/fhir_observation_chartevents.sql:9 casts source charttime through TIMESTAMPTZ, and line 67 writes it to Observation.effectiveDateTime, the element read by the port. The comparator replayed this America/New_York DST-gap transformation over every conflicting row with zero residual. Height values, row inclusion, grouping, subject/stay assignment, and natural grain remain equal. The port uses the required direct TIMESTAMP_NTZ mapping and does not infer values from opaque resource ids, so it is faithful to the served data.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
   "semantic_counter": 3,
-  "started_at": "2026-08-18T01:12:40.622598+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-18T01:31:49.075032+00:00"
+  "started_at": "2026-08-25T00:02:18.981778+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-25T00:21:31.814403+00:00"
 }
