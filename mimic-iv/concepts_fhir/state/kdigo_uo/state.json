@@ -1,17 +1,17 @@
 {
-  "attempt": 4,
+  "attempt": 5,
   "category": "organfailure",
-  "completed_at": "2026-08-21T03:53:26.472892+00:00",
+  "completed_at": "2026-08-25T01:51:11.217361+00:00",
   "concept_name": "kdigo_uo",
   "dependencies": [
     "urine_output",
     "weight_durations"
   ],
-  "divergence_decided_by": "judge",
-  "divergence_justification": "Accept attempt 0004: mimic-fhir/sql/fhir_observation_outputevents.sql:9 irreversibly normalizes source charttime through TIMESTAMPTZ, and line 60 writes only the normalized value to Observation.effectiveDateTime; lines 62-65 preserve quantity but not the original wall time. mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 does the same for weight-event charttime. Full-source replay found 395 moved outputevents rows forming 393 urine-output groups: all 393 only-oracle and 157 only-candidate rows close with residuals 0/0, while 236 occupied-key collisions explain the -236 row delta. Canonical and candidate urine_output both apply the same sign rule and SUM by stay_id, charttime, so collision aggregation is correct. Through kdigo_uo LAG, 6/12/24-hour RANGE windows, duration/rate gates, and half-open weight join, the replay accounts for all 1,061 conflicts - 2 direct and 1,059 second-order - with zero residual; the lone weight conflict is inherited from accepted weight_durations. The 393 shifted groups (0.0118%) and 1,061 propagated conflicts (0.032%) are DST-rarity-consistent. Attempt 0004 fixed the prior precision defect, all known mapping workarounds were applied, and no opaque-id reconstruction was used. The original wall time is unrecoverable by any allowed FHIR query, so the contract requires acceptance of this proven upstream DST defect and its inherited effects.",
-  "engineering_counter": 5,
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 7,
   "error_message": null,
-  "hpc_counter": 3,
+  "hpc_counter": 4,
   "reopen_history": [
     {
       "at": "2026-08-21T03:27:24.067513+00:00",
@@ -27,10 +27,25 @@
       "superseded_error": null,
       "superseded_justification": "Accept attempt 0003: mimic-fhir/sql/fhir_observation_outputevents.sql:9 irreversibly normalizes source charttime through TIMESTAMPTZ, and line 60 writes only the normalized value to Observation.effectiveDateTime. Full-source replay found 395 moved rows forming 393 urine_output groups across 391 stays; through kdigo_uo.sql:6-9,25-67, their effects account for all 393 only-oracle, 157 only-candidate, and 1,062 conflict rows, including 236 occupied-key collisions and 1,060 second-order LAG/RANGE-window conflicts, with zero unpaired residual. The 393 affected groups are 0.0118% of oracle rows, consistent with DST-gap rarity. Attempt 0003 fixed the prior Spark decimal bug, removed all 384 null-only rows, uses no resource-id inversion, and has no remaining mapping or dependency defect. The original wall time is absent from allowed FHIR paths, and the contract requires acceptance\u2014not blocking\u2014for proven upstream DST defects and their inherited effects.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-25T01:42:24.509834+00:00",
+      "baseline": {
+        "attempt": 4,
+        "engineering": 5,
+        "hpc": 3,
+        "semantic": 3
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "judge",
+      "superseded_error": null,
+      "superseded_justification": "Accept attempt 0004: mimic-fhir/sql/fhir_observation_outputevents.sql:9 irreversibly normalizes source charttime through TIMESTAMPTZ, and line 60 writes only the normalized value to Observation.effectiveDateTime; lines 62-65 preserve quantity but not the original wall time. mimic-fhir/sql/fhir_observation_chartevents.sql:9,67 does the same for weight-event charttime. Full-source replay found 395 moved outputevents rows forming 393 urine-output groups: all 393 only-oracle and 157 only-candidate rows close with residuals 0/0, while 236 occupied-key collisions explain the -236 row delta. Canonical and candidate urine_output both apply the same sign rule and SUM by stay_id, charttime, so collision aggregation is correct. Through kdigo_uo LAG, 6/12/24-hour RANGE windows, duration/rate gates, and half-open weight join, the replay accounts for all 1,061 conflicts - 2 direct and 1,059 second-order - with zero residual; the lone weight conflict is inherited from accepted weight_durations. The 393 shifted groups (0.0118%) and 1,061 propagated conflicts (0.032%) are DST-rarity-consistent. Attempt 0004 fixed the prior precision defect, all known mapping workarounds were applied, and no opaque-id reconstruction was used. The original wall time is unrecoverable by any allowed FHIR query, so the contract requires acceptance of this proven upstream DST defect and its inherited effects.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
   "semantic_counter": 3,
-  "started_at": "2026-08-21T03:27:24.069112+00:00",
-  "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-21T03:53:26.473375+00:00"
+  "started_at": "2026-08-25T01:42:24.511833+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-25T01:51:11.217706+00:00"
 }
