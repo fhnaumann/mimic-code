@@ -1,0 +1,20 @@
+{
+  "attempt": 1,
+  "category": "sepsis",
+  "completed_at": "2026-08-26T06:09:50.409948+00:00",
+  "concept_name": "sepsis3",
+  "dependencies": [
+    "sofa",
+    "suspicion_of_infection"
+  ],
+  "divergence_decided_by": "judge",
+  "divergence_justification": "Judge accepted the contested review as wholly inherited from accepted dependencies, not a sepsis3 bug. The target preserves sepsis3.sql:9-80 exactly: SOFA >= 2, inclusive [-48,+24] hour join, one-row-per-stay ordering, and dependency boundaries. The 177 only_oracle rows and 380 differing_conflict rows (32,414/32,971 identical; 98.3106%; zero only_candidate and zero null-only) inherit MedicationRequest validity-period loss at mimic-fhir/sql/fhir_medication_request.sql:172-177: invalid/incomplete or reversed intervals omit dispenseRequest.validityPeriod endpoints, authoredOn is not a substitute, and opaque resource ids cannot recover them. Accepted suspicion_of_infection propagates this through ab_id ordering and culture windows, changing inclusion, timing, and selected SOFA rows. The accepted SOFA divergence crosses the ETL/Pathling boundary at mimic-fhir/sql/fhir_medication_administration_icu.sql:14,91-99 (especially :94), where ie.rate is written unchanged and Pathling irreversibly encodes FHIR decimals as DECIMAL(32,6); mimic-iv/concepts/score/sofa.sql:278-285,370-375 amplifies it through scoring and the 24-row window. The target adds no independent loss and retains one row per stay_id. DST is not the cause: rebuilt 2026-08-26 warehouse, antibiotic attempt_0004 had zero post-rebuild DST conflicts, and comparator attributed 0/380.",
+  "engineering_counter": 1,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 1,
+  "started_at": "2026-08-26T03:55:48.715369+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-26T06:09:50.410405+00:00"
+}
