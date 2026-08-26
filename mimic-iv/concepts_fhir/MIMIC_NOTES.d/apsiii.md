@@ -1,0 +1,3 @@
+## The authoritative demo Delta currently exposes proprietary diagnosis coding systems
+- Affected: `Condition.code.coding.system`
+- Verified: embedded Pathling 9.6.0 over `/Users/nau025/warehouses/mimic-iv-demo/delta` projected `Condition.code.coding`; all 5,051 resources had one coding, with 2,442 rows under `http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd9` and 2,609 under `http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd10`. Hospital-Encounter-linked Conditions were 4,506/4,506 exact against `mimiciv_hosp.diagnoses_icd` in `/Users/nau025/warehouses/mimic4-demo.db`.

@@ -1,0 +1,24 @@
+{
+  "attempt": 2,
+  "category": "score",
+  "completed_at": "2026-08-26T03:12:26.408876+00:00",
+  "concept_name": "apsiii",
+  "dependencies": [
+    "bg",
+    "first_day_gcs",
+    "first_day_lab",
+    "first_day_urine_output",
+    "first_day_vitalsign",
+    "ventilation"
+  ],
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 4,
+  "error_message": null,
+  "hpc_counter": 2,
+  "reopen_history": [],
+  "semantic_counter": 0,
+  "started_at": "2026-08-26T02:21:05.689999+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-26T03:12:26.409138+00:00"
+}
