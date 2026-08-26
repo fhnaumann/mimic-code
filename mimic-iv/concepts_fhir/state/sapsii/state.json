@@ -1,0 +1,27 @@
+{
+  "attempt": 1,
+  "category": "score",
+  "completed_at": "2026-08-26T02:19:58.542312+00:00",
+  "concept_name": "sapsii",
+  "dependencies": [
+    "age",
+    "bg",
+    "chemistry",
+    "complete_blood_count",
+    "enzyme",
+    "gcs",
+    "urine_output",
+    "ventilation",
+    "vitalsign"
+  ],
+  "divergence_decided_by": null,
+  "divergence_justification": null,
+  "engineering_counter": 2,
+  "error_message": null,
+  "hpc_counter": 1,
+  "reopen_history": [],
+  "semantic_counter": 0,
+  "started_at": "2026-08-26T00:39:20.046320+00:00",
+  "status": "COMPLETED",
+  "updated_at": "2026-08-26T02:19:58.542753+00:00"
+}

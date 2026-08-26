@@ -1,0 +1,26 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/sapsii-0001-hospital_encounter",
+  "name": "hospital_encounter",
+  "resource": "Encounter",
+  "select": [
+    {
+      "column": [
+        { "path": "getResourceKey()", "name": "encounter_key" },
+        { "path": "subject.getReferenceKey(Patient)", "name": "patient_key" },
+        { "path": "priority.coding.code", "name": "admission_priority_code" },
+        { "path": "priority.coding.system", "name": "admission_priority_system" },
+        { "path": "serviceType.coding.code", "name": "service_code" },
+        { "path": "serviceType.coding.system", "name": "service_system" }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-hosp')",
+      "column": [
+        { "path": "system", "name": "hadm_system" },
+        { "path": "value", "name": "hadm_id_str" }
+      ]
+    }
+  ]
+}
