@@ -1,0 +1,1205 @@
+{
+  "reason": "The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+  "runs": [
+    {
+      "concept": "milrinone",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-24T09:54:20+00:00",
+          "event": "reopen",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-24T10:09:54+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete_with_divergence",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "reopen",
+      "outcome": "complete_with_divergence",
+      "phase": "terminal",
+      "seconds": 934.5,
+      "session_id": "ses_fcccebd7effeYRy5OmVniBb9i2",
+      "status": "COMPLETED_WITH_DIVERGENCE",
+      "turns": 1
+    },
+    {
+      "concept": "creatinine_baseline",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-24T09:54:20+00:00",
+          "event": "reopen",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-24T10:22:39+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "reopen",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 1699.6,
+      "session_id": "ses_fcccebddbffeFVcRivB2SlPvdn",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "acei",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-24T23:24:02+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-24T23:54:11+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete_with_divergence",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete_with_divergence",
+      "phase": "terminal",
+      "seconds": 1809.6,
+      "session_id": "ses_fc9e96ae9ffeZUz7Rbvsr6XVEY",
+      "status": "COMPLETED_WITH_DIVERGENCE",
+      "turns": 1
+    },
+    {
+      "concept": "antibiotic",
+      "error": "turn 1 exceeded 3600s",
+      "history": [
+        {
+          "at": "2026-08-24T23:24:02+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T00:24:02+00:00",
+          "event": "turn",
+          "exit": -1,
+          "marker": "blocked",
+          "timed_out": true,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "timeout",
+      "phase": "terminal",
+      "seconds": 3600.7,
+      "session_id": "ses_fc9e96724ffeg8GwA6fT4suuu7",
+      "status": "VALIDATING_FULL",
+      "turns": 1
+    },
+    {
+      "concept": "arb",
+      "error": "turn 1 exceeded 3600s",
+      "history": [
+        {
+          "at": "2026-08-24T23:24:02+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T00:24:02+00:00",
+          "event": "turn",
+          "exit": -1,
+          "marker": "blocked",
+          "timed_out": true,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "timeout",
+      "phase": "terminal",
+      "seconds": 3600.7,
+      "session_id": "ses_fc9e967caffeoBhlL2EXEwBCRF",
+      "status": "VALIDATING_FULL",
+      "turns": 1
+    },
+    {
+      "concept": "bg",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-24T23:24:02+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-24T23:50:25+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 1582.7,
+      "session_id": "ses_fc9e96875ffeCAwsh3cmTaWgjN",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "blood_differential",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-24T23:24:02+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-24T23:51:19+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 1637.3,
+      "session_id": "ses_fc9e96a96ffeyfXEJE0kQpx8L8",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "cardiac_marker",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-24T23:24:02+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-24T23:40:51+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 1008.8,
+      "session_id": "ses_fc9e96681ffejnr3lB2GbHSADN",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "chemistry",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-24T23:40:51+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-24T23:51:39+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 648.7,
+      "session_id": "ses_fc9da06faffeR0diKqd89VKHSW",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "coagulation",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-24T23:50:25+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T00:00:38+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 613.5,
+      "session_id": "ses_fc9d14932ffeMDxc1Sgubz7LCN",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "complete_blood_count",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-24T23:51:20+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T00:02:18+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 659.0,
+      "session_id": "ses_fc9d07142ffej1B2OVJ0cmC6qV",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "crrt",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-24T23:51:40+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T00:03:42+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 722.9,
+      "session_id": "ses_fc9d02481ffeG89nXd9wKG90s9",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "dobutamine",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-24T23:54:12+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T00:07:20+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete_with_divergence",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete_with_divergence",
+      "phase": "terminal",
+      "seconds": 788.4,
+      "session_id": "ses_fc9cdd01bffeJUjcU8TECIf2aL",
+      "status": "COMPLETED_WITH_DIVERGENCE",
+      "turns": 1
+    },
+    {
+      "concept": "enzyme",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T00:00:38+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T00:22:04+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 1285.7,
+      "session_id": "ses_fc9c7ec6affe0oi2oDqcs34bjz",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "height",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T00:02:19+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T00:23:16+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 1257.7,
+      "session_id": "ses_fc9c6659affeWZcCZcnjixvvFW",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "icp",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T00:03:44+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T00:25:34+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": null,
+          "timed_out": false,
+          "turn": 1
+        },
+        {
+          "at": "2026-08-25T00:26:34+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 2
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 1371.6,
+      "session_id": "ses_fc9c516cfffeFHjQ5YsWwU5h84",
+      "status": "COMPLETED",
+      "turns": 2
+    },
+    {
+      "concept": "icustay_detail",
+      "error": "turn 1 exceeded 3600s",
+      "history": [
+        {
+          "at": "2026-08-25T00:07:20+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:07:20+00:00",
+          "event": "turn",
+          "exit": -1,
+          "marker": "blocked",
+          "timed_out": true,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "timeout",
+      "phase": "terminal",
+      "seconds": 3600.5,
+      "session_id": "ses_fc9c1cb40ffewX5CRS5DL1NCCl",
+      "status": "VALIDATING_FULL",
+      "turns": 1
+    },
+    {
+      "concept": "icustay_times",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T00:22:04+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T00:35:48+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 824.6,
+      "session_id": "ses_fc9b44e12ffeM4jQXPYXMNGOrn",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "inflammation",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T00:23:16+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T00:34:15+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 658.9,
+      "session_id": "ses_fc9b33209ffedzRSJoJ3cBnxbx",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "invasive_line",
+      "error": "turn 1 exceeded 3600s",
+      "history": [
+        {
+          "at": "2026-08-25T00:24:03+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:24:03+00:00",
+          "event": "turn",
+          "exit": -1,
+          "marker": "blocked",
+          "timed_out": true,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "timeout",
+      "phase": "terminal",
+      "seconds": 3600.6,
+      "session_id": "ses_fc9b27da9ffez0vyOeDO2Iu9mo",
+      "status": "VALIDATING_FULL",
+      "turns": 1
+    },
+    {
+      "concept": "kdigo_creatinine",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T00:24:03+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T00:35:59+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 716.9,
+      "session_id": "ses_fc9b27d54ffeOYgsmVNt0Y559K",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "norepinephrine",
+      "error": "turn 1 exceeded 3600s",
+      "history": [
+        {
+          "at": "2026-08-25T00:26:34+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:26:34+00:00",
+          "event": "turn",
+          "exit": -1,
+          "marker": "blocked",
+          "timed_out": true,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "timeout",
+      "phase": "terminal",
+      "seconds": 3600.4,
+      "session_id": "ses_fc9b02f94ffesU9zxk8x1Z9hWz",
+      "status": "VALIDATING_FULL",
+      "turns": 1
+    },
+    {
+      "concept": "nsaid",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T00:34:15+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:00:55+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete_with_divergence",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete_with_divergence",
+      "phase": "terminal",
+      "seconds": 1599.9,
+      "session_id": "ses_fc9a926ccffeWpdKJx6Po6CYmS",
+      "status": "COMPLETED_WITH_DIVERGENCE",
+      "turns": 1
+    },
+    {
+      "concept": "oxygen_delivery",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T00:35:49+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:02:33+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 1604.9,
+      "session_id": "ses_fc9a7b8b9ffeQRgQ21z6jELntV",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "phenylephrine",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T00:36:00+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:01:14+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete_with_divergence",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete_with_divergence",
+      "phase": "terminal",
+      "seconds": 1514.7,
+      "session_id": "ses_fc9a78b8affe2F491rxzrF3rKB",
+      "status": "COMPLETED_WITH_DIVERGENCE",
+      "turns": 1
+    },
+    {
+      "concept": "rhythm",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T01:00:55+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:17:07+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 972.2,
+      "session_id": "ses_fc990bcf9ffeGkhLS6mKgcCkfK",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "rrt",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T01:01:15+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:31:26+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 1812.0,
+      "session_id": "ses_fc9907135ffeBtLvb6mwCCTWm9",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "urine_output",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T01:02:34+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:14:52+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 738.2,
+      "session_id": "ses_fc98f3b82ffe4KOfbME5JogVup",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "vasopressin",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T01:07:21+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:17:34+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete_with_divergence",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete_with_divergence",
+      "phase": "terminal",
+      "seconds": 613.7,
+      "session_id": "ses_fc98ad9e2ffexAeewPTiH00cDZ",
+      "status": "COMPLETED_WITH_DIVERGENCE",
+      "turns": 1
+    },
+    {
+      "concept": "vitalsign",
+      "error": "turn 1 exceeded 3600s",
+      "history": [
+        {
+          "at": "2026-08-25T01:14:52+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T02:14:52+00:00",
+          "event": "turn",
+          "exit": -1,
+          "marker": "blocked",
+          "timed_out": true,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "timeout",
+      "phase": "terminal",
+      "seconds": 3600.5,
+      "session_id": "ses_fc983f723ffeCTIIahWbFXF8k2",
+      "status": "VALIDATING_FULL",
+      "turns": 1
+    },
+    {
+      "concept": "weight_durations",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T01:17:07+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:29:17+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 730.6,
+      "session_id": "ses_fc981e54cffetqVE6aqd9EZXP1",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "charlson",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T01:17:35+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:27:57+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 623.2,
+      "session_id": "ses_fc9817cbaffedOiPYessG4Mo0E",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "first_day_bg",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T01:24:04+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:34:35+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 631.9,
+      "session_id": "ses_fc97b8bb4ffeWnCXs7exjsT7mv",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "first_day_bg_art",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T01:26:35+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:36:51+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 616.5,
+      "session_id": "ses_fc9793b90ffeC1MmK53MkyIeab",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "first_day_height",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T01:27:58+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:38:41+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 643.8,
+      "session_id": "ses_fc977f033ffeJ8YFo0XdzJZsZ9",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "first_day_lab",
+      "error": "turn 1 exceeded 3600s",
+      "history": [
+        {
+          "at": "2026-08-25T01:29:18+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T02:29:18+00:00",
+          "event": "turn",
+          "exit": -1,
+          "marker": "blocked",
+          "timed_out": true,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "timeout",
+      "phase": "terminal",
+      "seconds": 3600.6,
+      "session_id": "ses_fc976c14fffevbAxwe57d2mCNA",
+      "status": "VALIDATING_DEMO",
+      "turns": 1
+    },
+    {
+      "concept": "first_day_rrt",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T01:31:27+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:42:24+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 657.5,
+      "session_id": "ses_fc974cabaffeV5eYLPfu0ZWbxu",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "first_day_urine_output",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T01:34:35+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:45:23+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 648.1,
+      "session_id": "ses_fc971e668ffe44az6f00bOJnsu",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "first_day_vitalsign",
+      "error": "vitalsign did not succeed (timeout/VALIDATING_FULL)",
+      "history": [],
+      "mode": "replay",
+      "outcome": "dependency",
+      "phase": "skipped",
+      "seconds": 0.0,
+      "session_id": null,
+      "status": null,
+      "turns": 0
+    },
+    {
+      "concept": "first_day_weight",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T01:36:51+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:48:18+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 687.6,
+      "session_id": "ses_fc96fd6f7ffeN01y65uIyDlhzk",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "icustay_hourly",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T01:38:42+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:49:46+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 664.6,
+      "session_id": "ses_fc96e277effevJ5tWWr8b3H1kM",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "kdigo_uo",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T01:42:24+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T01:52:46+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 622.9,
+      "session_id": "ses_fc96ac27cffeRu3M9Xfu0nZpSH",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "suspicion_of_infection",
+      "error": "antibiotic did not succeed (timeout/VALIDATING_FULL)",
+      "history": [],
+      "mode": "replay",
+      "outcome": "dependency",
+      "phase": "skipped",
+      "seconds": 0.0,
+      "session_id": null,
+      "status": null,
+      "turns": 0
+    },
+    {
+      "concept": "urine_output_rate",
+      "error": "turn 1 exceeded 3600s",
+      "history": [
+        {
+          "at": "2026-08-25T01:45:24+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T02:45:24+00:00",
+          "event": "turn",
+          "exit": -1,
+          "marker": "blocked",
+          "timed_out": true,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "timeout",
+      "phase": "terminal",
+      "seconds": 3600.4,
+      "session_id": "ses_fc9680517ffepFEIU8PdpUZQU7",
+      "status": "VALIDATING_FULL",
+      "turns": 1
+    },
+    {
+      "concept": "vasoactive_agent",
+      "error": "norepinephrine did not succeed (timeout/VALIDATING_FULL)",
+      "history": [],
+      "mode": "replay",
+      "outcome": "dependency",
+      "phase": "skipped",
+      "seconds": 0.0,
+      "session_id": null,
+      "status": null,
+      "turns": 0
+    },
+    {
+      "concept": "kdigo_stages",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T01:52:47+00:00",
+          "event": "replay",
+          "exit": 0
+        },
+        {
+          "at": "2026-08-25T02:09:40+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "replay",
+      "outcome": "complete",
+      "phase": "terminal",
+      "seconds": 1013.1,
+      "session_id": "ses_fc9614199ffeoc4r64h0I7kFTX",
+      "status": "COMPLETED",
+      "turns": 1
+    },
+    {
+      "concept": "meld",
+      "error": "first_day_lab did not succeed (timeout/VALIDATING_DEMO)",
+      "history": [],
+      "mode": "replay",
+      "outcome": "dependency",
+      "phase": "skipped",
+      "seconds": 0.0,
+      "session_id": null,
+      "status": null,
+      "turns": 0
+    },
+    {
+      "concept": "norepinephrine_equivalent_dose",
+      "error": "vasoactive_agent did not succeed (dependency/None)",
+      "history": [],
+      "mode": "replay",
+      "outcome": "dependency",
+      "phase": "skipped",
+      "seconds": 0.0,
+      "session_id": null,
+      "status": null,
+      "turns": 0
+    },
+    {
+      "concept": "sirs",
+      "error": "first_day_lab did not succeed (timeout/VALIDATING_DEMO)",
+      "history": [],
+      "mode": "replay",
+      "outcome": "dependency",
+      "phase": "skipped",
+      "seconds": 0.0,
+      "session_id": null,
+      "status": null,
+      "turns": 0
+    }
+  ],
+  "updated_at": "2026-08-25T02:45:24+00:00",
+  "wave": "all"
+}

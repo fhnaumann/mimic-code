@@ -87,3 +87,9 @@ mimic-iv/concepts_fhir/metrics/index.html
 
 # cast-probe throwaway attempt copies (mimic_utils cast-probe)
 .cast_probe/
+
+# goal-run worker scratch: per-worker goal-plugin state and raw session
+# transcripts. The wave ledger beside them is a record of what ran and is
+# deliberately NOT ignored.
+mimic-iv/concepts_fhir/replay/*.goalrun/goalstate/
+mimic-iv/concepts_fhir/replay/*.goalrun/sessions/

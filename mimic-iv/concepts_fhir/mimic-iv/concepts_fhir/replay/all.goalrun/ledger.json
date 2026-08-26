@@ -1,0 +1,70 @@
+{
+  "reason": "upstream e7c326b (#125), chartevents value text",
+  "runs": [
+    {
+      "concept": "gcs",
+      "error": "opencode run exited -2 with no session",
+      "history": [
+        {
+          "at": "2026-08-25T06:35:58+00:00",
+          "event": "turn",
+          "exit": -2,
+          "marker": null,
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "none",
+      "outcome": "error",
+      "phase": "terminal",
+      "seconds": 0.4,
+      "session_id": null,
+      "status": "COMPLETED_WITH_DIVERGENCE",
+      "turns": 1
+    },
+    {
+      "concept": "first_day_gcs",
+      "error": null,
+      "history": [
+        {
+          "at": "2026-08-25T06:37:13+00:00",
+          "event": "turn",
+          "exit": 0,
+          "marker": "complete_with_divergence",
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "none",
+      "outcome": "complete_with_divergence",
+      "phase": "terminal",
+      "seconds": 72.9,
+      "session_id": "ses_fc85df41bffejH0iHVsdTXaVgM",
+      "status": "COMPLETED_WITH_DIVERGENCE",
+      "turns": 1
+    },
+    {
+      "concept": "ventilator_setting",
+      "error": "opencode run exited -2 with no session",
+      "history": [
+        {
+          "at": "2026-08-25T06:35:58+00:00",
+          "event": "turn",
+          "exit": -2,
+          "marker": null,
+          "timed_out": false,
+          "turn": 1
+        }
+      ],
+      "mode": "none",
+      "outcome": "error",
+      "phase": "terminal",
+      "seconds": 0.4,
+      "session_id": null,
+      "status": "BLOCKED_REPRESENTATION",
+      "turns": 1
+    }
+  ],
+  "updated_at": "2026-08-25T06:37:13+00:00",
+  "wave": "all"
+}

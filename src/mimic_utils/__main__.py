@@ -22,6 +22,12 @@ from mimic_utils.export_oracle import export_oracle
 from mimic_utils.transpile import transpile_file, transpile_folder
 
 
+#: Kept in step with mimic_utils.goal_pool.MODES, which is asserted by the tests.
+#: Duplicated rather than imported so building the parser does not pull in the
+#: pool's threading/subprocess machinery on every CLI invocation.
+_GOAL_MODES = ("replay", "reopen", "none")
+
+
 def _parse_schema_map(value: str) -> dict:
     """Parse ``old=new,old2=new2`` into a dict for schema renaming."""
     schema_map = {}
@@ -172,6 +178,64 @@ def _compare_port_results_command(**kwargs) -> int:
     # that used to live here had no `review` branch, so every `review` fell
     # through to EXIT_FAIL.
     return _cpr.report_verdict(result)
+
+
+def _replay_run_command(**kwargs) -> int:
+    """Dispatch for ``mimic_utils replay-run`` (a whole wave, no agent)."""
+    from mimic_utils.replay_batch import STAGES, run_wave
+
+    concepts = list(kwargs.get("concepts") or ())
+    if not concepts:
+        logging.error("name at least one concept")
+        return 2
+    return run_wave(
+        concepts,
+        reason=kwargs["reason"],
+        wave=kwargs.get("wave") or "wave",
+        artifact_root=kwargs.get("artifact_root"),
+        ledger_path=kwargs.get("ledger"),
+        stages=kwargs.get("stages") or STAGES,
+        dry_run=kwargs.get("dry_run", False),
+    )
+
+
+def _goal_run_command(**kwargs) -> int:
+    """Dispatch for ``mimic_utils goal-run`` (a wave of real sessions, k at a time)."""
+    from mimic_utils.goal_pool import DEFAULT_AGENT, run_pool, wave_concepts
+
+    wave = kwargs.get("wave")
+    concepts = list(kwargs.get("concepts") or ())
+    if concepts and wave:
+        logging.error("name concepts or pass --wave, not both")
+        return 2
+    if wave:
+        concepts = wave_concepts(wave, root=kwargs.get("artifact_root"))
+    if not concepts:
+        logging.error("name at least one concept, or pass --wave")
+        return 2
+
+    return run_pool(
+        concepts,
+        reason=kwargs["reason"],
+        # Names the ledger and its directory, so it must read well: a
+        # wave-less run over the combined list is "all", not "goalrun.goalrun".
+        # --name lets a caller that had to pass concepts explicitly keep the
+        # wave's bookkeeping anyway.
+        wave=kwargs.get("name") or wave or "all",
+        mode=kwargs.get("mode") or "replay",
+        parallel=kwargs.get("parallel") or 4,
+        artifact_root=kwargs.get("artifact_root"),
+        agent=kwargs.get("agent") or DEFAULT_AGENT,
+        model=kwargs.get("model"),
+        ledger_path=kwargs.get("ledger"),
+        run_dir=kwargs.get("run_dir"),
+        spark_lock=kwargs.get("spark_lock"),
+        max_turns=kwargs.get("max_turns") or 30,
+        turn_timeout=kwargs.get("turn_timeout") or 3600.0,
+        concept_budget=kwargs.get("concept_budget") or 6 * 3600.0,
+        invalidate_stage=kwargs.get("invalidate_stage"),
+        dry_run=kwargs.get("dry_run", False),
+    )
 
 
 def _run_demo_command(**kwargs) -> int:
@@ -535,6 +599,151 @@ def main():
     run_full_parser.add_argument("--sample-limit", type=int, default=20)
     run_full_parser.add_argument("--no-color", action="store_true")
     run_full_parser.set_defaults(func=_run_full_command)
+
+    replay_run_parser = subparsers.add_parser(
+        "replay-run",
+        help="Run a wave of replays end to end with no agent in the loop.",
+        description=(
+            "For each named concept: replay (reopen + carry the port forward "
+            "byte-identical), validate-demo, run-demo, validate-full, "
+            "hpc-launch. The whole wave is queued before any polling, then each "
+            "job is polled and every `match` is promoted to COMPLETED.\n\n"
+            "Concepts that come back `review` or `mismatch` are left exactly "
+            "where they are and listed at the end as needing a `/goal` session: "
+            "the judge is the only stage in a replay that needs a model.\n\n"
+            "Progress is written to a ledger after every stage, so an "
+            "interrupted wave resumes. A concept whose ledger says its job was "
+            "launched is never launched again -- hpc_job.json is write-once, and "
+            "a second launch abandons a live job.\n\n"
+            "Exit codes: 0 no errors, 1 at least one concept errored. A wave in "
+            "which every concept needs a judge is still exit 0."
+        ),
+        formatter_class=RawDescriptionHelpFormatter,
+    )
+    replay_run_parser.add_argument("concepts", nargs="+", help="Concept stems, in DAG order.")
+    replay_run_parser.add_argument(
+        "--reason", required=True,
+        help="Recorded on every concept's reopen: which upstream fix is being "
+             "measured and against which rebuilt warehouse.",
+    )
+    replay_run_parser.add_argument(
+        "--wave", default="wave", help="Ledger name (default: wave)."
+    )
+    replay_run_parser.add_argument(
+        "--stages", nargs="+", default=None,
+        metavar="STAGE",
+        help="Subset of replay demo launch poll promote (default: all). Stages "
+             "are cumulative and resumable, so --stages poll promote finishes a "
+             "wave that was launched earlier.",
+    )
+    replay_run_parser.add_argument("--ledger", default=None, help="Explicit ledger path.")
+    replay_run_parser.add_argument("--artifact-root", dest="artifact_root", default=None)
+    replay_run_parser.add_argument(
+        "--dry-run", dest="dry_run", action="store_true",
+        help="Print every command that would run, and run none of them.",
+    )
+    replay_run_parser.set_defaults(func=_replay_run_command)
+
+    goal_run_parser = subparsers.add_parser(
+        "goal-run",
+        help="Run a wave of full orchestrator sessions, k concepts in parallel.",
+        description=(
+            "Automates the by-hand loop: reopen/replay the concept, start an "
+            "`opencode run --agent concept-port-orchestrator --auto` session on "
+            "it, and keep sending that session a continuation until it emits a "
+            "terminal [goal:...] marker. K of those run at once; when one "
+            "finishes the next eligible concept starts.\n\n"
+            "Concepts are processed in the order given, but a concept whose "
+            "dependency is also in the run set waits for it to reach COMPLETED "
+            "or COMPLETED_WITH_DIVERGENCE. That is forced, not polite: `replay` "
+            "and `start` both refuse an unsatisfied dependency, and both runners "
+            "preprocess a dependency's own attempt output.\n\n"
+            "Each worker gets its own OPENCODE_GOAL_STATE_PATH -- the goal "
+            "plugin's lease is exclusive and would refuse workers 2..k -- and "
+            "MIMIC_SPARK_LOCK is set in every child so parallel demo runs queue "
+            "on the flock instead of colliding.\n\n"
+            "Progress is flushed to a ledger on every turn, so an interrupted "
+            "pool resumes: a concept with a recorded session id is continued, "
+            "not restarted, and a concept already terminal is left alone.\n\n"
+            "Use `replay-run` instead when the concepts only need the "
+            "deterministic stages -- it needs no model at all. This command is "
+            "for waves that genuinely need the loop: a re-implement, or replays "
+            "whose verdicts will need a judge.\n\n"
+            "Exit codes: 0 every concept reached a success status, 1 otherwise."
+        ),
+        formatter_class=RawDescriptionHelpFormatter,
+    )
+    goal_run_parser.add_argument(
+        "concepts", nargs="*",
+        help="Concept stems, in DAG order. Omit when using --wave.",
+    )
+    goal_run_parser.add_argument(
+        "--wave", default=None,
+        help="Read the concept list from mimic-iv/concepts_fhir/replay/wave<N>.txt "
+             "and name the ledger after it.",
+    )
+    goal_run_parser.add_argument(
+        "--reason", required=True,
+        help="Recorded on every concept's reopen: which upstream fix is being "
+             "measured and against which rebuilt warehouse.",
+    )
+    goal_run_parser.add_argument(
+        "--name", default=None,
+        help="Label for this pool, used in the ledger and the default run "
+             "directory. Defaults to the --wave value, or \"all\".",
+    )
+    goal_run_parser.add_argument(
+        "-k", "--parallel", type=int, default=4,
+        help="How many concepts run at once (default: 4).",
+    )
+    goal_run_parser.add_argument(
+        "--mode", choices=list(_GOAL_MODES), default="replay",
+        help="How each concept is opened: replay carries the port forward "
+             "byte-identical, reopen opens it for re-implementation, none "
+             "assumes it is already open (default: replay).",
+    )
+    goal_run_parser.add_argument(
+        "--invalidate-stage", dest="invalidate_stage", default=None,
+        help="With --mode reopen, also run carryover-invalidate for this stage "
+             "(e.g. fhir-prober when upstream now serves a new element).",
+    )
+    goal_run_parser.add_argument(
+        "--agent", default=None,
+        help="OpenCode agent to drive (default: concept-port-orchestrator).",
+    )
+    goal_run_parser.add_argument(
+        "--model", default=None,
+        help="provider/model override. Omit to use the agent's own model.",
+    )
+    goal_run_parser.add_argument(
+        "--max-turns", dest="max_turns", type=int, default=30,
+        help="Continuations per concept before giving up (default: 30).",
+    )
+    goal_run_parser.add_argument(
+        "--turn-timeout", dest="turn_timeout", type=float, default=3600.0,
+        help="Seconds one `opencode run` invocation may take (default: 3600).",
+    )
+    goal_run_parser.add_argument(
+        "--concept-budget", dest="concept_budget", type=float, default=6 * 3600.0,
+        help="Seconds one concept may take in total (default: 21600).",
+    )
+    goal_run_parser.add_argument(
+        "--spark-lock", dest="spark_lock", default=None,
+        help="Path passed as MIMIC_SPARK_LOCK to every worker "
+             "(default: ~/.mimic-spark.lock).",
+    )
+    goal_run_parser.add_argument("--ledger", default=None, help="Explicit ledger path.")
+    goal_run_parser.add_argument(
+        "--run-dir", dest="run_dir", default=None,
+        help="Where per-worker goal state and session transcripts are written.",
+    )
+    goal_run_parser.add_argument("--artifact-root", dest="artifact_root", default=None)
+    goal_run_parser.add_argument(
+        "--dry-run", dest="dry_run", action="store_true",
+        help="Print the plan and the command that would be run for each concept, "
+             "open nothing, and start no session.",
+    )
+    goal_run_parser.set_defaults(func=_goal_run_command)
 
     hpc_launch_parser = subparsers.add_parser(
         "hpc-launch",

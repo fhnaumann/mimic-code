@@ -1,0 +1,118 @@
+{
+  "attempt_dir": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/firstday/first_day_sofa/attempt_0002",
+  "column_types": {
+    "cardiovascular": "int",
+    "cns": "int",
+    "coagulation": "int",
+    "encounter_key": "string",
+    "hadm_id": "int",
+    "icu_encounter_key": "string",
+    "liver": "int",
+    "patient_key": "string",
+    "renal": "int",
+    "respiration": "int",
+    "sofa": "int",
+    "stay_id": "int",
+    "subject_id": "int"
+  },
+  "columns": [
+    "subject_id",
+    "hadm_id",
+    "stay_id",
+    "sofa",
+    "respiration",
+    "coagulation",
+    "liver",
+    "cardiovascular",
+    "cns",
+    "renal",
+    "patient_key",
+    "encounter_key",
+    "icu_encounter_key"
+  ],
+  "concept": "first_day_sofa",
+  "dataset": "full",
+  "divergence": {
+    "attributed": [],
+    "blocking": [
+      {
+        "class": "differing_conflict",
+        "count": 24,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "classification": "keyed",
+    "conflict_attribution": {
+      "attempted": false,
+      "complete": false,
+      "why": "no datetime column in this concept; the DST cast cannot apply"
+    },
+    "contested": [
+      {
+        "class": "differing_conflict",
+        "count": 24,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "declared_unrepresentable": {},
+    "diagnostician_required": true,
+    "gap_shaped": [],
+    "identical_fraction": 0.999672,
+    "identical_rows": 73157,
+    "judge_bar": "A conflict is not gap-shaped, so an absent element does not explain it. An accept must cite the upstream mimic-fhir ETL statement (file and line) that writes a different value than relational MIMIC-IV holds, and show the oracle value is not recoverable from what FHIR does carry by ANY query -- not merely that this port did not recover it. Absent that citation the answer is `bug`. State the affected fraction: a conflict concentrated in a few rows with an identified ETL cause is a different claim from one spread across the table.",
+    "judge_required": true,
+    "key_attribution": null,
+    "notes": [
+      "upstream conflict attribution not attempted: no datetime column in this concept; the DST cast cannot apply"
+    ],
+    "oracle_rows": 73181,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [
+      {
+        "class": "differing_conflict",
+        "count": 24,
+        "why": "matched rows where both sides hold a value and the values disagree, or the candidate holds a value where the oracle holds NULL. Either a port bug or upstream ETL transformation loss (MIMIC-on-FHIR carrying a *different* value, not a missing one) -- indistinguishable from the data alone"
+      }
+    ],
+    "tier": "contested",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "engine": "pathling-embedded",
+  "format_version": "1.0",
+  "generated_at": "2026-08-25T11:33:20.083728+00:00",
+  "oracle": "/scratch3/nau025/oracle/mimic4-full.db",
+  "oracle_row_count": 73181,
+  "row_count": 73181,
+  "timings_seconds": {
+    "compare": 1.392,
+    "execute": 2046.386
+  },
+  "verdict": "review",
+  "view_labels": [
+    "bg",
+    "dobutamine",
+    "dopamine",
+    "epinephrine",
+    "gcs",
+    "first_day_gcs",
+    "blood_differential",
+    "chemistry",
+    "coagulation",
+    "complete_blood_count",
+    "enzyme",
+    "first_day_lab",
+    "urine_output",
+    "first_day_urine_output",
+    "vitalsign",
+    "first_day_vitalsign",
+    "norepinephrine",
+    "oxygen_delivery",
+    "ventilator_setting",
+    "ventilation",
+    "hospital_encounter",
+    "icu_encounter",
+    "patient"
+  ],
+  "warehouse": "/scratch3/nau025/mimic-on-fhir-delta/spark_warehouse"
+}

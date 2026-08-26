@@ -1,0 +1,8 @@
+{
+  "concept": "oasis",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "30542485",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/score/oasis/attempt_0002",
+  "submitted_at": "2026-08-26T05:05:46.985653+00:00",
+  "walltime": "2:00:00"
+}

@@ -1,0 +1,31 @@
+{
+  "attempt": 2,
+  "category": "score",
+  "completed_at": "2026-08-26T03:52:36.937578+00:00",
+  "concept_name": "sofa",
+  "dependencies": [
+    "bg",
+    "chemistry",
+    "complete_blood_count",
+    "dobutamine",
+    "dopamine",
+    "enzyme",
+    "epinephrine",
+    "gcs",
+    "icustay_hourly",
+    "norepinephrine",
+    "urine_output_rate",
+    "ventilation",
+    "vitalsign"
+  ],
+  "divergence_decided_by": "human",
+  "divergence_justification": "Pathling's DECIMAL(32,6) encoder, not the mimic-fhir ETL, caps served numeric precision: MedicationAdministration.dosage.rateQuantity materializes as STRUCT(value DECIMAL(32,6), value_scale INTEGER, _value_canonicalized STRUCT(value DECIMAL(38,0), scale INTEGER), _code_canonicalized VARCHAR), rounded to six places at encode time. The cap is a fixed encoder constant, so no mimic-fhir patch or warehouse rebuild lifts it; fhir_medication_administration_icu.sql:14,91-99 (line 94, cited by the judge) only writes ie.rate into JSONB unmodified. No carrier recovers the digits: value_scale is 6 on all 44,152 demo rate rows, _value_canonicalized is computed from the already-truncated value and is non-NULL on 0/10,340 mcg/kg/min rows (372/372 mg/min), dose.value carries the same DECIMAL(32,6), and inputevents.patientweight is not served so no per-kg rate can be reconstructed. The loss is intrinsic and irreversible. It is accepted as non-essential because what is discarded is float32 representation noise, not clinical fact: mimiciv_icu.inputevents.rate is FLOAT (float32), and the oracle value on the affected rows is 0.10000000894069672 -- exactly float32(0.1) plus one ULP (7.45e-9) -- against the served 0.100000, so canonical sofa.sql:278-285 'rate_norepinephrine > 0.1' flips 4 to 3. The comparator's own tolerances (rtol 0.001, atol 1e-9) call those two rates EQUAL, which is why rate_norepinephrine conflicts on 1 row rather than all of them; the port and oracle agree on the dose by the loop's own standard and disagree only because a threshold test has no tolerance. Residual: 1,138 of 6,043,902 rows (0.0188%), 99.9812% identical, zero only_oracle, zero only_candidate, zero differing_null_only, no unrepresentable declarations. Per column: cardiovascular 294, cardiovascular_24hours 1,022, sofa_24hours 1,022 (the 24-row ROWS BETWEEN 23 PRECEDING window at sofa.sql:370-375 amplifies 294 divergent hours into 1,022, which LOOP_CONTRACT.md:1030-1033 rules is still inherited), rate_norepinephrine 1. Attempt 0001 (canonical untyped literals) recorded 1,938 conflicts and attempt 0002 (CAST(0.1 AS FLOAT) thresholds) 1,138: the cast fixed a real local Spark defect and no further cast, literal typing, or tolerance recovers a digit that is not served. Same cause, cut-points, drug and one-point delta as first_day_sofa, accepted --by human on 2026-08-26 and recorded at MIMIC_NOTES.md:1000-1003 as the worked example; blocking sofa on the identical event would be the split LOOP_CONTRACT.md:512-516 rules against. Caveat recorded in human_override/sofa.md: conflict_attribution is complete=false, attributed_rows=0 because the comparator replayed only the DST hypothesis, so the 1,138-row attribution rests on the diagnostician's mechanism plus 20 samples, not a row-by-row cut-point-proximity replay. Overriding the equivalence judge on the essential-loss test only; its factual findings are confirmed. Full argument: human_override/sofa.md.",
+  "engineering_counter": 2,
+  "error_message": null,
+  "hpc_counter": 2,
+  "reopen_history": [],
+  "semantic_counter": 3,
+  "started_at": "2026-08-26T02:29:05.923956+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-26T03:52:36.938001+00:00"
+}

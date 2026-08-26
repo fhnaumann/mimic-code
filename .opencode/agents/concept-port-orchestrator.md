@@ -41,6 +41,14 @@ only your own concept's state, and never transition or retry another goal's.
    The controller creates `mimic-iv/concepts_fhir/concepts/<category>/<concept>/attempt_NNNN/`
    and returns the path. Each artifact may be created once; existing artifacts
    are never edited or replaced.
+   **A replayed attempt is the exception to steps 2 and 3.** When
+   `mimic_utils resume` prints a `REPLAY (data rebuild)` block, the attempt
+   already holds its `concept.sql` and ViewDefinitions — carried forward
+   byte-identical from the previous attempt by `mimic_utils replay` to measure an
+   upstream fix. Skip the analysis stages and the implementer entirely, do not
+   edit the carried files, and enter at the demo shape gate. Re-authoring there
+   does not waste a run so much as invalidate the comparison: the query being
+   judged would no longer be the query that earned the superseded verdict.
 3. **Schedule subagents in order** — each depends on the output of the
    previous:
    `source-analyst` → `fhir-prober` →
@@ -90,16 +98,22 @@ only your own concept's state, and never transition or retry another goal's.
      `contested` result before convening the judge at all.
    - `attributed` (`differing_conflict` only, replayed by the comparator to a
      known upstream ETL cast on every conflicting row) — the citation is
-     already in `divergence.attributed[]`, so **skip the diagnostician** and
-     convene the judge directly. It confirms provenance and the affected
-     fraction instead of re-deriving the cause.
+     already in `divergence.attributed[]`, so the diagnostician does not
+     re-derive the cause. **Revised 2026-08-24: it is still spawned, with one
+     scoped question.** That cast was fixed upstream (`ade10fb`, #124 — FHIR
+     tables generated under UTC) and both warehouses rebuilt, so a shift that
+     still replays is an anomaly: ask *why the fix did not reach these rows* —
+     an old build, an unreached path, or a port defect one hour wide, which
+     replays identically. `divergence.diagnostician_required` is `true` here
+     now; route on the flag.
 
    Decide whom to spawn from `divergence.judge_required` and
    `divergence.diagnostician_required`, not from the tier name. The judge runs on
    every `review` tier without exception — it is the loop's final guard and it is
    not the expensive stage. The diagnostician is ~70% of the port's token spend,
    so **not spawning it** is the saving; it is the only stage a machine proof may
-   remove.
+   remove — though as of 2026-08-24 no tier removes it, because the one proof
+   that did no longer establishes enough on its own.
 
    On `accept`, record it with
    `mimic_utils accept-divergence <concept> --justification "<the judge's cited

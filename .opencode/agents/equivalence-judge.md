@@ -104,6 +104,38 @@ Do not treat a small conflict count as self-excusing. 460 conflicting rows with
 an identified ETL cause is an accept; 460 conflicting rows with no cause found
 is a bug that happens to be small.
 
+### `attributed` — the comparator proved the operation; you establish why it happened
+
+**Read this before the rest of this section, which was written while the defect
+was live.** The `TIMESTAMPTZ` cast was **fixed upstream on 2026-08-21**:
+`mimic-fhir` `ade10fb` (upstream #124) generates the FHIR tables under UTC,
+which has no DST in any year, so on a rebuilt warehouse there is no gap for a
+wall time to be normalised into. Both warehouses were rebuilt on 2026-08-24 and
+`age` attempt_0004 confirms it — the same SQL took 504 conflicts to 0.
+
+So a replayed shift is **no longer the expected background condition**. It is an
+anomaly, and the replay cannot tell you which anomaly it is, because **a port bug
+one hour wide replays identically**. Before accepting one, establish and state
+which of these holds, citing what told you:
+
+- **(a) the candidate predates the fix** — the run used a warehouse built before
+  2026-08-21. `run_meta.full.json` carries the warehouse path and the run date.
+- **(b) the fix did not reach this path** — name the ETL statement and say why
+  UTC generation leaves it shifted.
+- **(c) neither** — then the shift is not upstream, and your answer is **`bug`**.
+
+(a) and (b) are `accept` on exactly the terms below — the exemption is intact,
+because a fix is not proof that every path it touched is clean. What is no longer
+available is accepting because the replay succeeded. That is why
+`divergence.diagnostician_required` is now `true` on this tier: you will normally
+have a diagnosis scoped to *why the fix did not reach these rows*. It is not
+re-deriving the replay, and its absence is not the "no diagnosis attached"
+omission described for `contested`.
+
+The rest of this section is unchanged and still governs a shift established to be
+upstream — including the ban on recovering the pre-shift value by reconstructing
+a resource id.
+
 ### `attributed` — the comparator already proved the cause
 
 One of those two transformations is machine-provable, and where it applies the
@@ -120,8 +152,8 @@ fix it, and do not treat the absent diagnostician output as the "no diagnosis
 attached" omission that would otherwise send a `contested` result back to
 Phase 5.
 
-Two things the replay does **not** establish. They are yours, and
-`.judge_must_confirm` restates them:
+Two things the replay does **not** establish, on top of the "why is it there at
+all" question above. They are yours, and `.judge_must_confirm` restates them:
 
 1. **Provenance.** `.citations` is the set of *known* sites of that cast, not a
    per-column proof. Confirm one of them writes the FHIR element this column is
@@ -235,7 +267,16 @@ because most rows or columns match. An ancillary missing output can still be
 accepted when the remaining table faithfully implements the concept.
 
 > **The proven DST shift is exempt from this test, and the exemption is not
-> optional.** The essential-loss test is about information the served data
+> optional — but since 2026-08-21 "proven" means more than "replayed".** The
+> cast is fixed upstream (`ade10fb`, #124: FHIR tables generated under UTC) and
+> the warehouses are rebuilt, so first establish *why the shift is present* —
+> an old build, or a path the fix did not reach. With that established the
+> exemption below applies in full, unchanged. Without it the divergence is not
+> the upstream defect at all and the answer is `bug`, not `accept` and not
+> `blocked`. See "The DST cast is fixed; the exemption is now conditional" in
+> `LOOP_CONTRACT.md`.
+>
+> The essential-loss test is about information the served data
 > **cannot carry** — `gcs` losing `No Response-ETT`, where no query over FHIR
 > recovers it and the concept's outputs are permanently unreliable. The
 > `TIMESTAMPTZ` cast is not that. It is an acknowledged **defect in
@@ -250,7 +291,17 @@ accepted when the remaining table faithfully implements the concept.
 > was wrong. See "The DST cast is an upstream defect, and its consequences
 > travel with it" in `LOOP_CONTRACT.md`.
 
-> **The anchor `birthDate` defect is exempt on the same terms.**
+> **The anchor `birthDate` defect is exempt on the same terms — and is also
+> fixed.** `3048c88` (upstream #126, #117) re-anchors `birthDate` to
+> `MAKE_DATE(anchor_year,1,1) - anchor_age`, so on a rebuilt warehouse an
+> age-derived conflict is **not** explained by citing `fhir_patient.sql:15`:
+> `age` attempt_0004 reproduces every age exactly. Treat a surviving conflict
+> here the way you treat a surviving DST shift — establish why it is there before
+> accepting it. What remains true is that `anchor_age` and `anchor_year` are
+> individually unrecoverable, because `birthDate` is still one date: typed NULLs
+> for those two are still correct and still gap-shaped.
+>
+> The original exemption, for the record:
 > `mimic-fhir/sql/fhir_patient.sql:15` synthesises `Patient.birthDate` as
 > `MIN(transfers.intime) - anchor_age` rather than anchoring it to
 > `anchor_year`, so a FHIR-side age diverges from canonical `age.sql:30`

@@ -82,6 +82,36 @@ shorter `mimic_utils ...` spelling below names the subcommand only.
     finalization for COMPLETED or COMPLETED_WITH_DIVERGENCE, commit the
     concept-owned paths listed in Phase 8. Never commit a failed or blocked run.
 
+### `replay` — a reopen where the SQL is not what changed
+
+`mimic_utils replay <concept> --reason "..."` is the data-rebuild sibling of
+`reopen`. It reopens the concept, opens the next attempt, and carries the
+previous attempt's `concept.sql`, ViewDefinitions and `unrepresentable.json`
+forward **byte-identical**, recording their hashes in `replay_provenance.json`.
+
+Use it when an **upstream** defect was fixed and MIMIC-on-FHIR rebuilt. The port
+is not what changed, so re-authoring it is not an economy to skip — it is a
+mistake to avoid: the implementer authors fresh SQL each attempt with no memory
+of the last one, so a re-authored query is not necessarily the query that earned
+the superseded verdict, and the claim being tested is "the same port reproduces
+more rows now".
+
+**Nobody runs it on their own authority** — same rule as `reopen`, and the CLI
+refuses anything but `--by human`. Your job is to recognise a replayed attempt
+and not re-author it. `mimic_utils replay <concept> --check` is read-only and
+reports what would be carried and why a concept is refused.
+
+It refuses a concept whose recorded verdict or unrepresentability declaration
+cites a fixed defect that **adds** a served element — those must be re-authored,
+so they go through ordinary `reopen` plus
+`carryover-invalidate --stage fhir-prober`. The registry of fixed defects lives
+in `src/mimic_utils/replay.py`.
+
+`mimic_utils replay-run <concepts...> --reason "..."` drives a whole wave with
+no agent at all — replay, demo, launch, poll, and promote every `match` to
+`COMPLETED`. It hands out `/goal` sessions only for the `review` and `mismatch`
+results, because the judge is the only stage of a replay that needs a model.
+
 The controller uses three counters: `semantic`, `engineering`, `hpc`.
 Lifecycle: `PENDING → RUNNING → VALIDATING_DEMO → VALIDATING_FULL →
 COMPLETED | COMPLETED_WITH_DIVERGENCE` (with FAILED / SKIPPED terminal branches
@@ -146,6 +176,21 @@ human set aside a recorded verdict because the SQL that earned it was
 defective, and the block names the construction, the file and line, and the
 remedy. Carry it verbatim into the implementer's task text at Phase 3 — do not
 summarise it and do not treat it as context.
+
+**If the plan prints a `REPLAY (data rebuild)` block instead, the instruction is
+the opposite one.** The attempt already holds the port: its `concept.sql` and
+ViewDefinitions were carried forward byte-identical from the previous attempt to
+measure an upstream fix. **Skip Phase 3 entirely** — no source-analyst, no
+fhir-prober, no concept-implementer — and do not edit the carried files. Go
+straight to Phase 4. There is no carryover decision to make either; the plan
+prints `implementer: SKIP` rather than the reuse/re-run lines, because the stages
+those lines are about do not run.
+
+A replayed attempt that gets re-authored is worse than a wasted implementer run:
+the query being judged is then not the query that earned the superseded verdict,
+and the comparison stops being a measurement of the fix. If you believe the
+carried SQL is itself defective, that is a separate finding — report it and stop,
+do not silently fix it inside a replay.
 
 This is not a hypothetical failure mode. `crrt` was reopened with the
 instruction "replace every datetime mapping with a bare `TRY_CAST`"; nothing
@@ -293,8 +338,9 @@ Target shape comes from `mimic-iv/concepts_fhir/oracle/oracle_manifest.full.json
    exit early is not.
 
    Skip this step when:
-   - `divergence.diagnostician_required` is `false` — see **Attributed
-     conflicts** below;
+   - `divergence.diagnostician_required` is `false`. As of 2026-08-24 no tier
+     sets it `false` — `attributed` used to, and no longer does; see
+     **Attributed conflicts** below;
    - you already hold a diagnosis — a resumed session whose plan named the
      failure, or a `shape.demo.json` whose `schema.hints` state the remedy
      outright. The diagnostician exists to produce a diagnosis, not to confirm
@@ -380,12 +426,21 @@ all of them, emits:
 - `divergence.attributed[]` — the class, the row count, the replayed operation,
   and the `mimic-fhir/sql` citations, i.e. exactly the payload a `contested`
   diagnosis would have produced;
-- `divergence.diagnostician_required: false`.
+- `divergence.diagnostician_required` — **`true` since 2026-08-24**; it was
+  `false`, and everything below about skipping Phase 5 on this tier is history.
 
-Skip Phase 5 entirely and go to Phase 7. Do not spawn the diagnostician to
-confirm it: it would read the notes, the skills and the artifact — the whole
-cost — to re-derive a fact the artifact already carries with a stronger proof
-than a bounded sample can support.
+**Revised 2026-08-24: this tier no longer skips Phase 5.** The cast was fixed
+upstream (`ade10fb`, upstream #124: the FHIR tables now generate under UTC,
+which has no DST in any year) and both warehouses were rebuilt, so a shift that
+still replays is an anomaly rather than the expected background condition — and
+the replay cannot say which anomaly, because a port bug one hour wide replays
+identically. Spawn the diagnostician with **one scoped question**: why did the
+fix not reach these rows — an old build, an unreached path, or a port defect?
+Say in the task text that it must not re-derive the replay, whose citations are
+already in `divergence.attributed[]`.
+
+Route on the flag, as always. This is cheap by construction: if the fix holds,
+the tier stops occurring, and where it occurs it is the case worth the spend.
 
 Two things this does **not** do, both deliberate:
 
@@ -437,10 +492,10 @@ Route on the comparator's verdict, never on the row-count delta:
 - **`mismatch`** → go to Phase 5. The result is not comparable or the port
   contradicted itself; the judge cannot help.
 - **`review`, tier `gap_shaped`** → go to Phase 7.
-- **`review`, tier `attributed`** → go to Phase 7. The conflict was replayed to
-  an upstream ETL cast over every conflicting row, so there is nothing for a
-  diagnosis to add; the judge still rules. See **Attributed conflicts** in
-  Phase 5.
+- **`review`, tier `attributed`** → since 2026-08-24, Phase 5 **first** with a
+  scoped question (why did the upstream fix not reach these rows), then Phase 7.
+  The replay proves the operation, not that it should still be reachable. See
+  **Attributed conflicts** in Phase 5.
 - **`review`, tier `contested`** → go to Phase 5 for a diagnosis **first**, then
   Phase 7 if and only if the diagnostician cites the upstream ETL statement.
   This is the one route that visits Phase 5 without necessarily retrying.
@@ -525,6 +580,14 @@ argument that was set aside. Read both. Fix the named defect, and do not
 reproduce the superseded justification as your own — you must re-derive the
 divergence from this run's comparison, because the reason the concept was
 reopened is that the old SQL is no longer the SQL being judged.
+
+**One exception, and it inverts that paragraph: a reason beginning
+`[replay:data_rebuild]`.** There the old SQL *is* the SQL being judged — it was
+carried forward byte-identical and the served data is what changed. Nothing is
+wrong with the query, there is no defect to fix, and re-deriving the divergence
+is still your job but you are doing it for the same query against new data.
+`resume` prints the `REPLAY (data rebuild)` block for these; `replay` is also
+human-only, for the same reason `reopen` is.
 
 ### Phase 8 — Terminal state
 After the state transition to COMPLETED, COMPLETED_WITH_DIVERGENCE, FAILED, or

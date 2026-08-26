@@ -1,0 +1,7 @@
+# Equivalence-judge evidence — vitalsign, attempt 0003
+
+Verdict: `blocked`.
+
+The full comparison found one intrinsic `only_oracle` row and no candidate-only rows, conflicts, or NULL-only differences. The missing row is `(stay_id=34934165, charttime=2151-10-03 05:14:00, glucose=96)`. The upstream ETL excludes every chartevents source row at that stay/time before creating an Observation (`/Users/nau025/mimic-fhir/sql/fhir_observation_chartevents.sql:34-37`). The canonical SQL includes itemid `220621` and groups its duplicate qualifying source rows into one glucose row (`mimic-iv/concepts/measurement/vitalsign.sql:68-71,72-99`), explaining exactly one missing output row. No FHIR Observation, code, effective time, encounter, or value exists for the excluded tuple; Patient, Encounter, issued, component, or opaque resource identity cannot recover it.
+
+The judge confirmed that the candidate tried the defensible mappings: both effective dateTime/Period variants, `TIMESTAMP_NTZ`, Quantity numeric values, chartevents string values, the exact coding system and itemids, and the identifier/resource-key joins. This is essential loss because it changes row inclusion and the clinically meaningful vital-sign table grain, despite its size. Fidelity was 9,745,499/9,745,500 identical and representable, with no excluded columns or divergent dependencies. The replay run metadata confirms the rebuilt warehouse was used. The existing `MIMIC_NOTES.d/vitalsign.md` fragment already records this dataset-wide exclusion; no duplicate entry was appended.

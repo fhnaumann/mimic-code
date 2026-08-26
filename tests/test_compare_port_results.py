@@ -961,15 +961,26 @@ class TestUpstreamAttribution:
         assert r["match"] is False
         assert r["divergence"]["judge_required"] is True
 
-    def test_the_judge_is_never_skipped_but_the_diagnostician_is(
+    def test_an_attributed_shift_is_investigated_not_waved_through(
         self, manifest, oracle, candidate
     ):
-        """The saving is the diagnosis, never the final guard."""
+        """Revised 2026-08-24. The diagnosis used to be the saving here.
+
+        It was justified by the cast being a known, live upstream defect, so a
+        diagnosis could only re-derive the replay. Upstream #124 fixed the cast
+        and both warehouses were rebuilt, so a shift that still replays is an
+        anomaly -- old build, unreached path, or a port bug an hour wide, and
+        those replay identically. The accept route stays open; accepting
+        without asking does not.
+        """
         r = compare_full("dst", manifest, oracle, candidate(self.REPLAYED))
         div = r["divergence"]
 
         assert div["judge_required"] is True
-        assert div["diagnostician_required"] is False
+        assert div["diagnostician_required"] is True
+        # and the judge is told why, in the artifact it actually reads
+        assert "FIXED UPSTREAM" in div["judge_bar"]
+        assert "`bug`" in div["judge_bar"]
 
     def test_contested_still_requires_the_diagnostician(
         self, manifest, oracle, candidate
@@ -1093,8 +1104,10 @@ class TestUpstreamAttribution:
         # The gap bar, plus a pointer so the attribution is not absorbed silently.
         assert "coverage gap" not in div["judge_bar"] or "machine-attributed" in div["judge_bar"]
         assert "machine-attributed" in div["judge_bar"]
-        # The diagnostician is still not needed: nothing contested remains.
-        assert div["diagnostician_required"] is False
+        # Nothing contested remains, but the attribution still has to be
+        # explained now that the cast is fixed upstream -- and a gap-shaped
+        # result is exactly where it could otherwise ride along unexamined.
+        assert div["diagnostician_required"] is True
 
     def test_a_match_carries_no_attribution_at_all(self, manifest, oracle, candidate):
         """Attribution can lower a bar, so it must not appear where none is needed."""
@@ -1162,7 +1175,7 @@ class TestUpstreamAttribution:
         assert diff["conflict_attribution"]["attributed_rows"] == 2
         assert div["tier"] == "attributed"
         assert div["judge_required"] is True
-        assert div["diagnostician_required"] is False
+        assert div["diagnostician_required"] is True
 
     def test_no_zone_database_means_no_attribution_and_no_fallback(
         self, manifest, oracle, candidate, monkeypatch
@@ -1891,8 +1904,9 @@ class TestKeyCollisionAttribution:
         assert div["tier"] == "attributed"
         assert div["verdict"] == "review"
         assert not div["contested"]
-        # The whole point: a diagnosis here would only re-derive the replay.
-        assert div["diagnostician_required"] is False
+        # The lower bar survives; the skipped diagnosis does not. Since the cast
+        # was fixed upstream, a collision that still replays needs explaining.
+        assert div["diagnostician_required"] is True
 
     def test_sample_labels_which_route_each_row_took(
         self, manifest, oracle, candidate

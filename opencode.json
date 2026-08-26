@@ -9,7 +9,24 @@
       "model": "openai/gpt-5.6-luna"
     }
   },
+  "permission": {
+    "external_directory": {
+      "/Users/nau025/Documents/mimic-fhir/*": "allow",
+      "/Users/nau025/Documents/master_thesis_pipeline/*": "allow",
+      "/Users/nau025/warehouses/*": "allow",
+      "/Users/nau025/.cache/opencode/*": "allow",
+      "/Users/nau025/.config/opencode/*": "allow",
+      "/Users/nau025/.local/share/opencode/*": "allow",
+      "/tmp/*": "allow",
+      "/var/folders/*": "allow",
+      "*": "deny"
+    }
+  },
   "references": {
+    "mimic-fhir": {
+      "path": "../mimic-fhir",
+      "description": "Upstream MIMIC-on-FHIR ETL. `sql/*.sql` is the citable source for an upstream transformation-loss finding: the judge and the diagnostician must name file and line there before attributing a divergence upstream."
+    },
     "orchestration-new": {
       "path": "../master_thesis_pipeline/orchestration-new",
       "description": "Proven agentic pipeline architecture: Pathling client adapter, ViewDefinition provisioning scripts (sofa_provisioning), config templates, and protocol patterns."

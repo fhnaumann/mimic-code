@@ -1,0 +1,23 @@
+{
+  "attempt": 2,
+  "category": "score",
+  "completed_at": "2026-08-26T06:05:39.542822+00:00",
+  "concept_name": "oasis",
+  "dependencies": [
+    "age",
+    "first_day_gcs",
+    "first_day_urine_output",
+    "first_day_vitalsign",
+    "ventilation"
+  ],
+  "divergence_decided_by": "human",
+  "divergence_justification": "Upstream ETL omission, not a port defect: mimic-fhir/sql/fhir_encounter.sql:45-57 ranks mimiciv_hosp.services by transfertime and retains only row_num=1, carries that single service at :71,83-84, and writes it as one Encounter.serviceType coding at :142-147; transfertime is never serialized. mimiciv_hosp.services is read in exactly one other place in all of mimic-fhir (codesystem/cs-services.sql:11), which builds the mimic-services CodeSystem from SELECT DISTINCT and carries no hadm_id. Canonical oasis.sql:32-43 needs MAX(surgical) over EVERY service with transfertime < intime + 1 day, so the served data supplies one term of the aggregate and cannot supply the predicate. Encounter.location is transfers.careunit (fhir_encounter.sql:7-26,171), a ward history not a service history; Encounter.type is HCPCS (:27-43,123-134); ICU Encounter writes no serviceType; resource ids are opaque. Encounter.serviceType is 0..1 in R4 (build is R4 -- :153 writes hospitalization), so no query over served FHIR can recover the later service. Explains all 54 differing_conflict rows of 73,181 (0.0738%; 73,127 identical, 99.9262%), confined to electivesurgery, electivesurgery_score, oasis, oasis_prob across 51 admissions, diagnostician source-side accounting complete 54/54. Overriding the judge's essential-loss finding: per LOOP_CONTRACT.md:481-491 the test is what the absence reaches, not clinical importance -- row inclusion unchanged (73,181=73,181, 0 only_oracle, 0 only_candidate), grain unchanged (1:1 on stay_id), grouping unchanged (port surgflag is the canonical MAX over the services served), no temporal carry-forward (one row per stay), no contamination (other 21 columns exact on all rows including the 54). Repairable upstream: a mimic-fhir service-history extension mirroring transfer_locations closes all 54. Argument recorded in human_override/oasis.md.",
+  "engineering_counter": 2,
+  "error_message": null,
+  "hpc_counter": 2,
+  "reopen_history": [],
+  "semantic_counter": 3,
+  "started_at": "2026-08-26T03:39:42.112889+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-26T06:05:39.543259+00:00"
+}

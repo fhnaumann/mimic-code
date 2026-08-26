@@ -39,6 +39,50 @@ and never cite one as evidence for a verdict.
 
 ---
 
+## READ FIRST — three upstream defects were FIXED on 2026-08-21; entries below may be historical
+
+Three of the defects this file documents as properties of the served data have
+been **repaired in `mimic-fhir` and the warehouses rebuilt**. Several entries
+below were written while they were live, and they are kept — the artifacts of
+every attempt up to 2026-08-24 argue from them, and a reader of those artifacts
+needs to know what was true when they were written. But **do not port against
+them**: check this table first.
+
+| defect | fixed by | what changed | entries now historical |
+|---|---|---|---|
+| DST spring-forward wall times normalised +1h by a `TIMESTAMPTZ` cast | `ade10fb` (upstream #124) | the FHIR tables are now generated under **UTC**, which has no DST in any year, so the cast is an identity on the wall clock. The cast statements are still in the ETL — their line citations still resolve — but they no longer move a timestamp. | "FHIR datetimes carry an offset" (the **DST-gap** half only), "Labevents DST normalization can change dependent time-window aggregates" |
+| `Patient.birthDate` synthesised from `MIN(transfers.intime)` | `3048c88` (upstream #126, #117) | `birthDate` is now `MAKE_DATE(anchor_year, 1, 1) - anchor_age`, taken from the `patients` row itself. Same element, same path, correct value, and better coverage: the old `INNER JOIN transfers` left ED-only patients with no `birthDate` at all. | "`Patient.birthDate` is NOT `anchor_year - anchor_age`" |
+| `chartevents.value` discarded whenever `valuenum` was set | `e7c326b` (upstream #125) | the source text is now carried in `Observation.component`, coded with the same `mimic-chartevents-d-items` coding as `Observation.code`, wherever the text is not the number restated. `No Response` and `No Response-ETT` are distinguishable again. | "Categorical chartevents store their label in valueString" (extends it rather than replacing it) |
+
+**Not fixed, still true.** `inputevents.linkorderid` / `orderid` are still only
+inside the opaque `MedicationAdministration` UUID; the hospital `poe`/`poe_detail`
+branch is still absent; `inputevents.starttime` is still dropped for non-rate
+administrations (`fhir_medication_administration_icu.sql:61-69`); ICU
+`MedicationAdministration` Quantity values are still served at decimal scale
+six — and that one is **not an upstream defect at all**, it is Pathling's
+encoder, so no `mimic-fhir` fix or rebuild will ever clear it (see "Pathling
+encodes every FHIR decimal as `DECIMAL(32,6)`"). Do not read this section as
+"upstream is clean now".
+
+**What this means for a port.** The fixes to the first two change *values at
+paths a port already selects*, so the same SQL simply reproduces more rows — no
+re-mapping, and `mimic_utils replay` exists to re-measure those concepts without
+re-authoring them. The third **adds an element**, so a port written against its
+absence is now incomplete and must be re-authored; `replay` refuses those
+concepts by name rather than letting a false unrepresentability declaration
+through a second time.
+
+- Affected: everything time-keyed, everything age-derived, and every numeric
+  chartevents concept whose source `value` carried a distinct meaning.
+- Verified: `demographics/age` attempt_0004 — the **same** `concept.sql` as
+  attempt_0003, byte-identical, re-run against the rebuilt full warehouse.
+  Conflicts went 504 → **0** (460 `age` + 44 `admittime` all cleared),
+  `only_oracle` and `only_candidate` stayed 0, `representable_fraction` went
+  0.998831 → **1.000000**, and the tier dropped `contested` → `gap_shaped` with
+  only the two declared `anchor_*` typed NULLs left. That is one artifact
+  confirming both the birthDate and the DST fix, on full data, with the query
+  held constant.
+
 ## Extensions are not a column — use `extension(url)` in FHIRPath
 
 Pathling's encoders do not expose an `extension` column on the resource
@@ -102,11 +146,27 @@ codes/systems: e.g. `Condition.code` was re-coded from the proprietary
   the served view matches `%icd-10-cm` (liu's `condition.json`). Always probe via
   the executor (Spark over delta) or code-search — never the ndjson.
 
-## `Patient.birthDate` is NOT `anchor_year - anchor_age` — it is `MIN(transfers.intime) - anchor_age`
+## HISTORICAL (fixed 2026-08-21) — `Patient.birthDate` was `MIN(transfers.intime) - anchor_age`
 
-**The demo-validated assumption that `birthDate.year == anchor_year - anchor_age`
-does NOT hold on full data.** The upstream ETL synthesises `birthDate` from the
-patient's earliest transfer time, not from the anchor pair:
+**FIXED UPSTREAM.** `mimic-fhir` `3048c88` (upstream #126, #117) re-anchors
+`birthDate` to `MAKE_DATE(anchor_year, 1, 1) - anchor_age`, read from the
+`patients` row, and drops the `transfers` join entirely. Anchoring to Jan 1 is
+deliberate: it reproduces the canonical
+`anchor_age + DATETIME_DIFF(admittime, DATETIME(anchor_year,1,1), YEAR)`
+exactly, and it makes the calendar-year and anniversary age computations agree,
+which they do not for an arbitrary month and day. So `age` is now **exactly**
+derivable from `birthDate`, and the 460-row conflict below is gone — confirmed
+on full data by `age` attempt_0004 (see "READ FIRST" above).
+
+What did **not** change: `birthDate` is still a single date, so the
+`(anchor_age, anchor_year)` pair is still collapsed and neither member is
+individually recoverable. A port must still emit typed NULLs for them, and
+`anchor_year_group` is still not representable. The rest of this entry is the
+record of the old behaviour, kept because every artifact written before
+2026-08-24 argues from it.
+
+The upstream ETL used to synthesise `birthDate` from the patient's earliest
+transfer time, not from the anchor pair:
 `mimic-fhir/sql/fhir_patient.sql:15` is
 `CAST(CAST(MIN(tfs.intime) AS DATE) - CAST(pat.anchor_age || 'years' AS INTERVAL) AS DATE)`.
 
@@ -461,8 +521,21 @@ different answers on the two engines.
   (`papers/liu-2022-lar-pancreatitis/NOTES.md`), which recorded the parse
   requirement but not the timezone conversion.
 
-**DST-gap timestamps are irreversibly shifted +1 hour.** The upstream ETL
-casts naive MIMIC `admittime` through `TIMESTAMPTZ` (`mimic-fhir/sql/fhir_encounter.sql:65`),
+**DST-gap timestamps WERE irreversibly shifted +1 hour — FIXED 2026-08-21.**
+`mimic-fhir` `ade10fb` (upstream #124) generates the FHIR tables under UTC, and
+UTC has no DST in any year, so there is no gap for a wall time to be normalised
+into. The `TIMESTAMPTZ` casts are still in the ETL and every line citation below
+still resolves — but on the rebuilt warehouses they no longer move a timestamp,
+and a port that reproduces a shifted value now has a bug rather than an
+attributed divergence. The rest of this entry, and the propagation analysis
+under it, is the record of the old behaviour: it is what the pre-2026-08-24
+artifacts argue from, and it is still the right analysis of *how* a moved wall
+time damages a concept, should the pin ever come off. The cast advice above —
+`TIMESTAMP_NTZ`, never `TIMESTAMP` — is unaffected and still mandatory: the
+offsets are still in the served strings.
+
+Historically: the upstream ETL
+cast naive MIMIC `admittime` through `TIMESTAMPTZ` (`mimic-fhir/sql/fhir_encounter.sql:65`),
 and a wall-clock time that falls in the DST spring-forward gap (e.g. the
 nonexistent 02:10 on a March Sunday) is normalised to 03:10 before it is
 written to `Encounter.period.start`. The original 02:10 cannot be recovered — a
@@ -613,8 +686,28 @@ CodeableConcept. E.g. O2 Delivery Device (`226732`) values are strings —
 Project `value.ofType(string)` and match the text; `value.ofType(CodeableConcept)`
 returns nothing.
 
-- Affected: categorical `mimic-observation-chartevents` items.
-- Verified: lin-2025 `tmp/probe_data2.py` (226732 value_cc empty; value_str populated).
+**Since 2026-08-21 a numeric row can carry its label too.** `e7c326b` (upstream
+#125) added `Observation.component` for rows where `valuenum` **is** set and the
+source `value` text is not the number restated — coded with the same
+`mimic-chartevents-d-items` coding as `Observation.code`, value in
+`component.valueString`. So the rule is now: `value.ofType(string)` for rows
+with no `valuenum`, and
+`component.where(code.coding.code = '<itemid>').valueString` for numeric rows
+whose text meant something else. That is what makes `No Response` and
+`No Response-ETT` (both `valuenum` 1 under itemid `223900`) distinguishable, and
+what unblocks the ventilator mode/type text under `223849`/`223848`/`229314`.
+The component is deliberately absent where the text is just the number as a
+string, so treat it as `forEachOrNull` and expect it on a minority of rows.
+
+- Affected: categorical `mimic-observation-chartevents` items; and, since
+  2026-08-21, numeric chartevents whose source `value` carried a distinct
+  meaning.
+- Verified: lin-2025 `tmp/probe_data2.py` (226732 value_cc empty; value_str
+  populated). The component branch is read from the ETL source
+  (`mimic-fhir/sql/fhir_observation_chartevents.sql:97-113`, guarded by the
+  numeric-pattern `CASE` at `:99-101`) and has **not** yet been probed against
+  the rebuilt warehouse — the first port that needs it should confirm it and
+  record the count here.
 
 ## ICU body temperature is split across Fahrenheit and Celsius chartevents
 
@@ -816,7 +909,13 @@ source row. `micro_org` and `micro_susc` additionally drop rows where
   raw row counts do not. `fhir_observation_micro_org.sql:11,32,91-96`,
   `…_micro_susc.sql:7,40,67-72`, `…_micro_test.sql:11,124-129`.
 
-## Labevents DST normalization can change dependent time-window aggregates
+## HISTORICAL (fixed 2026-08-21) — labevents DST normalization changed dependent time-window aggregates
+
+**FIXED UPSTREAM** by `ade10fb` (upstream #124) — see "READ FIRST" above. The
+second-order mechanism recorded here (an anchor moves, and rows that were
+outside a window fall inside it) is the general shape of what a shifted
+timestamp does to a windowed concept, and worth keeping for that. It no longer
+describes the served data.
 
 - Affected: `Observation.effectiveDateTime` from labevents,
   `Specimen.collection.collectedDateTime`, and dependent concepts that window
@@ -860,3 +959,93 @@ discarded low-order source precision is not retained in another FHIR element.
   and `:14,91-99`; endpoint-aligned amount and rate values remained within the
   comparator tolerance, while the original low-order precision was not
   recoverable by any FHIR query.
+- Attribution corrected 2026-08-26: the six-decimal cap is **Pathling's encoder**,
+  not those ETL statements — see "Pathling encodes every FHIR decimal as
+  `DECIMAL(32,6)`" below. The observed loss stands; only its cause was misplaced.
+  This matters because no `mimic-fhir` patch can lift it.
+
+## Pathling encodes every FHIR decimal as `DECIMAL(32,6)`
+
+Not a MIMIC fact — a Pathling encoder fact, recorded here because it is what
+actually caps served numeric precision across the whole warehouse. Any FHIR
+`decimal` (`Quantity.value`, `Ratio` numerator/denominator, …) materializes as
+`DECIMAL(32,6)`. Source values are **rounded to six decimal places at encode
+time** and the discarded digits are gone; the cap is a fixed encoder constant,
+so it cannot be lifted by changing `mimic-fhir` SQL or rebuilding the warehouse.
+
+Two companion fields sit beside every decimal and neither recovers it:
+
+- `<field>_scale INTEGER` — the *stored* scale, not the source scale. It is `6`
+  on every row that has a value.
+- `<field>._value_canonicalized STRUCT(value DECIMAL(38,0), scale INTEGER)` plus
+  `_code_canonicalized` — the UCUM-canonical form, at much higher scale, but
+  computed **from the already-truncated value** and populated only where the
+  unit code parses as UCUM. The mimic-units codes mostly do not.
+
+The practical consequence is threshold comparisons. `mimiciv_icu.inputevents.rate`
+is `FLOAT` (float32, ~7 significant digits), so a source rate can sit a few
+times 10⁻⁷ off a clinical cut-point purely as float32 representation noise, and
+six-decimal rounding then lands it *on* the cut-point. Canonical SQL comparing
+`> 0.1` or `> 5` flips branch. No cast, tolerance, or literal typing on the port
+side recovers the side of the threshold — the discriminating digit is not served.
+
+- Affected: every FHIR `decimal` in the Delta warehouse. Bites hardest on
+  `MedicationAdministration.dosage.rateQuantity.value` for `mcg/kg/min`
+  vasopressor rates, which never canonicalize.
+- Verified: 2026-08-26 direct schema + data probe of the rebuilt demo warehouse
+  `~/warehouses/mimic-iv-demo/delta/MedicationAdministration.parquet` —
+  `rateQuantity` is `STRUCT(value DECIMAL(32,6), value_scale INTEGER, …,
+  _value_canonicalized STRUCT(value DECIMAL(38,0), scale INTEGER),
+  _code_canonicalized VARCHAR)`; `max(value_scale) = 6` on all 11,038 rate rows;
+  `_value_canonicalized` is non-NULL on 93/93 `mg/min` rows and **0/2,585**
+  `mcg/kg/min` rows. Consequence measured by full-data `first_day_sofa`
+  attempt_0002: 24/73,181 stays diverge on `cardiovascular` and `sofa`, 20 with
+  a norepinephrine max in `(0.1, 0.1000005]` served as `0.100000` and 4 with a
+  dopamine max of `5.0000004768371582` — exactly 5.0 plus one float32 ULP —
+  served as `5.000000`. Accepted by human override; the run is the worked example.
+- Counts corrected 2026-08-26, later the same day: this entry first read 44,152
+  rate rows, 0/10,340 `mcg/kg/min` and 372/372 `mg/min`. Those came from a
+  `read_parquet('…/**/*.parquet')` glob, which reads **every Delta file version**
+  rather than the current snapshot, and were uniformly 4× too high (226,140 rows /
+  4 = 56,535 `MedicationAdministration` resources). An independent census of
+  `MimicMedicationAdministrationICU.ndjson.zst` found 11,038 `rateQuantity`
+  values, matching the corrected figure exactly. No conclusion changes; zero is
+  still zero. **When probing this warehouse, read the Delta snapshot, not the
+  file glob.** The inflated numbers survive verbatim in the immutable
+  `state.json` justifications of `first_day_sofa` and `sofa`; both
+  `human_override/` entries note it.
+- The NDJSON reaches Pathling with the precision intact — it is not lost earlier.
+  Census of the same demo file: 8,826 of 11,038 rate values (80.0%) carry more
+  than six fractional digits in the raw JSON text, up to 18. One resource end to
+  end: `72aff2c0-d201-54c9-b5d3-400774303963`, NDJSON
+  `"value": 4.0460004806518555` (scale 16) → Delta `4.046000`, `value_scale` 6.
+- The cap is `val scale: Int = 6` / `val precision: Int = 32` in the companion
+  object of `au.csiro.pathling.encoders.datatypes.DecimalCustomCoder`
+  (`DecimalCustomCoder.scala:131-133`) — a compile-time constant with no accessor,
+  no `PathlingContext.create` option and no Spark conf. **Not a missed
+  configuration in `step1_ndjson_to_delta.py`**; that script had no lever. The
+  documented behaviour matches (`site/docs/libraries/io/schema.md:111-112`).
+- **`_scale` is a documented `SHALL` the encoder does not honour.**
+  `site/docs/libraries/io/schema.md:114-116` says the `_scale` field "SHALL be
+  used to store the scale of the decimal value from the original FHIR data";
+  `DecimalCustomCoder.scala:96-103` writes `min(6, source_scale)`. So the
+  truncation is not merely lossy but *silent* — no served signal distinguishes a
+  source that said `0.10000000894069672` from one that said `0.100000`. This is
+  the one filable upstream defect in this class; the argued form, with a fix that
+  preserves round-trip behaviour, is in `human_override/first_day_sofa.md:§5`.
+
+## Current served Condition.code systems are proprietary MIMIC diagnosis systems
+
+The current authoritative Delta warehouse serves hospital-linked diagnosis
+codings under the proprietary MIMIC ICD systems, not the standard ICD URI
+systems described by the older entry above. Ports must discriminate using the
+served `system` plus the exact source code; no terminology translation is
+needed.
+
+- Affected: `Condition.code.coding.system` and ICD-9/ICD-10 diagnosis filters.
+- Verified: `sapsii` attempt_0001 first probed the current Delta and matched
+  4,506/4,506 hospital-linked diagnosis tuples, then the full-data comparison
+  matched all 73,181/73,181 SAPS-II rows. The probe found 2,193 hospital ICD-9
+  codings under `http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd9`
+  and 2,313 ICD-10 codings under
+  `http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd10`.

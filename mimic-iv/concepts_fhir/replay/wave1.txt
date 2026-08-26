@@ -1,0 +1,15 @@
+charlson
+creatinine_baseline
+first_day_bg
+first_day_bg_art
+first_day_height
+first_day_lab
+first_day_rrt
+first_day_urine_output
+first_day_vitalsign
+first_day_weight
+icustay_hourly
+kdigo_uo
+suspicion_of_infection
+urine_output_rate
+vasoactive_agent

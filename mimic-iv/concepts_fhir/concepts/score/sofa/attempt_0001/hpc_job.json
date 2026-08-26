@@ -1,0 +1,8 @@
+{
+  "concept": "sofa",
+  "host": "nau025@petrichor.hpc.csiro.au",
+  "job_id": "30534326",
+  "remote_attempt": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/score/sofa/attempt_0001",
+  "submitted_at": "2026-08-26T01:19:22.998856+00:00",
+  "walltime": "2:00:00"
+}

@@ -1,0 +1,28 @@
+{
+  "attempt": 2,
+  "category": "firstday",
+  "completed_at": "2026-08-26T00:36:43.381677+00:00",
+  "concept_name": "first_day_sofa",
+  "dependencies": [
+    "bg",
+    "dobutamine",
+    "dopamine",
+    "epinephrine",
+    "first_day_gcs",
+    "first_day_lab",
+    "first_day_urine_output",
+    "first_day_vitalsign",
+    "norepinephrine",
+    "ventilation"
+  ],
+  "divergence_decided_by": "human",
+  "divergence_justification": "Six-decimal Quantity truncation is Pathling's encoder, not the mimic-fhir ETL: MedicationAdministration.dosage.rateQuantity is materialized as STRUCT(value DECIMAL(32,6), value_scale INTEGER, _value_canonicalized STRUCT(value DECIMAL(38,0), scale INTEGER), _code_canonicalized VARCHAR). Pathling rounds every FHIR decimal to scale six at encode time; the cap is a fixed encoder constant, so no mimic-fhir patch or warehouse rebuild can lift it, and fhir_medication_administration_icu.sql:94 (cited by the judge) only writes ie.rate into JSONB. Neither companion field recovers the digits: value_scale is 6 on all 44,152 demo rate rows, and _value_canonicalized is computed from the already-truncated value and is non-NULL on 0/10,340 mcg/kg/min rows (372/372 for mg/min). dose.value carries the same DECIMAL(32,6), and inputevents.patientweight is not served, so amount/effectivePeriod cannot reconstruct a per-kg rate. The loss is therefore intrinsic and irreversible. It is accepted as non-essential because what is discarded is float32 representation noise, not a clinical distinction: mimiciv_icu.inputevents.rate is FLOAT (float32, ~7 significant digits), and all 24 of 73,181 divergent stays (0.0328%) sit within 5e-7 of a SOFA cardiovascular cut-point. Twenty have a norepinephrine max in (0.1, 0.1000005] served as 0.100000; four have a dopamine max of 5.0000004768371582, which is exactly 5.0 plus one float32 ULP, served as 5.000000 -- the served value is arguably the more correct one. Affected stays differ by exactly one point on cardiovascular and sofa; zero row-presence and zero null-only differences; schema and row count match at 73,181. Attempt 0001 (> 0.1) recorded 22 conflicts and attempt 0002 (> CAST(0.1 AS FLOAT)) 24, right on the 20 and wrong on 18 others and vice versa, which demonstrates that no port-side cast, literal typing, or tolerance recovers the side of the threshold. Unlike the gcs worked example, one clinical state is at stake here, not two collapsed ones. Nothing depends on first_day_sofa. Overriding the equivalence judge on the essential-loss test only; its factual findings are confirmed.",
+  "engineering_counter": 2,
+  "error_message": null,
+  "hpc_counter": 2,
+  "reopen_history": [],
+  "semantic_counter": 3,
+  "started_at": "2026-08-25T10:48:51.457018+00:00",
+  "status": "COMPLETED_WITH_DIVERGENCE",
+  "updated_at": "2026-08-26T00:36:43.381975+00:00"
+}

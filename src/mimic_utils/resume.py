@@ -51,6 +51,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Union
 
 from .conversion_state import ConversionController, StateError
+from .replay import read_provenance
 
 __all__ = [
     "CARRYOVER_STAGES",
@@ -300,6 +301,12 @@ class ResumePlan:
     #: instruction set for the attempt about to be authored -- not history.
     reopen_reason: Optional[str] = None
     reopen_count: int = 0
+    #: Set when the newest attempt carries ``replay_provenance.json``: the port
+    #: was carried forward byte-identical to measure an upstream fix, so the
+    #: reopen reason is NOT a defect to fix and no stage may author SQL. Printed
+    #: instead of the ``REOPENED`` block, because that block's instruction --
+    #: "hand this to the implementer" -- is exactly wrong here.
+    replay: Optional[Dict[str, Any]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -318,6 +325,7 @@ class ResumePlan:
             "new_attempt_dir": str(self.new_attempt_dir) if self.new_attempt_dir else None,
             "reopen_reason": self.reopen_reason,
             "reopen_count": self.reopen_count,
+            "replay": self.replay,
         }
 
     def format(self) -> str:
@@ -332,11 +340,60 @@ class ResumePlan:
             lines.append(f"  latest attempt: {self.attempt_dir}")
         if self.transitions:
             lines.append(f"  transitions:   {' -> '.join(self.transitions)}")
-        if self.fresh_stages:
-            lines.append(f"  reuse (skip):  {', '.join(self.fresh_stages)}")
-        if self.stale_stages:
-            lines.append(f"  must re-run:   {', '.join(self.stale_stages)}")
-        if self.reopen_reason:
+        if self.replay:
+            # Deliberately NOT the fresh/stale carryover lines. Those answer
+            # "which analysis does the implementer need", and on a replay there
+            # is no implementer -- printing "must re-run: fhir-prober" would
+            # invite a re-mapping of a port that must not change.
+            lines.append("  analysis:      SKIP (no stage authors anything here)")
+            lines.append("  implementer:   SKIP -- the port is already in this attempt")
+        else:
+            if self.fresh_stages:
+                lines.append(f"  reuse (skip):  {', '.join(self.fresh_stages)}")
+            if self.stale_stages:
+                lines.append(f"  must re-run:   {', '.join(self.stale_stages)}")
+        if self.replay:
+            # Printed in place of the REOPENED block. Same prominence, opposite
+            # instruction: that block exists to get a defect fixed, this one
+            # exists to stop the SQL being touched at all.
+            carried = ", ".join(c.get("name", "?") for c in self.replay.get("carried") or [])
+            lines.append("")
+            lines.append(
+                f"  REPLAY (data rebuild) -- carried forward from "
+                f"{self.replay.get('source_attempt', '?')}:"
+            )
+            lines.append(f"      {carried or '-'}")
+            lines.append("")
+            if self.replay.get("reason"):
+                for line in textwrap.wrap(str(self.replay["reason"]), width=76):
+                    lines.append(f"      {line}")
+                lines.append("")
+            lines.append(
+                "  This attempt's SQL and ViewDefinitions were NOT authored for it. Do"
+            )
+            lines.append(
+                "  NOT spawn the source-analyst, the fhir-prober or the "
+                "concept-implementer,"
+            )
+            lines.append(
+                "  and do not edit the carried files. Only the served data changed, and"
+            )
+            lines.append(
+                "  holding the query byte-identical is what makes this a measurement of"
+            )
+            lines.append("  the upstream fix rather than a comparison of two queries.")
+            for fix in self.replay.get("fixes_measured") or []:
+                lines.append("")
+                for line in textwrap.wrap(
+                    f"measuring: {fix.get('id')} -- fixed by {fix.get('fixed_by')}", width=76
+                ):
+                    lines.append(f"      {line}")
+            for warning in self.replay.get("warnings") or []:
+                lines.append("")
+                for line in textwrap.wrap(f"WARNING: {warning}", width=76):
+                    lines.append(f"      {line}")
+            lines.append("")
+        elif self.reopen_reason:
             # Printed loudly and last-but-one because it is the one thing on this
             # plan that the implementer must act on. It used to live only in
             # state.json: crrt's first reopen said "replace every datetime
@@ -439,6 +496,10 @@ def resume_plan(
     reopen_history = list(state.reopen_history or [])
     reopen_reason = reopen_history[-1].get("reason") if reopen_history else None
 
+    # A replayed attempt is a reopen too, so without this it would print the
+    # defect block and send a byte-identical port back to the implementer.
+    replay_provenance = read_provenance(attempt_dir)
+
     def plan(action: str, phase: Optional[str], reason: str, transitions: Sequence[str] = ()) -> ResumePlan:
         return ResumePlan(
             concept=concept,
@@ -453,6 +514,7 @@ def resume_plan(
             stale_stages=stale,
             reopen_reason=reopen_reason,
             reopen_count=len(reopen_history),
+            replay=replay_provenance,
         )
 
     status = state.status

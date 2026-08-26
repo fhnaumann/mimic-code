@@ -1,0 +1,120 @@
+{
+  "attempt_dir": "/scratch3/nau025/mimic-code/mimic-iv/concepts_fhir/concepts/measurement/vitalsign/attempt_0003",
+  "column_types": {
+    "charttime": "timestamp_ntz",
+    "dbp": "double",
+    "dbp_ni": "double",
+    "glucose": "double",
+    "heart_rate": "double",
+    "icu_encounter_key": "string",
+    "mbp": "double",
+    "mbp_ni": "double",
+    "patient_key": "string",
+    "resp_rate": "double",
+    "sbp": "double",
+    "sbp_ni": "double",
+    "spo2": "double",
+    "stay_id": "int",
+    "subject_id": "int",
+    "temperature": "decimal(38,2)",
+    "temperature_site": "string"
+  },
+  "columns": [
+    "subject_id",
+    "stay_id",
+    "charttime",
+    "heart_rate",
+    "sbp",
+    "dbp",
+    "mbp",
+    "sbp_ni",
+    "dbp_ni",
+    "mbp_ni",
+    "resp_rate",
+    "temperature",
+    "temperature_site",
+    "spo2",
+    "glucose",
+    "patient_key",
+    "icu_encounter_key"
+  ],
+  "concept": "vitalsign",
+  "dataset": "full",
+  "divergence": {
+    "attributed": [],
+    "blocking": [],
+    "classification": "keyed",
+    "conflict_attribution": null,
+    "contested": [],
+    "declared_unrepresentable": {},
+    "diagnostician_required": false,
+    "gap_shaped": [
+      {
+        "class": "only_oracle",
+        "count": 1,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "identical_fraction": 1.0,
+    "identical_rows": 9745499,
+    "judge_bar": "Cite the FHIR element or path that does not exist in the MIMIC-on-FHIR IG, show it explains the magnitude and shape of the divergence, and confirm every defensible mapping was tried.",
+    "judge_required": true,
+    "key_attribution": {
+      "attempted": true,
+      "attributed_only_candidate": 0,
+      "attributed_only_oracle": 0,
+      "attributed_only_oracle_collided": 0,
+      "attributed_only_oracle_repaired": 0,
+      "cause": "upstream_timestamptz_dst_shift",
+      "citations": [
+        "mimic-fhir/sql/fhir_observation_chartevents.sql:9,67",
+        "mimic-fhir/sql/fhir_observation_labevents.sql:15,121",
+        "mimic-fhir/sql/fhir_observation_outputevents.sql:9,60,62-65",
+        "mimic-fhir/sql/fhir_specimen_lab.sql:18,58",
+        "mimic-fhir/sql/fhir_encounter.sql:65",
+        "mimic-fhir/sql/fhir_medication_request.sql:43-44",
+        "mimic-fhir/sql/fhir_medication_administration_icu.sql:8-9,61-69"
+      ],
+      "complete": false,
+      "keys_considered": [
+        "charttime"
+      ],
+      "only_candidate": 0,
+      "only_oracle": 1,
+      "operation": "For every unpaired row, the oracle key round-tripped through a America/New_York TIMESTAMPTZ cast matches an unpaired candidate key, and differs from the oracle key itself -- i.e. the oracle wall time falls in the DST spring-forward gap and the shift moved the row out of its key rather than out of a value. Checked by semi-join over both unpaired sets in full, not sampled.",
+      "residual_only_candidate": 0,
+      "residual_only_oracle": 1,
+      "timezone": "America/New_York"
+    },
+    "notes": [],
+    "oracle_rows": 9745500,
+    "policy": "Row count is not a hard gate. `mismatch` is reserved for machine-provable contradictions (schema, execution, a declaration the data refutes) and the judge is not called. Everything else is `review`: tier `gap_shaped` needs a named absent FHIR element; tier `contested` carries a value conflict, which an absence cannot explain, and needs the upstream ETL statement that rewrote the value; tier `attributed` carries a conflict the comparator has already replayed to an upstream ETL cast over every conflicting row, so the judge confirms provenance and fraction rather than re-deriving the cause. A conflict is NOT presumed to be a bug and is NOT presumed to be intrinsic -- the judge decides which, and the judge is called on EVERY `review` including `attributed`.",
+    "reviewable": [
+      {
+        "class": "only_oracle",
+        "count": 1,
+        "why": "oracle rows the candidate never produced; this is the shape a legitimate MIMIC-on-FHIR coverage gap takes"
+      }
+    ],
+    "tier": "gap_shaped",
+    "unresolvable": [],
+    "verdict": "review"
+  },
+  "engine": "pathling-embedded",
+  "format_version": "1.0",
+  "generated_at": "2026-08-25T01:19:01.713620+00:00",
+  "oracle": "/scratch3/nau025/oracle/mimic4-full.db",
+  "oracle_row_count": 9745500,
+  "row_count": 9745499,
+  "timings_seconds": {
+    "compare": 5.506,
+    "execute": 107.115
+  },
+  "verdict": "review",
+  "view_labels": [
+    "vitalsign_icu_encounter",
+    "vitalsign_observation",
+    "vitalsign_patient"
+  ],
+  "warehouse": "/scratch3/nau025/mimic-on-fhir-delta/spark_warehouse"
+}

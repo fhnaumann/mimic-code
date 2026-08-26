@@ -59,6 +59,7 @@ from mimic_utils.duckdb_oracle import (
     resolve_duckdb_path,
 )
 from mimic_utils.export_mappings import export_mappings
+from mimic_utils.replay import check_replay, replay
 from mimic_utils.resume import (
     CARRYOVER_STAGES,
     CarryoverStore,
@@ -169,6 +170,59 @@ def cmd_reopen(
         f"  NOTE: metrics for this run are scoped to attempts > "
         f"{st.run_baseline['attempt']}; the previous run's artifact stands."
     ), 0
+
+
+def cmd_replay(
+    concept: str,
+    *,
+    reason: Optional[str] = None,
+    decided_by: str = "human",
+    artifact_root: Optional[str] = None,
+    force: bool = False,
+    check_only: bool = False,
+    as_json: bool = False,
+) -> tuple[str, int]:
+    """Reopen a finished port and carry its SQL forward unchanged.
+
+    ``--check`` is the read-only half and is what a wave should run first: every
+    refusal it reports costs nothing, while the same refusal discovered after the
+    reopen has already spent the verdict.
+    """
+    ctrl = ConversionController(artifact_root=artifact_root)
+    if check_only:
+        check = check_replay(concept, controller=ctrl)
+        if as_json:
+            import json as _json
+
+            return _json.dumps(check.to_dict(), indent=2, sort_keys=True), (
+                0 if check.replayable else 5
+            )
+        return check.format(), (0 if check.replayable else 5)
+
+    _refuse_if_live(ctrl, concept, force=force, action="replay")
+    if not (reason or "").strip():
+        return (
+            "ERROR: replay requires --reason: which upstream fix is being "
+            "measured, and against which rebuilt warehouse."
+        ), 4
+    result = replay(concept, reason=reason, decided_by=decided_by, controller=ctrl)
+    if as_json:
+        import json as _json
+
+        return _json.dumps(
+            {
+                "concept": result.concept,
+                "attempt": result.attempt,
+                "attempt_dir": str(result.attempt_dir),
+                "source_attempt_dir": str(result.source_attempt_dir),
+                "carried": result.carried,
+                "cleared": result.cleared,
+                "warnings": result.warnings,
+            },
+            indent=2,
+            sort_keys=True,
+        ), 0
+    return result.format(), 0
 
 
 def cmd_transition(
@@ -391,6 +445,24 @@ def _h_reopen(
     msg, code = _safe_run(
         cmd_reopen, concept, reason=reason, decided_by=by,
         artifact_root=artifact_root, force=force,
+    )
+    print(msg)
+    return code
+
+
+def _h_replay(
+    concept: str,
+    reason: Optional[str] = None,
+    by: str = "human",
+    artifact_root: Optional[str] = None,
+    force: bool = False,
+    check: bool = False,
+    json: bool = False,
+) -> _Ec:
+    msg, code = _safe_run(
+        cmd_replay, concept, reason=reason, decided_by=by,
+        artifact_root=artifact_root, force=force, check_only=check,
+        as_json=json,
     )
     print(msg)
     return code
@@ -782,6 +854,47 @@ def register_commands(subparsers: _SubParsersAction) -> None:
     )
     p.add_argument("--artifact-root", **ar)
     p.set_defaults(func=_h_reopen)
+
+    # --- replay ---------------------------------------------------------------
+    # Separate from `reopen` because the two answer different questions and
+    # `resume` gives them opposite instructions. `reopen` says "the SQL this port
+    # shipped is defective, author a new one"; `replay` says "the SQL is fine,
+    # the data under it was rebuilt, do not touch it". Collapsing them into one
+    # verb with a flag would put the whole distinction in prose, and prose has
+    # already failed at this once -- see `sql_lint`.
+    p = subparsers.add_parser(
+        "replay",
+        help="Reopen a finished port and carry its concept.sql and "
+             "ViewDefinitions forward byte-identical, to measure an upstream "
+             "fix. No analysis, no implementer; re-enter at the demo gate.",
+    )
+    p.add_argument("concept")
+    p.add_argument(
+        "--reason", default=None,
+        help="Which upstream fix is being measured and against which rebuilt "
+             "warehouse. Recorded in reopen_history behind a "
+             "'[replay:data_rebuild]' marker so a reader -- and `resume` -- can "
+             "tell it from a defect reopen without parsing prose.",
+    )
+    p.add_argument(
+        "--by", default="human", choices=["human"],
+        help="Only a human sets aside a recorded verdict. A replay is a cheaper "
+             "reopen, not a weaker one.",
+    )
+    p.add_argument(
+        "--check", action="store_true",
+        help="Report whether the concept is replayable and what would be "
+             "carried, and change nothing. Exit 5 if it is not replayable. Run "
+             "this over a whole wave first: a refusal found after the reopen has "
+             "already spent the verdict.",
+    )
+    p.add_argument(
+        "--force", action="store_true",
+        help="Proceed even though the concept still looks live.",
+    )
+    p.add_argument("--json", action="store_true")
+    p.add_argument("--artifact-root", **ar)
+    p.set_defaults(func=_h_replay)
 
     # --- cast-probe -----------------------------------------------------------
     p = subparsers.add_parser(

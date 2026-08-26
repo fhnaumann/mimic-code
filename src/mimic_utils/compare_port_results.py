@@ -91,8 +91,19 @@ verdict and a two-tier ``review``:
         comparator **replayed** it to a known upstream transformation over
         every conflicting row -- see "Attributing a conflict" below.  Still
         ``review``, still judged; what changes is that the citation the
-        ``contested`` bar demands is already in the artifact, so there is
-        nothing for a diagnosis to derive.
+        ``contested`` bar demands is already in the artifact.
+
+        **Revised 2026-08-24: this tier no longer skips the diagnosis.**  The
+        cast it attributes to was fixed upstream (``mimic-fhir`` ``ade10fb``,
+        upstream #124: the FHIR tables are generated under UTC, which has no
+        DST in any year) and both warehouses were rebuilt.  A replayed shift is
+        therefore no longer the expected background condition it was written
+        for -- it is an anomaly, and "which is it: a build that predates the
+        fix, a path the fix did not reach, or a port bug that happens to look
+        like an hour?" is a question no replay answers.  The accept route stays
+        open, because the fix may genuinely not have reached every path and
+        that divergence would still be intrinsic.  What closes is accepting it
+        without asking.
 
 Attributing a conflict
 ----------------------
@@ -106,8 +117,13 @@ oracle value through ``America/New_York`` reproduces exactly what the ETL wrote.
 So the comparator does that, per row, over the whole conflict set, and a
 conflict set it explains completely moves to tier ``attributed``.  This is
 strictly stronger evidence than a model inferring the same thing from a bounded
-sample -- and much cheaper, since the diagnosis it replaces was 72% of the
-loop's token spend.
+sample.
+
+It used to also *replace* the diagnosis, which was 72% of the loop's token
+spend.  Since 2026-08-24 it does not: the cast was fixed upstream and the
+warehouses rebuilt, so an attributed shift is now an unexpected finding rather
+than a known condition, and the diagnosis it triggers is cheap in exactly the
+case that matters -- if the fix works, this tier stops firing at all.
 
 The same shift can land in the **key**, and then in one of two ways.  It can
 move the row into a key nothing else occupies, where re-keying the unpaired
@@ -139,6 +155,10 @@ Deliberate limits, all of them stated in ``divergence.judge_bar``:
   fraction is not consistent with that rarity.
 * If the zone rules available at comparison time do not reproduce the ETL's, a
   canary catches it and nothing is attributed.
+* It proves the operation happened, not that it *had* to happen.  Since the
+  upstream fix (2026-08-21) the operation should not be reachable on a rebuilt
+  warehouse, so a replay that succeeds is evidence something else is true as
+  well -- and the judge is told to establish what before accepting.
 
 Columns with no FHIR representation
 -----------------------------------
@@ -2413,11 +2433,30 @@ _ATTRIBUTED_BAR = (
     "mimic-fhir transformation: the comparator replayed the ETL's TIMESTAMPTZ "
     "cast over EVERY conflicting row -- not a sample -- and the candidate value "
     "is what that cast produces from the oracle value. So the arithmetic half "
-    "of the `contested` bar is already discharged: the oracle value was "
-    "overwritten before the FHIR resource was written and no query can recover "
-    "it. Do NOT ask the port to fix it, and do NOT ask for the diagnostician's "
-    "citation -- see `divergence.attributed[].citations`.\n"
-    "Two things the replay does NOT establish, and they are yours:\n"
+    "of the `contested` bar is already discharged: on the build that produced "
+    "this candidate, the oracle value was overwritten before the FHIR resource "
+    "was written.\n"
+    "READ THIS FIRST. That cast was FIXED UPSTREAM on 2026-08-21 -- mimic-fhir "
+    "`ade10fb` (upstream #124) generates the FHIR tables under UTC, which has "
+    "no DST in any year, so on a rebuilt warehouse there is no gap for a wall "
+    "time to be normalised into. A replayed shift is therefore no longer the "
+    "expected background condition this tier was written for. You may still "
+    "accept it -- the fix may not have reached every path, and such a "
+    "divergence would still be intrinsic -- but you may NOT accept it merely "
+    "because the replay succeeded. Establish which of these is true, say which, "
+    "and cite what told you:\n"
+    "  (a) the candidate was produced against a build that predates the fix -- "
+    "check `run_meta.full.json` for the warehouse path and the run date;\n"
+    "  (b) the fix did not reach this path -- name the ETL statement and say "
+    "why UTC generation leaves it shifted;\n"
+    "  (c) neither, in which case the shift is not upstream at all and the "
+    "answer is `bug`: a port defect that happens to be an hour wide replays "
+    "identically, which is exactly why the replay alone cannot settle this.\n"
+    "The diagnostician is spawned for this tier again for that reason. Its "
+    "question is narrow -- why did the fix not reach these rows -- not a "
+    "re-derivation of the replay, whose citations are already in "
+    "`divergence.attributed[].citations`.\n"
+    "Two further things the replay does NOT establish, and they are yours:\n"
     "(1) PROVENANCE. The citations are the known sites of that cast, not a "
     "per-column proof. Confirm one of them writes the FHIR element this "
     "column is actually sourced from; if none does, the replay is a "
@@ -2439,23 +2478,32 @@ _ATTRIBUTED_ADDENDUM = (
     "upstream transformation (see `divergence.attributed`), which is why this "
     "result is gap-shaped rather than contested. Rule on the gap on its own "
     "merits, and check the attribution's provenance and fraction as "
-    "`divergence.attributed[].judge_must_confirm` states."
+    "`divergence.attributed[].judge_must_confirm` states -- including WHY the "
+    "shift is present when the cast was fixed upstream on 2026-08-21. Do not "
+    "let the attribution ride along unexamined because the gap is what you came "
+    "to rule on."
 )
 
 #: Handed to the judge on every attributed class, so the obligation travels with
 #: the finding rather than only with the bar.
 _ATTRIBUTED_CONFIRM = (
     "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR "
-    "element this column is sourced from, and (b) that the attributed fraction "
-    "is consistent with DST-gap rarity. Either failing makes this `bug`."
+    "element this column is sourced from, (b) that the attributed fraction "
+    "is consistent with DST-gap rarity, and (c) -- since the cast was fixed "
+    "upstream on 2026-08-21 (ade10fb, #124: FHIR tables generated under UTC) "
+    "-- WHY the shift is present at all: an old build, or a path the fix did "
+    "not reach. Any failing makes this `bug`. The replay succeeding is not an "
+    "answer to (c); a port bug an hour wide replays identically."
 )
 
 _KEY_ATTRIBUTED_CONFIRM = (
     "Confirm (a) that one of the cited mimic-fhir statements writes the FHIR "
     "element the shifted *key* column is sourced from, (b) that the attributed "
-    "fraction is consistent with DST-gap rarity, and (c) that both unpaired "
+    "fraction is consistent with DST-gap rarity, (c) that both unpaired "
     "sets are fully accounted for -- a residual `only_candidate` row is still a "
-    "row the port invented. Any failing makes this `bug`. Do NOT accept a port "
+    "row the port invented -- and (d) WHY the shift is present at all, given "
+    "that the cast was fixed upstream on 2026-08-21 (ade10fb, #124): an old "
+    "build, or a path the fix did not reach. Any failing makes this `bug`. Do NOT accept a port "
     "that recovers the pre-shift value by reconstructing a resource id: the "
     "shift is intrinsic, and inverting the ETL's id-generation is not a mapping."
 )
@@ -2698,10 +2746,13 @@ def _classify_divergence(
             f"{attribution['conflict_rows']:,} conflicting rows -- all of them "
             f"-- replay the upstream {attribution['cause']} exactly, over "
             f"column(s) {', '.join(attribution.get('columns') or {}) or 'n/a'}. "
-            "`differing_conflict` moved from `contested` to `attributed`; a "
-            "diagnosis of this class would only re-derive the replay, so the "
-            "diagnostician can be skipped. The judge cannot: it still has to "
-            "confirm provenance and fraction, and still has to rule."
+            "`differing_conflict` moved from `contested` to `attributed`, which "
+            "lowers the bar but no longer skips the diagnosis: that cast was "
+            "fixed upstream on 2026-08-21 (ade10fb, #124 -- FHIR tables "
+            "generated under UTC), so a shift that still replays needs "
+            "explaining rather than accepting. Diagnose why the fix did not "
+            "reach these rows -- an old build, an unreached path, or a port bug "
+            "an hour wide, which replays identically -- then let the judge rule."
         )
     if key_attr.get("complete"):
         notes.append(
@@ -2711,10 +2762,12 @@ def _classify_divergence(
             f"is replayed through the upstream {key_attr['cause']} over key "
             f"column(s) {', '.join(key_attr.get('keys_considered') or []) or 'n/a'}. "
             "The port did not lose a row or invent one; the shift moved the row "
-            "out of its key. Both classes moved to `attributed`, so the "
-            "diagnostician can be skipped. The judge cannot -- and must not "
-            "accept a port that recovers the pre-shift key by reconstructing a "
-            "resource id, which is an inversion of the ETL, not a mapping."
+            "out of its key. Both classes moved to `attributed` -- a lower bar, "
+            "not a skipped diagnosis: the cast was fixed upstream on 2026-08-21 "
+            "(ade10fb, #124), so establish why it still applies here before the "
+            "judge rules. And the judge must not accept a port that recovers "
+            "the pre-shift key by reconstructing a resource id, which is an "
+            "inversion of the ETL, not a mapping."
         )
         if key_attr.get("attributed_only_oracle_collided"):
             notes.append(
@@ -2766,10 +2819,21 @@ def _classify_divergence(
         # Union of everything the judge rules on, in bar order (highest first).
         "reviewable": contested + gap_shaped + attributed,
         "judge_required": verdict == "review",
-        # The one stage attribution is allowed to skip. Written explicitly so
-        # the orchestrator reads a decision rather than inferring one from a
-        # tier name it may not recognise.
-        "diagnostician_required": verdict == "mismatch" or bool(contested),
+        # Written explicitly so the orchestrator reads a decision rather than
+        # inferring one from a tier name it may not recognise.
+        #
+        # Revised 2026-08-24: `attributed` no longer removes this stage. The
+        # skip was justified by the cast being a known, live upstream defect --
+        # a diagnosis would only re-derive the replay. Upstream #124 fixed the
+        # cast and both warehouses were rebuilt, so a replayed shift is now an
+        # anomaly, and the question it raises (old build, unreached path, or a
+        # port bug an hour wide -- which replay identically) is one no machine
+        # proof answers. Cost is not the objection it would have been: if the
+        # fix works this tier stops firing, and where it does fire it is
+        # exactly the case worth spending a diagnosis on.
+        "diagnostician_required": (
+            verdict == "mismatch" or bool(contested) or bool(attributed)
+        ),
         "judge_bar": bar,
         "oracle_rows": oracle_rows,
         "identical_rows": reproduced,

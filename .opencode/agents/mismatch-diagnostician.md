@@ -247,10 +247,28 @@ transformation below is machine-provable, so the comparator now replays it
 against the oracle value on every conflicting row rather than paying you to
 infer it from a sample.
 
-- If it explains **all** of them, you were not spawned — the tier is
-  `attributed` and the loop went straight to the judge. If you are reading this
-  on an `attributed` tier, the orchestrator made a mistake: say so in one line
-  and stop. Do not re-derive the replay.
+- If it explains **all** of them, the tier is `attributed`. **Revised
+  2026-08-24: you ARE spawned for this, and you have exactly one question.**
+  Until 2026-08-21 the cast was a live upstream defect, so a full replay was the
+  whole answer and this tier skipped you. `mimic-fhir` `ade10fb` (upstream #124)
+  then made the FHIR tables generate under UTC — no DST in any year, no gap to
+  normalise into — and both warehouses were rebuilt on 2026-08-24. A shift that
+  still replays is therefore an anomaly, and the replay cannot say which,
+  because **a port bug one hour wide replays identically**.
+
+  Your question is *why did the fix not reach these rows*, and it is the only
+  one. Answer it in one of three ways and stop:
+  1. **the build predates the fix** — `run_meta.full.json` names the warehouse
+     and the run date; check them and say so;
+  2. **the fix did not reach this path** — name the ETL statement and say why
+     UTC generation leaves it shifted;
+  3. **neither** — then the divergence is not upstream, and your finding is a
+     port defect. Say that plainly; it is the case the old procedure could not
+     express.
+
+  Do **not** re-derive the replay itself: its citations and proof are already in
+  `divergence.attributed[]`. This is a cheap diagnosis by construction — if the
+  fix holds, this tier stops occurring at all.
 - If it explains **some** of them, `residual_rows` is your entire job.
   `divergence.notes` gives the count. Diagnose the residual; do not spend a
   paragraph re-confirming the attributed rows, and do not cite them as your

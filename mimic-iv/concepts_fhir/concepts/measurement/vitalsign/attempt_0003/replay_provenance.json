@@ -1,0 +1,30 @@
+{
+  "authored_by": "mimic_utils replay",
+  "carried": [
+    {
+      "name": "concept.sql",
+      "sha256": "3007fbc26583833f52f940fbac1a0c9ac93a9e1a071888f10b476860bd952802"
+    },
+    {
+      "name": "ViewDefinition.vitalsign_icu_encounter.json",
+      "sha256": "3462faaf0cb22a70a2a433cef8668762da5b1b1215994497c34756717ee7312f"
+    },
+    {
+      "name": "ViewDefinition.vitalsign_observation.json",
+      "sha256": "4292cafec7ac5604e0a9378c796f32c0fa2e848928b9c8ccb5ffb95d1a371b76"
+    },
+    {
+      "name": "ViewDefinition.vitalsign_patient.json",
+      "sha256": "881824943a1d27c141d6752533c41b4060658d4904627627c1e9358cf49fd855"
+    }
+  ],
+  "concept": "vitalsign",
+  "created_at": "2026-08-25T01:14:52+00:00",
+  "fixes_measured": [],
+  "kind": "data_rebuild",
+  "note": "The SQL and ViewDefinitions in this attempt were NOT authored for it. They are the previous attempt's, carried forward byte-identical so that the only thing that changed between the superseded verdict and this one is the served data. No implementer ran, and none should: re-authoring would make this a comparison of two queries instead of a measurement of the upstream fix.",
+  "reason": "The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+  "source_attempt": "attempt_0002",
+  "superseded_status": "COMPLETED_WITH_DIVERGENCE",
+  "warnings": []
+}

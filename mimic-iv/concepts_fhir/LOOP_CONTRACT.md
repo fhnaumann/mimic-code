@@ -7,6 +7,60 @@ and the other document is a bug.
 Decided 2026-08-05. Row-count gating revised 2026-08-06. Conflict gating
 revised 2026-08-07 — see "MIMIC-on-FHIR is a transform, not a subset".
 Concurrency revised 2026-08-10 — see "Concurrency: waves of parallel goals".
+DST attribution revised 2026-08-24 — see "The DST cast is fixed; the exemption
+is now conditional".
+
+## The DST cast is fixed; the exemption is now conditional
+
+Revised 2026-08-24. Read this before the DST sections below, which were written
+while the defect was live and are scoped by it.
+
+`mimic-fhir` `ade10fb` (upstream #124) generates the FHIR tables under **UTC**.
+UTC has no DST in any year, so there is no spring-forward gap for a wall time to
+be normalised into, and the `TIMESTAMPTZ` casts — still present in the ETL, so
+every line citation below still resolves — are the identity on the wall clock.
+Both warehouses were rebuilt on 2026-08-24. `age` attempt_0004 confirms it on
+full data: the same `concept.sql`, byte-identical, took 504 conflicts to 0 and
+`representable_fraction` from 0.998831 to 1.000000.
+
+**The exemption is not withdrawn.** A fix is not proof that every path it
+touched is clean: a build may predate it, a code path may have been missed, and
+a divergence from either would still be intrinsic and still deserve `accept`.
+Everything the sections below say about *what* a moved wall time does to a
+concept — second-order damage through `GROUP BY`, `UNION DISTINCT`, range
+joins; the ban on inverting resource ids to recover the pre-shift value — stands
+unchanged and is still the right analysis.
+
+**What is withdrawn is accepting it without asking.** Before 2026-08-24 a
+replayed shift was the expected background condition, so the machine proof was
+the whole argument and the diagnosis was skippable. Now a replayed shift is an
+*anomaly*, and the replay cannot tell you which anomaly, because a port bug one
+hour wide replays identically. So on any `attributed` class the judge must
+establish, and state, which of these holds:
+
+1. **the candidate predates the fix** — the run used a warehouse built before
+   2026-08-21; cite `run_meta.full.json`;
+2. **the fix did not reach this path** — name the ETL statement and say why UTC
+   generation leaves it shifted;
+3. **neither** — then the shift is not upstream, and the verdict is `bug`.
+
+(1) and (2) are `accept` on the same terms as before. (3) is the case the old
+rule could not express, and it is why `divergence.diagnostician_required` is now
+`true` on `attributed` as well as `contested`: the diagnosis is scoped to *why
+the fix did not reach these rows*, not to re-deriving a replay the comparator
+already did. That is not the expensive change it looks like — if the fix holds,
+the tier stops firing at all, and where it fires it is exactly the case worth a
+diagnosis.
+
+The same conditional applies to the other two fixed defects. `Patient.birthDate`
+(`3048c88`, upstream #126/#117) is now anchored to `MAKE_DATE(anchor_year,1,1) -
+anchor_age`, so a conflict on an age-derived column is no longer explained by
+citing `fhir_patient.sql`; the `(anchor_age, anchor_year)` pair is still
+collapsed and still typed-NULL territory. `chartevents.value` (`e7c326b`,
+upstream #125) is now carried in `Observation.component[].valueString`, so
+"the discriminator is discarded" is no longer an unrepresentability argument —
+it is a mapping the port is required to make, and a declaration asserting
+otherwise is refuted by the served data.
 
 ## What is being claimed
 
@@ -143,12 +197,19 @@ the port contradicted itself" — never "these values look wrong to me".
 |---|---|---|
 | `gap_shaped` | only `only_oracle` / `differing_null_only` | the **FHIR element or path that does not exist**, that it explains the magnitude and shape, and that every defensible mapping was tried |
 | `contested` | `differing_conflict` or `only_candidate` | all of the above **plus** the **upstream `mimic-fhir` ETL statement (file and line)** that writes a different value than relational MIMIC-IV holds, and that the oracle value is unrecoverable by **any** query — not merely that this port did not recover it |
-| `attributed` | `differing_conflict` **only**, and the comparator replayed it to a known upstream ETL cast on **every** conflicting row | the citation is already in the artifact, so instead: that one cited statement writes the FHIR element **this** column is sourced from, and that the attributed fraction is consistent with the transformation's rarity |
+| `attributed` | `differing_conflict` **only**, and the comparator replayed it to a known upstream ETL cast on **every** conflicting row | the citation is already in the artifact, so instead: that one cited statement writes the FHIR element **this** column is sourced from, that the attributed fraction is consistent with the transformation's rarity, and — since 2026-08-24 — **why the shift is present when the cast was fixed upstream**: an old build, or a path the fix did not reach. Neither, and it is `bug` |
 
 A conflict outranks a gap: a result with both is `contested`. The raised bar is
 what keeps the relaxation honest — a conflict is not presumed to be a bug, and
 is **not presumed to be intrinsic either**. Without the ETL citation the answer
 is `bug`, and the loop continues exactly as before.
+
+> **Scoped 2026-08-24.** Everything in this subsection describes a defect that
+> has since been fixed upstream. The tier still exists and still lowers the bar,
+> but it no longer skips the diagnosis and an accept now has to say *why the
+> shift is there at all* — see "The DST cast is fixed; the exemption is now
+> conditional" above. Where this text says
+> `divergence.diagnostician_required` is `false`, that is history: it is `true`.
 
 **`attributed` is the one case where the comparator supplies the citation
 itself.** `mimic-fhir` casts naive MIMIC wall times through `TIMESTAMPTZ`, which
@@ -255,7 +316,14 @@ see the next section, which was written because the two were being conflated.
 
 ### The DST cast is an upstream defect, and its consequences travel with it
 
-Revised 2026-08-14, after `rrt`.
+Revised 2026-08-14, after `rrt`. **Scoped 2026-08-24: the defect is fixed.** The
+reasoning below — that a port diverging only where the cast moved a wall time is
+a correct port of a corrupted input, and that second-order damage through the
+concept's own SQL is the same event — is unchanged and still governs a shift
+that is *established* to be upstream. What no longer holds is the assumption
+running through it that a replayed shift *is* upstream by default. Establish
+that first (old build, or unreached path); if neither holds, the divergence is a
+port bug and none of the exemptions below apply to it.
 
 The `TIMESTAMPTZ` cast is not a property of the IG that consumers must live with
 forever. It is a **defect in `mimic-fhir`**, acknowledged as one, and it will be
@@ -338,11 +406,16 @@ The judge argues every case from the IG and the ETL source rather than from an
 arbitrary percentage. Magnitude is still evidence — the artifact reports the
 affected fraction per column — but it is never the argument.
 
-**The judge is never skipped; the diagnostician is.** Those are separate
-decisions and the artifact states each: `divergence.judge_required` is `true` for
-every `review` tier without exception, and
-`divergence.diagnostician_required` is the only stage a machine proof is allowed
-to remove.
+**The judge is never skipped.** `divergence.judge_required` is `true` for every
+`review` tier without exception. The diagnostician is a separate decision and
+the artifact states it separately as `divergence.diagnostician_required` — route
+on the flag, never on the tier name.
+
+Revised 2026-08-24: as of the upstream DST fix, that flag is `true` on
+`attributed` too, so **no tier currently removes the diagnosis**. The principle
+that a machine proof *may* remove it survives — it is the only stage that can be
+removed that way — but the one proof that was doing so no longer establishes
+enough on its own. See "The DST cast is fixed; the exemption is now conditional".
 
 ### Fidelity is reported twice when a declaration is confirmed
 

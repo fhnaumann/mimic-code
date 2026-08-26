@@ -1,0 +1,11 @@
+## Encounter.serviceType carries one service code, not the services history
+- Affected: `Encounter.serviceType.coding` and source `mimiciv_hosp.services.curr_service` / `transfertime`
+- Verified: oasis attempt 0001 embedded Pathling 9.6.0/Spark 4.0.2 projected `serviceType.coding`; 275/275 hospital Encounters had one coding under `http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-services` while the DuckDB source had 319 service rows. Equality-joining ICU `Encounter.partOf` to its hospital Encounter reproduced the OASIS surgical predicate on 45/57 positive stays and missed 12 stays whose qualifying service was in the source history; the ICU `serviceType` population was 0/140.
+
+## Encounter.priority preserves elective admission, but serviceType preserves only the first service
+- Affected: `Encounter.priority`, `Encounter.serviceType`, source `mimiciv_hosp.admissions.admission_type`, and source `mimiciv_hosp.services.curr_service` / `transfertime`
+- Verified: oasis attempt 0001 full comparison found 3,349 elective-surgery conflicts. Full-oracle decomposition showed that `priority.coding.code='EL'` plus the one served service resolves 3,295 AMB-heuristic false positives, while 54 oracle-positive stays remain false negatives because their first service is non-surgical and a later pre-cutoff service is surgical. The ETL maps `ELECTIVE` uniquely to priority `EL` (`mimic-fhir/sql/fhir_etl/map_encounter_priority.sql:12-20`) but ranks services by `transfertime`, retains only row 1, drops `transfertime`, and writes that one code to `serviceType` (`mimic-fhir/sql/fhir_encounter.sql:45-57,71,142-147`).
+
+## Rebuilt numeric chartevent components cover all OASIS GCS items
+- Affected: `Observation.component[].valueString` and `Observation.component[].code.coding` for the OASIS GCS items `220739`, `223900`, and `223901`, plus ventilator label items `223848`, `223849`, and `229314`
+- Verified: oasis attempt 0002 embedded Pathling 9.6.0/Spark 4.0.2 probe over the authoritative local Delta found component text/code/system on `220739` 3274/3274, `223900` 3266/3266, `223901` 3251/3251, `223848` 906/1292, `223849` 1011/1048, and `229314` 402/402; DuckDB source `valuenum` partitions explain the partial ventilator counts. This sharpens the provisional component coverage lead without changing the existing priority/service-history entries.

@@ -1,14 +1,14 @@
 {
-  "attempt": 2,
+  "attempt": 3,
   "category": "measurement",
-  "completed_at": "2026-08-20T02:01:34.992783+00:00",
+  "completed_at": "2026-08-25T06:20:13.388758+00:00",
   "concept_name": "vitalsign",
   "dependencies": [],
   "divergence_decided_by": "human",
-  "divergence_justification": "We accept that there is a one-row loss that is irreversable.",
-  "engineering_counter": 2,
+  "divergence_justification": "Human override of the equivalence judge's BLOCKED_REPRESENTATION ruling. We know about the hard-coded chartevents exclusion and we accept it. mimic-fhir/sql/fhir_observation_chartevents.sql:34-37 removes the entire tuple (stay_id=34934165, charttime=2151-10-03 05:14:00) before any Observation is created; canonical vitalsign.sql:68-71,72-99 groups the two duplicate itemid 220621 rows (valuenum=96) at that tuple into one glucose=96 row, so exactly one oracle row has no FHIR counterpart and no query over the served data can recover it. This is an upstream omission, not an unrepresentable FHIR element, and it is outside the three defects fixed on 2026-08-21 -- so the 2026-08-24 rebuild was never going to clear it. The rebuild did clear everything else: the same byte-identical concept.sql went from 1,106 only_oracle / 343 only_candidate / 758 differing_conflict (tier contested) to 1 / 0 / 0 (tier gap_shaped), with all 2,207 DST-attributed divergences gone. Fidelity 9,745,499/9,745,500 identical and representable (0.9999999); no declared unrepresentable columns, no invented rows, no value conflicts, no divergent dependencies. Documented in MIMIC_NOTES.d/vitalsign.md. Known inherited risk: first_day_vitalsign and any APSIII/SOFA path carry this one-row absence for that single ICU stay.",
+  "engineering_counter": 3,
   "error_message": null,
-  "hpc_counter": 2,
+  "hpc_counter": 3,
   "reopen_history": [
     {
       "at": "2026-08-20T01:32:35.160688+00:00",
@@ -24,10 +24,25 @@
       "superseded_error": null,
       "superseded_justification": "Accept COMPLETED_WITH_DIVERGENCE as a human override. The upstream hard-coded exclusion at mimic-fhir/sql/fhir_observation_chartevents.sql:34-37 removes one valid glucose=96 vital-sign group, so exact event consumers and downstream first_day_vitalsign/APSIII may differ; this is an isolated upstream omission, not an unrepresentable FHIR field. Also accept the fully attributed chartevents DST shift at mimic-fhir/sql/fhir_observation_chartevents.sql:9,67, with the known risk that rare time-windowed consumers such as SOFA may differ.",
       "superseded_status": "COMPLETED_WITH_DIVERGENCE"
+    },
+    {
+      "at": "2026-08-25T01:14:52.525406+00:00",
+      "baseline": {
+        "attempt": 2,
+        "engineering": 2,
+        "hpc": 2,
+        "semantic": 4
+      },
+      "by": "human",
+      "reason": "[replay:data_rebuild] The MIMIC-on-FHIR warehouse was rebuilt on 2026-08-24 after two upstream data defects were fixed: FHIR resources are now generated under UTC, so wall-clock timestamps are no longer shifted an hour across the spring-forward boundary, and Patient.birthDate is now derived from the anchor year and age rather than from the first transfer. This port was carried forward byte-identical to re-measure it against the corrected data -- do not re-author it. Expect previously accepted divergences to have shrunk or gone; if an hour-wide shift still appears, treat it as a finding and establish why the correction did not reach that path rather than accepting it as an upstream artifact.",
+      "superseded_decided_by": "human",
+      "superseded_error": null,
+      "superseded_justification": "We accept that there is a one-row loss that is irreversable.",
+      "superseded_status": "COMPLETED_WITH_DIVERGENCE"
     }
   ],
-  "semantic_counter": 4,
-  "started_at": "2026-08-20T01:32:35.162963+00:00",
+  "semantic_counter": 6,
+  "started_at": "2026-08-25T01:14:52.526922+00:00",
   "status": "COMPLETED_WITH_DIVERGENCE",
-  "updated_at": "2026-08-20T02:01:34.993240+00:00"
+  "updated_at": "2026-08-25T06:20:13.389280+00:00"
 }
