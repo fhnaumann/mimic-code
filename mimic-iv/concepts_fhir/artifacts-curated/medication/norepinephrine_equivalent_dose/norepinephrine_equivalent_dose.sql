@@ -25,7 +25,7 @@ SELECT
     v.patient_key
 FROM vasoactive_agent AS v
 JOIN encounter_icu AS e
-    ON v.icu_encounter_key = e.encounter_key
+    ON v.icu_encounter_key = e.icu_encounter_key
    AND e.stay_system = 'http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu'
 WHERE v.norepinephrine IS NOT NULL
     OR v.epinephrine IS NOT NULL

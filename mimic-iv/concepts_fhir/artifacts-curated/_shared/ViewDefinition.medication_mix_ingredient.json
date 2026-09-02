@@ -1,0 +1,43 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/shared-medication_mix_ingredient",
+  "name": "medication_mix_ingredient",
+  "title": "Medication mix ingredients",
+  "description": "One row per mix identifier per ingredient -- the cross product of both collections. Replaces 2 per-concept ViewDefinition(s).",
+  "resource": "Medication",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "mix_key"
+        }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/medication-mix')",
+      "column": [
+        {
+          "path": "value",
+          "name": "mix_identifier"
+        },
+        {
+          "path": "system",
+          "name": "mix_system"
+        }
+      ]
+    },
+    {
+      "forEach": "ingredient",
+      "column": [
+        {
+          "path": "itemReference.getReferenceKey(Medication)",
+          "name": "ingredient_medication_key"
+        }
+      ]
+    }
+  ],
+  "id": "shared-medication_mix_ingredient",
+  "version": "1"
+}

@@ -17,7 +17,7 @@
     {
       "type": "depends-on",
       "label": "urine_output_encounter",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/urine_output-urine_output_encounter"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-icu_encounter"
     },
     {
       "type": "depends-on",

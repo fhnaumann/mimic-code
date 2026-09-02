@@ -22,7 +22,7 @@
     {
       "type": "depends-on",
       "label": "ventilation_encounter",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/ventilation-ventilation_encounter"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-icu_encounter"
     },
     {
       "type": "depends-on",

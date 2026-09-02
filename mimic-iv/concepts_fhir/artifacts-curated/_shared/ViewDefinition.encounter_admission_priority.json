@@ -1,0 +1,50 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/shared-encounter_admission_priority",
+  "name": "encounter_admission_priority",
+  "title": "Encounter admission priority codings",
+  "description": "One row per Encounter per priority coding. Replaces 1 per-concept ViewDefinition(s).",
+  "resource": "Encounter",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "encounter_key"
+        },
+        {
+          "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-hosp').value",
+          "name": "hadm_id_str"
+        },
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_key"
+        },
+        {
+          "path": "period.start",
+          "name": "period_start"
+        }
+      ]
+    },
+    {
+      "forEach": "priority.coding",
+      "column": [
+        {
+          "path": "code",
+          "name": "priority_code"
+        },
+        {
+          "path": "display",
+          "name": "priority_display"
+        },
+        {
+          "path": "system",
+          "name": "priority_system"
+        }
+      ]
+    }
+  ],
+  "id": "shared-encounter_admission_priority",
+  "version": "1"
+}

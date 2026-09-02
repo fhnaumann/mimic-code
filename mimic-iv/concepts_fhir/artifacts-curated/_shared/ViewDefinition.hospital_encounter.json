@@ -1,0 +1,54 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/shared-hospital_encounter",
+  "name": "hospital_encounter",
+  "title": "Hospital admission encounters",
+  "description": "One row per hospital admission. The forEach on the encounter-hosp identifier restricts the view to Encounters that carry one. Replaces 14 per-concept ViewDefinition(s).",
+  "resource": "Encounter",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "priority.coding.code",
+          "name": "admission_priority_code"
+        },
+        {
+          "path": "priority.coding.system",
+          "name": "admission_priority_system"
+        },
+        {
+          "path": "getResourceKey()",
+          "name": "encounter_key"
+        },
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_key"
+        },
+        {
+          "path": "serviceType.coding.code",
+          "name": "service_code"
+        },
+        {
+          "path": "serviceType.coding.system",
+          "name": "service_system"
+        }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-hosp')",
+      "column": [
+        {
+          "path": "value",
+          "name": "hadm_id_str"
+        },
+        {
+          "path": "system",
+          "name": "hadm_system"
+        }
+      ]
+    }
+  ],
+  "id": "shared-hospital_encounter",
+  "version": "1"
+}

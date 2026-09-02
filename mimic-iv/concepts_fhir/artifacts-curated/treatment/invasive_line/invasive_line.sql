@@ -29,7 +29,7 @@ WITH selected_procedures AS (
     SELECT
         e.stay_id_str,
         p.patient_key,
-        e.encounter_key AS icu_encounter_key,
+        e.icu_encounter_key,
         CASE
             WHEN p.item_display IN ('Arterial Line', 'A-Line') THEN 'Arterial'
             WHEN p.item_display IN ('CCO PA Line', 'CCO PAC')
@@ -81,7 +81,7 @@ WITH selected_procedures AS (
         ) AS endtime
     FROM selected_procedures p
     INNER JOIN invasive_line_icu_encounter e
-        ON p.encounter_key = e.encounter_key
+        ON p.encounter_key = e.icu_encounter_key
     WHERE e.stay_id_str IS NOT NULL
 )
 SELECT

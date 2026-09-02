@@ -1,0 +1,30 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/shared-medication_ingredient",
+  "name": "medication_ingredient",
+  "title": "Medication ingredients",
+  "description": "One row per Medication per ingredient. Replaces 2 per-concept ViewDefinition(s).",
+  "resource": "Medication",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "mix_key"
+        }
+      ]
+    },
+    {
+      "forEach": "ingredient",
+      "column": [
+        {
+          "path": "itemReference.getReferenceKey(Medication)",
+          "name": "ingredient_medication_key"
+        }
+      ]
+    }
+  ],
+  "id": "shared-medication_ingredient",
+  "version": "1"
+}

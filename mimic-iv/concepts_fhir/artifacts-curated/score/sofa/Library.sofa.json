@@ -57,7 +57,7 @@
     {
       "type": "depends-on",
       "label": "icu_encounter",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/sofa-icu_encounter"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-encounter"
     },
     {
       "type": "depends-on",

@@ -21,7 +21,7 @@ WITH target_medication_administrations AS (
       AND ma.item_code = '221986'
 ), joined_rows AS (
     SELECT
-        e.encounter_key AS icu_encounter_key,
+        e.icu_encounter_key,
         ma.patient_key,
         e.stay_id_str,
         TRY_CAST(ma.effective_period_start AS TIMESTAMP_NTZ) AS starttime_value,
@@ -33,7 +33,7 @@ WITH target_medication_administrations AS (
         CAST(ma.amount_value AS DOUBLE) AS amount_value
     FROM target_medication_administrations AS ma
     LEFT JOIN encounter_icu AS e
-      ON ma.encounter_key = e.encounter_key
+      ON ma.encounter_key = e.icu_encounter_key
      AND e.stay_system = 'http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu'
 )
 SELECT

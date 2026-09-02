@@ -52,7 +52,7 @@ WITH antibiotic_rows AS (
         s.specimen_key,
         s.patient_key,
         CAST(s.micro_specimen_id_str AS INTEGER) AS micro_specimen_id,
-        TRY_CAST(s.collected_datetime AS TIMESTAMP_NTZ) AS charttime,
+        TRY_CAST(s.collection_datetime AS TIMESTAMP_NTZ) AS charttime,
         s.specimen_type_display,
         t.micro_org_key,
         TRY_CAST(t.effective_datetime AS TIMESTAMP_NTZ) AS test_effective_datetime,

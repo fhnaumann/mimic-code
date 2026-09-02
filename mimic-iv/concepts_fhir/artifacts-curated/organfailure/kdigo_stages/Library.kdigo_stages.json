@@ -27,17 +27,17 @@
     {
       "type": "depends-on",
       "label": "kdigo_stages_hospital_encounter",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/kdigo_stages-kdigo_stages_hospital_encounter"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-encounter"
     },
     {
       "type": "depends-on",
       "label": "kdigo_stages_icu_encounter",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/kdigo_stages-kdigo_stages_icu_encounter"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-encounter"
     },
     {
       "type": "depends-on",
       "label": "kdigo_stages_patient",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/kdigo_stages-kdigo_stages_patient"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-patient"
     },
     {
       "type": "depends-on",

@@ -17,12 +17,12 @@
     {
       "type": "depends-on",
       "label": "icustay_times_hospital_encounter",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/icustay_times-icustay_times_hospital_encounter"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-encounter"
     },
     {
       "type": "depends-on",
       "label": "icustay_times_icu_encounter",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/icustay_times-icustay_times_icu_encounter"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-encounter"
     },
     {
       "type": "depends-on",
@@ -32,7 +32,7 @@
     {
       "type": "depends-on",
       "label": "icustay_times_patient",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/icustay_times-icustay_times_patient"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-patient"
     }
   ],
   "content": [

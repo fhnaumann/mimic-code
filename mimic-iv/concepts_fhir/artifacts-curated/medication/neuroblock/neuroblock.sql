@@ -24,7 +24,7 @@ WITH filtered_rows AS (
     SELECT
         e.stay_id_str,
         ma.patient_key,
-        e.encounter_key AS icu_encounter_key,
+        e.icu_encounter_key,
         CAST(ma.rate_value AS DOUBLE) AS rate_value_double,
         CAST(ma.amount_value AS DOUBLE) AS amount_value_double,
         TRY_CAST(ma.effective_period_start AS TIMESTAMP_NTZ) AS starttime_value,
@@ -34,7 +34,7 @@ WITH filtered_rows AS (
         ) AS endtime_value
     FROM filtered_rows AS ma
     LEFT JOIN encounter_icu AS e
-      ON ma.encounter_key = e.encounter_key
+      ON ma.encounter_key = e.icu_encounter_key
      AND e.stay_system = 'http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu'
 )
 SELECT

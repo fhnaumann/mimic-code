@@ -24,7 +24,7 @@ WITH observation_rows AS (
 ), identified_rows AS (
     SELECT
         o.patient_key,
-        e.encounter_key AS icu_encounter_key,
+        e.icu_encounter_key,
         p.subject_id_str,
         e.stay_id_str,
         o.code,
@@ -36,7 +36,7 @@ WITH observation_rows AS (
     INNER JOIN oxygen_delivery_patient p
         ON o.patient_key = p.patient_key
     INNER JOIN oxygen_delivery_encounter e
-        ON o.encounter_key = e.encounter_key
+        ON o.encounter_key = e.icu_encounter_key
 ), flow_stg1 AS (
     SELECT
         patient_key,

@@ -17,12 +17,12 @@
     {
       "type": "depends-on",
       "label": "icu_encounter",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/first_day_weight-icu_encounter"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-icu_encounter"
     },
     {
       "type": "depends-on",
       "label": "patient",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/first_day_weight-patient"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-patient"
     },
     {
       "type": "depends-on",

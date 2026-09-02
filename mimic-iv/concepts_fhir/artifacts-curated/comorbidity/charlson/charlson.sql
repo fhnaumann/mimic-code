@@ -9,13 +9,13 @@ WITH diag AS (
     SELECT
         c.encounter_key,
         CASE
-            WHEN c.code_system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd9'
-            THEN c.icd_code
+            WHEN c.system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd9'
+            THEN c.code
             ELSE NULL
         END AS icd9_code,
         CASE
-            WHEN c.code_system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd10'
-            THEN c.icd_code
+            WHEN c.system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd10'
+            THEN c.code
             ELSE NULL
         END AS icd10_code
     FROM condition AS c

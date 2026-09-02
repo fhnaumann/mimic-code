@@ -17,32 +17,32 @@
     {
       "type": "depends-on",
       "label": "encounter",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/arb-encounter"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-encounter"
     },
     {
       "type": "depends-on",
       "label": "medication",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/arb-medication"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-medication"
     },
     {
       "type": "depends-on",
       "label": "medication_mix",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/arb-medication_mix"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-medication_mix"
     },
     {
       "type": "depends-on",
       "label": "medication_mix_ingredient",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/arb-medication_mix_ingredient"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-medication_ingredient"
     },
     {
       "type": "depends-on",
       "label": "medication_request",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/arb-medication_request"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-medication_request"
     },
     {
       "type": "depends-on",
       "label": "patient",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/arb-patient"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-patient"
     }
   ],
   "content": [

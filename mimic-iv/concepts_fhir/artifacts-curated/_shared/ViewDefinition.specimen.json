@@ -1,0 +1,38 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/shared-specimen",
+  "name": "specimen",
+  "title": "Lab specimens",
+  "description": "One row per Specimen carrying a specimen-lab identifier. Replaces 8 per-concept ViewDefinition(s).",
+  "resource": "Specimen",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "collection.collectedDateTime",
+          "name": "collection_datetime"
+        },
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_key"
+        },
+        {
+          "path": "getResourceKey()",
+          "name": "specimen_key"
+        }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/specimen-lab')",
+      "column": [
+        {
+          "path": "value",
+          "name": "specimen_id_str"
+        }
+      ]
+    }
+  ],
+  "id": "shared-specimen",
+  "version": "1"
+}

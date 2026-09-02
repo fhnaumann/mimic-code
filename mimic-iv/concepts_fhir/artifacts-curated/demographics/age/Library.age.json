@@ -17,12 +17,12 @@
     {
       "type": "depends-on",
       "label": "encounter",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/age-encounter"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-encounter"
     },
     {
       "type": "depends-on",
       "label": "patient",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/age-patient"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-patient"
     }
   ],
   "content": [

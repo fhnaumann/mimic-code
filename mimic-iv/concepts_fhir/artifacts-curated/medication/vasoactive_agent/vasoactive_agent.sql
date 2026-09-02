@@ -8,7 +8,7 @@
 WITH icu_support AS (
     SELECT
         CAST(stay_id_str AS INTEGER) AS stay_id,
-        encounter_key AS icu_encounter_key,
+        icu_encounter_key,
         patient_key
     FROM encounter_icu
     WHERE stay_system = 'http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu'

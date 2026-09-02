@@ -17,7 +17,7 @@
     {
       "type": "depends-on",
       "label": "encounter",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/chemistry-encounter"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-hospital_encounter"
     },
     {
       "type": "depends-on",
@@ -27,12 +27,12 @@
     {
       "type": "depends-on",
       "label": "patient",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/chemistry-patient"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-patient"
     },
     {
       "type": "depends-on",
       "label": "specimen",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/chemistry-specimen"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-specimen"
     }
   ],
   "content": [

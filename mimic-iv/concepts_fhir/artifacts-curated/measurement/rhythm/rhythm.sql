@@ -27,7 +27,7 @@ WITH observation_rows AS (
     INNER JOIN rhythm_patient p
         ON o.patient_key = p.patient_key
     INNER JOIN rhythm_encounter e
-        ON o.encounter_key = e.encounter_key
+        ON o.encounter_key = e.icu_encounter_key
     WHERE e.stay_id_str IS NOT NULL
 ), pivoted AS (
     SELECT

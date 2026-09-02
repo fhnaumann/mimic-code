@@ -11,13 +11,13 @@ WITH p AS (
         pt.patient_key,
         eh.encounter_key,
         CASE
-            WHEN pt.gender_fhir = 'female' THEN 'F'
-            WHEN pt.gender_fhir = 'male' THEN 'M'
+            WHEN pt.gender = 'female' THEN 'F'
+            WHEN pt.gender = 'male' THEN 'M'
             ELSE NULL
         END AS gender,
         ag.age,
         CASE
-            WHEN pt.gender_fhir = 'female' THEN
+            WHEN pt.gender = 'female' THEN
                 POWER(
                     75.0 / 186.0 / POWER(ag.age, -0.203) / 0.742,
                     -1 / 1.154
@@ -50,12 +50,12 @@ WITH p AS (
     WHERE e.hadm_id_str IS NOT NULL
         AND (
             (
-                c.diagnosis_system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd9'
-                AND SUBSTR(c.diagnosis_code, 1, 3) = '585'
+                c.system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd9'
+                AND SUBSTR(c.code, 1, 3) = '585'
             )
             OR (
-                c.diagnosis_system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd10'
-                AND SUBSTR(c.diagnosis_code, 1, 3) = 'N18'
+                c.system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd10'
+                AND SUBSTR(c.code, 1, 3) = 'N18'
             )
         )
     GROUP BY CAST(e.hadm_id_str AS INTEGER)

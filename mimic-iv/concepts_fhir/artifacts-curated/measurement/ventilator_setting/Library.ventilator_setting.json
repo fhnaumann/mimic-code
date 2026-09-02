@@ -17,7 +17,7 @@
     {
       "type": "depends-on",
       "label": "ventilator_setting_encounter",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/ventilator_setting-ventilator_setting_encounter"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-icu_encounter"
     },
     {
       "type": "depends-on",
@@ -27,7 +27,7 @@
     {
       "type": "depends-on",
       "label": "ventilator_setting_patient",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/ventilator_setting-ventilator_setting_patient"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-patient"
     }
   ],
   "content": [

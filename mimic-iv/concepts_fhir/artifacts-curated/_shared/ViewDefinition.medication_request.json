@@ -1,0 +1,45 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/shared-medication_request",
+  "name": "medication_request",
+  "title": "Medication requests",
+  "description": "One row per MedicationRequest. All scalar projections. Replaces 3 per-concept ViewDefinition(s).",
+  "resource": "MedicationRequest",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "encounter.getReferenceKey(Encounter)",
+          "name": "encounter_key"
+        },
+        {
+          "path": "medicationReference.getReferenceKey(Medication)",
+          "name": "medication_key"
+        },
+        {
+          "path": "getResourceKey()",
+          "name": "medication_request_key"
+        },
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_key"
+        },
+        {
+          "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/medication-request-phid').value",
+          "name": "pharmacy_id_str"
+        },
+        {
+          "path": "dispenseRequest.validityPeriod.start",
+          "name": "starttime_str"
+        },
+        {
+          "path": "dispenseRequest.validityPeriod.end",
+          "name": "stoptime_str"
+        }
+      ]
+    }
+  ],
+  "id": "shared-medication_request",
+  "version": "1"
+}

@@ -17,12 +17,12 @@
     {
       "type": "depends-on",
       "label": "icu_encounter",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/sepsis3-icu_encounter"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-encounter"
     },
     {
       "type": "depends-on",
       "label": "patient",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/sepsis3-patient"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-patient"
     },
     {
       "type": "depends-on",

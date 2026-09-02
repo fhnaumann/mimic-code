@@ -247,8 +247,8 @@ WITH expanded_prescriptions AS (
         i.icu_encounter_key,
         i.hospital_encounter_key,
         i.stay_id_str,
-        TRY_CAST(i.intime_str AS TIMESTAMP_NTZ) AS intime_ts,
-        TRY_CAST(i.outtime_str AS TIMESTAMP_NTZ) AS outtime_ts
+        TRY_CAST(i.intime_datetime AS TIMESTAMP_NTZ) AS intime_ts,
+        TRY_CAST(i.outtime_datetime AS TIMESTAMP_NTZ) AS outtime_ts
     FROM encounter_icu i
     WHERE i.stay_id_str IS NOT NULL
 ), resolved_rows AS (

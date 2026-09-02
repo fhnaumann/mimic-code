@@ -1,0 +1,34 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/shared-medication_mix",
+  "name": "medication_mix",
+  "title": "Medication mixes",
+  "description": "One row per Medication per medication-mix identifier. Replaces 2 per-concept ViewDefinition(s).",
+  "resource": "Medication",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "mix_key"
+        }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/medication-mix')",
+      "column": [
+        {
+          "path": "value",
+          "name": "mix_identifier"
+        },
+        {
+          "path": "system",
+          "name": "mix_system"
+        }
+      ]
+    }
+  ],
+  "id": "shared-medication_mix",
+  "version": "1"
+}

@@ -40,6 +40,13 @@ def view_columns(path):
     return d["url"], out
 
 
+# Shared views live outside any concept directory and are visible to every Library.
+SHARED_BY_URL = {}
+for _vd in sorted(glob.glob(os.path.join(ROOT, "_shared", "ViewDefinition.*.json"))):
+    _url, _cols = view_columns(_vd)
+    SHARED_BY_URL[_url] = (_cols, "_shared/" + os.path.basename(_vd))
+
+
 def main():
     problems = 0
     checked_refs = 0
@@ -52,7 +59,7 @@ def main():
             continue
         lib = json.load(open(lib_path))
 
-        by_url = {}
+        by_url = dict(SHARED_BY_URL)
         for vd in glob.glob(os.path.join(cdir, "ViewDefinition*.json")):
             url, cols = view_columns(vd)
             by_url[url] = (cols, os.path.basename(vd))

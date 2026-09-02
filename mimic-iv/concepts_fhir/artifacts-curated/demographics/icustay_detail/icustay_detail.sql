@@ -7,12 +7,12 @@
 
 WITH icu_encounters AS (
     SELECT
-        encounter_key AS icu_encounter_key,
+        icu_encounter_key,
         patient_key,
         hospital_encounter_key,
         stay_id_str,
-        TRY_CAST(period_start AS TIMESTAMP_NTZ) AS icu_intime,
-        TRY_CAST(period_end AS TIMESTAMP_NTZ) AS icu_outtime
+        TRY_CAST(intime_datetime AS TIMESTAMP_NTZ) AS icu_intime,
+        TRY_CAST(outtime_datetime AS TIMESTAMP_NTZ) AS icu_outtime
     FROM icustay_detail_icu_encounter
     WHERE stay_id_str IS NOT NULL
 ), hospital_encounters AS (

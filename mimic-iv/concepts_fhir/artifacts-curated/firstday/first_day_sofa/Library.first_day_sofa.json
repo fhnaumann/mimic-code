@@ -57,12 +57,12 @@
     {
       "type": "depends-on",
       "label": "hospital_encounter",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/first_day_sofa-hospital_encounter"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-hospital_encounter"
     },
     {
       "type": "depends-on",
       "label": "icu_encounter",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/first_day_sofa-icu_encounter"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-icu_encounter"
     },
     {
       "type": "depends-on",
@@ -72,7 +72,7 @@
     {
       "type": "depends-on",
       "label": "patient",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/first_day_sofa-patient"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-patient"
     },
     {
       "type": "depends-on",

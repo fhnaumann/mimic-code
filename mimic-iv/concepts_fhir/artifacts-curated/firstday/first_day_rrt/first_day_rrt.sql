@@ -9,7 +9,7 @@ WITH icu AS (
     SELECT
         CAST(p.subject_id_str AS INTEGER) AS subject_id,
         CAST(e.stay_id_str AS INTEGER) AS stay_id,
-        TRY_CAST(e.period_start AS TIMESTAMP_NTZ) AS intime,
+        TRY_CAST(e.intime_datetime AS TIMESTAMP_NTZ) AS intime,
         e.icu_encounter_key,
         p.patient_key
     FROM first_day_rrt_encounter e

@@ -17,27 +17,27 @@
     {
       "type": "depends-on",
       "label": "encounter",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/acei-encounter"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-encounter"
     },
     {
       "type": "depends-on",
       "label": "medication",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/acei-medication"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-medication"
     },
     {
       "type": "depends-on",
       "label": "medication_mix",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/acei-medication_mix"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-medication_mix_ingredient"
     },
     {
       "type": "depends-on",
       "label": "medication_request",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/acei-medication_request"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-medication_request"
     },
     {
       "type": "depends-on",
       "label": "patient",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/acei-patient"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-patient"
     }
   ],
   "content": [

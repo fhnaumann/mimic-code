@@ -7,12 +7,12 @@
 
 WITH icu_encounters AS (
     SELECT
-        i.encounter_key,
+        i.icu_encounter_key,
         i.patient_key,
         i.hospital_encounter_key,
         i.stay_id_str,
-        TRY_CAST(i.period_start AS TIMESTAMP_NTZ) AS intime,
-        TRY_CAST(i.period_end AS TIMESTAMP_NTZ) AS outtime
+        TRY_CAST(i.intime_datetime AS TIMESTAMP_NTZ) AS intime,
+        TRY_CAST(i.outtime_datetime AS TIMESTAMP_NTZ) AS outtime
     FROM icu_encounter i
     WHERE i.stay_id_str IS NOT NULL
 ), hospital_encounters AS (
@@ -96,7 +96,7 @@ SELECT
         WHERE i.stay_id_str = cr.stay_id_str
     ) AS encounter_key,
     (
-        SELECT MAX(i.encounter_key)
+        SELECT MAX(i.icu_encounter_key)
         FROM icu_encounters i
         WHERE i.stay_id_str = cr.stay_id_str
     ) AS icu_encounter_key

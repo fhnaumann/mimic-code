@@ -1,0 +1,59 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/shared-micro_specimen",
+  "name": "micro_specimen",
+  "title": "Microbiology specimens",
+  "description": "One row per microbiology Specimen per specimen-micro identifier. The type coding uses forEachOrNull, so a specimen with no mimic-spec-type-desc coding is kept with null type columns rather than dropped. Replaces 1 per-concept ViewDefinition.",
+  "resource": "Specimen",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "specimen_key"
+        },
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_key"
+        },
+        {
+          "path": "collection.collectedDateTime",
+          "name": "collection_datetime"
+        }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/specimen-micro')",
+      "column": [
+        {
+          "path": "system",
+          "name": "specimen_id_system"
+        },
+        {
+          "path": "value",
+          "name": "micro_specimen_id_str"
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "type.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-spec-type-desc')",
+      "column": [
+        {
+          "path": "code",
+          "name": "specimen_type_code"
+        },
+        {
+          "path": "system",
+          "name": "specimen_type_system"
+        },
+        {
+          "path": "display",
+          "name": "specimen_type_display"
+        }
+      ]
+    }
+  ],
+  "id": "shared-micro_specimen",
+  "version": "1"
+}

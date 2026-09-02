@@ -22,12 +22,12 @@
     {
       "type": "depends-on",
       "label": "icu_encounter",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/first_day_height-icu_encounter"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-icu_encounter"
     },
     {
       "type": "depends-on",
       "label": "patient",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/first_day_height-patient"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-patient"
     }
   ],
   "content": [
@@ -35,11 +35,11 @@
       "extension": [
         {
           "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
-          "valueString": "WITH icu AS (\n    SELECT\n        CAST(p.subject_id_str AS INTEGER) AS subject_id,\n        CAST(e.stay_id_str AS INTEGER) AS stay_id,\n        TRY_CAST(e.period_start AS TIMESTAMP_NTZ) AS period_start,\n        e.patient_key AS patient_key,\n        e.icu_encounter_key AS icu_encounter_key\n    FROM icu_encounter e\n    LEFT JOIN patient p\n        ON e.patient_key = p.patient_key\n    WHERE e.stay_id_str IS NOT NULL\n), aggregated AS (\n    SELECT\n        i.subject_id,\n        i.stay_id,\n        i.patient_key,\n        i.icu_encounter_key,\n        ROUND(AVG(h.height), 2) AS height\n    FROM icu i\n    LEFT JOIN height h\n        ON i.icu_encounter_key = h.icu_encounter_key\n        AND h.charttime >= i.period_start - INTERVAL 6 HOURS\n        AND h.charttime <= i.period_start + INTERVAL 1 DAY\n    GROUP BY\n        i.subject_id,\n        i.stay_id,\n        i.patient_key,\n        i.icu_encounter_key\n)\nSELECT\n    CAST(a.height AS DECIMAL(38,2)) AS height,\n    a.patient_key,\n    a.icu_encounter_key\nFROM aggregated a\n;\n"
+          "valueString": "WITH icu AS (\n    SELECT\n        CAST(p.subject_id_str AS INTEGER) AS subject_id,\n        CAST(e.stay_id_str AS INTEGER) AS stay_id,\n        TRY_CAST(e.intime_datetime AS TIMESTAMP_NTZ) AS period_start,\n        e.patient_key AS patient_key,\n        e.icu_encounter_key AS icu_encounter_key\n    FROM icu_encounter e\n    LEFT JOIN patient p\n        ON e.patient_key = p.patient_key\n    WHERE e.stay_id_str IS NOT NULL\n), aggregated AS (\n    SELECT\n        i.subject_id,\n        i.stay_id,\n        i.patient_key,\n        i.icu_encounter_key,\n        ROUND(AVG(h.height), 2) AS height\n    FROM icu i\n    LEFT JOIN height h\n        ON i.icu_encounter_key = h.icu_encounter_key\n        AND h.charttime >= i.period_start - INTERVAL 6 HOURS\n        AND h.charttime <= i.period_start + INTERVAL 1 DAY\n    GROUP BY\n        i.subject_id,\n        i.stay_id,\n        i.patient_key,\n        i.icu_encounter_key\n)\nSELECT\n    CAST(a.height AS DECIMAL(38,2)) AS height,\n    a.patient_key,\n    a.icu_encounter_key\nFROM aggregated a\n;\n"
         }
       ],
       "contentType": "application/sql;dialect=spark-sql",
-      "data": "V0lUSCBpY3UgQVMgKAogICAgU0VMRUNUCiAgICAgICAgQ0FTVChwLnN1YmplY3RfaWRfc3RyIEFTIElOVEVHRVIpIEFTIHN1YmplY3RfaWQsCiAgICAgICAgQ0FTVChlLnN0YXlfaWRfc3RyIEFTIElOVEVHRVIpIEFTIHN0YXlfaWQsCiAgICAgICAgVFJZX0NBU1QoZS5wZXJpb2Rfc3RhcnQgQVMgVElNRVNUQU1QX05UWikgQVMgcGVyaW9kX3N0YXJ0LAogICAgICAgIGUucGF0aWVudF9rZXkgQVMgcGF0aWVudF9rZXksCiAgICAgICAgZS5pY3VfZW5jb3VudGVyX2tleSBBUyBpY3VfZW5jb3VudGVyX2tleQogICAgRlJPTSBpY3VfZW5jb3VudGVyIGUKICAgIExFRlQgSk9JTiBwYXRpZW50IHAKICAgICAgICBPTiBlLnBhdGllbnRfa2V5ID0gcC5wYXRpZW50X2tleQogICAgV0hFUkUgZS5zdGF5X2lkX3N0ciBJUyBOT1QgTlVMTAopLCBhZ2dyZWdhdGVkIEFTICgKICAgIFNFTEVDVAogICAgICAgIGkuc3ViamVjdF9pZCwKICAgICAgICBpLnN0YXlfaWQsCiAgICAgICAgaS5wYXRpZW50X2tleSwKICAgICAgICBpLmljdV9lbmNvdW50ZXJfa2V5LAogICAgICAgIFJPVU5EKEFWRyhoLmhlaWdodCksIDIpIEFTIGhlaWdodAogICAgRlJPTSBpY3UgaQogICAgTEVGVCBKT0lOIGhlaWdodCBoCiAgICAgICAgT04gaS5pY3VfZW5jb3VudGVyX2tleSA9IGguaWN1X2VuY291bnRlcl9rZXkKICAgICAgICBBTkQgaC5jaGFydHRpbWUgPj0gaS5wZXJpb2Rfc3RhcnQgLSBJTlRFUlZBTCA2IEhPVVJTCiAgICAgICAgQU5EIGguY2hhcnR0aW1lIDw9IGkucGVyaW9kX3N0YXJ0ICsgSU5URVJWQUwgMSBEQVkKICAgIEdST1VQIEJZCiAgICAgICAgaS5zdWJqZWN0X2lkLAogICAgICAgIGkuc3RheV9pZCwKICAgICAgICBpLnBhdGllbnRfa2V5LAogICAgICAgIGkuaWN1X2VuY291bnRlcl9rZXkKKQpTRUxFQ1QKICAgIENBU1QoYS5oZWlnaHQgQVMgREVDSU1BTCgzOCwyKSkgQVMgaGVpZ2h0LAogICAgYS5wYXRpZW50X2tleSwKICAgIGEuaWN1X2VuY291bnRlcl9rZXkKRlJPTSBhZ2dyZWdhdGVkIGEKOwo="
+      "data": "V0lUSCBpY3UgQVMgKAogICAgU0VMRUNUCiAgICAgICAgQ0FTVChwLnN1YmplY3RfaWRfc3RyIEFTIElOVEVHRVIpIEFTIHN1YmplY3RfaWQsCiAgICAgICAgQ0FTVChlLnN0YXlfaWRfc3RyIEFTIElOVEVHRVIpIEFTIHN0YXlfaWQsCiAgICAgICAgVFJZX0NBU1QoZS5pbnRpbWVfZGF0ZXRpbWUgQVMgVElNRVNUQU1QX05UWikgQVMgcGVyaW9kX3N0YXJ0LAogICAgICAgIGUucGF0aWVudF9rZXkgQVMgcGF0aWVudF9rZXksCiAgICAgICAgZS5pY3VfZW5jb3VudGVyX2tleSBBUyBpY3VfZW5jb3VudGVyX2tleQogICAgRlJPTSBpY3VfZW5jb3VudGVyIGUKICAgIExFRlQgSk9JTiBwYXRpZW50IHAKICAgICAgICBPTiBlLnBhdGllbnRfa2V5ID0gcC5wYXRpZW50X2tleQogICAgV0hFUkUgZS5zdGF5X2lkX3N0ciBJUyBOT1QgTlVMTAopLCBhZ2dyZWdhdGVkIEFTICgKICAgIFNFTEVDVAogICAgICAgIGkuc3ViamVjdF9pZCwKICAgICAgICBpLnN0YXlfaWQsCiAgICAgICAgaS5wYXRpZW50X2tleSwKICAgICAgICBpLmljdV9lbmNvdW50ZXJfa2V5LAogICAgICAgIFJPVU5EKEFWRyhoLmhlaWdodCksIDIpIEFTIGhlaWdodAogICAgRlJPTSBpY3UgaQogICAgTEVGVCBKT0lOIGhlaWdodCBoCiAgICAgICAgT04gaS5pY3VfZW5jb3VudGVyX2tleSA9IGguaWN1X2VuY291bnRlcl9rZXkKICAgICAgICBBTkQgaC5jaGFydHRpbWUgPj0gaS5wZXJpb2Rfc3RhcnQgLSBJTlRFUlZBTCA2IEhPVVJTCiAgICAgICAgQU5EIGguY2hhcnR0aW1lIDw9IGkucGVyaW9kX3N0YXJ0ICsgSU5URVJWQUwgMSBEQVkKICAgIEdST1VQIEJZCiAgICAgICAgaS5zdWJqZWN0X2lkLAogICAgICAgIGkuc3RheV9pZCwKICAgICAgICBpLnBhdGllbnRfa2V5LAogICAgICAgIGkuaWN1X2VuY291bnRlcl9rZXkKKQpTRUxFQ1QKICAgIENBU1QoYS5oZWlnaHQgQVMgREVDSU1BTCgzOCwyKSkgQVMgaGVpZ2h0LAogICAgYS5wYXRpZW50X2tleSwKICAgIGEuaWN1X2VuY291bnRlcl9rZXkKRlJPTSBhZ2dyZWdhdGVkIGEKOwo="
     }
   ]
 }

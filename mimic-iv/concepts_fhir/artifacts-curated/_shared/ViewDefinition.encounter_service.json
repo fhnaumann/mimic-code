@@ -1,0 +1,38 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/shared-encounter_service",
+  "name": "encounter_service",
+  "title": "Encounter service-type codings",
+  "description": "One row per Encounter per serviceType coding -- MIMIC's hospital service. Replaces 1 per-concept ViewDefinition(s).",
+  "resource": "Encounter",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "encounter_key"
+        }
+      ]
+    },
+    {
+      "forEach": "serviceType.coding",
+      "column": [
+        {
+          "path": "code",
+          "name": "service_code"
+        },
+        {
+          "path": "display",
+          "name": "service_display"
+        },
+        {
+          "path": "system",
+          "name": "service_system"
+        }
+      ]
+    }
+  ],
+  "id": "shared-encounter_service",
+  "version": "1"
+}

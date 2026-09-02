@@ -37,7 +37,7 @@
     {
       "type": "depends-on",
       "label": "condition",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/sapsii-condition"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-condition_icd"
     },
     {
       "type": "depends-on",
@@ -57,17 +57,17 @@
     {
       "type": "depends-on",
       "label": "hospital_encounter",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/sapsii-hospital_encounter"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-hospital_encounter"
     },
     {
       "type": "depends-on",
       "label": "icu_encounter",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/sapsii-icu_encounter"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-icu_encounter"
     },
     {
       "type": "depends-on",
       "label": "patient",
-      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/sapsii-patient"
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/shared-patient"
     },
     {
       "type": "depends-on",

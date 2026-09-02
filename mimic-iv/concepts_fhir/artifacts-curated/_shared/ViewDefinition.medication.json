@@ -1,0 +1,34 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/shared-medication",
+  "name": "medication",
+  "title": "Medications by drug name",
+  "description": "One row per Medication per mimic-medication-name identifier. Replaces 4 per-concept ViewDefinition(s).",
+  "resource": "Medication",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "medication_key"
+        }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-medication-name')",
+      "column": [
+        {
+          "path": "value",
+          "name": "drug_name"
+        },
+        {
+          "path": "system",
+          "name": "drug_system"
+        }
+      ]
+    }
+  ],
+  "id": "shared-medication",
+  "version": "1"
+}

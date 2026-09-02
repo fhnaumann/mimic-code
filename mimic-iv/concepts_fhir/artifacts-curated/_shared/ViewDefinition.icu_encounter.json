@@ -1,0 +1,50 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/shared-icu_encounter",
+  "name": "icu_encounter",
+  "title": "ICU stay encounters",
+  "description": "One row per ICU stay. The forEach on the encounter-icu identifier restricts the view to Encounters that carry one, so non-ICU Encounters are absent. Use `encounter` instead if you need every Encounter with the ICU identifier only where present. Replaces 38 per-concept ViewDefinition(s).",
+  "resource": "Encounter",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "partOf.getReferenceKey(Encounter)",
+          "name": "hospital_encounter_key"
+        },
+        {
+          "path": "getResourceKey()",
+          "name": "icu_encounter_key"
+        },
+        {
+          "path": "period.start",
+          "name": "intime_datetime"
+        },
+        {
+          "path": "period.end",
+          "name": "outtime_datetime"
+        },
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_key"
+        }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu')",
+      "column": [
+        {
+          "path": "value",
+          "name": "stay_id_str"
+        },
+        {
+          "path": "system",
+          "name": "stay_system"
+        }
+      ]
+    }
+  ],
+  "id": "shared-icu_encounter",
+  "version": "1"
+}

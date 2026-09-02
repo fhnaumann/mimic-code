@@ -1,0 +1,46 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/shared-condition_icd",
+  "name": "condition_icd",
+  "title": "ICD-coded conditions",
+  "description": "One row per Condition per ICD-9/ICD-10 coding. Replaces 4 per-concept ViewDefinition(s).",
+  "resource": "Condition",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "condition_key"
+        },
+        {
+          "path": "encounter.getReferenceKey(Encounter)",
+          "name": "encounter_key"
+        },
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_key"
+        }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd9' or system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd10')",
+      "column": [
+        {
+          "path": "code",
+          "name": "code"
+        },
+        {
+          "path": "display",
+          "name": "display"
+        },
+        {
+          "path": "system",
+          "name": "system"
+        }
+      ]
+    }
+  ],
+  "id": "shared-condition_icd",
+  "version": "1"
+}

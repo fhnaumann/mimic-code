@@ -8,7 +8,7 @@
 WITH observation_rows AS (
     SELECT
         p.patient_key,
-        e.encounter_key AS icu_encounter_key,
+        e.icu_encounter_key,
         p.subject_id_str,
         e.stay_id_str,
         o.item_code,
@@ -19,7 +19,7 @@ WITH observation_rows AS (
     INNER JOIN height_patient p
         ON o.patient_key = p.patient_key
     INNER JOIN height_encounter e
-        ON o.encounter_key = e.encounter_key
+        ON o.encounter_key = e.icu_encounter_key
         AND o.patient_key = e.patient_key
     WHERE o.item_system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items'
         AND o.item_code IN ('226707', '226730')

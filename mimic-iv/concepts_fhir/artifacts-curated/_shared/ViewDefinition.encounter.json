@@ -1,0 +1,61 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/shared-encounter",
+  "name": "encounter",
+  "title": "All encounters, both grains",
+  "description": "One row per Encounter, hospital and ICU alike. Every column is a scalar projection, so identifier columns are null for the grain that does not apply -- hadm_id_str is null on an ICU stay, stay_id_str on a hospital admission. Nothing is filtered out. Replaces 24 per-concept ViewDefinition(s).",
+  "resource": "Encounter",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "encounter_key"
+        },
+        {
+          "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-hosp').value",
+          "name": "hadm_id_str"
+        },
+        {
+          "path": "partOf.getReferenceKey(Encounter)",
+          "name": "hospital_encounter_key"
+        },
+        {
+          "path": "getResourceKey()",
+          "name": "icu_encounter_key"
+        },
+        {
+          "path": "period.start",
+          "name": "intime_datetime"
+        },
+        {
+          "path": "period.end",
+          "name": "outtime_datetime"
+        },
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_key"
+        },
+        {
+          "path": "period.end",
+          "name": "period_end"
+        },
+        {
+          "path": "period.start",
+          "name": "period_start"
+        },
+        {
+          "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu').value",
+          "name": "stay_id_str"
+        },
+        {
+          "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu').system",
+          "name": "stay_system"
+        }
+      ]
+    }
+  ],
+  "id": "shared-encounter",
+  "version": "1"
+}
