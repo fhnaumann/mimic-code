@@ -1,0 +1,50 @@
+{
+  "resourceType": "Library",
+  "id": "sepsis3",
+  "url": "https://fhnaumann.masters/pathling/Library/sepsis3",
+  "version": "1",
+  "name": "sepsis3",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "icu_encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/sepsis3-icu_encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "patient",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/sepsis3-patient"
+    },
+    {
+      "type": "depends-on",
+      "label": "sofa",
+      "resource": "https://fhnaumann.masters/pathling/Library/sofa"
+    },
+    {
+      "type": "depends-on",
+      "label": "suspicion_of_infection",
+      "resource": "https://fhnaumann.masters/pathling/Library/suspicion_of_infection"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH sofa_filtered AS (\n    SELECT\n        s.icu_encounter_key,\n        s.patient_key,\n        s.starttime,\n        s.endtime,\n        s.respiration_24hours AS respiration,\n        s.coagulation_24hours AS coagulation,\n        s.liver_24hours AS liver,\n        s.cardiovascular_24hours AS cardiovascular,\n        s.cns_24hours AS cns,\n        s.renal_24hours AS renal,\n        s.sofa_24hours AS sofa_score\n    FROM sofa AS s\n    WHERE s.sofa_24hours >= 2\n), s1 AS (\n    SELECT\n        p.subject_id_str,\n        i.stay_id_str,\n        soi.ab_id,\n        soi.antibiotic,\n        soi.antibiotic_time,\n        soi.culture_time,\n        soi.suspected_infection,\n        soi.suspected_infection_time,\n        soi.specimen,\n        soi.positive_culture,\n        sf.starttime,\n        sf.endtime,\n        sf.respiration,\n        sf.coagulation,\n        sf.liver,\n        sf.cardiovascular,\n        sf.cns,\n        sf.renal,\n        sf.sofa_score,\n        soi.patient_key,\n        soi.icu_encounter_key,\n        sf.sofa_score >= 2 AND soi.suspected_infection = 1 AS sepsis3,\n        ROW_NUMBER() OVER (\n            PARTITION BY soi.icu_encounter_key\n            ORDER BY\n                soi.suspected_infection_time,\n                soi.antibiotic_time,\n                soi.culture_time,\n                sf.endtime\n        ) AS rn_sus\n    FROM suspicion_of_infection AS soi\n    INNER JOIN sofa_filtered AS sf\n        ON soi.icu_encounter_key = sf.icu_encounter_key\n        AND sf.endtime >= soi.suspected_infection_time - INTERVAL 48 HOURS\n        AND sf.endtime <= soi.suspected_infection_time + INTERVAL 24 HOURS\n    INNER JOIN icu_encounter AS i\n        ON soi.icu_encounter_key = i.icu_encounter_key\n    INNER JOIN patient AS p\n        ON soi.patient_key = p.patient_key\n    WHERE soi.icu_encounter_key IS NOT NULL\n)\nSELECT\n    CAST(s.antibiotic_time AS TIMESTAMP_NTZ) AS antibiotic_time,\n    CAST(s.culture_time AS TIMESTAMP_NTZ) AS culture_time,\n    CAST(s.suspected_infection_time AS TIMESTAMP_NTZ) AS suspected_infection_time,\n    CAST(s.endtime AS TIMESTAMP_NTZ) AS sofa_time,\n    CAST(s.sofa_score AS INTEGER) AS sofa_score,\n    CAST(s.respiration AS INTEGER) AS respiration,\n    CAST(s.coagulation AS INTEGER) AS coagulation,\n    CAST(s.liver AS INTEGER) AS liver,\n    CAST(s.cardiovascular AS INTEGER) AS cardiovascular,\n    CAST(s.cns AS INTEGER) AS cns,\n    CAST(s.renal AS INTEGER) AS renal,\n    CAST(s.sepsis3 AS BOOLEAN) AS sepsis3,\n    s.icu_encounter_key AS icu_encounter_key,\n    s.patient_key AS patient_key\nFROM s1 AS s\nWHERE s.rn_sus = 1\n;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBzb2ZhX2ZpbHRlcmVkIEFTICgKICAgIFNFTEVDVAogICAgICAgIHMuaWN1X2VuY291bnRlcl9rZXksCiAgICAgICAgcy5wYXRpZW50X2tleSwKICAgICAgICBzLnN0YXJ0dGltZSwKICAgICAgICBzLmVuZHRpbWUsCiAgICAgICAgcy5yZXNwaXJhdGlvbl8yNGhvdXJzIEFTIHJlc3BpcmF0aW9uLAogICAgICAgIHMuY29hZ3VsYXRpb25fMjRob3VycyBBUyBjb2FndWxhdGlvbiwKICAgICAgICBzLmxpdmVyXzI0aG91cnMgQVMgbGl2ZXIsCiAgICAgICAgcy5jYXJkaW92YXNjdWxhcl8yNGhvdXJzIEFTIGNhcmRpb3Zhc2N1bGFyLAogICAgICAgIHMuY25zXzI0aG91cnMgQVMgY25zLAogICAgICAgIHMucmVuYWxfMjRob3VycyBBUyByZW5hbCwKICAgICAgICBzLnNvZmFfMjRob3VycyBBUyBzb2ZhX3Njb3JlCiAgICBGUk9NIHNvZmEgQVMgcwogICAgV0hFUkUgcy5zb2ZhXzI0aG91cnMgPj0gMgopLCBzMSBBUyAoCiAgICBTRUxFQ1QKICAgICAgICBwLnN1YmplY3RfaWRfc3RyLAogICAgICAgIGkuc3RheV9pZF9zdHIsCiAgICAgICAgc29pLmFiX2lkLAogICAgICAgIHNvaS5hbnRpYmlvdGljLAogICAgICAgIHNvaS5hbnRpYmlvdGljX3RpbWUsCiAgICAgICAgc29pLmN1bHR1cmVfdGltZSwKICAgICAgICBzb2kuc3VzcGVjdGVkX2luZmVjdGlvbiwKICAgICAgICBzb2kuc3VzcGVjdGVkX2luZmVjdGlvbl90aW1lLAogICAgICAgIHNvaS5zcGVjaW1lbiwKICAgICAgICBzb2kucG9zaXRpdmVfY3VsdHVyZSwKICAgICAgICBzZi5zdGFydHRpbWUsCiAgICAgICAgc2YuZW5kdGltZSwKICAgICAgICBzZi5yZXNwaXJhdGlvbiwKICAgICAgICBzZi5jb2FndWxhdGlvbiwKICAgICAgICBzZi5saXZlciwKICAgICAgICBzZi5jYXJkaW92YXNjdWxhciwKICAgICAgICBzZi5jbnMsCiAgICAgICAgc2YucmVuYWwsCiAgICAgICAgc2Yuc29mYV9zY29yZSwKICAgICAgICBzb2kucGF0aWVudF9rZXksCiAgICAgICAgc29pLmljdV9lbmNvdW50ZXJfa2V5LAogICAgICAgIHNmLnNvZmFfc2NvcmUgPj0gMiBBTkQgc29pLnN1c3BlY3RlZF9pbmZlY3Rpb24gPSAxIEFTIHNlcHNpczMsCiAgICAgICAgUk9XX05VTUJFUigpIE9WRVIgKAogICAgICAgICAgICBQQVJUSVRJT04gQlkgc29pLmljdV9lbmNvdW50ZXJfa2V5CiAgICAgICAgICAgIE9SREVSIEJZCiAgICAgICAgICAgICAgICBzb2kuc3VzcGVjdGVkX2luZmVjdGlvbl90aW1lLAogICAgICAgICAgICAgICAgc29pLmFudGliaW90aWNfdGltZSwKICAgICAgICAgICAgICAgIHNvaS5jdWx0dXJlX3RpbWUsCiAgICAgICAgICAgICAgICBzZi5lbmR0aW1lCiAgICAgICAgKSBBUyBybl9zdXMKICAgIEZST00gc3VzcGljaW9uX29mX2luZmVjdGlvbiBBUyBzb2kKICAgIElOTkVSIEpPSU4gc29mYV9maWx0ZXJlZCBBUyBzZgogICAgICAgIE9OIHNvaS5pY3VfZW5jb3VudGVyX2tleSA9IHNmLmljdV9lbmNvdW50ZXJfa2V5CiAgICAgICAgQU5EIHNmLmVuZHRpbWUgPj0gc29pLnN1c3BlY3RlZF9pbmZlY3Rpb25fdGltZSAtIElOVEVSVkFMIDQ4IEhPVVJTCiAgICAgICAgQU5EIHNmLmVuZHRpbWUgPD0gc29pLnN1c3BlY3RlZF9pbmZlY3Rpb25fdGltZSArIElOVEVSVkFMIDI0IEhPVVJTCiAgICBJTk5FUiBKT0lOIGljdV9lbmNvdW50ZXIgQVMgaQogICAgICAgIE9OIHNvaS5pY3VfZW5jb3VudGVyX2tleSA9IGkuaWN1X2VuY291bnRlcl9rZXkKICAgIElOTkVSIEpPSU4gcGF0aWVudCBBUyBwCiAgICAgICAgT04gc29pLnBhdGllbnRfa2V5ID0gcC5wYXRpZW50X2tleQogICAgV0hFUkUgc29pLmljdV9lbmNvdW50ZXJfa2V5IElTIE5PVCBOVUxMCikKU0VMRUNUCiAgICBDQVNUKHMuYW50aWJpb3RpY190aW1lIEFTIFRJTUVTVEFNUF9OVFopIEFTIGFudGliaW90aWNfdGltZSwKICAgIENBU1Qocy5jdWx0dXJlX3RpbWUgQVMgVElNRVNUQU1QX05UWikgQVMgY3VsdHVyZV90aW1lLAogICAgQ0FTVChzLnN1c3BlY3RlZF9pbmZlY3Rpb25fdGltZSBBUyBUSU1FU1RBTVBfTlRaKSBBUyBzdXNwZWN0ZWRfaW5mZWN0aW9uX3RpbWUsCiAgICBDQVNUKHMuZW5kdGltZSBBUyBUSU1FU1RBTVBfTlRaKSBBUyBzb2ZhX3RpbWUsCiAgICBDQVNUKHMuc29mYV9zY29yZSBBUyBJTlRFR0VSKSBBUyBzb2ZhX3Njb3JlLAogICAgQ0FTVChzLnJlc3BpcmF0aW9uIEFTIElOVEVHRVIpIEFTIHJlc3BpcmF0aW9uLAogICAgQ0FTVChzLmNvYWd1bGF0aW9uIEFTIElOVEVHRVIpIEFTIGNvYWd1bGF0aW9uLAogICAgQ0FTVChzLmxpdmVyIEFTIElOVEVHRVIpIEFTIGxpdmVyLAogICAgQ0FTVChzLmNhcmRpb3Zhc2N1bGFyIEFTIElOVEVHRVIpIEFTIGNhcmRpb3Zhc2N1bGFyLAogICAgQ0FTVChzLmNucyBBUyBJTlRFR0VSKSBBUyBjbnMsCiAgICBDQVNUKHMucmVuYWwgQVMgSU5URUdFUikgQVMgcmVuYWwsCiAgICBDQVNUKHMuc2Vwc2lzMyBBUyBCT09MRUFOKSBBUyBzZXBzaXMzLAogICAgcy5pY3VfZW5jb3VudGVyX2tleSBBUyBpY3VfZW5jb3VudGVyX2tleSwKICAgIHMucGF0aWVudF9rZXkgQVMgcGF0aWVudF9rZXkKRlJPTSBzMSBBUyBzCldIRVJFIHMucm5fc3VzID0gMQo7Cg=="
+    }
+  ]
+}

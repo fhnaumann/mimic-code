@@ -90,7 +90,7 @@ WITH filtered_rows AS (
 SELECT
     patient_key,
     encounter_key,
-    CAST(charttime AS TIMESTAMP) AS charttime,
+    CAST(charttime AS TIMESTAMP_NTZ) AS charttime,
     specimen_key,
     CAST(albumin AS DOUBLE) AS albumin,
     CAST(globulin AS DOUBLE) AS globulin,

@@ -1,0 +1,60 @@
+{
+  "resourceType": "Library",
+  "id": "sirs",
+  "url": "https://fhnaumann.masters/pathling/Library/sirs",
+  "version": "1",
+  "name": "sirs",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/sirs-encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "first_day_bg_art",
+      "resource": "https://fhnaumann.masters/pathling/Library/first_day_bg_art"
+    },
+    {
+      "type": "depends-on",
+      "label": "first_day_lab",
+      "resource": "https://fhnaumann.masters/pathling/Library/first_day_lab"
+    },
+    {
+      "type": "depends-on",
+      "label": "first_day_vitalsign",
+      "resource": "https://fhnaumann.masters/pathling/Library/first_day_vitalsign"
+    },
+    {
+      "type": "depends-on",
+      "label": "icu_encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/sirs-icu_encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "patient",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/sirs-patient"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH icu_stays AS (\n    SELECT\n        e.icu_encounter_key,\n        e.patient_key,\n        e.hospital_encounter_key AS encounter_key,\n        e.stay_id_str\n    FROM icu_encounter e\n    WHERE e.stay_id_str IS NOT NULL\n), hospital_encounters AS (\n    SELECT\n        e.encounter_key,\n        e.hadm_id_str\n    FROM encounter e\n    WHERE e.hadm_id_str IS NOT NULL\n), scorecomp AS (\n    SELECT\n        i.icu_encounter_key,\n        i.patient_key,\n        i.encounter_key,\n        i.stay_id_str,\n        v.temperature_min,\n        v.temperature_max,\n        v.heart_rate_max,\n        v.resp_rate_max,\n        bg.pco2_min AS paco2_min,\n        l.wbc_min,\n        l.wbc_max,\n        l.bands_max\n    FROM icu_stays i\n    LEFT JOIN first_day_bg_art bg\n        ON i.icu_encounter_key = bg.icu_encounter_key\n    LEFT JOIN first_day_vitalsign v\n        ON i.icu_encounter_key = v.icu_encounter_key\n    LEFT JOIN first_day_lab l\n        ON i.icu_encounter_key = l.icu_encounter_key\n), scorecalc AS (\n    SELECT\n        icu_encounter_key,\n        patient_key,\n        encounter_key,\n        stay_id_str,\n        CASE\n            WHEN temperature_min < 36.0 THEN 1\n            WHEN temperature_max > 38.0 THEN 1\n            WHEN temperature_min IS NULL THEN NULL\n            ELSE 0\n        END AS temp_score,\n        CASE\n            WHEN heart_rate_max > 90.0 THEN 1\n            WHEN heart_rate_max IS NULL THEN NULL\n            ELSE 0\n        END AS heart_rate_score,\n        CASE\n            WHEN resp_rate_max > 20.0 THEN 1\n            WHEN paco2_min < 32.0 THEN 1\n            WHEN COALESCE(resp_rate_max, paco2_min) IS NULL THEN NULL\n            ELSE 0\n        END AS resp_score,\n        CASE\n            WHEN wbc_min < 4.0 THEN 1\n            WHEN wbc_max > 12.0 THEN 1\n            WHEN bands_max > 10 THEN 1\n            WHEN COALESCE(wbc_min, bands_max) IS NULL THEN NULL\n            ELSE 0\n        END AS wbc_score\n    FROM scorecomp\n), identity_spine AS (\n    SELECT\n        i.icu_encounter_key,\n        i.patient_key,\n        i.encounter_key,\n        i.stay_id_str,\n        p.subject_id_str,\n        h.hadm_id_str\n    FROM icu_stays i\n    LEFT JOIN patient p\n        ON i.patient_key = p.patient_key\n    LEFT JOIN hospital_encounters h\n        ON i.encounter_key = h.encounter_key\n)\nSELECT\n    CAST(\n        COALESCE(s.temp_score, 0)\n        + COALESCE(s.heart_rate_score, 0)\n        + COALESCE(s.resp_score, 0)\n        + COALESCE(s.wbc_score, 0)\n        AS INTEGER\n    ) AS sirs,\n    CAST(s.temp_score AS INTEGER) AS temp_score,\n    CAST(s.heart_rate_score AS INTEGER) AS heart_rate_score,\n    CAST(s.resp_score AS INTEGER) AS resp_score,\n    CAST(s.wbc_score AS INTEGER) AS wbc_score,\n    r.encounter_key AS encounter_key,\n    r.icu_encounter_key AS icu_encounter_key,\n    r.patient_key AS patient_key\nFROM identity_spine r\nLEFT JOIN scorecalc s\n    ON r.icu_encounter_key = s.icu_encounter_key\n;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBpY3Vfc3RheXMgQVMgKAogICAgU0VMRUNUCiAgICAgICAgZS5pY3VfZW5jb3VudGVyX2tleSwKICAgICAgICBlLnBhdGllbnRfa2V5LAogICAgICAgIGUuaG9zcGl0YWxfZW5jb3VudGVyX2tleSBBUyBlbmNvdW50ZXJfa2V5LAogICAgICAgIGUuc3RheV9pZF9zdHIKICAgIEZST00gaWN1X2VuY291bnRlciBlCiAgICBXSEVSRSBlLnN0YXlfaWRfc3RyIElTIE5PVCBOVUxMCiksIGhvc3BpdGFsX2VuY291bnRlcnMgQVMgKAogICAgU0VMRUNUCiAgICAgICAgZS5lbmNvdW50ZXJfa2V5LAogICAgICAgIGUuaGFkbV9pZF9zdHIKICAgIEZST00gZW5jb3VudGVyIGUKICAgIFdIRVJFIGUuaGFkbV9pZF9zdHIgSVMgTk9UIE5VTEwKKSwgc2NvcmVjb21wIEFTICgKICAgIFNFTEVDVAogICAgICAgIGkuaWN1X2VuY291bnRlcl9rZXksCiAgICAgICAgaS5wYXRpZW50X2tleSwKICAgICAgICBpLmVuY291bnRlcl9rZXksCiAgICAgICAgaS5zdGF5X2lkX3N0ciwKICAgICAgICB2LnRlbXBlcmF0dXJlX21pbiwKICAgICAgICB2LnRlbXBlcmF0dXJlX21heCwKICAgICAgICB2LmhlYXJ0X3JhdGVfbWF4LAogICAgICAgIHYucmVzcF9yYXRlX21heCwKICAgICAgICBiZy5wY28yX21pbiBBUyBwYWNvMl9taW4sCiAgICAgICAgbC53YmNfbWluLAogICAgICAgIGwud2JjX21heCwKICAgICAgICBsLmJhbmRzX21heAogICAgRlJPTSBpY3Vfc3RheXMgaQogICAgTEVGVCBKT0lOIGZpcnN0X2RheV9iZ19hcnQgYmcKICAgICAgICBPTiBpLmljdV9lbmNvdW50ZXJfa2V5ID0gYmcuaWN1X2VuY291bnRlcl9rZXkKICAgIExFRlQgSk9JTiBmaXJzdF9kYXlfdml0YWxzaWduIHYKICAgICAgICBPTiBpLmljdV9lbmNvdW50ZXJfa2V5ID0gdi5pY3VfZW5jb3VudGVyX2tleQogICAgTEVGVCBKT0lOIGZpcnN0X2RheV9sYWIgbAogICAgICAgIE9OIGkuaWN1X2VuY291bnRlcl9rZXkgPSBsLmljdV9lbmNvdW50ZXJfa2V5CiksIHNjb3JlY2FsYyBBUyAoCiAgICBTRUxFQ1QKICAgICAgICBpY3VfZW5jb3VudGVyX2tleSwKICAgICAgICBwYXRpZW50X2tleSwKICAgICAgICBlbmNvdW50ZXJfa2V5LAogICAgICAgIHN0YXlfaWRfc3RyLAogICAgICAgIENBU0UKICAgICAgICAgICAgV0hFTiB0ZW1wZXJhdHVyZV9taW4gPCAzNi4wIFRIRU4gMQogICAgICAgICAgICBXSEVOIHRlbXBlcmF0dXJlX21heCA+IDM4LjAgVEhFTiAxCiAgICAgICAgICAgIFdIRU4gdGVtcGVyYXR1cmVfbWluIElTIE5VTEwgVEhFTiBOVUxMCiAgICAgICAgICAgIEVMU0UgMAogICAgICAgIEVORCBBUyB0ZW1wX3Njb3JlLAogICAgICAgIENBU0UKICAgICAgICAgICAgV0hFTiBoZWFydF9yYXRlX21heCA+IDkwLjAgVEhFTiAxCiAgICAgICAgICAgIFdIRU4gaGVhcnRfcmF0ZV9tYXggSVMgTlVMTCBUSEVOIE5VTEwKICAgICAgICAgICAgRUxTRSAwCiAgICAgICAgRU5EIEFTIGhlYXJ0X3JhdGVfc2NvcmUsCiAgICAgICAgQ0FTRQogICAgICAgICAgICBXSEVOIHJlc3BfcmF0ZV9tYXggPiAyMC4wIFRIRU4gMQogICAgICAgICAgICBXSEVOIHBhY28yX21pbiA8IDMyLjAgVEhFTiAxCiAgICAgICAgICAgIFdIRU4gQ09BTEVTQ0UocmVzcF9yYXRlX21heCwgcGFjbzJfbWluKSBJUyBOVUxMIFRIRU4gTlVMTAogICAgICAgICAgICBFTFNFIDAKICAgICAgICBFTkQgQVMgcmVzcF9zY29yZSwKICAgICAgICBDQVNFCiAgICAgICAgICAgIFdIRU4gd2JjX21pbiA8IDQuMCBUSEVOIDEKICAgICAgICAgICAgV0hFTiB3YmNfbWF4ID4gMTIuMCBUSEVOIDEKICAgICAgICAgICAgV0hFTiBiYW5kc19tYXggPiAxMCBUSEVOIDEKICAgICAgICAgICAgV0hFTiBDT0FMRVNDRSh3YmNfbWluLCBiYW5kc19tYXgpIElTIE5VTEwgVEhFTiBOVUxMCiAgICAgICAgICAgIEVMU0UgMAogICAgICAgIEVORCBBUyB3YmNfc2NvcmUKICAgIEZST00gc2NvcmVjb21wCiksIGlkZW50aXR5X3NwaW5lIEFTICgKICAgIFNFTEVDVAogICAgICAgIGkuaWN1X2VuY291bnRlcl9rZXksCiAgICAgICAgaS5wYXRpZW50X2tleSwKICAgICAgICBpLmVuY291bnRlcl9rZXksCiAgICAgICAgaS5zdGF5X2lkX3N0ciwKICAgICAgICBwLnN1YmplY3RfaWRfc3RyLAogICAgICAgIGguaGFkbV9pZF9zdHIKICAgIEZST00gaWN1X3N0YXlzIGkKICAgIExFRlQgSk9JTiBwYXRpZW50IHAKICAgICAgICBPTiBpLnBhdGllbnRfa2V5ID0gcC5wYXRpZW50X2tleQogICAgTEVGVCBKT0lOIGhvc3BpdGFsX2VuY291bnRlcnMgaAogICAgICAgIE9OIGkuZW5jb3VudGVyX2tleSA9IGguZW5jb3VudGVyX2tleQopClNFTEVDVAogICAgQ0FTVCgKICAgICAgICBDT0FMRVNDRShzLnRlbXBfc2NvcmUsIDApCiAgICAgICAgKyBDT0FMRVNDRShzLmhlYXJ0X3JhdGVfc2NvcmUsIDApCiAgICAgICAgKyBDT0FMRVNDRShzLnJlc3Bfc2NvcmUsIDApCiAgICAgICAgKyBDT0FMRVNDRShzLndiY19zY29yZSwgMCkKICAgICAgICBBUyBJTlRFR0VSCiAgICApIEFTIHNpcnMsCiAgICBDQVNUKHMudGVtcF9zY29yZSBBUyBJTlRFR0VSKSBBUyB0ZW1wX3Njb3JlLAogICAgQ0FTVChzLmhlYXJ0X3JhdGVfc2NvcmUgQVMgSU5URUdFUikgQVMgaGVhcnRfcmF0ZV9zY29yZSwKICAgIENBU1Qocy5yZXNwX3Njb3JlIEFTIElOVEVHRVIpIEFTIHJlc3Bfc2NvcmUsCiAgICBDQVNUKHMud2JjX3Njb3JlIEFTIElOVEVHRVIpIEFTIHdiY19zY29yZSwKICAgIHIuZW5jb3VudGVyX2tleSBBUyBlbmNvdW50ZXJfa2V5LAogICAgci5pY3VfZW5jb3VudGVyX2tleSBBUyBpY3VfZW5jb3VudGVyX2tleSwKICAgIHIucGF0aWVudF9rZXkgQVMgcGF0aWVudF9rZXkKRlJPTSBpZGVudGl0eV9zcGluZSByCkxFRlQgSk9JTiBzY29yZWNhbGMgcwogICAgT04gci5pY3VfZW5jb3VudGVyX2tleSA9IHMuaWN1X2VuY291bnRlcl9rZXkKOwo="
+    }
+  ]
+}

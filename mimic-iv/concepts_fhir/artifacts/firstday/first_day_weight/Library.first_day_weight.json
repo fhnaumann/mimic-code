@@ -1,0 +1,45 @@
+{
+  "resourceType": "Library",
+  "id": "first-day-weight",
+  "url": "https://fhnaumann.masters/pathling/Library/first_day_weight",
+  "version": "2",
+  "name": "first_day_weight",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "icu_encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/first_day_weight-icu_encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "patient",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/first_day_weight-patient"
+    },
+    {
+      "type": "depends-on",
+      "label": "weight_durations",
+      "resource": "https://fhnaumann.masters/pathling/Library/weight_durations"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH icu AS (\n    SELECT\n        CAST(p.subject_id_str AS INTEGER) AS subject_id,\n        CAST(e.stay_id_str AS INTEGER) AS stay_id,\n        TRY_CAST(e.intime_datetime AS TIMESTAMP_NTZ) AS intime,\n        p.patient_key AS patient_key,\n        e.icu_encounter_key AS icu_encounter_key\n    FROM icu_encounter e\n    LEFT JOIN patient p\n        ON e.patient_key = p.patient_key\n    WHERE e.stay_id_str IS NOT NULL\n), aggregated AS (\n    SELECT\n        i.subject_id,\n        i.stay_id,\n        AVG(CASE WHEN ce.weight_type = 'admit' THEN ce.weight ELSE NULL END) AS weight_admit,\n        AVG(ce.weight) AS weight,\n        MIN(ce.weight) AS weight_min,\n        MAX(ce.weight) AS weight_max,\n        i.icu_encounter_key,\n        i.patient_key\n    FROM icu i\n    LEFT JOIN weight_durations ce\n        ON i.icu_encounter_key = ce.icu_encounter_key\n        AND ce.starttime <= i.intime + INTERVAL 1 DAY\n    GROUP BY\n        i.subject_id,\n        i.stay_id,\n        i.icu_encounter_key,\n        i.patient_key\n)\nSELECT\n    CAST(a.weight_admit AS DOUBLE) AS weight_admit,\n    CAST(a.weight AS DOUBLE) AS weight,\n    CAST(a.weight_min AS DECIMAL(38,3)) AS weight_min,\n    CAST(a.weight_max AS DECIMAL(38,3)) AS weight_max,\n    a.icu_encounter_key AS icu_encounter_key,\n    a.patient_key AS patient_key\nFROM aggregated a\n;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBpY3UgQVMgKAogICAgU0VMRUNUCiAgICAgICAgQ0FTVChwLnN1YmplY3RfaWRfc3RyIEFTIElOVEVHRVIpIEFTIHN1YmplY3RfaWQsCiAgICAgICAgQ0FTVChlLnN0YXlfaWRfc3RyIEFTIElOVEVHRVIpIEFTIHN0YXlfaWQsCiAgICAgICAgVFJZX0NBU1QoZS5pbnRpbWVfZGF0ZXRpbWUgQVMgVElNRVNUQU1QX05UWikgQVMgaW50aW1lLAogICAgICAgIHAucGF0aWVudF9rZXkgQVMgcGF0aWVudF9rZXksCiAgICAgICAgZS5pY3VfZW5jb3VudGVyX2tleSBBUyBpY3VfZW5jb3VudGVyX2tleQogICAgRlJPTSBpY3VfZW5jb3VudGVyIGUKICAgIExFRlQgSk9JTiBwYXRpZW50IHAKICAgICAgICBPTiBlLnBhdGllbnRfa2V5ID0gcC5wYXRpZW50X2tleQogICAgV0hFUkUgZS5zdGF5X2lkX3N0ciBJUyBOT1QgTlVMTAopLCBhZ2dyZWdhdGVkIEFTICgKICAgIFNFTEVDVAogICAgICAgIGkuc3ViamVjdF9pZCwKICAgICAgICBpLnN0YXlfaWQsCiAgICAgICAgQVZHKENBU0UgV0hFTiBjZS53ZWlnaHRfdHlwZSA9ICdhZG1pdCcgVEhFTiBjZS53ZWlnaHQgRUxTRSBOVUxMIEVORCkgQVMgd2VpZ2h0X2FkbWl0LAogICAgICAgIEFWRyhjZS53ZWlnaHQpIEFTIHdlaWdodCwKICAgICAgICBNSU4oY2Uud2VpZ2h0KSBBUyB3ZWlnaHRfbWluLAogICAgICAgIE1BWChjZS53ZWlnaHQpIEFTIHdlaWdodF9tYXgsCiAgICAgICAgaS5pY3VfZW5jb3VudGVyX2tleSwKICAgICAgICBpLnBhdGllbnRfa2V5CiAgICBGUk9NIGljdSBpCiAgICBMRUZUIEpPSU4gd2VpZ2h0X2R1cmF0aW9ucyBjZQogICAgICAgIE9OIGkuaWN1X2VuY291bnRlcl9rZXkgPSBjZS5pY3VfZW5jb3VudGVyX2tleQogICAgICAgIEFORCBjZS5zdGFydHRpbWUgPD0gaS5pbnRpbWUgKyBJTlRFUlZBTCAxIERBWQogICAgR1JPVVAgQlkKICAgICAgICBpLnN1YmplY3RfaWQsCiAgICAgICAgaS5zdGF5X2lkLAogICAgICAgIGkuaWN1X2VuY291bnRlcl9rZXksCiAgICAgICAgaS5wYXRpZW50X2tleQopClNFTEVDVAogICAgQ0FTVChhLndlaWdodF9hZG1pdCBBUyBET1VCTEUpIEFTIHdlaWdodF9hZG1pdCwKICAgIENBU1QoYS53ZWlnaHQgQVMgRE9VQkxFKSBBUyB3ZWlnaHQsCiAgICBDQVNUKGEud2VpZ2h0X21pbiBBUyBERUNJTUFMKDM4LDMpKSBBUyB3ZWlnaHRfbWluLAogICAgQ0FTVChhLndlaWdodF9tYXggQVMgREVDSU1BTCgzOCwzKSkgQVMgd2VpZ2h0X21heCwKICAgIGEuaWN1X2VuY291bnRlcl9rZXkgQVMgaWN1X2VuY291bnRlcl9rZXksCiAgICBhLnBhdGllbnRfa2V5IEFTIHBhdGllbnRfa2V5CkZST00gYWdncmVnYXRlZCBhCjsK"
+    }
+  ]
+}

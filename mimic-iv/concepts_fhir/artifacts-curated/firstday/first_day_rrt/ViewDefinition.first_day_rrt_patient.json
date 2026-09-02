@@ -1,0 +1,28 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/first_day_rrt-first_day_rrt_patient",
+  "name": "first_day_rrt_patient",
+  "resource": "Patient",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "patient_key"
+        }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/patient')",
+      "column": [
+        {
+          "path": "value",
+          "name": "subject_id_str"
+        }
+      ]
+    }
+  ],
+  "id": "first-day-rrt-first-day-rrt-patient",
+  "version": "2"
+}

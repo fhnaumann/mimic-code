@@ -23,7 +23,7 @@ WITH lab_rows AS (
     FROM lab_observation l
     INNER JOIN patient p
         ON l.patient_key = p.patient_key
-    INNER JOIN specimen_src s
+    INNER JOIN specimen s
         ON l.specimen_key = s.specimen_key
     LEFT JOIN encounter e
         ON l.encounter_key = e.encounter_key
@@ -223,7 +223,7 @@ derived AS (
     WHERE lastrowfio2 = 1
 )
 SELECT
-    CAST(charttime AS TIMESTAMP) AS charttime,
+    CAST(charttime AS TIMESTAMP_NTZ) AS charttime,
     CAST(specimen AS VARCHAR(255)) AS specimen,
     CAST(so2 AS DOUBLE) AS so2,
     CAST(po2 AS DOUBLE) AS po2,

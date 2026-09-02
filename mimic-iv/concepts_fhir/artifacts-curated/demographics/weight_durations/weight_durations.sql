@@ -159,8 +159,8 @@ WITH observation_typed AS (
     FROM wt_fix
 )
 SELECT
-    CAST(fr.starttime AS TIMESTAMP) AS starttime,
-    CAST(fr.endtime AS TIMESTAMP) AS endtime,
+    CAST(fr.starttime AS TIMESTAMP_NTZ) AS starttime,
+    CAST(fr.endtime AS TIMESTAMP_NTZ) AS endtime,
     CAST(fr.weight AS DECIMAL(38,3)) AS weight,
     CAST(fr.weight_type AS VARCHAR(255)) AS weight_type,
     fr.icu_encounter_key AS icu_encounter_key,

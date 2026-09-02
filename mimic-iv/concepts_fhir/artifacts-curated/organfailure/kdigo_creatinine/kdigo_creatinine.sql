@@ -9,7 +9,7 @@ WITH icu_encounters AS (
     SELECT
         i.encounter_key,
         i.patient_key,
-        i.parent_encounter_key,
+        i.hospital_encounter_key,
         i.stay_id_str,
         TRY_CAST(i.period_start AS TIMESTAMP_NTZ) AS intime,
         TRY_CAST(i.period_end AS TIMESTAMP_NTZ) AS outtime
@@ -30,7 +30,7 @@ WITH icu_encounters AS (
         h.hadm_id_str
     FROM icu_encounters i
     LEFT JOIN hospital_encounters h
-        ON i.parent_encounter_key = h.encounter_key
+        ON i.hospital_encounter_key = h.encounter_key
 ), observations AS (
     SELECT
         o.patient_key,
@@ -79,7 +79,7 @@ WITH icu_encounters AS (
     GROUP BY c.stay_id_str, c.charttime
 )
 SELECT
-    CAST(cr.charttime AS TIMESTAMP) AS charttime,
+    CAST(cr.charttime AS TIMESTAMP_NTZ) AS charttime,
     CAST(cr.creat AS DOUBLE) AS creat,
     CAST(cr48.creat_low_past_48hr AS DOUBLE) AS creat_low_past_48hr,
     CAST(cr7.creat_low_past_7day AS DOUBLE) AS creat_low_past_7day,
@@ -92,7 +92,7 @@ SELECT
         SELECT MAX(h.encounter_key)
         FROM icu_encounters i
         LEFT JOIN hospital_encounters h
-            ON i.parent_encounter_key = h.encounter_key
+            ON i.hospital_encounter_key = h.encounter_key
         WHERE i.stay_id_str = cr.stay_id_str
     ) AS encounter_key,
     (

@@ -6,7 +6,7 @@
 -- `mimic-utils metrics-finalize` from the finalized attempt.
 
 SELECT
-    TRY_CAST(e.period_start AS TIMESTAMP) AS admittime,
+    TRY_CAST(e.period_start AS TIMESTAMP_NTZ) AS admittime,
     CAST(NULL AS SMALLINT) AS anchor_age,
     CAST(NULL AS SMALLINT) AS anchor_year,
     CAST(

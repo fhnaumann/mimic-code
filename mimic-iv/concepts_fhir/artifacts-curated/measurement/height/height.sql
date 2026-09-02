@@ -60,7 +60,7 @@ WITH observation_rows AS (
         AND h1.charttime = h2.charttime
 )
 SELECT
-    CAST(charttime AS TIMESTAMP) AS charttime,
+    CAST(charttime AS TIMESTAMP_NTZ) AS charttime,
     CAST(height AS DECIMAL(38,2)) AS height,
     patient_key,
     icu_encounter_key

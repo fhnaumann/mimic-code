@@ -1,0 +1,45 @@
+{
+  "resourceType": "Library",
+  "id": "first-day-urine-output",
+  "url": "https://fhnaumann.masters/pathling/Library/first_day_urine_output",
+  "version": "2",
+  "name": "first_day_urine_output",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "icu_encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/first_day_urine_output-icu_encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "patient",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/first_day_urine_output-patient"
+    },
+    {
+      "type": "depends-on",
+      "label": "urine_output",
+      "resource": "https://fhnaumann.masters/pathling/Library/urine_output"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH icu AS (\n    SELECT\n        CAST(p.subject_id_str AS INTEGER) AS subject_id,\n        CAST(e.stay_id_str AS INTEGER) AS stay_id,\n        TRY_CAST(e.intime_datetime AS TIMESTAMP_NTZ) AS intime,\n        p.patient_key AS patient_key,\n        e.icu_encounter_key AS icu_encounter_key\n    FROM icu_encounter e\n    INNER JOIN patient p\n        ON e.patient_key = p.patient_key\n    WHERE e.stay_id_str IS NOT NULL\n), aggregated AS (\n    SELECT\n        i.subject_id,\n        i.stay_id,\n        i.patient_key,\n        i.icu_encounter_key,\n        SUM(uo.urineoutput) AS urineoutput\n    FROM icu i\n    LEFT JOIN urine_output uo\n        ON i.icu_encounter_key = uo.icu_encounter_key\n        AND uo.charttime >= i.intime\n        AND uo.charttime <= i.intime + INTERVAL 1 DAY\n    GROUP BY\n        i.subject_id,\n        i.stay_id,\n        i.patient_key,\n        i.icu_encounter_key\n)\nSELECT\n    CAST(a.urineoutput AS DOUBLE) AS urineoutput,\n    a.patient_key,\n    a.icu_encounter_key\nFROM aggregated a\n;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBpY3UgQVMgKAogICAgU0VMRUNUCiAgICAgICAgQ0FTVChwLnN1YmplY3RfaWRfc3RyIEFTIElOVEVHRVIpIEFTIHN1YmplY3RfaWQsCiAgICAgICAgQ0FTVChlLnN0YXlfaWRfc3RyIEFTIElOVEVHRVIpIEFTIHN0YXlfaWQsCiAgICAgICAgVFJZX0NBU1QoZS5pbnRpbWVfZGF0ZXRpbWUgQVMgVElNRVNUQU1QX05UWikgQVMgaW50aW1lLAogICAgICAgIHAucGF0aWVudF9rZXkgQVMgcGF0aWVudF9rZXksCiAgICAgICAgZS5pY3VfZW5jb3VudGVyX2tleSBBUyBpY3VfZW5jb3VudGVyX2tleQogICAgRlJPTSBpY3VfZW5jb3VudGVyIGUKICAgIElOTkVSIEpPSU4gcGF0aWVudCBwCiAgICAgICAgT04gZS5wYXRpZW50X2tleSA9IHAucGF0aWVudF9rZXkKICAgIFdIRVJFIGUuc3RheV9pZF9zdHIgSVMgTk9UIE5VTEwKKSwgYWdncmVnYXRlZCBBUyAoCiAgICBTRUxFQ1QKICAgICAgICBpLnN1YmplY3RfaWQsCiAgICAgICAgaS5zdGF5X2lkLAogICAgICAgIGkucGF0aWVudF9rZXksCiAgICAgICAgaS5pY3VfZW5jb3VudGVyX2tleSwKICAgICAgICBTVU0odW8udXJpbmVvdXRwdXQpIEFTIHVyaW5lb3V0cHV0CiAgICBGUk9NIGljdSBpCiAgICBMRUZUIEpPSU4gdXJpbmVfb3V0cHV0IHVvCiAgICAgICAgT04gaS5pY3VfZW5jb3VudGVyX2tleSA9IHVvLmljdV9lbmNvdW50ZXJfa2V5CiAgICAgICAgQU5EIHVvLmNoYXJ0dGltZSA+PSBpLmludGltZQogICAgICAgIEFORCB1by5jaGFydHRpbWUgPD0gaS5pbnRpbWUgKyBJTlRFUlZBTCAxIERBWQogICAgR1JPVVAgQlkKICAgICAgICBpLnN1YmplY3RfaWQsCiAgICAgICAgaS5zdGF5X2lkLAogICAgICAgIGkucGF0aWVudF9rZXksCiAgICAgICAgaS5pY3VfZW5jb3VudGVyX2tleQopClNFTEVDVAogICAgQ0FTVChhLnVyaW5lb3V0cHV0IEFTIERPVUJMRSkgQVMgdXJpbmVvdXRwdXQsCiAgICBhLnBhdGllbnRfa2V5LAogICAgYS5pY3VfZW5jb3VudGVyX2tleQpGUk9NIGFnZ3JlZ2F0ZWQgYQo7Cg=="
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/first_day_sofa-icu_encounter",
+  "name": "icu_encounter",
+  "resource": "Encounter",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "icu_encounter_key"
+        },
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_key"
+        },
+        {
+          "path": "partOf.getReferenceKey(Encounter)",
+          "name": "hospital_encounter_key"
+        },
+        {
+          "path": "period.start",
+          "name": "intime_datetime"
+        }
+      ]
+    },
+    {
+      "forEach": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu')",
+      "column": [
+        {
+          "path": "system",
+          "name": "stay_system"
+        },
+        {
+          "path": "value",
+          "name": "stay_id_str"
+        }
+      ]
+    }
+  ],
+  "id": "first-day-sofa-icu-encounter",
+  "version": "2"
+}

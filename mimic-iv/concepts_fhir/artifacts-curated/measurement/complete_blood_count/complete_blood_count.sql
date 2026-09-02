@@ -72,7 +72,7 @@ WITH filtered_rows AS (
     GROUP BY specimen_id
 )
 SELECT
-    CAST(charttime AS TIMESTAMP) AS charttime,
+    CAST(charttime AS TIMESTAMP_NTZ) AS charttime,
     CAST(hematocrit AS DOUBLE) AS hematocrit,
     CAST(hemoglobin AS DOUBLE) AS hemoglobin,
     CAST(mch AS DOUBLE) AS mch,

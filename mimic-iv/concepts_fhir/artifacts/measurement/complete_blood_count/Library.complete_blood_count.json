@@ -2,7 +2,7 @@
   "resourceType": "Library",
   "id": "complete-blood-count",
   "url": "https://fhnaumann.masters/pathling/Library/complete_blood_count",
-  "version": "3",
+  "version": "4",
   "name": "complete_blood_count",
   "status": "active",
   "type": {

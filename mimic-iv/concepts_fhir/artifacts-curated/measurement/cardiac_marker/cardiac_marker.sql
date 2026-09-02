@@ -63,7 +63,7 @@ WITH filtered_rows AS (
 SELECT
     grouped.patient_key AS patient_key,
     grouped.encounter_key AS encounter_key,
-    CAST(grouped.charttime AS TIMESTAMP) AS charttime,
+    CAST(grouped.charttime AS TIMESTAMP_NTZ) AS charttime,
     grouped.specimen_key AS specimen_key,
     CAST(grouped.troponin_t AS DOUBLE) AS troponin_t,
     CAST(grouped.ck_mb AS DOUBLE) AS ck_mb,

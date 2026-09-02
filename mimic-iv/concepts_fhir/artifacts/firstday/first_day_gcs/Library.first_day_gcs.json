@@ -1,0 +1,45 @@
+{
+  "resourceType": "Library",
+  "id": "first-day-gcs",
+  "url": "https://fhnaumann.masters/pathling/Library/first_day_gcs",
+  "version": "3",
+  "name": "first_day_gcs",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "gcs",
+      "resource": "https://fhnaumann.masters/pathling/Library/gcs"
+    },
+    {
+      "type": "depends-on",
+      "label": "icu_encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/first_day_gcs-icu_encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "patient",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/first_day_gcs-patient"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH icu_stays AS (\n    SELECT\n        p.subject_id_str,\n        e.stay_id_str,\n        TRY_CAST(e.intime_datetime AS TIMESTAMP_NTZ) AS intime,\n        p.patient_key,\n        e.icu_encounter_key\n    FROM icu_encounter e\n    LEFT JOIN patient p\n        ON e.patient_key = p.patient_key\n    WHERE e.stay_system = 'http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu'\n        AND e.stay_id_str IS NOT NULL\n), gcs_final AS (\n    SELECT\n        i.subject_id_str,\n        i.stay_id_str,\n        i.patient_key,\n        i.icu_encounter_key,\n        g.charttime,\n        g.gcs,\n        g.gcs_motor,\n        g.gcs_verbal,\n        g.gcs_eyes,\n        g.gcs_unable,\n        ROW_NUMBER() OVER (\n            PARTITION BY g.icu_encounter_key\n            ORDER BY g.gcs ASC NULLS LAST, g.charttime DESC NULLS LAST\n        ) AS gcs_seq\n    FROM icu_stays i\n    LEFT JOIN gcs g\n        ON i.icu_encounter_key = g.icu_encounter_key\n        AND g.charttime >= i.intime - INTERVAL 6 HOURS\n        AND g.charttime <= i.intime + INTERVAL 1 DAY\n)\nSELECT\n    CAST(gs.gcs AS FLOAT) AS gcs_min,\n    CAST(gs.gcs_motor AS FLOAT) AS gcs_motor,\n    CAST(gs.gcs_verbal AS FLOAT) AS gcs_verbal,\n    CAST(gs.gcs_eyes AS FLOAT) AS gcs_eyes,\n    CAST(gs.gcs_unable AS INTEGER) AS gcs_unable,\n    i.patient_key AS patient_key,\n    i.icu_encounter_key AS icu_encounter_key\nFROM icu_stays i\nLEFT JOIN gcs_final gs\n    ON i.icu_encounter_key = gs.icu_encounter_key\n    AND gs.gcs_seq = 1\n;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBpY3Vfc3RheXMgQVMgKAogICAgU0VMRUNUCiAgICAgICAgcC5zdWJqZWN0X2lkX3N0ciwKICAgICAgICBlLnN0YXlfaWRfc3RyLAogICAgICAgIFRSWV9DQVNUKGUuaW50aW1lX2RhdGV0aW1lIEFTIFRJTUVTVEFNUF9OVFopIEFTIGludGltZSwKICAgICAgICBwLnBhdGllbnRfa2V5LAogICAgICAgIGUuaWN1X2VuY291bnRlcl9rZXkKICAgIEZST00gaWN1X2VuY291bnRlciBlCiAgICBMRUZUIEpPSU4gcGF0aWVudCBwCiAgICAgICAgT04gZS5wYXRpZW50X2tleSA9IHAucGF0aWVudF9rZXkKICAgIFdIRVJFIGUuc3RheV9zeXN0ZW0gPSAnaHR0cDovL21pbWljLm1pdC5lZHUvZmhpci9taW1pYy9pZGVudGlmaWVyL2VuY291bnRlci1pY3UnCiAgICAgICAgQU5EIGUuc3RheV9pZF9zdHIgSVMgTk9UIE5VTEwKKSwgZ2NzX2ZpbmFsIEFTICgKICAgIFNFTEVDVAogICAgICAgIGkuc3ViamVjdF9pZF9zdHIsCiAgICAgICAgaS5zdGF5X2lkX3N0ciwKICAgICAgICBpLnBhdGllbnRfa2V5LAogICAgICAgIGkuaWN1X2VuY291bnRlcl9rZXksCiAgICAgICAgZy5jaGFydHRpbWUsCiAgICAgICAgZy5nY3MsCiAgICAgICAgZy5nY3NfbW90b3IsCiAgICAgICAgZy5nY3NfdmVyYmFsLAogICAgICAgIGcuZ2NzX2V5ZXMsCiAgICAgICAgZy5nY3NfdW5hYmxlLAogICAgICAgIFJPV19OVU1CRVIoKSBPVkVSICgKICAgICAgICAgICAgUEFSVElUSU9OIEJZIGcuaWN1X2VuY291bnRlcl9rZXkKICAgICAgICAgICAgT1JERVIgQlkgZy5nY3MgQVNDIE5VTExTIExBU1QsIGcuY2hhcnR0aW1lIERFU0MgTlVMTFMgTEFTVAogICAgICAgICkgQVMgZ2NzX3NlcQogICAgRlJPTSBpY3Vfc3RheXMgaQogICAgTEVGVCBKT0lOIGdjcyBnCiAgICAgICAgT04gaS5pY3VfZW5jb3VudGVyX2tleSA9IGcuaWN1X2VuY291bnRlcl9rZXkKICAgICAgICBBTkQgZy5jaGFydHRpbWUgPj0gaS5pbnRpbWUgLSBJTlRFUlZBTCA2IEhPVVJTCiAgICAgICAgQU5EIGcuY2hhcnR0aW1lIDw9IGkuaW50aW1lICsgSU5URVJWQUwgMSBEQVkKKQpTRUxFQ1QKICAgIENBU1QoZ3MuZ2NzIEFTIEZMT0FUKSBBUyBnY3NfbWluLAogICAgQ0FTVChncy5nY3NfbW90b3IgQVMgRkxPQVQpIEFTIGdjc19tb3RvciwKICAgIENBU1QoZ3MuZ2NzX3ZlcmJhbCBBUyBGTE9BVCkgQVMgZ2NzX3ZlcmJhbCwKICAgIENBU1QoZ3MuZ2NzX2V5ZXMgQVMgRkxPQVQpIEFTIGdjc19leWVzLAogICAgQ0FTVChncy5nY3NfdW5hYmxlIEFTIElOVEVHRVIpIEFTIGdjc191bmFibGUsCiAgICBpLnBhdGllbnRfa2V5IEFTIHBhdGllbnRfa2V5LAogICAgaS5pY3VfZW5jb3VudGVyX2tleSBBUyBpY3VfZW5jb3VudGVyX2tleQpGUk9NIGljdV9zdGF5cyBpCkxFRlQgSk9JTiBnY3NfZmluYWwgZ3MKICAgIE9OIGkuaWN1X2VuY291bnRlcl9rZXkgPSBncy5pY3VfZW5jb3VudGVyX2tleQogICAgQU5EIGdzLmdjc19zZXEgPSAxCjsK"
+    }
+  ]
+}

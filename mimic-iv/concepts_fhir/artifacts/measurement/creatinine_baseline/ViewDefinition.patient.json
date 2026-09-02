@@ -1,0 +1,27 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/creatinine_baseline-patient",
+  "name": "patient",
+  "resource": "Patient",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "patient_key"
+        },
+        {
+          "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/patient').value",
+          "name": "subject_id_str"
+        },
+        {
+          "path": "gender",
+          "name": "gender_fhir"
+        }
+      ]
+    }
+  ],
+  "id": "creatinine-baseline-patient",
+  "version": "4"
+}

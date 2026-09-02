@@ -48,7 +48,7 @@ WITH observation_rows AS (
     GROUP BY stay_id, charttime, icu_encounter_key, patient_key
 )
 SELECT
-    CAST(charttime AS TIMESTAMP) AS charttime,
+    CAST(charttime AS TIMESTAMP_NTZ) AS charttime,
     CAST(urineoutput AS DOUBLE) AS urineoutput,
     icu_encounter_key,
     patient_key

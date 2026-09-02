@@ -83,7 +83,7 @@ grouped AS (
 SELECT
     patient_key,
     encounter_key,
-    CAST(charttime AS TIMESTAMP) AS charttime,
+    CAST(charttime AS TIMESTAMP_NTZ) AS charttime,
     specimen_key,
     CAST(d_dimer AS DOUBLE) AS d_dimer,
     CAST(fibrinogen AS DOUBLE) AS fibrinogen,

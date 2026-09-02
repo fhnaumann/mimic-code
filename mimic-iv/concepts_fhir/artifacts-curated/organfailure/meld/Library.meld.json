@@ -1,0 +1,55 @@
+{
+  "resourceType": "Library",
+  "id": "meld",
+  "url": "https://fhnaumann.masters/pathling/Library/meld",
+  "version": "2",
+  "name": "meld",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "first_day_lab",
+      "resource": "https://fhnaumann.masters/pathling/Library/first_day_lab"
+    },
+    {
+      "type": "depends-on",
+      "label": "first_day_rrt",
+      "resource": "https://fhnaumann.masters/pathling/Library/first_day_rrt"
+    },
+    {
+      "type": "depends-on",
+      "label": "hospital_encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/meld-hospital_encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "icu_encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/meld-icu_encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "patient",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/meld-patient"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH cohort AS (\n    SELECT\n        p.subject_id_str AS subject_id,\n        h.hadm_id_str AS hadm_id,\n        e.stay_id_str AS stay_id,\n        labs.creatinine_max,\n        labs.bilirubin_total_max,\n        labs.inr_max,\n        labs.sodium_min,\n        r.dialysis_present AS rrt,\n        h.encounter_key,\n        e.icu_encounter_key,\n        p.patient_key\n    FROM icu_encounter e\n    LEFT JOIN patient p\n        ON e.patient_key = p.patient_key\n    LEFT JOIN hospital_encounter h\n        ON e.hospital_encounter_key = h.encounter_key\n    LEFT JOIN first_day_lab labs\n        ON e.icu_encounter_key = labs.icu_encounter_key\n    LEFT JOIN first_day_rrt r\n        ON e.icu_encounter_key = r.icu_encounter_key\n    WHERE e.stay_id_str IS NOT NULL\n), score AS (\n    SELECT\n        subject_id,\n        hadm_id,\n        stay_id,\n        rrt,\n        creatinine_max,\n        bilirubin_total_max,\n        inr_max,\n        sodium_min,\n        encounter_key,\n        icu_encounter_key,\n        patient_key,\n\n        CASE\n            WHEN sodium_min IS NULL\n                THEN 0.0\n            WHEN sodium_min > 137\n                THEN 0.0\n            WHEN sodium_min < 125\n                THEN 12.0\n            ELSE 137.0 - sodium_min\n        END AS sodium_score,\n\n        CASE\n            WHEN rrt = 1 OR creatinine_max > 4.0\n                THEN 0.957 * LN(4)\n            WHEN creatinine_max < 1\n                THEN 0.957 * LN(1)\n            ELSE 0.957 * COALESCE(LN(creatinine_max), LN(1))\n        END AS creatinine_score,\n\n        CASE\n            WHEN bilirubin_total_max < 1\n                THEN 0.378 * LN(1)\n            ELSE 0.378 * COALESCE(LN(bilirubin_total_max), LN(1))\n        END AS bilirubin_score,\n\n        CASE\n            WHEN inr_max < 1\n                THEN 1.120 * LN(1) + 0.643\n            ELSE 1.120 * COALESCE(LN(inr_max), LN(1)) + 0.643\n        END AS inr_score\n    FROM cohort\n), score2 AS (\n    SELECT\n        subject_id,\n        hadm_id,\n        stay_id,\n        rrt,\n        creatinine_max,\n        bilirubin_total_max,\n        inr_max,\n        sodium_min,\n        sodium_score,\n        creatinine_score,\n        bilirubin_score,\n        inr_score,\n        encounter_key,\n        icu_encounter_key,\n        patient_key,\n\n        CASE\n            WHEN (creatinine_score + bilirubin_score + inr_score) > 4\n                THEN 40.0\n            ELSE ROUND(\n                CAST(\n                    creatinine_score\n                    + bilirubin_score\n                    + inr_score\n                    AS DECIMAL(38,12)\n                ),\n                1\n            ) * 10\n        END AS meld_initial\n    FROM score\n), final_values AS (\n    SELECT\n        subject_id,\n        hadm_id,\n        stay_id,\n        meld_initial,\n        CASE\n            WHEN meld_initial > 11\n                THEN meld_initial + 1.32 * sodium_score\n                    - 0.033 * meld_initial * sodium_score\n            ELSE meld_initial\n        END AS meld,\n        rrt,\n        creatinine_max,\n        bilirubin_total_max,\n        inr_max,\n        sodium_min,\n        encounter_key,\n        icu_encounter_key,\n        patient_key\n    FROM score2\n)\nSELECT\n    CAST(f.meld_initial AS DECIMAL(38,1)) AS meld_initial,\n    CAST(f.meld AS DOUBLE) AS meld,\n    CAST(f.rrt AS INTEGER) AS rrt,\n    CAST(f.creatinine_max AS DOUBLE) AS creatinine_max,\n    CAST(f.bilirubin_total_max AS DOUBLE) AS bilirubin_total_max,\n    CAST(f.inr_max AS DOUBLE) AS inr_max,\n    CAST(f.sodium_min AS DOUBLE) AS sodium_min,\n    f.encounter_key AS encounter_key,\n    f.icu_encounter_key AS icu_encounter_key,\n    f.patient_key AS patient_key\nFROM final_values f\n;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBjb2hvcnQgQVMgKAogICAgU0VMRUNUCiAgICAgICAgcC5zdWJqZWN0X2lkX3N0ciBBUyBzdWJqZWN0X2lkLAogICAgICAgIGguaGFkbV9pZF9zdHIgQVMgaGFkbV9pZCwKICAgICAgICBlLnN0YXlfaWRfc3RyIEFTIHN0YXlfaWQsCiAgICAgICAgbGFicy5jcmVhdGluaW5lX21heCwKICAgICAgICBsYWJzLmJpbGlydWJpbl90b3RhbF9tYXgsCiAgICAgICAgbGFicy5pbnJfbWF4LAogICAgICAgIGxhYnMuc29kaXVtX21pbiwKICAgICAgICByLmRpYWx5c2lzX3ByZXNlbnQgQVMgcnJ0LAogICAgICAgIGguZW5jb3VudGVyX2tleSwKICAgICAgICBlLmljdV9lbmNvdW50ZXJfa2V5LAogICAgICAgIHAucGF0aWVudF9rZXkKICAgIEZST00gaWN1X2VuY291bnRlciBlCiAgICBMRUZUIEpPSU4gcGF0aWVudCBwCiAgICAgICAgT04gZS5wYXRpZW50X2tleSA9IHAucGF0aWVudF9rZXkKICAgIExFRlQgSk9JTiBob3NwaXRhbF9lbmNvdW50ZXIgaAogICAgICAgIE9OIGUuaG9zcGl0YWxfZW5jb3VudGVyX2tleSA9IGguZW5jb3VudGVyX2tleQogICAgTEVGVCBKT0lOIGZpcnN0X2RheV9sYWIgbGFicwogICAgICAgIE9OIGUuaWN1X2VuY291bnRlcl9rZXkgPSBsYWJzLmljdV9lbmNvdW50ZXJfa2V5CiAgICBMRUZUIEpPSU4gZmlyc3RfZGF5X3JydCByCiAgICAgICAgT04gZS5pY3VfZW5jb3VudGVyX2tleSA9IHIuaWN1X2VuY291bnRlcl9rZXkKICAgIFdIRVJFIGUuc3RheV9pZF9zdHIgSVMgTk9UIE5VTEwKKSwgc2NvcmUgQVMgKAogICAgU0VMRUNUCiAgICAgICAgc3ViamVjdF9pZCwKICAgICAgICBoYWRtX2lkLAogICAgICAgIHN0YXlfaWQsCiAgICAgICAgcnJ0LAogICAgICAgIGNyZWF0aW5pbmVfbWF4LAogICAgICAgIGJpbGlydWJpbl90b3RhbF9tYXgsCiAgICAgICAgaW5yX21heCwKICAgICAgICBzb2RpdW1fbWluLAogICAgICAgIGVuY291bnRlcl9rZXksCiAgICAgICAgaWN1X2VuY291bnRlcl9rZXksCiAgICAgICAgcGF0aWVudF9rZXksCgogICAgICAgIENBU0UKICAgICAgICAgICAgV0hFTiBzb2RpdW1fbWluIElTIE5VTEwKICAgICAgICAgICAgICAgIFRIRU4gMC4wCiAgICAgICAgICAgIFdIRU4gc29kaXVtX21pbiA+IDEzNwogICAgICAgICAgICAgICAgVEhFTiAwLjAKICAgICAgICAgICAgV0hFTiBzb2RpdW1fbWluIDwgMTI1CiAgICAgICAgICAgICAgICBUSEVOIDEyLjAKICAgICAgICAgICAgRUxTRSAxMzcuMCAtIHNvZGl1bV9taW4KICAgICAgICBFTkQgQVMgc29kaXVtX3Njb3JlLAoKICAgICAgICBDQVNFCiAgICAgICAgICAgIFdIRU4gcnJ0ID0gMSBPUiBjcmVhdGluaW5lX21heCA+IDQuMAogICAgICAgICAgICAgICAgVEhFTiAwLjk1NyAqIExOKDQpCiAgICAgICAgICAgIFdIRU4gY3JlYXRpbmluZV9tYXggPCAxCiAgICAgICAgICAgICAgICBUSEVOIDAuOTU3ICogTE4oMSkKICAgICAgICAgICAgRUxTRSAwLjk1NyAqIENPQUxFU0NFKExOKGNyZWF0aW5pbmVfbWF4KSwgTE4oMSkpCiAgICAgICAgRU5EIEFTIGNyZWF0aW5pbmVfc2NvcmUsCgogICAgICAgIENBU0UKICAgICAgICAgICAgV0hFTiBiaWxpcnViaW5fdG90YWxfbWF4IDwgMQogICAgICAgICAgICAgICAgVEhFTiAwLjM3OCAqIExOKDEpCiAgICAgICAgICAgIEVMU0UgMC4zNzggKiBDT0FMRVNDRShMTihiaWxpcnViaW5fdG90YWxfbWF4KSwgTE4oMSkpCiAgICAgICAgRU5EIEFTIGJpbGlydWJpbl9zY29yZSwKCiAgICAgICAgQ0FTRQogICAgICAgICAgICBXSEVOIGlucl9tYXggPCAxCiAgICAgICAgICAgICAgICBUSEVOIDEuMTIwICogTE4oMSkgKyAwLjY0MwogICAgICAgICAgICBFTFNFIDEuMTIwICogQ09BTEVTQ0UoTE4oaW5yX21heCksIExOKDEpKSArIDAuNjQzCiAgICAgICAgRU5EIEFTIGlucl9zY29yZQogICAgRlJPTSBjb2hvcnQKKSwgc2NvcmUyIEFTICgKICAgIFNFTEVDVAogICAgICAgIHN1YmplY3RfaWQsCiAgICAgICAgaGFkbV9pZCwKICAgICAgICBzdGF5X2lkLAogICAgICAgIHJydCwKICAgICAgICBjcmVhdGluaW5lX21heCwKICAgICAgICBiaWxpcnViaW5fdG90YWxfbWF4LAogICAgICAgIGlucl9tYXgsCiAgICAgICAgc29kaXVtX21pbiwKICAgICAgICBzb2RpdW1fc2NvcmUsCiAgICAgICAgY3JlYXRpbmluZV9zY29yZSwKICAgICAgICBiaWxpcnViaW5fc2NvcmUsCiAgICAgICAgaW5yX3Njb3JlLAogICAgICAgIGVuY291bnRlcl9rZXksCiAgICAgICAgaWN1X2VuY291bnRlcl9rZXksCiAgICAgICAgcGF0aWVudF9rZXksCgogICAgICAgIENBU0UKICAgICAgICAgICAgV0hFTiAoY3JlYXRpbmluZV9zY29yZSArIGJpbGlydWJpbl9zY29yZSArIGlucl9zY29yZSkgPiA0CiAgICAgICAgICAgICAgICBUSEVOIDQwLjAKICAgICAgICAgICAgRUxTRSBST1VORCgKICAgICAgICAgICAgICAgIENBU1QoCiAgICAgICAgICAgICAgICAgICAgY3JlYXRpbmluZV9zY29yZQogICAgICAgICAgICAgICAgICAgICsgYmlsaXJ1YmluX3Njb3JlCiAgICAgICAgICAgICAgICAgICAgKyBpbnJfc2NvcmUKICAgICAgICAgICAgICAgICAgICBBUyBERUNJTUFMKDM4LDEyKQogICAgICAgICAgICAgICAgKSwKICAgICAgICAgICAgICAgIDEKICAgICAgICAgICAgKSAqIDEwCiAgICAgICAgRU5EIEFTIG1lbGRfaW5pdGlhbAogICAgRlJPTSBzY29yZQopLCBmaW5hbF92YWx1ZXMgQVMgKAogICAgU0VMRUNUCiAgICAgICAgc3ViamVjdF9pZCwKICAgICAgICBoYWRtX2lkLAogICAgICAgIHN0YXlfaWQsCiAgICAgICAgbWVsZF9pbml0aWFsLAogICAgICAgIENBU0UKICAgICAgICAgICAgV0hFTiBtZWxkX2luaXRpYWwgPiAxMQogICAgICAgICAgICAgICAgVEhFTiBtZWxkX2luaXRpYWwgKyAxLjMyICogc29kaXVtX3Njb3JlCiAgICAgICAgICAgICAgICAgICAgLSAwLjAzMyAqIG1lbGRfaW5pdGlhbCAqIHNvZGl1bV9zY29yZQogICAgICAgICAgICBFTFNFIG1lbGRfaW5pdGlhbAogICAgICAgIEVORCBBUyBtZWxkLAogICAgICAgIHJydCwKICAgICAgICBjcmVhdGluaW5lX21heCwKICAgICAgICBiaWxpcnViaW5fdG90YWxfbWF4LAogICAgICAgIGlucl9tYXgsCiAgICAgICAgc29kaXVtX21pbiwKICAgICAgICBlbmNvdW50ZXJfa2V5LAogICAgICAgIGljdV9lbmNvdW50ZXJfa2V5LAogICAgICAgIHBhdGllbnRfa2V5CiAgICBGUk9NIHNjb3JlMgopClNFTEVDVAogICAgQ0FTVChmLm1lbGRfaW5pdGlhbCBBUyBERUNJTUFMKDM4LDEpKSBBUyBtZWxkX2luaXRpYWwsCiAgICBDQVNUKGYubWVsZCBBUyBET1VCTEUpIEFTIG1lbGQsCiAgICBDQVNUKGYucnJ0IEFTIElOVEVHRVIpIEFTIHJydCwKICAgIENBU1QoZi5jcmVhdGluaW5lX21heCBBUyBET1VCTEUpIEFTIGNyZWF0aW5pbmVfbWF4LAogICAgQ0FTVChmLmJpbGlydWJpbl90b3RhbF9tYXggQVMgRE9VQkxFKSBBUyBiaWxpcnViaW5fdG90YWxfbWF4LAogICAgQ0FTVChmLmlucl9tYXggQVMgRE9VQkxFKSBBUyBpbnJfbWF4LAogICAgQ0FTVChmLnNvZGl1bV9taW4gQVMgRE9VQkxFKSBBUyBzb2RpdW1fbWluLAogICAgZi5lbmNvdW50ZXJfa2V5IEFTIGVuY291bnRlcl9rZXksCiAgICBmLmljdV9lbmNvdW50ZXJfa2V5IEFTIGljdV9lbmNvdW50ZXJfa2V5LAogICAgZi5wYXRpZW50X2tleSBBUyBwYXRpZW50X2tleQpGUk9NIGZpbmFsX3ZhbHVlcyBmCjsK"
+    }
+  ]
+}

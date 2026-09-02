@@ -17,7 +17,7 @@
         },
         {
           "path": "partOf.getReferenceKey(Encounter)",
-          "name": "parent_encounter_key"
+          "name": "hospital_encounter_key"
         },
         {
           "path": "period.start",
@@ -40,5 +40,5 @@
     }
   ],
   "id": "kdigo-creatinine-icu-encounter",
-  "version": "2"
+  "version": "3"
 }

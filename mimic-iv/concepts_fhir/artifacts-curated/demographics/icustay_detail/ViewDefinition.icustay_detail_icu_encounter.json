@@ -17,7 +17,7 @@
         },
         {
           "path": "partOf.getReferenceKey(Encounter)",
-          "name": "parent_encounter_key"
+          "name": "hospital_encounter_key"
         },
         {
           "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu').value",
@@ -35,5 +35,5 @@
     }
   ],
   "id": "icustay-detail-icustay-detail-icu-encounter",
-  "version": "4"
+  "version": "5"
 }

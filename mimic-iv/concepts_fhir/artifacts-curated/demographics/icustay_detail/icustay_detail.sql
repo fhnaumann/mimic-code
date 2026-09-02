@@ -9,7 +9,7 @@ WITH icu_encounters AS (
     SELECT
         encounter_key AS icu_encounter_key,
         patient_key,
-        parent_encounter_key,
+        hospital_encounter_key,
         stay_id_str,
         TRY_CAST(period_start AS TIMESTAMP_NTZ) AS icu_intime,
         TRY_CAST(period_end AS TIMESTAMP_NTZ) AS icu_outtime
@@ -65,7 +65,7 @@ WITH icu_encounters AS (
         END AS race
     FROM icu_encounters i
     INNER JOIN hospital_encounters h
-        ON i.parent_encounter_key = h.hospital_encounter_key
+        ON i.hospital_encounter_key = h.hospital_encounter_key
     INNER JOIN icustay_detail_patient p
         ON i.patient_key = p.patient_key
 ), ranked_rows AS (
@@ -111,16 +111,16 @@ WITH icu_encounters AS (
 SELECT
     CAST(gender AS VARCHAR(255)) AS gender,
     CAST(dod_datetime AS DATE) AS dod,
-    CAST(admittime AS TIMESTAMP) AS admittime,
-    CAST(dischtime AS TIMESTAMP) AS dischtime,
+    CAST(admittime AS TIMESTAMP_NTZ) AS admittime,
+    CAST(dischtime AS TIMESTAMP_NTZ) AS dischtime,
     CAST(los_hospital AS BIGINT) AS los_hospital,
     CAST(admission_age AS BIGINT) AS admission_age,
     CAST(race AS VARCHAR(255)) AS race,
     CAST(NULL AS SMALLINT) AS hospital_expire_flag,
     CAST(hospstay_seq AS BIGINT) AS hospstay_seq,
     CAST(first_hosp_stay AS BOOLEAN) AS first_hosp_stay,
-    CAST(icu_intime AS TIMESTAMP) AS icu_intime,
-    CAST(icu_outtime AS TIMESTAMP) AS icu_outtime,
+    CAST(icu_intime AS TIMESTAMP_NTZ) AS icu_intime,
+    CAST(icu_outtime AS TIMESTAMP_NTZ) AS icu_outtime,
     CAST(los_icu AS DECIMAL(38,2)) AS los_icu,
     CAST(icustay_seq AS BIGINT) AS icustay_seq,
     CAST(first_icu_stay AS BOOLEAN) AS first_icu_stay,

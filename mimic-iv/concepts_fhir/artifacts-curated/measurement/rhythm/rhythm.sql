@@ -53,7 +53,7 @@ WITH observation_rows AS (
 )
 SELECT
     patient_key,
-    CAST(charttime AS TIMESTAMP) AS charttime,
+    CAST(charttime AS TIMESTAMP_NTZ) AS charttime,
     CAST(heart_rhythm AS VARCHAR(255)) AS heart_rhythm,
     CAST(ectopy_type AS VARCHAR(255)) AS ectopy_type,
     CAST(ectopy_frequency AS VARCHAR(255)) AS ectopy_frequency,

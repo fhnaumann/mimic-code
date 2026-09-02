@@ -42,7 +42,7 @@ WITH filtered_rows AS (
 SELECT
     patient_key AS patient_key,
     icu_encounter_key AS icu_encounter_key,
-    CAST(charttime AS TIMESTAMP) AS charttime,
+    CAST(charttime AS TIMESTAMP_NTZ) AS charttime,
     CAST(icp AS FLOAT) AS icp
 FROM grouped
 ;

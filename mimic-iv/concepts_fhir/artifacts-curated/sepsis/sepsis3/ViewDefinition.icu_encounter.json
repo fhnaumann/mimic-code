@@ -1,0 +1,31 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/sepsis3-icu_encounter",
+  "name": "icu_encounter",
+  "resource": "Encounter",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "icu_encounter_key"
+        },
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_key"
+        },
+        {
+          "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu').system",
+          "name": "stay_system"
+        },
+        {
+          "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu').value",
+          "name": "stay_id_str"
+        }
+      ]
+    }
+  ],
+  "id": "sepsis3-icu-encounter",
+  "version": "1"
+}

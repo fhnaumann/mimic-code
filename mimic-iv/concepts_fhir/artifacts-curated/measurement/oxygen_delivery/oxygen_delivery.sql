@@ -135,7 +135,7 @@ WITH observation_rows AS (
     GROUP BY f.patient_key, f.subject_id_str, f.charttime, f.icu_encounter_key
 )
 SELECT
-    CAST(a.charttime AS TIMESTAMP) AS charttime,
+    CAST(a.charttime AS TIMESTAMP_NTZ) AS charttime,
     CAST(a.o2_flow AS FLOAT) AS o2_flow,
     CAST(a.o2_flow_additional AS FLOAT) AS o2_flow_additional,
     CAST(a.o2_delivery_device_1 AS VARCHAR(255)) AS o2_delivery_device_1,

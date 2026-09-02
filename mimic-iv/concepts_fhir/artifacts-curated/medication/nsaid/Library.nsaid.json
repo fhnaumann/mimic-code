@@ -1,0 +1,60 @@
+{
+  "resourceType": "Library",
+  "id": "nsaid",
+  "url": "https://fhnaumann.masters/pathling/Library/nsaid",
+  "version": "3",
+  "name": "nsaid",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/nsaid-encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "medication",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/nsaid-medication"
+    },
+    {
+      "type": "depends-on",
+      "label": "medication_mix",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/nsaid-medication_mix"
+    },
+    {
+      "type": "depends-on",
+      "label": "medication_mix_ingredient",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/nsaid-medication_mix_ingredient"
+    },
+    {
+      "type": "depends-on",
+      "label": "medication_request",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/nsaid-medication_request"
+    },
+    {
+      "type": "depends-on",
+      "label": "patient",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/nsaid-patient"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH medication_names AS (\n    SELECT\n        medication_key,\n        drug_name AS drug\n    FROM medication\n    WHERE drug_system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-medication-name'\n), nsaid_drug AS (\n    SELECT DISTINCT\n        medication_key,\n        drug,\n        CASE\n            WHEN UPPER(drug) LIKE '%ASPIRIN%' THEN 1\n            WHEN UPPER(drug) LIKE '%BROMFENAC%' THEN 1\n            WHEN UPPER(drug) LIKE '%CELECOXIB%' THEN 1\n            WHEN UPPER(drug) LIKE '%DICLOFENAC%' THEN 1\n            WHEN UPPER(drug) LIKE '%DIFLUNISAL%' THEN 1\n            WHEN UPPER(drug) LIKE '%ETODOLAC%' THEN 1\n            WHEN UPPER(drug) LIKE '%FENOPROFEN%' THEN 1\n            WHEN UPPER(drug) LIKE '%FLURBIPROFEN%' THEN 1\n            WHEN UPPER(drug) LIKE '%IBUPROFEN%' THEN 1\n            WHEN UPPER(drug) LIKE '%INDOMETHACIN%' THEN 1\n            WHEN UPPER(drug) LIKE '%KETOPROFEN%' THEN 1\n            WHEN UPPER(drug) LIKE '%MEFENAMIC ACID%' THEN 1\n            WHEN UPPER(drug) LIKE '%MELOXICAM%' THEN 1\n            WHEN UPPER(drug) LIKE '%NABUMETONE%' THEN 1\n            WHEN UPPER(drug) LIKE '%NAPROXEN%' THEN 1\n            WHEN UPPER(drug) LIKE '%NEPAFENAC%' THEN 1\n            WHEN UPPER(drug) LIKE '%OXAPROZIN%' THEN 1\n            WHEN UPPER(drug) LIKE '%PIROXICAM%' THEN 1\n            WHEN UPPER(drug) LIKE '%SULINDAC%' THEN 1\n            WHEN UPPER(drug) LIKE '%TOLMETIN%' THEN 1\n            ELSE 0\n        END AS nsaid\n    FROM medication_names\n), prescription_rows AS (\n    SELECT\n        p.subject_id_str,\n        e.hadm_id_str,\n        d.drug AS nsaid_str,\n        mr.starttime_str,\n        mr.stoptime_str,\n        p.patient_key,\n        e.encounter_key\n    FROM medication_request mr\n    INNER JOIN nsaid_drug d\n        ON mr.medication_key = d.medication_key\n    INNER JOIN patient p\n        ON mr.patient_key = p.patient_key\n    INNER JOIN encounter e\n        ON mr.encounter_key = e.encounter_key\n    WHERE mr.pharmacy_id_str IS NOT NULL\n        AND mr.medication_key IS NOT NULL\n        AND d.nsaid = 1\n        AND e.hadm_id_str IS NOT NULL\n\n    UNION ALL\n\n    SELECT\n        p.subject_id_str,\n        e.hadm_id_str,\n        d.drug AS nsaid_str,\n        mr.starttime_str,\n        mr.stoptime_str,\n        p.patient_key,\n        e.encounter_key\n    FROM medication_request mr\n    INNER JOIN medication_mix mm\n        ON mr.medication_key = mm.mix_key\n    INNER JOIN medication_mix_ingredient mi\n        ON mm.mix_key = mi.mix_key\n    INNER JOIN nsaid_drug d\n        ON mi.ingredient_medication_key = d.medication_key\n    INNER JOIN patient p\n        ON mr.patient_key = p.patient_key\n    INNER JOIN encounter e\n        ON mr.encounter_key = e.encounter_key\n    WHERE mr.pharmacy_id_str IS NOT NULL\n        AND mr.medication_key IS NOT NULL\n        AND mm.mix_system = 'http://mimic.mit.edu/fhir/mimic/identifier/medication-mix'\n        AND d.nsaid = 1\n        AND e.hadm_id_str IS NOT NULL\n), parsed_rows AS (\n    SELECT\n        subject_id_str,\n        hadm_id_str,\n        nsaid_str,\n        TRY_CAST(starttime_str AS TIMESTAMP_NTZ) AS starttime_ts,\n        TRY_CAST(stoptime_str AS TIMESTAMP_NTZ) AS stoptime_ts,\n        patient_key,\n        encounter_key\n    FROM prescription_rows\n)\nSELECT\n    patient_key,\n    encounter_key,\n    CAST(nsaid_str AS VARCHAR(255)) AS nsaid,\n    CAST(starttime_ts AS TIMESTAMP_NTZ) AS starttime,\n    CAST(stoptime_ts AS TIMESTAMP_NTZ) AS stoptime\nFROM parsed_rows\n;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBtZWRpY2F0aW9uX25hbWVzIEFTICgKICAgIFNFTEVDVAogICAgICAgIG1lZGljYXRpb25fa2V5LAogICAgICAgIGRydWdfbmFtZSBBUyBkcnVnCiAgICBGUk9NIG1lZGljYXRpb24KICAgIFdIRVJFIGRydWdfc3lzdGVtID0gJ2h0dHA6Ly9taW1pYy5taXQuZWR1L2ZoaXIvbWltaWMvQ29kZVN5c3RlbS9taW1pYy1tZWRpY2F0aW9uLW5hbWUnCiksIG5zYWlkX2RydWcgQVMgKAogICAgU0VMRUNUIERJU1RJTkNUCiAgICAgICAgbWVkaWNhdGlvbl9rZXksCiAgICAgICAgZHJ1ZywKICAgICAgICBDQVNFCiAgICAgICAgICAgIFdIRU4gVVBQRVIoZHJ1ZykgTElLRSAnJUFTUElSSU4lJyBUSEVOIDEKICAgICAgICAgICAgV0hFTiBVUFBFUihkcnVnKSBMSUtFICclQlJPTUZFTkFDJScgVEhFTiAxCiAgICAgICAgICAgIFdIRU4gVVBQRVIoZHJ1ZykgTElLRSAnJUNFTEVDT1hJQiUnIFRIRU4gMQogICAgICAgICAgICBXSEVOIFVQUEVSKGRydWcpIExJS0UgJyVESUNMT0ZFTkFDJScgVEhFTiAxCiAgICAgICAgICAgIFdIRU4gVVBQRVIoZHJ1ZykgTElLRSAnJURJRkxVTklTQUwlJyBUSEVOIDEKICAgICAgICAgICAgV0hFTiBVUFBFUihkcnVnKSBMSUtFICclRVRPRE9MQUMlJyBUSEVOIDEKICAgICAgICAgICAgV0hFTiBVUFBFUihkcnVnKSBMSUtFICclRkVOT1BST0ZFTiUnIFRIRU4gMQogICAgICAgICAgICBXSEVOIFVQUEVSKGRydWcpIExJS0UgJyVGTFVSQklQUk9GRU4lJyBUSEVOIDEKICAgICAgICAgICAgV0hFTiBVUFBFUihkcnVnKSBMSUtFICclSUJVUFJPRkVOJScgVEhFTiAxCiAgICAgICAgICAgIFdIRU4gVVBQRVIoZHJ1ZykgTElLRSAnJUlORE9NRVRIQUNJTiUnIFRIRU4gMQogICAgICAgICAgICBXSEVOIFVQUEVSKGRydWcpIExJS0UgJyVLRVRPUFJPRkVOJScgVEhFTiAxCiAgICAgICAgICAgIFdIRU4gVVBQRVIoZHJ1ZykgTElLRSAnJU1FRkVOQU1JQyBBQ0lEJScgVEhFTiAxCiAgICAgICAgICAgIFdIRU4gVVBQRVIoZHJ1ZykgTElLRSAnJU1FTE9YSUNBTSUnIFRIRU4gMQogICAgICAgICAgICBXSEVOIFVQUEVSKGRydWcpIExJS0UgJyVOQUJVTUVUT05FJScgVEhFTiAxCiAgICAgICAgICAgIFdIRU4gVVBQRVIoZHJ1ZykgTElLRSAnJU5BUFJPWEVOJScgVEhFTiAxCiAgICAgICAgICAgIFdIRU4gVVBQRVIoZHJ1ZykgTElLRSAnJU5FUEFGRU5BQyUnIFRIRU4gMQogICAgICAgICAgICBXSEVOIFVQUEVSKGRydWcpIExJS0UgJyVPWEFQUk9aSU4lJyBUSEVOIDEKICAgICAgICAgICAgV0hFTiBVUFBFUihkcnVnKSBMSUtFICclUElST1hJQ0FNJScgVEhFTiAxCiAgICAgICAgICAgIFdIRU4gVVBQRVIoZHJ1ZykgTElLRSAnJVNVTElOREFDJScgVEhFTiAxCiAgICAgICAgICAgIFdIRU4gVVBQRVIoZHJ1ZykgTElLRSAnJVRPTE1FVElOJScgVEhFTiAxCiAgICAgICAgICAgIEVMU0UgMAogICAgICAgIEVORCBBUyBuc2FpZAogICAgRlJPTSBtZWRpY2F0aW9uX25hbWVzCiksIHByZXNjcmlwdGlvbl9yb3dzIEFTICgKICAgIFNFTEVDVAogICAgICAgIHAuc3ViamVjdF9pZF9zdHIsCiAgICAgICAgZS5oYWRtX2lkX3N0ciwKICAgICAgICBkLmRydWcgQVMgbnNhaWRfc3RyLAogICAgICAgIG1yLnN0YXJ0dGltZV9zdHIsCiAgICAgICAgbXIuc3RvcHRpbWVfc3RyLAogICAgICAgIHAucGF0aWVudF9rZXksCiAgICAgICAgZS5lbmNvdW50ZXJfa2V5CiAgICBGUk9NIG1lZGljYXRpb25fcmVxdWVzdCBtcgogICAgSU5ORVIgSk9JTiBuc2FpZF9kcnVnIGQKICAgICAgICBPTiBtci5tZWRpY2F0aW9uX2tleSA9IGQubWVkaWNhdGlvbl9rZXkKICAgIElOTkVSIEpPSU4gcGF0aWVudCBwCiAgICAgICAgT04gbXIucGF0aWVudF9rZXkgPSBwLnBhdGllbnRfa2V5CiAgICBJTk5FUiBKT0lOIGVuY291bnRlciBlCiAgICAgICAgT04gbXIuZW5jb3VudGVyX2tleSA9IGUuZW5jb3VudGVyX2tleQogICAgV0hFUkUgbXIucGhhcm1hY3lfaWRfc3RyIElTIE5PVCBOVUxMCiAgICAgICAgQU5EIG1yLm1lZGljYXRpb25fa2V5IElTIE5PVCBOVUxMCiAgICAgICAgQU5EIGQubnNhaWQgPSAxCiAgICAgICAgQU5EIGUuaGFkbV9pZF9zdHIgSVMgTk9UIE5VTEwKCiAgICBVTklPTiBBTEwKCiAgICBTRUxFQ1QKICAgICAgICBwLnN1YmplY3RfaWRfc3RyLAogICAgICAgIGUuaGFkbV9pZF9zdHIsCiAgICAgICAgZC5kcnVnIEFTIG5zYWlkX3N0ciwKICAgICAgICBtci5zdGFydHRpbWVfc3RyLAogICAgICAgIG1yLnN0b3B0aW1lX3N0ciwKICAgICAgICBwLnBhdGllbnRfa2V5LAogICAgICAgIGUuZW5jb3VudGVyX2tleQogICAgRlJPTSBtZWRpY2F0aW9uX3JlcXVlc3QgbXIKICAgIElOTkVSIEpPSU4gbWVkaWNhdGlvbl9taXggbW0KICAgICAgICBPTiBtci5tZWRpY2F0aW9uX2tleSA9IG1tLm1peF9rZXkKICAgIElOTkVSIEpPSU4gbWVkaWNhdGlvbl9taXhfaW5ncmVkaWVudCBtaQogICAgICAgIE9OIG1tLm1peF9rZXkgPSBtaS5taXhfa2V5CiAgICBJTk5FUiBKT0lOIG5zYWlkX2RydWcgZAogICAgICAgIE9OIG1pLmluZ3JlZGllbnRfbWVkaWNhdGlvbl9rZXkgPSBkLm1lZGljYXRpb25fa2V5CiAgICBJTk5FUiBKT0lOIHBhdGllbnQgcAogICAgICAgIE9OIG1yLnBhdGllbnRfa2V5ID0gcC5wYXRpZW50X2tleQogICAgSU5ORVIgSk9JTiBlbmNvdW50ZXIgZQogICAgICAgIE9OIG1yLmVuY291bnRlcl9rZXkgPSBlLmVuY291bnRlcl9rZXkKICAgIFdIRVJFIG1yLnBoYXJtYWN5X2lkX3N0ciBJUyBOT1QgTlVMTAogICAgICAgIEFORCBtci5tZWRpY2F0aW9uX2tleSBJUyBOT1QgTlVMTAogICAgICAgIEFORCBtbS5taXhfc3lzdGVtID0gJ2h0dHA6Ly9taW1pYy5taXQuZWR1L2ZoaXIvbWltaWMvaWRlbnRpZmllci9tZWRpY2F0aW9uLW1peCcKICAgICAgICBBTkQgZC5uc2FpZCA9IDEKICAgICAgICBBTkQgZS5oYWRtX2lkX3N0ciBJUyBOT1QgTlVMTAopLCBwYXJzZWRfcm93cyBBUyAoCiAgICBTRUxFQ1QKICAgICAgICBzdWJqZWN0X2lkX3N0ciwKICAgICAgICBoYWRtX2lkX3N0ciwKICAgICAgICBuc2FpZF9zdHIsCiAgICAgICAgVFJZX0NBU1Qoc3RhcnR0aW1lX3N0ciBBUyBUSU1FU1RBTVBfTlRaKSBBUyBzdGFydHRpbWVfdHMsCiAgICAgICAgVFJZX0NBU1Qoc3RvcHRpbWVfc3RyIEFTIFRJTUVTVEFNUF9OVFopIEFTIHN0b3B0aW1lX3RzLAogICAgICAgIHBhdGllbnRfa2V5LAogICAgICAgIGVuY291bnRlcl9rZXkKICAgIEZST00gcHJlc2NyaXB0aW9uX3Jvd3MKKQpTRUxFQ1QKICAgIHBhdGllbnRfa2V5LAogICAgZW5jb3VudGVyX2tleSwKICAgIENBU1QobnNhaWRfc3RyIEFTIFZBUkNIQVIoMjU1KSkgQVMgbnNhaWQsCiAgICBDQVNUKHN0YXJ0dGltZV90cyBBUyBUSU1FU1RBTVBfTlRaKSBBUyBzdGFydHRpbWUsCiAgICBDQVNUKHN0b3B0aW1lX3RzIEFTIFRJTUVTVEFNUF9OVFopIEFTIHN0b3B0aW1lCkZST00gcGFyc2VkX3Jvd3MKOwo="
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/lods-cpap_observation",
+  "name": "cpap_observation",
+  "resource": "Observation",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "observation_key"
+        },
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_key"
+        },
+        {
+          "path": "encounter.getReferenceKey(Encounter)",
+          "name": "icu_encounter_key"
+        },
+        {
+          "path": "(effective).ofType(dateTime)",
+          "name": "effective_datetime"
+        },
+        {
+          "path": "(effective).ofType(Period).start",
+          "name": "effective_period_start"
+        },
+        {
+          "path": "(value).ofType(string)",
+          "name": "value_string"
+        }
+      ]
+    },
+    {
+      "forEach": "code.coding.where(system='http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-chartevents-d-items' and code='226732')",
+      "column": [
+        {
+          "path": "code",
+          "name": "code"
+        },
+        {
+          "path": "system",
+          "name": "system"
+        }
+      ]
+    }
+  ],
+  "id": "lods-cpap-observation",
+  "version": "1"
+}

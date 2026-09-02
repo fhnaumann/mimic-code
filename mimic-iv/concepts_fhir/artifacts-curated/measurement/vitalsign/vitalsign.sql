@@ -100,7 +100,7 @@ WITH observation_rows AS (
         COALESCE(effective_datetime_ntz, effective_period_start_ntz)
 )
 SELECT
-    CAST(charttime AS TIMESTAMP) AS charttime,
+    CAST(charttime AS TIMESTAMP_NTZ) AS charttime,
     CAST(heart_rate AS DOUBLE) AS heart_rate,
     CAST(sbp AS DOUBLE) AS sbp,
     CAST(dbp AS DOUBLE) AS dbp,

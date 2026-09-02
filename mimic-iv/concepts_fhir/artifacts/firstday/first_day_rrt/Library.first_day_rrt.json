@@ -1,0 +1,45 @@
+{
+  "resourceType": "Library",
+  "id": "first-day-rrt",
+  "url": "https://fhnaumann.masters/pathling/Library/first_day_rrt",
+  "version": "2",
+  "name": "first_day_rrt",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "first_day_rrt_encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/first_day_rrt-first_day_rrt_encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "first_day_rrt_patient",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/first_day_rrt-first_day_rrt_patient"
+    },
+    {
+      "type": "depends-on",
+      "label": "rrt",
+      "resource": "https://fhnaumann.masters/pathling/Library/rrt"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH icu AS (\n    SELECT\n        CAST(p.subject_id_str AS INTEGER) AS subject_id,\n        CAST(e.stay_id_str AS INTEGER) AS stay_id,\n        TRY_CAST(e.period_start AS TIMESTAMP_NTZ) AS intime,\n        e.icu_encounter_key,\n        p.patient_key\n    FROM first_day_rrt_encounter e\n    LEFT JOIN first_day_rrt_patient p\n        ON e.patient_key = p.patient_key\n    WHERE e.stay_id_str IS NOT NULL\n), aggregated AS (\n    SELECT\n        i.subject_id,\n        i.stay_id,\n        MAX(r.dialysis_present) AS dialysis_present,\n        MAX(r.dialysis_active) AS dialysis_active,\n        CASE\n            WHEN COUNT(r.dialysis_type) = 0\n                THEN CAST(NULL AS VARCHAR(255))\n            ELSE concat_ws(\n                ', ',\n                sort_array(collect_set(r.dialysis_type))\n            )\n        END AS dialysis_type,\n        i.icu_encounter_key,\n        i.patient_key\n    FROM icu i\n    LEFT JOIN rrt r\n        ON i.icu_encounter_key = r.icu_encounter_key\n        AND r.charttime >= i.intime - INTERVAL 6 HOURS\n        AND r.charttime <= i.intime + INTERVAL 1 DAY\n    GROUP BY\n        i.subject_id,\n        i.stay_id,\n        i.icu_encounter_key,\n        i.patient_key\n)\nSELECT\n    CAST(a.dialysis_present AS INTEGER) AS dialysis_present,\n    CAST(a.dialysis_active AS INTEGER) AS dialysis_active,\n    CAST(a.dialysis_type AS VARCHAR(255)) AS dialysis_type,\n    a.icu_encounter_key,\n    a.patient_key\nFROM aggregated a;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBpY3UgQVMgKAogICAgU0VMRUNUCiAgICAgICAgQ0FTVChwLnN1YmplY3RfaWRfc3RyIEFTIElOVEVHRVIpIEFTIHN1YmplY3RfaWQsCiAgICAgICAgQ0FTVChlLnN0YXlfaWRfc3RyIEFTIElOVEVHRVIpIEFTIHN0YXlfaWQsCiAgICAgICAgVFJZX0NBU1QoZS5wZXJpb2Rfc3RhcnQgQVMgVElNRVNUQU1QX05UWikgQVMgaW50aW1lLAogICAgICAgIGUuaWN1X2VuY291bnRlcl9rZXksCiAgICAgICAgcC5wYXRpZW50X2tleQogICAgRlJPTSBmaXJzdF9kYXlfcnJ0X2VuY291bnRlciBlCiAgICBMRUZUIEpPSU4gZmlyc3RfZGF5X3JydF9wYXRpZW50IHAKICAgICAgICBPTiBlLnBhdGllbnRfa2V5ID0gcC5wYXRpZW50X2tleQogICAgV0hFUkUgZS5zdGF5X2lkX3N0ciBJUyBOT1QgTlVMTAopLCBhZ2dyZWdhdGVkIEFTICgKICAgIFNFTEVDVAogICAgICAgIGkuc3ViamVjdF9pZCwKICAgICAgICBpLnN0YXlfaWQsCiAgICAgICAgTUFYKHIuZGlhbHlzaXNfcHJlc2VudCkgQVMgZGlhbHlzaXNfcHJlc2VudCwKICAgICAgICBNQVgoci5kaWFseXNpc19hY3RpdmUpIEFTIGRpYWx5c2lzX2FjdGl2ZSwKICAgICAgICBDQVNFCiAgICAgICAgICAgIFdIRU4gQ09VTlQoci5kaWFseXNpc190eXBlKSA9IDAKICAgICAgICAgICAgICAgIFRIRU4gQ0FTVChOVUxMIEFTIFZBUkNIQVIoMjU1KSkKICAgICAgICAgICAgRUxTRSBjb25jYXRfd3MoCiAgICAgICAgICAgICAgICAnLCAnLAogICAgICAgICAgICAgICAgc29ydF9hcnJheShjb2xsZWN0X3NldChyLmRpYWx5c2lzX3R5cGUpKQogICAgICAgICAgICApCiAgICAgICAgRU5EIEFTIGRpYWx5c2lzX3R5cGUsCiAgICAgICAgaS5pY3VfZW5jb3VudGVyX2tleSwKICAgICAgICBpLnBhdGllbnRfa2V5CiAgICBGUk9NIGljdSBpCiAgICBMRUZUIEpPSU4gcnJ0IHIKICAgICAgICBPTiBpLmljdV9lbmNvdW50ZXJfa2V5ID0gci5pY3VfZW5jb3VudGVyX2tleQogICAgICAgIEFORCByLmNoYXJ0dGltZSA+PSBpLmludGltZSAtIElOVEVSVkFMIDYgSE9VUlMKICAgICAgICBBTkQgci5jaGFydHRpbWUgPD0gaS5pbnRpbWUgKyBJTlRFUlZBTCAxIERBWQogICAgR1JPVVAgQlkKICAgICAgICBpLnN1YmplY3RfaWQsCiAgICAgICAgaS5zdGF5X2lkLAogICAgICAgIGkuaWN1X2VuY291bnRlcl9rZXksCiAgICAgICAgaS5wYXRpZW50X2tleQopClNFTEVDVAogICAgQ0FTVChhLmRpYWx5c2lzX3ByZXNlbnQgQVMgSU5URUdFUikgQVMgZGlhbHlzaXNfcHJlc2VudCwKICAgIENBU1QoYS5kaWFseXNpc19hY3RpdmUgQVMgSU5URUdFUikgQVMgZGlhbHlzaXNfYWN0aXZlLAogICAgQ0FTVChhLmRpYWx5c2lzX3R5cGUgQVMgVkFSQ0hBUigyNTUpKSBBUyBkaWFseXNpc190eXBlLAogICAgYS5pY3VfZW5jb3VudGVyX2tleSwKICAgIGEucGF0aWVudF9rZXkKRlJPTSBhZ2dyZWdhdGVkIGE7Cg=="
+    }
+  ]
+}

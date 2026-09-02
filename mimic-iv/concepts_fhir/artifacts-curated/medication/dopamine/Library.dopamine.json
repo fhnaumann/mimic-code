@@ -1,0 +1,40 @@
+{
+  "resourceType": "Library",
+  "id": "dopamine",
+  "url": "https://fhnaumann.masters/pathling/Library/dopamine",
+  "version": "3",
+  "name": "dopamine",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "encounter_icu",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/dopamine-encounter_icu"
+    },
+    {
+      "type": "depends-on",
+      "label": "medication_administration",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/dopamine-medication_administration"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH filtered_rows AS (\n    SELECT\n        ma.patient_key,\n        ma.encounter_key,\n        ma.effective_datetime,\n        ma.effective_period_start,\n        ma.effective_period_end,\n        ma.rate_value,\n        ma.amount_value,\n        ma.item_code,\n        ma.code_system\n    FROM medication_administration ma\n    WHERE ma.code_system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-medication-icu'\n      AND ma.item_code = '221662'\n), typed_rows AS (\n    SELECT\n        e.stay_id_str,\n        ma.patient_key,\n        ma.encounter_key AS icu_encounter_key,\n        TRY_CAST(ma.effective_period_start AS TIMESTAMP_NTZ) AS starttime_value,\n        COALESCE(\n            TRY_CAST(ma.effective_period_end AS TIMESTAMP_NTZ),\n            TRY_CAST(ma.effective_datetime AS TIMESTAMP_NTZ)\n        ) AS endtime_value,\n        CAST(ma.rate_value AS DOUBLE) AS rate_value,\n        CAST(ma.amount_value AS DOUBLE) AS amount_value\n    FROM filtered_rows ma\n    LEFT JOIN encounter_icu e\n      ON ma.encounter_key = e.encounter_key\n     AND e.stay_system = 'http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu'\n)\nSELECT\n    CAST(NULL AS INTEGER) AS linkorderid,\n    CAST(rate_value AS FLOAT) AS vaso_rate,\n    CAST(amount_value AS FLOAT) AS vaso_amount,\n    CAST(starttime_value AS TIMESTAMP_NTZ) AS starttime,\n    CAST(endtime_value AS TIMESTAMP_NTZ) AS endtime,\n    patient_key,\n    icu_encounter_key\nFROM typed_rows;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBmaWx0ZXJlZF9yb3dzIEFTICgKICAgIFNFTEVDVAogICAgICAgIG1hLnBhdGllbnRfa2V5LAogICAgICAgIG1hLmVuY291bnRlcl9rZXksCiAgICAgICAgbWEuZWZmZWN0aXZlX2RhdGV0aW1lLAogICAgICAgIG1hLmVmZmVjdGl2ZV9wZXJpb2Rfc3RhcnQsCiAgICAgICAgbWEuZWZmZWN0aXZlX3BlcmlvZF9lbmQsCiAgICAgICAgbWEucmF0ZV92YWx1ZSwKICAgICAgICBtYS5hbW91bnRfdmFsdWUsCiAgICAgICAgbWEuaXRlbV9jb2RlLAogICAgICAgIG1hLmNvZGVfc3lzdGVtCiAgICBGUk9NIG1lZGljYXRpb25fYWRtaW5pc3RyYXRpb24gbWEKICAgIFdIRVJFIG1hLmNvZGVfc3lzdGVtID0gJ2h0dHA6Ly9taW1pYy5taXQuZWR1L2ZoaXIvbWltaWMvQ29kZVN5c3RlbS9taW1pYy1tZWRpY2F0aW9uLWljdScKICAgICAgQU5EIG1hLml0ZW1fY29kZSA9ICcyMjE2NjInCiksIHR5cGVkX3Jvd3MgQVMgKAogICAgU0VMRUNUCiAgICAgICAgZS5zdGF5X2lkX3N0ciwKICAgICAgICBtYS5wYXRpZW50X2tleSwKICAgICAgICBtYS5lbmNvdW50ZXJfa2V5IEFTIGljdV9lbmNvdW50ZXJfa2V5LAogICAgICAgIFRSWV9DQVNUKG1hLmVmZmVjdGl2ZV9wZXJpb2Rfc3RhcnQgQVMgVElNRVNUQU1QX05UWikgQVMgc3RhcnR0aW1lX3ZhbHVlLAogICAgICAgIENPQUxFU0NFKAogICAgICAgICAgICBUUllfQ0FTVChtYS5lZmZlY3RpdmVfcGVyaW9kX2VuZCBBUyBUSU1FU1RBTVBfTlRaKSwKICAgICAgICAgICAgVFJZX0NBU1QobWEuZWZmZWN0aXZlX2RhdGV0aW1lIEFTIFRJTUVTVEFNUF9OVFopCiAgICAgICAgKSBBUyBlbmR0aW1lX3ZhbHVlLAogICAgICAgIENBU1QobWEucmF0ZV92YWx1ZSBBUyBET1VCTEUpIEFTIHJhdGVfdmFsdWUsCiAgICAgICAgQ0FTVChtYS5hbW91bnRfdmFsdWUgQVMgRE9VQkxFKSBBUyBhbW91bnRfdmFsdWUKICAgIEZST00gZmlsdGVyZWRfcm93cyBtYQogICAgTEVGVCBKT0lOIGVuY291bnRlcl9pY3UgZQogICAgICBPTiBtYS5lbmNvdW50ZXJfa2V5ID0gZS5lbmNvdW50ZXJfa2V5CiAgICAgQU5EIGUuc3RheV9zeXN0ZW0gPSAnaHR0cDovL21pbWljLm1pdC5lZHUvZmhpci9taW1pYy9pZGVudGlmaWVyL2VuY291bnRlci1pY3UnCikKU0VMRUNUCiAgICBDQVNUKE5VTEwgQVMgSU5URUdFUikgQVMgbGlua29yZGVyaWQsCiAgICBDQVNUKHJhdGVfdmFsdWUgQVMgRkxPQVQpIEFTIHZhc29fcmF0ZSwKICAgIENBU1QoYW1vdW50X3ZhbHVlIEFTIEZMT0FUKSBBUyB2YXNvX2Ftb3VudCwKICAgIENBU1Qoc3RhcnR0aW1lX3ZhbHVlIEFTIFRJTUVTVEFNUF9OVFopIEFTIHN0YXJ0dGltZSwKICAgIENBU1QoZW5kdGltZV92YWx1ZSBBUyBUSU1FU1RBTVBfTlRaKSBBUyBlbmR0aW1lLAogICAgcGF0aWVudF9rZXksCiAgICBpY3VfZW5jb3VudGVyX2tleQpGUk9NIHR5cGVkX3Jvd3M7Cg=="
+    }
+  ]
+}

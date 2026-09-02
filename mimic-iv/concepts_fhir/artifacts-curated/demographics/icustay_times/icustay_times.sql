@@ -9,7 +9,7 @@ WITH icu_encounters AS (
     SELECT
         icu_encounter_key,
         patient_key,
-        parent_encounter_key,
+        hospital_encounter_key,
         stay_id_str
     FROM icustay_times_icu_encounter
     WHERE stay_id_str IS NOT NULL
@@ -38,14 +38,14 @@ WITH icu_encounters AS (
     GROUP BY i.stay_id_str
 )
 SELECT
-    CAST(hr.intime_hr AS TIMESTAMP) AS intime_hr,
-    CAST(hr.outtime_hr AS TIMESTAMP) AS outtime_hr,
+    CAST(hr.intime_hr AS TIMESTAMP_NTZ) AS intime_hr,
+    CAST(hr.outtime_hr AS TIMESTAMP_NTZ) AS outtime_hr,
     p.patient_key AS patient_key,
     h.encounter_key AS encounter_key,
     i.icu_encounter_key AS icu_encounter_key
 FROM icu_encounters i
 LEFT JOIN hospital_encounters h
-    ON i.parent_encounter_key = h.encounter_key
+    ON i.hospital_encounter_key = h.encounter_key
 LEFT JOIN patient_ids p
     ON i.patient_key = p.patient_key
 LEFT JOIN heart_rate_times hr

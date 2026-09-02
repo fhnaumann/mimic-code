@@ -1,0 +1,55 @@
+{
+  "resourceType": "Library",
+  "id": "creatinine-baseline",
+  "url": "https://fhnaumann.masters/pathling/Library/creatinine_baseline",
+  "version": "4",
+  "name": "creatinine_baseline",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "age",
+      "resource": "https://fhnaumann.masters/pathling/Library/age"
+    },
+    {
+      "type": "depends-on",
+      "label": "chemistry",
+      "resource": "https://fhnaumann.masters/pathling/Library/chemistry"
+    },
+    {
+      "type": "depends-on",
+      "label": "condition",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/creatinine_baseline-condition"
+    },
+    {
+      "type": "depends-on",
+      "label": "encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/creatinine_baseline-encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "patient",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/creatinine_baseline-patient"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH p AS (\n    SELECT\n        CAST(eh.hadm_id_str AS INTEGER) AS hadm_id,\n        pt.patient_key,\n        eh.encounter_key,\n        CASE\n            WHEN pt.gender_fhir = 'female' THEN 'F'\n            WHEN pt.gender_fhir = 'male' THEN 'M'\n            ELSE NULL\n        END AS gender,\n        ag.age,\n        CASE\n            WHEN pt.gender_fhir = 'female' THEN\n                POWER(\n                    75.0 / 186.0 / POWER(ag.age, -0.203) / 0.742,\n                    -1 / 1.154\n                )\n            ELSE\n                POWER(\n                    75.0 / 186.0 / POWER(ag.age, -0.203),\n                    -1 / 1.154\n                )\n        END AS mdrd_est\n    FROM age AS ag\n    LEFT JOIN patient AS pt\n        ON ag.patient_key = pt.patient_key\n    LEFT JOIN encounter AS eh\n        ON ag.encounter_key = eh.encounter_key\n    WHERE ag.age >= 18\n), lab AS (\n    SELECT\n        c.encounter_key,\n        MIN(c.creatinine) AS scr_min\n    FROM chemistry AS c\n    GROUP BY c.encounter_key\n), ckd AS (\n    SELECT\n        CAST(e.hadm_id_str AS INTEGER) AS hadm_id,\n        MAX(1) AS ckd_flag\n    FROM condition AS c\n    INNER JOIN encounter AS e\n        ON c.encounter_key = e.encounter_key\n    WHERE e.hadm_id_str IS NOT NULL\n        AND (\n            (\n                c.diagnosis_system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd9'\n                AND SUBSTR(c.diagnosis_code, 1, 3) = '585'\n            )\n            OR (\n                c.diagnosis_system = 'http://mimic.mit.edu/fhir/mimic/CodeSystem/mimic-diagnosis-icd10'\n                AND SUBSTR(c.diagnosis_code, 1, 3) = 'N18'\n            )\n        )\n    GROUP BY CAST(e.hadm_id_str AS INTEGER)\n)\nSELECT\n    CAST(p.gender AS VARCHAR(255)) AS gender,\n    CAST(p.age AS BIGINT) AS age,\n    CAST(lab.scr_min AS DOUBLE) AS scr_min,\n    CAST(COALESCE(ckd.ckd_flag, 0) AS INTEGER) AS ckd,\n    CAST(p.mdrd_est AS DOUBLE) AS mdrd_est,\n    CAST(\n        CASE\n            WHEN lab.scr_min <= 1.1 THEN lab.scr_min\n            WHEN ckd.ckd_flag = 1 THEN lab.scr_min\n            ELSE p.mdrd_est\n        END\n        AS DOUBLE\n    ) AS scr_baseline,\n    p.encounter_key,\n    p.patient_key\nFROM p\nLEFT JOIN lab\n    ON p.encounter_key = lab.encounter_key\nLEFT JOIN ckd\n    ON p.hadm_id = ckd.hadm_id\n;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBwIEFTICgKICAgIFNFTEVDVAogICAgICAgIENBU1QoZWguaGFkbV9pZF9zdHIgQVMgSU5URUdFUikgQVMgaGFkbV9pZCwKICAgICAgICBwdC5wYXRpZW50X2tleSwKICAgICAgICBlaC5lbmNvdW50ZXJfa2V5LAogICAgICAgIENBU0UKICAgICAgICAgICAgV0hFTiBwdC5nZW5kZXJfZmhpciA9ICdmZW1hbGUnIFRIRU4gJ0YnCiAgICAgICAgICAgIFdIRU4gcHQuZ2VuZGVyX2ZoaXIgPSAnbWFsZScgVEhFTiAnTScKICAgICAgICAgICAgRUxTRSBOVUxMCiAgICAgICAgRU5EIEFTIGdlbmRlciwKICAgICAgICBhZy5hZ2UsCiAgICAgICAgQ0FTRQogICAgICAgICAgICBXSEVOIHB0LmdlbmRlcl9maGlyID0gJ2ZlbWFsZScgVEhFTgogICAgICAgICAgICAgICAgUE9XRVIoCiAgICAgICAgICAgICAgICAgICAgNzUuMCAvIDE4Ni4wIC8gUE9XRVIoYWcuYWdlLCAtMC4yMDMpIC8gMC43NDIsCiAgICAgICAgICAgICAgICAgICAgLTEgLyAxLjE1NAogICAgICAgICAgICAgICAgKQogICAgICAgICAgICBFTFNFCiAgICAgICAgICAgICAgICBQT1dFUigKICAgICAgICAgICAgICAgICAgICA3NS4wIC8gMTg2LjAgLyBQT1dFUihhZy5hZ2UsIC0wLjIwMyksCiAgICAgICAgICAgICAgICAgICAgLTEgLyAxLjE1NAogICAgICAgICAgICAgICAgKQogICAgICAgIEVORCBBUyBtZHJkX2VzdAogICAgRlJPTSBhZ2UgQVMgYWcKICAgIExFRlQgSk9JTiBwYXRpZW50IEFTIHB0CiAgICAgICAgT04gYWcucGF0aWVudF9rZXkgPSBwdC5wYXRpZW50X2tleQogICAgTEVGVCBKT0lOIGVuY291bnRlciBBUyBlaAogICAgICAgIE9OIGFnLmVuY291bnRlcl9rZXkgPSBlaC5lbmNvdW50ZXJfa2V5CiAgICBXSEVSRSBhZy5hZ2UgPj0gMTgKKSwgbGFiIEFTICgKICAgIFNFTEVDVAogICAgICAgIGMuZW5jb3VudGVyX2tleSwKICAgICAgICBNSU4oYy5jcmVhdGluaW5lKSBBUyBzY3JfbWluCiAgICBGUk9NIGNoZW1pc3RyeSBBUyBjCiAgICBHUk9VUCBCWSBjLmVuY291bnRlcl9rZXkKKSwgY2tkIEFTICgKICAgIFNFTEVDVAogICAgICAgIENBU1QoZS5oYWRtX2lkX3N0ciBBUyBJTlRFR0VSKSBBUyBoYWRtX2lkLAogICAgICAgIE1BWCgxKSBBUyBja2RfZmxhZwogICAgRlJPTSBjb25kaXRpb24gQVMgYwogICAgSU5ORVIgSk9JTiBlbmNvdW50ZXIgQVMgZQogICAgICAgIE9OIGMuZW5jb3VudGVyX2tleSA9IGUuZW5jb3VudGVyX2tleQogICAgV0hFUkUgZS5oYWRtX2lkX3N0ciBJUyBOT1QgTlVMTAogICAgICAgIEFORCAoCiAgICAgICAgICAgICgKICAgICAgICAgICAgICAgIGMuZGlhZ25vc2lzX3N5c3RlbSA9ICdodHRwOi8vbWltaWMubWl0LmVkdS9maGlyL21pbWljL0NvZGVTeXN0ZW0vbWltaWMtZGlhZ25vc2lzLWljZDknCiAgICAgICAgICAgICAgICBBTkQgU1VCU1RSKGMuZGlhZ25vc2lzX2NvZGUsIDEsIDMpID0gJzU4NScKICAgICAgICAgICAgKQogICAgICAgICAgICBPUiAoCiAgICAgICAgICAgICAgICBjLmRpYWdub3Npc19zeXN0ZW0gPSAnaHR0cDovL21pbWljLm1pdC5lZHUvZmhpci9taW1pYy9Db2RlU3lzdGVtL21pbWljLWRpYWdub3Npcy1pY2QxMCcKICAgICAgICAgICAgICAgIEFORCBTVUJTVFIoYy5kaWFnbm9zaXNfY29kZSwgMSwgMykgPSAnTjE4JwogICAgICAgICAgICApCiAgICAgICAgKQogICAgR1JPVVAgQlkgQ0FTVChlLmhhZG1faWRfc3RyIEFTIElOVEVHRVIpCikKU0VMRUNUCiAgICBDQVNUKHAuZ2VuZGVyIEFTIFZBUkNIQVIoMjU1KSkgQVMgZ2VuZGVyLAogICAgQ0FTVChwLmFnZSBBUyBCSUdJTlQpIEFTIGFnZSwKICAgIENBU1QobGFiLnNjcl9taW4gQVMgRE9VQkxFKSBBUyBzY3JfbWluLAogICAgQ0FTVChDT0FMRVNDRShja2QuY2tkX2ZsYWcsIDApIEFTIElOVEVHRVIpIEFTIGNrZCwKICAgIENBU1QocC5tZHJkX2VzdCBBUyBET1VCTEUpIEFTIG1kcmRfZXN0LAogICAgQ0FTVCgKICAgICAgICBDQVNFCiAgICAgICAgICAgIFdIRU4gbGFiLnNjcl9taW4gPD0gMS4xIFRIRU4gbGFiLnNjcl9taW4KICAgICAgICAgICAgV0hFTiBja2QuY2tkX2ZsYWcgPSAxIFRIRU4gbGFiLnNjcl9taW4KICAgICAgICAgICAgRUxTRSBwLm1kcmRfZXN0CiAgICAgICAgRU5ECiAgICAgICAgQVMgRE9VQkxFCiAgICApIEFTIHNjcl9iYXNlbGluZSwKICAgIHAuZW5jb3VudGVyX2tleSwKICAgIHAucGF0aWVudF9rZXkKRlJPTSBwCkxFRlQgSk9JTiBsYWIKICAgIE9OIHAuZW5jb3VudGVyX2tleSA9IGxhYi5lbmNvdW50ZXJfa2V5CkxFRlQgSk9JTiBja2QKICAgIE9OIHAuaGFkbV9pZCA9IGNrZC5oYWRtX2lkCjsK"
+    }
+  ]
+}

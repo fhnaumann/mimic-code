@@ -1,0 +1,35 @@
+{
+  "resourceType": "ViewDefinition",
+  "status": "active",
+  "url": "https://fhnaumann.masters/pathling/ViewDefinition/kdigo_stages-kdigo_stages_icu_encounter",
+  "name": "kdigo_stages_icu_encounter",
+  "resource": "Encounter",
+  "select": [
+    {
+      "column": [
+        {
+          "path": "getResourceKey()",
+          "name": "icu_encounter_key"
+        },
+        {
+          "path": "subject.getReferenceKey(Patient)",
+          "name": "patient_key"
+        },
+        {
+          "path": "partOf.getReferenceKey(Encounter)",
+          "name": "parent_encounter_key"
+        },
+        {
+          "path": "identifier.where(system='http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu').value",
+          "name": "stay_id_str"
+        },
+        {
+          "path": "period.start",
+          "name": "intime_datetime"
+        }
+      ]
+    }
+  ],
+  "id": "kdigo-stages-kdigo-stages-icu-encounter",
+  "version": "3"
+}

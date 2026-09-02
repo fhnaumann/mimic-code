@@ -1,0 +1,40 @@
+{
+  "resourceType": "Library",
+  "id": "icustay-hourly",
+  "url": "https://fhnaumann.masters/pathling/Library/icustay_hourly",
+  "version": "2",
+  "name": "icustay_hourly",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "icustay_hourly_icu_encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/icustay_hourly-icustay_hourly_icu_encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "icustay_times",
+      "resource": "https://fhnaumann.masters/pathling/Library/icustay_times"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH all_hours AS (\n    SELECT\n        it.icu_encounter_key,\n        it.patient_key,\n        CASE\n            WHEN DATE_TRUNC('HOUR', it.intime_hr) = it.intime_hr\n                THEN CAST(it.intime_hr AS TIMESTAMP_NTZ)\n            ELSE CAST(DATE_TRUNC('HOUR', it.intime_hr) + INTERVAL 1 HOUR AS TIMESTAMP_NTZ)\n        END AS endtime,\n        SEQUENCE(\n            CAST(-24 AS BIGINT),\n            CAST(\n                CEIL(\n                    TIMESTAMPDIFF(\n                        HOUR,\n                        DATE_TRUNC('HOUR', it.intime_hr),\n                        DATE_TRUNC('HOUR', it.outtime_hr)\n                    )\n                ) AS BIGINT\n            )\n        ) AS hrs,\n        CAST(e.stay_id_str AS INTEGER) AS stay_id\n    FROM icustay_times it\n    INNER JOIN icustay_hourly_icu_encounter e\n        ON it.icu_encounter_key = e.icu_encounter_key\n    WHERE e.stay_id_str IS NOT NULL\n)\nSELECT\n    CAST(hr_unnested AS BIGINT) AS hr,\n    CAST(TIMESTAMPADD(HOUR, hr_unnested, endtime) AS TIMESTAMP_NTZ) AS endtime,\n    icu_encounter_key,\n    patient_key\nFROM all_hours\nLATERAL VIEW EXPLODE(hrs) exploded AS hr_unnested\n;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBhbGxfaG91cnMgQVMgKAogICAgU0VMRUNUCiAgICAgICAgaXQuaWN1X2VuY291bnRlcl9rZXksCiAgICAgICAgaXQucGF0aWVudF9rZXksCiAgICAgICAgQ0FTRQogICAgICAgICAgICBXSEVOIERBVEVfVFJVTkMoJ0hPVVInLCBpdC5pbnRpbWVfaHIpID0gaXQuaW50aW1lX2hyCiAgICAgICAgICAgICAgICBUSEVOIENBU1QoaXQuaW50aW1lX2hyIEFTIFRJTUVTVEFNUF9OVFopCiAgICAgICAgICAgIEVMU0UgQ0FTVChEQVRFX1RSVU5DKCdIT1VSJywgaXQuaW50aW1lX2hyKSArIElOVEVSVkFMIDEgSE9VUiBBUyBUSU1FU1RBTVBfTlRaKQogICAgICAgIEVORCBBUyBlbmR0aW1lLAogICAgICAgIFNFUVVFTkNFKAogICAgICAgICAgICBDQVNUKC0yNCBBUyBCSUdJTlQpLAogICAgICAgICAgICBDQVNUKAogICAgICAgICAgICAgICAgQ0VJTCgKICAgICAgICAgICAgICAgICAgICBUSU1FU1RBTVBESUZGKAogICAgICAgICAgICAgICAgICAgICAgICBIT1VSLAogICAgICAgICAgICAgICAgICAgICAgICBEQVRFX1RSVU5DKCdIT1VSJywgaXQuaW50aW1lX2hyKSwKICAgICAgICAgICAgICAgICAgICAgICAgREFURV9UUlVOQygnSE9VUicsIGl0Lm91dHRpbWVfaHIpCiAgICAgICAgICAgICAgICAgICAgKQogICAgICAgICAgICAgICAgKSBBUyBCSUdJTlQKICAgICAgICAgICAgKQogICAgICAgICkgQVMgaHJzLAogICAgICAgIENBU1QoZS5zdGF5X2lkX3N0ciBBUyBJTlRFR0VSKSBBUyBzdGF5X2lkCiAgICBGUk9NIGljdXN0YXlfdGltZXMgaXQKICAgIElOTkVSIEpPSU4gaWN1c3RheV9ob3VybHlfaWN1X2VuY291bnRlciBlCiAgICAgICAgT04gaXQuaWN1X2VuY291bnRlcl9rZXkgPSBlLmljdV9lbmNvdW50ZXJfa2V5CiAgICBXSEVSRSBlLnN0YXlfaWRfc3RyIElTIE5PVCBOVUxMCikKU0VMRUNUCiAgICBDQVNUKGhyX3VubmVzdGVkIEFTIEJJR0lOVCkgQVMgaHIsCiAgICBDQVNUKFRJTUVTVEFNUEFERChIT1VSLCBocl91bm5lc3RlZCwgZW5kdGltZSkgQVMgVElNRVNUQU1QX05UWikgQVMgZW5kdGltZSwKICAgIGljdV9lbmNvdW50ZXJfa2V5LAogICAgcGF0aWVudF9rZXkKRlJPTSBhbGxfaG91cnMKTEFURVJBTCBWSUVXIEVYUExPREUoaHJzKSBleHBsb2RlZCBBUyBocl91bm5lc3RlZAo7Cg=="
+    }
+  ]
+}

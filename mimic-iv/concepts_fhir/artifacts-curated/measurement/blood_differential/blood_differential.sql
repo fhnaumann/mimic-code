@@ -157,7 +157,7 @@ WITH filtered_rows AS (
     GROUP BY specimen_id
 )
 SELECT
-    CAST(charttime AS TIMESTAMP) AS charttime,
+    CAST(charttime AS TIMESTAMP_NTZ) AS charttime,
     CAST(wbc AS DOUBLE) AS wbc,
     CAST(
         ROUND(

@@ -1,0 +1,45 @@
+{
+  "resourceType": "Library",
+  "id": "first-day-vitalsign",
+  "url": "https://fhnaumann.masters/pathling/Library/first_day_vitalsign",
+  "version": "1",
+  "name": "first_day_vitalsign",
+  "status": "active",
+  "type": {
+    "coding": [
+      {
+        "system": "https://sql-on-fhir.org/ig/CodeSystem/LibraryTypesCodes",
+        "code": "sql-view"
+      }
+    ]
+  },
+  "relatedArtifact": [
+    {
+      "type": "depends-on",
+      "label": "icu_encounter",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/first_day_vitalsign-icu_encounter"
+    },
+    {
+      "type": "depends-on",
+      "label": "patient",
+      "resource": "https://fhnaumann.masters/pathling/ViewDefinition/first_day_vitalsign-patient"
+    },
+    {
+      "type": "depends-on",
+      "label": "vitalsign",
+      "resource": "https://fhnaumann.masters/pathling/Library/vitalsign"
+    }
+  ],
+  "content": [
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/sql-text",
+          "valueString": "WITH icu AS (\n    SELECT\n        p.subject_id_str,\n        e.stay_id_str,\n        TRY_CAST(e.intime_datetime AS TIMESTAMP_NTZ) AS intime,\n        e.patient_key,\n        e.icu_encounter_key\n    FROM icu_encounter e\n    LEFT JOIN patient p\n        ON e.patient_key = p.patient_key\n    WHERE e.stay_system = 'http://mimic.mit.edu/fhir/mimic/identifier/encounter-icu'\n        AND e.stay_id_str IS NOT NULL\n), aggregated AS (\n    SELECT\n        i.subject_id_str,\n        i.stay_id_str,\n        i.patient_key,\n        i.icu_encounter_key,\n        MIN(v.heart_rate) AS heart_rate_min,\n        MAX(v.heart_rate) AS heart_rate_max,\n        AVG(v.heart_rate) AS heart_rate_mean,\n        MIN(v.sbp) AS sbp_min,\n        MAX(v.sbp) AS sbp_max,\n        AVG(v.sbp) AS sbp_mean,\n        MIN(v.dbp) AS dbp_min,\n        MAX(v.dbp) AS dbp_max,\n        AVG(v.dbp) AS dbp_mean,\n        MIN(v.mbp) AS mbp_min,\n        MAX(v.mbp) AS mbp_max,\n        AVG(v.mbp) AS mbp_mean,\n        MIN(v.resp_rate) AS resp_rate_min,\n        MAX(v.resp_rate) AS resp_rate_max,\n        AVG(v.resp_rate) AS resp_rate_mean,\n        MIN(v.temperature) AS temperature_min,\n        MAX(v.temperature) AS temperature_max,\n        AVG(v.temperature) AS temperature_mean,\n        MIN(v.spo2) AS spo2_min,\n        MAX(v.spo2) AS spo2_max,\n        AVG(v.spo2) AS spo2_mean,\n        MIN(v.glucose) AS glucose_min,\n        MAX(v.glucose) AS glucose_max,\n        AVG(v.glucose) AS glucose_mean\n    FROM icu i\n    LEFT JOIN vitalsign v\n        ON i.icu_encounter_key = v.icu_encounter_key\n        AND v.charttime >= i.intime - INTERVAL 6 HOURS\n        AND v.charttime <= i.intime + INTERVAL 1 DAY\n    GROUP BY\n        i.subject_id_str,\n        i.stay_id_str,\n        i.patient_key,\n        i.icu_encounter_key\n)\nSELECT\n    CAST(a.heart_rate_min AS DOUBLE) AS heart_rate_min,\n    CAST(a.heart_rate_max AS DOUBLE) AS heart_rate_max,\n    CAST(a.heart_rate_mean AS DOUBLE) AS heart_rate_mean,\n    CAST(a.sbp_min AS DOUBLE) AS sbp_min,\n    CAST(a.sbp_max AS DOUBLE) AS sbp_max,\n    CAST(a.sbp_mean AS DOUBLE) AS sbp_mean,\n    CAST(a.dbp_min AS DOUBLE) AS dbp_min,\n    CAST(a.dbp_max AS DOUBLE) AS dbp_max,\n    CAST(a.dbp_mean AS DOUBLE) AS dbp_mean,\n    CAST(a.mbp_min AS DOUBLE) AS mbp_min,\n    CAST(a.mbp_max AS DOUBLE) AS mbp_max,\n    CAST(a.mbp_mean AS DOUBLE) AS mbp_mean,\n    CAST(a.resp_rate_min AS DOUBLE) AS resp_rate_min,\n    CAST(a.resp_rate_max AS DOUBLE) AS resp_rate_max,\n    CAST(a.resp_rate_mean AS DOUBLE) AS resp_rate_mean,\n    CAST(a.temperature_min AS DECIMAL(38, 2)) AS temperature_min,\n    CAST(a.temperature_max AS DECIMAL(38, 2)) AS temperature_max,\n    CAST(a.temperature_mean AS DOUBLE) AS temperature_mean,\n    CAST(a.spo2_min AS DOUBLE) AS spo2_min,\n    CAST(a.spo2_max AS DOUBLE) AS spo2_max,\n    CAST(a.spo2_mean AS DOUBLE) AS spo2_mean,\n    CAST(a.glucose_min AS DOUBLE) AS glucose_min,\n    CAST(a.glucose_max AS DOUBLE) AS glucose_max,\n    CAST(a.glucose_mean AS DOUBLE) AS glucose_mean,\n    a.icu_encounter_key AS icu_encounter_key,\n    a.patient_key AS patient_key\nFROM aggregated a\n;\n"
+        }
+      ],
+      "contentType": "application/sql;dialect=spark-sql",
+      "data": "V0lUSCBpY3UgQVMgKAogICAgU0VMRUNUCiAgICAgICAgcC5zdWJqZWN0X2lkX3N0ciwKICAgICAgICBlLnN0YXlfaWRfc3RyLAogICAgICAgIFRSWV9DQVNUKGUuaW50aW1lX2RhdGV0aW1lIEFTIFRJTUVTVEFNUF9OVFopIEFTIGludGltZSwKICAgICAgICBlLnBhdGllbnRfa2V5LAogICAgICAgIGUuaWN1X2VuY291bnRlcl9rZXkKICAgIEZST00gaWN1X2VuY291bnRlciBlCiAgICBMRUZUIEpPSU4gcGF0aWVudCBwCiAgICAgICAgT04gZS5wYXRpZW50X2tleSA9IHAucGF0aWVudF9rZXkKICAgIFdIRVJFIGUuc3RheV9zeXN0ZW0gPSAnaHR0cDovL21pbWljLm1pdC5lZHUvZmhpci9taW1pYy9pZGVudGlmaWVyL2VuY291bnRlci1pY3UnCiAgICAgICAgQU5EIGUuc3RheV9pZF9zdHIgSVMgTk9UIE5VTEwKKSwgYWdncmVnYXRlZCBBUyAoCiAgICBTRUxFQ1QKICAgICAgICBpLnN1YmplY3RfaWRfc3RyLAogICAgICAgIGkuc3RheV9pZF9zdHIsCiAgICAgICAgaS5wYXRpZW50X2tleSwKICAgICAgICBpLmljdV9lbmNvdW50ZXJfa2V5LAogICAgICAgIE1JTih2LmhlYXJ0X3JhdGUpIEFTIGhlYXJ0X3JhdGVfbWluLAogICAgICAgIE1BWCh2LmhlYXJ0X3JhdGUpIEFTIGhlYXJ0X3JhdGVfbWF4LAogICAgICAgIEFWRyh2LmhlYXJ0X3JhdGUpIEFTIGhlYXJ0X3JhdGVfbWVhbiwKICAgICAgICBNSU4odi5zYnApIEFTIHNicF9taW4sCiAgICAgICAgTUFYKHYuc2JwKSBBUyBzYnBfbWF4LAogICAgICAgIEFWRyh2LnNicCkgQVMgc2JwX21lYW4sCiAgICAgICAgTUlOKHYuZGJwKSBBUyBkYnBfbWluLAogICAgICAgIE1BWCh2LmRicCkgQVMgZGJwX21heCwKICAgICAgICBBVkcodi5kYnApIEFTIGRicF9tZWFuLAogICAgICAgIE1JTih2Lm1icCkgQVMgbWJwX21pbiwKICAgICAgICBNQVgodi5tYnApIEFTIG1icF9tYXgsCiAgICAgICAgQVZHKHYubWJwKSBBUyBtYnBfbWVhbiwKICAgICAgICBNSU4odi5yZXNwX3JhdGUpIEFTIHJlc3BfcmF0ZV9taW4sCiAgICAgICAgTUFYKHYucmVzcF9yYXRlKSBBUyByZXNwX3JhdGVfbWF4LAogICAgICAgIEFWRyh2LnJlc3BfcmF0ZSkgQVMgcmVzcF9yYXRlX21lYW4sCiAgICAgICAgTUlOKHYudGVtcGVyYXR1cmUpIEFTIHRlbXBlcmF0dXJlX21pbiwKICAgICAgICBNQVgodi50ZW1wZXJhdHVyZSkgQVMgdGVtcGVyYXR1cmVfbWF4LAogICAgICAgIEFWRyh2LnRlbXBlcmF0dXJlKSBBUyB0ZW1wZXJhdHVyZV9tZWFuLAogICAgICAgIE1JTih2LnNwbzIpIEFTIHNwbzJfbWluLAogICAgICAgIE1BWCh2LnNwbzIpIEFTIHNwbzJfbWF4LAogICAgICAgIEFWRyh2LnNwbzIpIEFTIHNwbzJfbWVhbiwKICAgICAgICBNSU4odi5nbHVjb3NlKSBBUyBnbHVjb3NlX21pbiwKICAgICAgICBNQVgodi5nbHVjb3NlKSBBUyBnbHVjb3NlX21heCwKICAgICAgICBBVkcodi5nbHVjb3NlKSBBUyBnbHVjb3NlX21lYW4KICAgIEZST00gaWN1IGkKICAgIExFRlQgSk9JTiB2aXRhbHNpZ24gdgogICAgICAgIE9OIGkuaWN1X2VuY291bnRlcl9rZXkgPSB2LmljdV9lbmNvdW50ZXJfa2V5CiAgICAgICAgQU5EIHYuY2hhcnR0aW1lID49IGkuaW50aW1lIC0gSU5URVJWQUwgNiBIT1VSUwogICAgICAgIEFORCB2LmNoYXJ0dGltZSA8PSBpLmludGltZSArIElOVEVSVkFMIDEgREFZCiAgICBHUk9VUCBCWQogICAgICAgIGkuc3ViamVjdF9pZF9zdHIsCiAgICAgICAgaS5zdGF5X2lkX3N0ciwKICAgICAgICBpLnBhdGllbnRfa2V5LAogICAgICAgIGkuaWN1X2VuY291bnRlcl9rZXkKKQpTRUxFQ1QKICAgIENBU1QoYS5oZWFydF9yYXRlX21pbiBBUyBET1VCTEUpIEFTIGhlYXJ0X3JhdGVfbWluLAogICAgQ0FTVChhLmhlYXJ0X3JhdGVfbWF4IEFTIERPVUJMRSkgQVMgaGVhcnRfcmF0ZV9tYXgsCiAgICBDQVNUKGEuaGVhcnRfcmF0ZV9tZWFuIEFTIERPVUJMRSkgQVMgaGVhcnRfcmF0ZV9tZWFuLAogICAgQ0FTVChhLnNicF9taW4gQVMgRE9VQkxFKSBBUyBzYnBfbWluLAogICAgQ0FTVChhLnNicF9tYXggQVMgRE9VQkxFKSBBUyBzYnBfbWF4LAogICAgQ0FTVChhLnNicF9tZWFuIEFTIERPVUJMRSkgQVMgc2JwX21lYW4sCiAgICBDQVNUKGEuZGJwX21pbiBBUyBET1VCTEUpIEFTIGRicF9taW4sCiAgICBDQVNUKGEuZGJwX21heCBBUyBET1VCTEUpIEFTIGRicF9tYXgsCiAgICBDQVNUKGEuZGJwX21lYW4gQVMgRE9VQkxFKSBBUyBkYnBfbWVhbiwKICAgIENBU1QoYS5tYnBfbWluIEFTIERPVUJMRSkgQVMgbWJwX21pbiwKICAgIENBU1QoYS5tYnBfbWF4IEFTIERPVUJMRSkgQVMgbWJwX21heCwKICAgIENBU1QoYS5tYnBfbWVhbiBBUyBET1VCTEUpIEFTIG1icF9tZWFuLAogICAgQ0FTVChhLnJlc3BfcmF0ZV9taW4gQVMgRE9VQkxFKSBBUyByZXNwX3JhdGVfbWluLAogICAgQ0FTVChhLnJlc3BfcmF0ZV9tYXggQVMgRE9VQkxFKSBBUyByZXNwX3JhdGVfbWF4LAogICAgQ0FTVChhLnJlc3BfcmF0ZV9tZWFuIEFTIERPVUJMRSkgQVMgcmVzcF9yYXRlX21lYW4sCiAgICBDQVNUKGEudGVtcGVyYXR1cmVfbWluIEFTIERFQ0lNQUwoMzgsIDIpKSBBUyB0ZW1wZXJhdHVyZV9taW4sCiAgICBDQVNUKGEudGVtcGVyYXR1cmVfbWF4IEFTIERFQ0lNQUwoMzgsIDIpKSBBUyB0ZW1wZXJhdHVyZV9tYXgsCiAgICBDQVNUKGEudGVtcGVyYXR1cmVfbWVhbiBBUyBET1VCTEUpIEFTIHRlbXBlcmF0dXJlX21lYW4sCiAgICBDQVNUKGEuc3BvMl9taW4gQVMgRE9VQkxFKSBBUyBzcG8yX21pbiwKICAgIENBU1QoYS5zcG8yX21heCBBUyBET1VCTEUpIEFTIHNwbzJfbWF4LAogICAgQ0FTVChhLnNwbzJfbWVhbiBBUyBET1VCTEUpIEFTIHNwbzJfbWVhbiwKICAgIENBU1QoYS5nbHVjb3NlX21pbiBBUyBET1VCTEUpIEFTIGdsdWNvc2VfbWluLAogICAgQ0FTVChhLmdsdWNvc2VfbWF4IEFTIERPVUJMRSkgQVMgZ2x1Y29zZV9tYXgsCiAgICBDQVNUKGEuZ2x1Y29zZV9tZWFuIEFTIERPVUJMRSkgQVMgZ2x1Y29zZV9tZWFuLAogICAgYS5pY3VfZW5jb3VudGVyX2tleSBBUyBpY3VfZW5jb3VudGVyX2tleSwKICAgIGEucGF0aWVudF9rZXkgQVMgcGF0aWVudF9rZXkKRlJPTSBhZ2dyZWdhdGVkIGEKOwo="
+    }
+  ]
+}
